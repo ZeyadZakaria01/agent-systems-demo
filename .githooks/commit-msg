@@ -1,0 +1,10 @@
+#!/bin/sh
+# Strip AI-tool attribution from commit messages (Claude Code, Cursor, omp, Copilot, ...).
+# Human co-authors are kept. Tool settings alone do not reliably suppress these lines,
+# so this hook is the enforcement point. Enable once per clone: git config core.hooksPath .githooks
+msg="$1"
+tmp="$(mktemp)"
+grep -viE '^co-authored-by:.*(claude|anthropic|cursor|copilot|openai|chatgpt|gemini|omp)|^claude-session:|made with cursor|generated with \[?(claude|omp)' "$msg" \
+  | sed -e :a -e '/^\n*$/{$d;N;ba' -e '}' >"$tmp"
+cat "$tmp" >"$msg"
+rm -f "$tmp"

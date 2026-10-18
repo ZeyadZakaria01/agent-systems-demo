@@ -1,0 +1,3 @@
+[submodule "MemState"]
+	path = MemState
+	url = https://github.com/CoDS-GCS/MemState
