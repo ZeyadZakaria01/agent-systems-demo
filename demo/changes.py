@@ -5,7 +5,10 @@ holds a real verdict (step 1 with upstream, step 2 with step 1, and so on). A ch
 `**<before> → <after>** (vs <system>)`, naming the system it was compared with; an unchanged one just the verdict;
 an unmeasured one `—`. `error` is not a verdict on the scale (a crashed check, a failed setup): an `error` cell is
 shown as `error`, never marked, and never the baseline of a later cell, so a step that failed to run neither
-fabricates nor hides changes. The chain and the step names come from the system registry (`demo/systems.py`); the
+fabricates nor hides changes. Beside the verdicts, each step lists per row the cases whose outcome changed against the
+same baseline (cases matched by `Case.id`; a case missing on one side reads `n/a`): a row can keep its verdict
+(`partial → partial`) while a case flips. A count a row measures on random ids (`measurements["natural_count"]`,
+C2(a)'s natural arrangement) is shown beside the case lines when it differs, never compared. The chain and the step names come from the system registry (`demo/systems.py`); the
 functions are otherwise generic over rows and verdicts.
 """
 
@@ -15,7 +18,7 @@ from dataclasses import dataclass
 
 from demo.checks import Row
 from demo.systems import STEP_IDS, SYSTEMS
-from demo.verdict import ERROR, Verdict, last_verdict, measured
+from demo.verdict import ERROR, Case, Verdict, last_verdict, measured
 
 CHAIN = ("upstream", *STEP_IDS)
 HEADERS = {"upstream": "upstream", **{i: f"step {SYSTEMS[i].step}" for i in STEP_IDS}}
@@ -110,6 +113,61 @@ def render_change_table(rows: list[Row], verdicts: list[Verdict], chain: tuple[s
         lines.append(f"| {label} | " + " | ".join(_text(cells[r.id][s]) for s in chain) + " |")
     lines.append("")
     lines += [_summary(s, rows, cells, chain) for s in measured(verdicts, chain)[1:]]
+    lines += _case_lines(rows, verdicts, chain)
     lines.append("- Changed cells are bold (`before → after`, naming the system compared with: the nearest earlier real "
                  "verdict of the row, never an `error`).")
     return "\n".join(lines)
+
+
+def _outcome(case: Case | None) -> str:
+    return "n/a" if case is None or case.held is None else "held" if case.held else "broken"
+
+
+RANDOM_ID_COUNT = "natural_count"  # the measurement key of a count taken on random ids: shown, not compared
+
+
+def case_changes_per_step(rows: list[Row], verdicts: list[Verdict],
+                          chain: tuple[str, ...] = CHAIN) -> dict[str, list[dict]]:
+    """For each measured system after the first of the chain: the rows with a case-level change against the system the
+    row's verdict was compared with. An entry: the row, its verdict before and after, `vs`, `cases` (id, name, before,
+    after; a broken case that now holds reads `fixed`) and `counts` when the row's random-id count differs. Rows without a case change are not listed."""
+    cells = _all_cells(rows, verdicts, chain)
+    out: dict[str, list[dict]] = {}
+    for system_id in measured(verdicts, chain)[1:]:
+        entries = []
+        for r in rows:
+            cell = cells[r.id][system_id]
+            if cell is None or cell.compared_with is None or cell.verdict == ERROR:
+                continue
+            before = last_verdict(verdicts, cell.compared_with, r.id)
+            after = last_verdict(verdicts, system_id, r.id)
+            old = {c.id: c for c in before.cases}
+            new = {c.id: c for c in after.cases}
+            changed = []
+            for case_id in [*new, *(i for i in old if i not in new)]:
+                a, b = _outcome(old.get(case_id)), _outcome(new.get(case_id))
+                if a != b:
+                    changed.append({"case": case_id, "name": (new.get(case_id) or old[case_id]).name,
+                                    "from": a, "to": "fixed" if (a, b) == ("broken", "held") else b})
+            entry = {"row": r.id, "from": before.verdict, "to": after.verdict, "vs": cell.compared_with,
+                     "cases": changed}
+            counts = [v.measurements.get(RANDOM_ID_COUNT) for v in (before, after)]
+            if counts[0] != counts[1]:
+                entry["counts"] = {"from": counts[0] or "n/a", "to": counts[1] or "n/a"}
+            if changed or "counts" in entry:
+                entries.append(entry)
+        out[system_id] = entries
+    return out
+
+
+def _case_lines(rows: list[Row], verdicts: list[Verdict], chain: tuple[str, ...]) -> list[str]:
+    lines = []
+    for system_id, entries in case_changes_per_step(rows, verdicts, chain).items():
+        for e in entries:
+            parts = [f"{e['row']}: {e['from']} → {e['to']}"]
+            parts += [f"{c['name']}: {c['from']} → {c['to']}" for c in e["cases"]]
+            if "counts" in e:
+                parts.append(f"random-ID count {e['counts']['from']} → {e['counts']['to']} (shown, not compared)")
+            lines.append(f"- {HEADERS.get(system_id, system_id)} cases: " + " · ".join(parts)
+                         + f" (vs {HEADERS.get(e['vs'], e['vs'])})")
+    return lines

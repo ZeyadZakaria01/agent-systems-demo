@@ -5,12 +5,12 @@ from contextlib import contextmanager
 from datetime import date
 
 from demo.baseline import Baseline
-from demo.changes import changes_per_step, render_change_table
+from demo.changes import case_changes_per_step, changes_per_step, render_change_table
 from demo.checks import Row, discover
 from demo.run import run_recorded
 from demo.scorecard import COLUMNS, render_scorecard
 from demo.systems import SystemSpec
-from demo.verdict import ERROR, Verdict
+from demo.verdict import ERROR, Case, Verdict
 
 ROWS = [Row("C1", "c1", control=True), Row("C2a", "c2a"), Row("C3", "c3")]
 
@@ -78,7 +78,8 @@ def test_a_recorded_run_prints_the_change_table_and_stores_it_in_results(tmp_pat
     assert "- step 1 vs upstream: no change." in run.scorecard
     results = json.loads((run.dir / "results.json").read_text())
     assert results["change_table"] == {"chain": ["upstream", "step1", "step2", "step3"],
-                                       "measured": ["upstream", "step1"], "changes": {"step1": []}}
+                                       "measured": ["upstream", "step1"], "changes": {"step1": []},
+                                       "case_changes": {"step1": []}}
     assert any("bitemporal patch (step1, LadybugDB)" == c["header"] for c in results["columns"])
 
 
@@ -128,3 +129,68 @@ def test_a_storyline_only_run_has_no_measured_systems_and_no_changes_for_the_ste
     table = json.loads((run.dir / "results.json").read_text())["change_table"]
     assert table["measured"] == [] and table["changes"] == {}
     assert "change table" not in run.scorecard
+
+
+def cv(system, row, verdict, **held):
+    """A verdict with cases `{id: held}` (True held, False broken, None n/a)."""
+    return Verdict(row=row, verdict=verdict, system=system,
+                   cases=[Case(f"case {i}", h, id=i) for i, h in held.items()])
+
+
+C4_ROWS = [Row("C4", "c4"), Row("C1", "c1", control=True)]
+
+
+def test_a_row_whose_verdict_is_unchanged_but_whose_case_outcomes_changed_lists_the_cases():
+    verdicts = [cv("upstream", "C4", "partial", update=True, merge=False, archive=False),
+                cv("step1", "C4", "partial", update=True, merge=False, archive=False),
+                cv("step2", "C4", "partial", update=True, merge=True, archive=False),
+                cv("upstream", "C1", "pass", default=True), cv("step1", "C1", "pass", default=True),
+                cv("step2", "C1", "pass", default=True)]
+    table = render_change_table(C4_ROWS, verdicts)
+    assert "| C4 | partial | partial | partial | — |" in table
+    assert "- step 2 cases: C4: partial → partial · case merge: broken → fixed" in table
+    assert "- step 1 cases" not in table and "C1:" not in table.split("cases")[-1]
+    assert case_changes_per_step(C4_ROWS, verdicts) == {
+        "step1": [], "step2": [{"row": "C4", "from": "partial", "to": "partial", "vs": "step1", "cases": [
+            {"case": "merge", "name": "case merge", "from": "broken", "to": "fixed"}]}]}
+
+
+def test_a_row_with_no_case_change_lists_nothing():
+    verdicts = [cv("upstream", "C1", "pass", default=True), cv("step1", "C1", "pass", default=True)]
+    table = render_change_table(C4_ROWS, verdicts)
+    assert "cases:" not in table
+    assert case_changes_per_step(C4_ROWS, verdicts) == {"step1": []}
+
+
+def test_a_case_not_applicable_on_one_system_and_held_on_the_next_reads_n_a_to_held():
+    verdicts = [cv("upstream", "C4", "pass", update=True, archive=None), cv("step1", "C4", "pass", update=True, archive=True)]
+    table = render_change_table(C4_ROWS, verdicts)
+    assert "- step 1 cases: C4: pass → pass · case archive: n/a → held" in table
+
+
+def test_case_changes_follow_the_verdict_comparison_chain_skipping_errors_and_unmeasured_steps():
+    verdicts = [cv("upstream", "C4", "fail", merge=False), v("step1", "C4", ERROR), cv("step2", "C4", "pass", merge=True)]
+    changes = case_changes_per_step(C4_ROWS, verdicts)
+    assert changes["step1"] == []
+    assert changes["step2"][0]["vs"] == "upstream" and changes["step2"][0]["cases"][0]["to"] == "fixed"
+    assert "- step 2 cases: C4: fail → pass · case merge: broken → fixed" in render_change_table(C4_ROWS, verdicts)
+
+
+def test_random_id_counts_are_shown_but_not_compared():
+    def natural(system, count):
+        return Verdict(row="C2a", verdict="partial", system=system, measurements={"natural_count": count},
+                       cases=[Case("existence", False, id="existence")])
+    rows = [Row("C2a", "c2a")]
+    verdicts = [natural("upstream", "10/20"), natural("step1", "3/20")]
+    table = render_change_table(rows, verdicts)
+    assert "- step 1 cases: C2a: partial → partial · random-ID count 10/20 → 3/20 (shown, not compared)" in table
+    assert case_changes_per_step(rows, verdicts) == {"step1": [{"row": "C2a", "from": "partial", "to": "partial",
+                                                                "vs": "upstream", "cases": [],
+                                                                "counts": {"from": "10/20", "to": "3/20"}}]}
+
+
+def test_generic_over_any_chain():
+    chain = ("phase1", "phase2")
+    verdicts = [cv("phase1", "C4", "partial", merge=False), cv("phase2", "C4", "partial", merge=True)]
+    table = render_change_table(C4_ROWS, verdicts, chain)
+    assert "- phase2 cases: C4: partial → partial · case merge: broken → fixed" in table

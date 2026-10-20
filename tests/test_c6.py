@@ -1,11 +1,11 @@
-"""C6 clause 1 and clause 2, run in-process. The baseline tracks no salience, so both clauses fail with it unchanged;
+"""C6 clause 1 and clause 2, run in-process. The baseline (versioned row) tracks no salience, so both clauses are absent, confirmed by the salience read;
 `BumpingStore` (a Baseline subclass that reinforces and forgets) shows the passing path, the observations and the
 check's own failure branches."""
 
 from demo.baseline import Baseline
 from demo.checks import discover
 from demo.checks import c6_retrieval_adaptation as c6mod
-from demo.verdict import FAIL, PARTIAL, PASS
+from demo.verdict import ABSENT, FAIL, NOT_SCORED, PARTIAL, PASS
 
 
 def by_row(row):
@@ -21,23 +21,19 @@ def observation(verdict, name):
     return next(o for o in verdict.observations if o["name"] == name)
 
 
-def test_clause_1_fails_on_the_baseline_with_salience_unchanged():
+def test_clause_1_is_absent_on_the_baseline_because_salience_reads_none():
     verdict = run(Baseline(), "C6-1")
-    assert verdict.verdict == FAIL
-    assert [c.held for c in verdict.cases] == [False]
-    over = observation(verdict, "over-reinforcement")
-    assert all(t["start"] is None and t["end"] is None and t["rise"] is None for t in over["per_topic"].values())
-    assert over["unrelated_topics_that_rose"] == 0
+    assert verdict.verdict == ABSENT
+    assert verdict.cases == []
+    read = verdict.probe_evidence["salience_read"]
+    assert len(read) == 4 and all(x is None for x in read.values())  # every topic written read back without salience
 
 
-def test_clause_2_fails_on_the_baseline_with_salience_unchanged():
+def test_clause_2_is_absent_on_the_baseline_because_salience_reads_none():
     verdict = run(Baseline(), "C6-2")
-    assert verdict.verdict == FAIL
-    assert [c.held for c in verdict.cases] == [False, False]
-    assert observation(verdict, "salience trajectory")["after_each_retrieval"] == []
-    assert observation(verdict, "forgetting pass")["ran"] is False
-    durability = observation(verdict, "salience durability")
-    assert durability["reset"] is None and durability["after_field_write"] is None
+    assert verdict.verdict == ABSENT
+    assert verdict.cases == []
+    assert list(verdict.probe_evidence["salience_read"].values()) == [None, None]
 
 
 class BumpingStore(Baseline):
@@ -117,12 +113,73 @@ def test_a_bumping_store_passes_clause_2_after_the_forgetting_pass_ran():
     assert observation(verdict, "salience durability")["reset"] is True
 
 
-def test_clause_2_is_partial_when_the_control_shows_no_forgetting_pass_ran(monkeypatch):
+def test_clause_2_is_not_scored_when_no_forgetting_pass_ran(monkeypatch):
     monkeypatch.setattr(c6mod, "ARCHIVE_WAIT_S", 0.2)
     verdict = run(BumpingStore(forgets=False), "C6-2")
-    assert verdict.verdict == PARTIAL  # reinforcement held, forgetting not demonstrated
-    assert [c.held for c in verdict.cases] == [True, False]
+    assert verdict.verdict == NOT_SCORED  # forgetting is C5's failure, not C6's: never partial
+    assert [c.held for c in verdict.cases] == [True, None]
     assert observation(verdict, "forgetting pass")["control"]["archived"] is False
+    assert observation(verdict, "forgetting was not shown to run")["summary"].startswith("forgetting was not shown to run")
+
+
+def test_clause_2_stops_at_the_first_forgetting_pass_seen_during_the_reads():
+    class ForgetsAtOnce(BumpingStore):
+        """The pass runs on the first read: every topic below the threshold is archived by it (the control is)."""
+
+        def _query(self, request):
+            response = super()._query(request)
+            for t, s in self.salience.items():
+                if s < c6mod.FORGET_THRESHOLD:
+                    self.archived[t] = True
+            return response
+
+    system = ForgetsAtOnce()
+    verdict = run(system, "C6-2")
+    assert verdict.verdict == PASS
+    gate = observation(verdict, "forgetting pass")
+    assert gate["first_pass_in_reads"] is True and gate["topics_after"] is None  # no filler was ingested
+    assert gate["control"]["archived"] is True and gate["target"]["archived"] is False
+
+
+def test_clause_2_fails_when_the_pass_archives_the_read_topic_too():
+    class ArchivesEverything(BumpingStore):
+        def _query(self, request):
+            response = super()._query(request)
+            for t in self.archived:
+                self.archived[t] = True
+            return response
+
+    verdict = run(ArchivesEverything(), "C6-2")
+    assert verdict.verdict == PARTIAL  # reinforcement lifted the topic, but the pass archived it anyway
+    assert verdict.cases[-1].held is False
+
+
+def test_an_as_of_read_raising_salience_is_a_clause_1_case():
+    verdict = run(BumpingStore(), "C6-1")  # the baseline accepts recorded_at; BumpingStore bumps whatever it returns
+    assert [c.held for c in verdict.cases] == [True, True]
+    assert verdict.measurements["as_of"]["axis"] == "recorded_at"
+
+
+def test_the_as_of_case_is_not_applicable_where_no_date_is_accepted():
+    class NoDates(BumpingStore):
+        def _describe(self):
+            return {**super()._describe(), "accepts": {}}
+
+    verdict = run(NoDates(), "C6-1")
+    assert [c.held for c in verdict.cases] == [True, None]
+    assert verdict.verdict == PASS  # the verdict rests on the cases that could run
+
+
+def test_clause_1_fails_the_as_of_case_when_an_as_of_read_does_not_raise_salience():
+    class AsOfDoesNotBump(BumpingStore):
+        def _query(self, request):
+            if request.get("recorded_at") or request.get("valid_at"):
+                return Baseline._query(self, request)
+            return super()._query(request)
+
+    verdict = run(AsOfDoesNotBump(), "C6-1")
+    assert [c.held for c in verdict.cases] == [True, False]
+    assert verdict.verdict == PARTIAL
 
 
 def test_clause_1_fails_when_only_unrelated_topics_were_returned():
@@ -135,7 +192,7 @@ def test_clause_1_fails_when_only_unrelated_topics_were_returned():
             return response
 
     verdict = run(MissesTarget(), "C6-1")
-    assert verdict.verdict == FAIL
+    assert verdict.cases[0].held is False  # the plain-retrieval case; the as-of read still raises salience
     assert observation(verdict, "over-reinforcement")["per_topic"]["Marathon Training"]["returned_in_retrievals"] == 0
 
 

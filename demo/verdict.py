@@ -3,7 +3,9 @@
 Scale (ADR 0002): pass = every applicable case held; partial = some held; fail = the capability is implemented
 and every case broke; absent = a probe confirmed the capability missing (the probe evidence is mandatory);
 not-scored = no case applied (C2(b)'s "neither outcome" rule; `from_cases` also gives it when every case is
-`held=None`, e.g. a nothing-value on the system). A verdict resting on fewer cases than were run shows
+`held=None`, e.g. a nothing-value on the system). `absent` and `not-scored` differ: absent says the condition's whole capability is missing
+(and carries the probe that showed it); not-scored says the cases that could run were none (they need another
+condition's capability, or hold no value on this system), so nothing is claimed either way. A verdict resting on fewer cases than were run shows
 `(n case(s) n/a)` in the scorecard cell. `ERROR` is not part of the scale: the check crashed, and the scorecard
 shows it as such.
 
@@ -25,12 +27,20 @@ SCALE = (PASS, PARTIAL, FAIL, ABSENT, NOT_SCORED)
 
 @dataclass
 class Case:
-    """One tested case. `held=None` means the case does not apply to this system (a nothing-value)."""
+    """One tested case. `held=None` means the case does not apply to this system (a nothing-value).
+
+    `id` is the case's identity across systems (the change table matches cases of two systems by it); it defaults to
+    `name`, so a check sets it only when the name carries system-dependent text.
+    """
 
     name: str
     held: bool | None
     observation: str = ""
     control: bool = False
+    id: str = ""
+
+    def __post_init__(self) -> None:
+        self.id = self.id or self.name
 
 
 @dataclass

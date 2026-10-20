@@ -1,16 +1,25 @@
 """C4 (provenance preservation): history survival, empty/null writes, the 500-entry cap.
 
-The baseline is last-write-wins with no history, so C4 fails with the observations a scorecard reader relies on (lost
-earlier value, empty value becoming current). `AppendOnlyStore` shows the passing path and that a system accepting
+The baseline (versioned row) keeps every write and rejects empty and null values, so C4 passes with the merge and
+real-forgetting cases not applicable and the observations a scorecard reader relies on (nothing lost, nothing empty current). `AppendOnlyStore` shows the passing path and that a system accepting
 empty writes breaks those cases. MemState verdicts are never pinned.
 """
 
 import uuid
 
+import pytest
+
+from demo import ramp
 from demo.adapter import Rejected, System
 from demo.baseline import Baseline
 from demo.checks import discover
 from demo.verdict import FAIL, PASS
+
+
+@pytest.fixture(autouse=True)
+def small_forgetting_drive(monkeypatch):
+    monkeypatch.setattr(ramp, "FORGET_GATE", 12)
+    monkeypatch.setattr(ramp, "ARCHIVE_WAIT_S", 0.2)
 
 
 def c4():
@@ -35,17 +44,31 @@ def test_c4_marks_only_the_update_path_as_a_control():
     assert controls == ["history survives a value update"]
 
 
-def test_c4_fails_on_the_baseline_with_the_lost_earlier_value_and_empty_current():
+def test_c4_passes_on_the_baseline_with_the_merge_and_forgetting_cases_not_applicable():
     v = run(Baseline())
-    assert v.verdict == FAIL
-    assert by_name(v, "history survives a value update").held is False
-    assert by_name(v, "history survives a merge").held is False
-    assert by_name(v, "history survives archiving").held is None  # no archived flag
-    assert by_name(v, 'version_field with "" does not replace April 20').held is False
-    assert by_name(v, "version_field with null does not replace April 20").held is False
-    assert observation(v, "lost earlier value")["lost"] is True
+    assert v.verdict == PASS
+    assert by_name(v, "history survives a value update").held is True
+    assert by_name(v, "history survives a merge").held is None  # no duplicate is ever created, so no merge
+    assert by_name(v, "history survives real forgetting").held is None  # no archived flag
+    assert "no archived flag" in by_name(v, "history survives real forgetting").observation
+    assert not [e for e in Baseline().log.entries if e["kind"] == "setup"]  # never an editor archive write
+    assert by_name(v, 'version_field with "" does not replace April 20').held is True
+    assert by_name(v, "version_field with null does not replace April 20").held is True
+    assert observation(v, "lost earlier value")["lost"] is False
+
+
+def test_the_baseline_rejects_the_empty_and_null_writes_and_the_current_value_stays():
+    v = run(Baseline())
     empty = observation(v, "empty value becoming current")
-    assert empty["empty_current"] is True and empty["null_current"] is True
+    assert empty["empty_current"] is False and empty["null_current"] is False
+    assert "rejected (422)" in by_name(v, 'version_field with "" does not replace April 20').observation
+    assert "rejected (422)" in by_name(v, "version_field with null does not replace April 20").observation
+
+
+def test_the_baseline_keeps_the_first_value_after_501_writes():
+    v = run(Baseline())
+    cap = v.measurements["history_cap"]
+    assert cap["first_present"] is True and cap["length"] == 501
 
 
 class AppendOnlyStore(System):
@@ -121,4 +144,108 @@ def test_accepting_an_empty_write_that_becomes_current_breaks_the_empty_cases():
     assert by_name(v, 'version_field with "" does not replace April 20').held is False
     assert by_name(v, "version_field with null does not replace April 20").held is False
     assert observation(v, "empty value becoming current")["empty_current"] is True
+    assert v.verdict != PASS
+
+
+# -- real forgetting and the cap
+
+class Forgetter(AppendOnlyStore):
+    """AppendOnlyStore plus salience and forgetting, for the real-forgetting case: salience starts at the request's
+    value (default 1.0); once `ramp.FORGET_GATE` topics exist an ingest archives every topic below 0.05; a field write
+    resets salience to 1.0 unless `resets=False`."""
+
+    def __init__(self, resets=True, forgets=True):
+        super().__init__()
+        self.resets, self.forgets = resets, forgets
+        self.salience = {}
+
+    def _topic(self, t):
+        return {**super()._topic(t), "salience": self.salience.get(t["id"])}
+
+    def _ingest(self, request):
+        out = super()._ingest(request)
+        tid = out["topic_id"]
+        if request["placement"] == "new_topic":
+            self.salience[tid] = request.get("salience", 1.0)
+        if request.get("fields") and self.resets:
+            self.salience[tid] = 1.0
+        if self.forgets and len(self.topics) >= ramp.FORGET_GATE:
+            for t in self.topics.values():
+                if self.salience.get(t["id"], 1.0) < 0.05:
+                    t["archived"] = True
+        return out
+
+
+FORGETTING = "history survives real forgetting"
+
+
+def test_a_topic_with_fields_that_cannot_be_forgotten_makes_the_case_not_applicable_confirmed_by_the_run():
+    v = run(Forgetter(resets=True))  # upstream's shape (F24): a field write resets salience to 1.0
+    case = by_name(v, FORGETTING)
+    assert case.held is None and "was not forgotten" in case.observation
+    assert v.measurements["forgetting"]["ran"] is True and v.measurements["forgetting"]["target_archived"] is False
+    assert v.verdict == PASS  # the verdict rests on the cases that could run
+
+
+def test_a_forgotten_topic_with_its_history_and_provenance_intact_holds():
+    v = run(Forgetter(resets=False))
+    case = by_name(v, FORGETTING)
+    assert case.held is True and v.measurements["forgetting"]["target_archived"] is True
+    assert v.verdict == PASS
+
+
+def test_a_forgotten_topic_that_lost_its_history_breaks_the_case():
+    class Wipes(Forgetter):
+        def _topic(self, t):
+            topic = super()._topic(t)
+            if t["archived"]:
+                topic["fields"] = {n: {"current": None, "history": []} for n in t["fields"]}
+            return topic
+
+    v = run(Wipes(resets=False))
+    assert by_name(v, FORGETTING).held is False and v.verdict != PASS
+
+
+def test_forgetting_not_shown_to_run_is_not_applicable():
+    v = run(Forgetter(resets=False, forgets=False))
+    case = by_name(v, FORGETTING)
+    assert case.held is None and "forgetting was not shown to run" in case.observation
+
+
+class Capped(AppendOnlyStore):
+    """History capped at 500 entries; the overflow is archived (`archive=True`) or dropped."""
+
+    def __init__(self, archive):
+        super().__init__()
+        self.archive = archive
+        self.overflow = {}
+
+    def _topic(self, t):
+        topic = super()._topic(t)
+        for n, f in topic["fields"].items():
+            f["history"] = f["history"][:500]
+            if self.archive:
+                f["archived_history"] = list(self.overflow.get((t["id"], n), []))
+        return topic
+
+    def _ingest(self, request):
+        out = super()._ingest(request)
+        t = self.topics[out["topic_id"]]
+        for n, hist in t["fields"].items():
+            while len(hist) > 500:
+                self.overflow.setdefault((t["id"], n), []).insert(0, hist.pop())
+        return out
+
+
+def test_the_cap_case_holds_when_the_first_value_is_archived_overflow_readable_by_id():
+    v = run(Capped(archive=True))
+    cap = v.measurements["history_cap"]
+    assert cap["first_present"] is True and cap["first_in_history"] is False and cap["first_in_archived_overflow"] is True
+    assert cap["length"] == 500
+
+
+def test_the_cap_case_breaks_when_the_overflow_is_dropped():
+    v = run(Capped(archive=False))
+    cap = v.measurements["history_cap"]
+    assert cap["first_present"] is False and cap["length"] == 500
     assert v.verdict != PASS

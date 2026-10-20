@@ -8,26 +8,31 @@ The clause, copied from `docs/papers/2605.26252v1.md:218` (Definition 4):
 - `C6-1` (clause 1): each retrieval raises the salience of the topics it returns, by at least `BUMP` per retrieval that
   returned them. Beside the verdict, as an observation (never graded): whether unrelated candidates rise too
   (over-reinforcement; upstream returns the top k whatever the similarity, `docs/findings.md` F8).
+  A second case: an as-of read (`valid_at`, else `recorded_at`) of a topic raises its salience by `BUMP` too; n/a where
+  the system accepts neither date.
 - `C6-2` (clause 2): a field-less topic ingested at salience 0.03 is read by id until its salience reaches
-  `FORGET_THRESHOLD` (0.05; a topic is eligible for forgetting while its salience is strictly below it). Then the
-  forgetting pass is made to run: field-less filler topics bring the topic count to `FORGET_GATE` (whether upstream
-  counts archived topics too is [INFERENCE], code reading; the F15 run only shows the control archived), one more
-  ingest follows, and the stored `archived` flag and salience are read. A control topic ingested at salience 0.01 and
-  never read must be archived by that pass; if it is not, the pass cannot be shown to have run, so the "left
-  eligibility" case does not hold: the row is `partial` (reinforcement held, forgetting not demonstrated), never a
-  pass. Observation (never graded): a field write after the pass - does the salience the topic has then survive it
-  (durability)?
+  `FORGET_THRESHOLD` (0.05; a topic is eligible for forgetting while its salience is strictly below it), and the check
+  stops at the **first forgetting pass**: the first observation in which any topic has been archived. After each read
+  it looks for one; if none came by the time the topic left eligibility, the pass is made to run: field-less filler
+  topics bring the topic count to `FORGET_GATE` (whether upstream counts archived topics too is [INFERENCE], code
+  reading; the F15 run only shows the control archived), one more ingest follows, and the stored `archived` flags and
+  salience are read. A control topic ingested at salience 0.01 and never read must be archived by that pass and the
+  read topic must not be (and must not be eligible). When the control is not archived, the pass was not shown to run
+  (that is C5's failure, not C6's): the row is `not-scored` with the observation "forgetting was not shown to run",
+  never `partial`. If the control is archived and the read topic was too, the clause broke. Observation (never graded):
+  a field write after the pass - does the salience the topic has then survive it (durability)?
 
 Salience is read with `read_topic` (upstream `GET /api/ui/topics/{id}`), which never bumps. The only retrievals the
 suite issues are the ones the checks count; each adds the system's `BUMP` to every topic it returns, so the expected
 minimum rise of a topic is `BUMP` times the retrievals that returned it. A system that does not track salience reads
-`None`: the clauses fail, with salience unchanged.
+`None`: the capability is missing, so both rows are `absent`, with that read as the probe evidence (ADR 0002).
 """
 
 from __future__ import annotations
 
 from demo.checks import Ctx, check
-from demo.adapter import System, Waited
+from demo import ramp
+from demo.adapter import Rejected, System, Waited, utc_now
 from demo.reads import read_request
 from demo.verdict import Case, Verdict
 
@@ -74,6 +79,12 @@ def _eligible(x: float | None) -> bool | None:
     return None if x is None else x < FORGET_THRESHOLD - EPS
 
 
+def _no_salience_probe(read: dict) -> dict:
+    """The absence probe: topics written (with a salience where the row asks for one) all read back without one."""
+    return {"probe": "salience is a nothing-value on every topic the check wrote (the system does not track it)",
+            "salience_read": read}
+
+
 @check(row="C6-1", claim=CLAUSE_1)
 def c6_clause_1(ctx: Ctx) -> Verdict:
     s = ctx.system
@@ -84,6 +95,8 @@ def c6_clause_1(ctx: Ctx) -> Verdict:
         labels[topic_id] = "target" if title == TARGET[0] else "unrelated"
     target_id = next(t for t, kind in labels.items() if kind == "target")
     start = {tid: salience(s, tid) for tid in labels}
+    if all(x is None for x in start.values()):
+        return Verdict.absent("C6-1", _no_salience_probe(start))
 
     returned_in: list[list[str]] = []
     for _ in range(RETRIEVALS_CLAUSE_1):
@@ -119,7 +132,38 @@ def c6_clause_1(ctx: Ctx) -> Verdict:
                           "expected_min_rise": expected_min_rise[t], "rise": rise(t)} for t in labels},
         "note": f"salience read with read_topic, which adds nothing; the only retrievals are the {RETRIEVALS_CLAUSE_1} counted ones",
     }]
-    return Verdict.from_cases("C6-1", [case], observations=observations)
+    as_of, as_of_evidence = _as_of_case(s)
+    return Verdict.from_cases("C6-1", [case, as_of], observations=observations,
+                              measurements={"as_of": as_of_evidence})
+
+
+AS_OF_SALIENCE = 0.5
+
+
+def _as_of_case(s: System) -> tuple[Case, dict]:
+    """An as-of read raises the salience of the topic it returns by the system's bump; n/a without a date."""
+    name = "an as-of read raises the salience of the topic it returns"
+    accepts = s.describe()["accepts"]
+    axis = "valid_at" if accepts["valid_at"] else "recorded_at" if accepts["recorded_at"] else None
+    if axis is None:
+        return Case(name, None, "the system accepts neither valid_at nor recorded_at"), {"axis": None}
+    title, summary = "As-of Salience Probe", "Field-less topic read once with an as-of date"
+    topic_id = s.ingest({"placement": "new_topic", "title": title, "summary": summary,
+                         "salience": AS_OF_SALIENCE})["topic_id"]
+    before = salience(s, topic_id)
+    request = {**read_request(topic_id, q=title), axis: utc_now()}
+    try:
+        response = s.query(request)
+    except Rejected as e:
+        return (Case(name, False, f"the {axis} read was {e}"),
+                {"axis": axis, "topic_id": topic_id, "before": before, "rejected": str(e)})
+    returned = any(c["topic_id"] == topic_id for c in response["candidates"])
+    after = salience(s, topic_id)
+    rose = before is not None and after is not None and after - before >= BUMP - EPS
+    return (Case(name, returned and rose,
+                 f"{axis} read: salience {_fmt(before)} -> {_fmt(after)}, expected at least {_fmt(None if before is None else before + BUMP)}"
+                 + ("" if returned else "; the topic was not returned")),
+            {"axis": axis, "topic_id": topic_id, "before": before, "after": after, "returned": returned})
 
 
 def _force_forgetting_pass(s: System, topics: int, control_id: str) -> tuple[int, Waited]:
@@ -159,13 +203,20 @@ def c6_clause_2(ctx: Ctx) -> Verdict:
     control_id = s.ingest({"placement": "new_topic", "title": CONTROL[0], "summary": CONTROL[1],
                            "salience": CONTROL_SALIENCE})["topic_id"]
     start = salience(s, target_id)
+    if start is None and salience(s, control_id) is None:
+        return Verdict.absent("C6-2", _no_salience_probe({target_id: start, control_id: None}))
     trajectory = [start]
     hits = 0
-    # Read by id, so only the target is returned (the control must stay unread).
+    pass_seen = False
+    # Read by id, so only the target is returned (the control must stay unread). After each read, has any topic been
+    # archived (the first forgetting pass)? The check stops there.
     while len(trajectory) <= MAX_RETRIEVALS and _eligible(trajectory[-1]) is not False and trajectory[-1] is not None:
         response = s.query(read_request(target_id, q=title))
         hits += any(c["topic_id"] == target_id for c in response["candidates"])
         trajectory.append(salience(s, target_id))
+        if (ramp.archive_stats(s)["archived"] or 0) > 0:
+            pass_seen = True
+            break
     reached = trajectory[-1]
     expected_min = None if start is None else start + BUMP * hits
     lifted = (reached is not None and expected_min is not None and _eligible(reached) is False
@@ -175,29 +226,39 @@ def c6_clause_2(ctx: Ctx) -> Verdict:
                   observation=f"salience {' -> '.join(_fmt(x) for x in trajectory)}; {hits} retrieval(s) returned the "
                               f"topic, expected at least {_fmt(expected_min)}")]
     gate: dict = {"ran": False}
-    if not lifted:
+    not_shown = False
+    if not lifted and not pass_seen:
         cases.append(Case("the topic left forgetting eligibility", held=False,
                           observation=f"salience {_fmt(reached)} never reached {FORGET_THRESHOLD}, so the topic is "
                                       "still (or not demonstrably not) eligible; the forgetting pass was not run"))
     else:
-        topics, waited = _force_forgetting_pass(s, 2, control_id)
+        topics, waited = (None, None) if pass_seen else _force_forgetting_pass(s, 2, control_id)
         control, target = _stored(s, control_id), _stored(s, target_id)
-        pass_ran = control.get("archived") is True
-        gate = {"ran": True, "topics_after": topics, "waited_s": waited.elapsed,
+        control_archived, target_archived = control.get("archived") is True, target.get("archived") is True
+        gate = {"ran": True, "first_pass_in_reads": pass_seen, "topics_after": topics,
+                "waited_s": None if waited is None else waited.elapsed,
                 "control": {"id": control_id, "start": CONTROL_SALIENCE, "salience": control.get("salience"),
                             "archived": control.get("archived")},
                 "target": {"id": target_id, "salience": target.get("salience"), "archived": target.get("archived")}}
-        left = target.get("archived") is False and _eligible(target.get("salience")) is False
-        cases.append(Case(
-            "the topic left forgetting eligibility", held=pass_ran and left,
-            observation=(f"after the pass ({topics} topics) the target has salience {_fmt(target.get('salience'))}, "
-                         f"archived={target.get('archived')!r}; the never-read control at {CONTROL_SALIENCE} "
-                         f"archived={control.get('archived')!r}")
-                        + ("" if pass_ran else " - the control was not archived within "
-                           f"{ARCHIVE_WAIT_S:.0f}s, so the pass cannot be shown to have run; forgetting not "
-                           "demonstrated")))
+        where = "during the reads" if pass_seen else f"after the forced pass ({topics} topics)"
+        seen = (f"{where} the target has salience {_fmt(target.get('salience'))}, archived={target.get('archived')!r}; "
+                f"the never-read control at {CONTROL_SALIENCE} archived={control.get('archived')!r}")
+        if control_archived or target_archived:
+            left = not target_archived and _eligible(target.get("salience")) is False
+            cases.append(Case("the topic left forgetting eligibility", held=control_archived and left,
+                              observation=seen))
+        else:
+            not_shown = True
+            cases.append(Case("the topic left forgetting eligibility", held=None,
+                              observation=seen + " - the control was not archived, so no forgetting pass was shown "
+                                                 f"to run (waited {ARCHIVE_WAIT_S:.0f}s after the forced pass)"))
 
     observations = [{"name": "salience trajectory", "target_topic_id": target_id, "start": start,
                      "after_each_retrieval": trajectory[1:], "threshold": FORGET_THRESHOLD},
                     {"name": "forgetting pass", **gate}, _durability(s, target_id)]
+    if not_shown:
+        observations.append({"name": "forgetting was not shown to run",
+                             "summary": "forgetting was not shown to run: the never-read control was not archived "
+                                        "(C5's failure, not C6's)"})
+        return Verdict.not_scored("C6-2", cases=cases, observations=observations)
     return Verdict.from_cases("C6-2", cases, observations=observations)

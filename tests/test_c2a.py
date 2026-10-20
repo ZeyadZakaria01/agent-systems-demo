@@ -1,6 +1,7 @@
 """C2(a), the merge helpers and the merge extras, in-process. No server and no MemState mocks.
 
-The baseline gives the pinned expectation (pass, 0 violations: it upserts, nothing is ever duplicated). MemState's
+The baseline (versioned row) gives the pinned expectation: not-scored, because it appends a same-title write to the
+same topic, nothing is ever duplicated, and the check's arrangement cannot be met. MemState's
 own verdicts are never pinned here. `LowerIdKeeper` below is a generic second system on the adapter, not a model of
 MemState: it folds same-title topics together with whatever keeper rule the test picks, so that violation counting,
 the arrangement guard, windows and timeouts run through the check as it would run on any system.
@@ -100,17 +101,18 @@ class LowerIdKeeper(System):
         return {"keeps_history": False}
 
 
-# -- baseline: the pinned expectation
+# -- baseline (versioned row): the pinned expectation
 
 
-def test_c2a_passes_on_the_baseline_with_zero_violations():
+def test_c2a_is_not_scored_on_the_baseline_because_no_merge_occurs():
     (verdict,) = c2a().execute(Baseline())
-    assert verdict.verdict == PASS
-    assert len(verdict.cases) == 20 and all(c.held for c in verdict.cases)
-    assert verdict.measurements["violations"] == 0
+    assert verdict.verdict == NOT_SCORED
+    assert [c.held for c in verdict.cases] == [None]  # no case could run
+    assert verdict.measurements["violations"] == 0 and verdict.measurements["arrangement_not_met"] == 20
+    assert verdict.measurements["natural"] is None  # no merge of two topics, so no natural count
 
 
-def test_the_baseline_counts_its_upserts_apart_from_merges_and_has_no_window():
+def test_the_baseline_counts_its_appends_apart_from_merges_and_has_no_window():
     (verdict,) = c2a().execute(Baseline())
     m = verdict.measurements
     assert m["upserted"] == 20 and m["merges"] == 0  # nothing was ever duplicated, so nothing merged
@@ -146,6 +148,16 @@ def test_a_merge_that_keeps_the_lower_id_value_breaks_every_repetition_because_t
     assert m["window_samples"] == 20 and m["window_min_s"] <= m["window_median_s"] <= m["window_max_s"]
 
 
+def test_existence_is_one_case_and_the_natural_count_is_reported_beside_it_but_never_in_the_verdict():
+    verdict = c2a().execute(LowerIdKeeper(newer_wins=True))[0]
+    assert len(verdict.cases) == 1 and verdict.verdict == PASS  # arranged case: the newer value always wins
+    natural = verdict.measurements["natural"]
+    assert natural["repetitions"] == 20 and natural["merged"] == 20
+    assert verdict.measurements["natural_count"] == f"{natural['stale_current']}/20"
+    summary = next(o for o in verdict.observations if o["name"] == "natural merge count")["summary"]
+    assert natural["count"] in summary and "not compared" in summary
+
+
 def test_a_merge_that_lets_the_newer_value_win_passes_with_no_violations():
     verdict = c2a().execute(LowerIdKeeper(newer_wins=True))[0]
     assert verdict.verdict == PASS and verdict.measurements["violation_rate"] == "0/20"
@@ -156,7 +168,7 @@ def test_a_repetition_in_which_the_newer_topic_survived_is_not_a_case():
     verdict = measure_merges(LowerIdKeeper(keep="higher"), timeout=0.3)  # the extras give up after 0.3 s
     m = verdict.measurements
     assert m["arrangement_not_met"] == 20 and m["dropped_held_newer"] == 0 and m["violations"] == 0
-    assert all(c.held is None for c in verdict.cases)
+    assert [c.held for c in verdict.cases] == [None]
     assert verdict.verdict == NOT_SCORED
 
 
@@ -190,7 +202,7 @@ def test_a_system_that_never_merges_scores_absent_with_the_waits_as_evidence():
     verdict = measure_merges(LowerIdKeeper(merge=False), repetitions=2, timeout=0.2)
     assert verdict.verdict == ABSENT and verdict.probe_evidence["merges_seen"] == 0
     assert len(verdict.probe_evidence["waits_s"]) == 2
-    assert all(c.held is None for c in verdict.cases)
+    assert [c.held for c in verdict.cases] == [None]
 
 
 def test_an_archived_dropped_topic_counts_as_a_merge_and_is_not_reported_deleted():

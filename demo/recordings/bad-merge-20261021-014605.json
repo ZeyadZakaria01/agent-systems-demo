@@ -1,0 +1,1302 @@
+{
+  "schema": 1,
+  "case": "bad-merge",
+  "title": "Bad merge on upstream: the re-explained Website Redesign is merged over the original",
+  "run_id": "20261021-014605",
+  "recorded_at": "2026-10-20T22:46:16+00:00",
+  "command": "cd /home/zeyad/work/agent-systems-demo-wt/17-bad-merge-chat && /home/zeyad/work/agent-systems-demo/.venv/bin/python -m demo.chat_run record bad-merge",
+  "snapshot": "demo/results/20261021-014605/snapshots/upstream/chat-bad-merge.json",
+  "system": {
+    "label": "upstream",
+    "url": "http://127.0.0.1:8765",
+    "db_path": "/home/zeyad/work/agent-systems-demo/.runtime/gem-suite/20261021-014605/upstream-chat-bad-merge/memstate.kuzu",
+    "commit": "945d7c45a054dfc20cdcf53e37ec2b1b31384a50",
+    "engine": "MemState engine module: kuzu",
+    "source_dir": "/home/zeyad/work/agent-systems-demo/MemState/src"
+  },
+  "llm": {
+    "provider": "ollama",
+    "model": "qwen3.5:2b",
+    "base_url": "http://127.0.0.1:11435 (think-off proxy, ADR 0003) -> Ollama :11434",
+    "left_unset": [
+      "no `intent_override`",
+      "no `model` in the request (the server's `MEMSTATE_OLLAMA_MODEL`)",
+      "no Groq",
+      "no judge"
+    ]
+  },
+  "state": {
+    "title": "Website Redesign",
+    "events_played": 29,
+    "topic_ids": {
+      "redesign": "6ded8358-465c-4abb-9fd4-6d7cc9d494e4",
+      "lunch": "b4965ee0-2a71-4f9a-8892-a332a26e2fb1",
+      "newproj": "e46d6846-906b-4c6c-a063-dd5ab70a72b2",
+      "meeting": "42dcb3da-2f2d-4af2-9e6f-be443a312a3e",
+      "budget": "a1acde01-6b7d-483e-aaf4-d74416b27ad4",
+      "vendor": "b8a9ac37-b5f9-4269-87c8-8d482e0ff709",
+      "milestones": "9e086a0f-4451-4859-8c3f-16b664958622",
+      "brand": "6a2bc297-35fc-4b67-91e6-6ca704f512c0",
+      "phase2": "40ebaade-ca93-41c9-ac20-17610909c420",
+      "marketing": "49670dcc-71f4-492b-8ada-d6749894fd48",
+      "designreview": "c885162a-ec3e-4673-90ee-696d4ec4353f",
+      "alice": "334fb4c7-be1f-4e39-8f70-f5cccb72c767",
+      "analytics": "7fc2e3aa-66f7-48ab-9f9d-fec688194e2e",
+      "hiring": "f78d1078-c491-4eaf-abfd-c603653c4ad0"
+    },
+    "original_id": "6ded8358-465c-4abb-9fd4-6d7cc9d494e4",
+    "reexplanation_id": "539174ed-82e2-4b3c-ad8b-7569a9b19246",
+    "reexplained": {
+      "field": "Deadline",
+      "value": "April 20",
+      "provenance": "chat-reexplanation"
+    },
+    "merge": {
+      "survivor_id": "539174ed-82e2-4b3c-ad8b-7569a9b19246",
+      "dropped_id": "6ded8358-465c-4abb-9fd4-6d7cc9d494e4",
+      "dropped_state": "deleted",
+      "window_s": 0.086,
+      "arranged": true
+    },
+    "setup_writes": [
+      {
+        "action": "patch_topic",
+        "label": "give the duplicate pair one title (the editor never writes a value)",
+        "topic_id": "539174ed-82e2-4b3c-ad8b-7569a9b19246",
+        "title": "Website Redesign"
+      },
+      {
+        "action": "patch_topic",
+        "label": "give the duplicate pair one title (the editor never writes a value)",
+        "topic_id": "6ded8358-465c-4abb-9fd4-6d7cc9d494e4",
+        "title": "Website Redesign"
+      }
+    ],
+    "before_merge": {
+      "original": {
+        "id": "6ded8358-465c-4abb-9fd4-6d7cc9d494e4",
+        "title": "Website Redesign 23ed309722 first",
+        "summary": "Project to redesign the company website: deadline, status and team.",
+        "topic_kind": "project",
+        "fields": {
+          "Deadline": {
+            "current": "April 20",
+            "history": [
+              {
+                "value": "April 20",
+                "provenance": "pm-email",
+                "why_changed": "vendor delay",
+                "impact_expected": "milestones slip about five weeks",
+                "valid_from": "2026-10-20T22:46:18.004751+00:00"
+              },
+              {
+                "value": "March 15",
+                "provenance": "kickoff-notes",
+                "why_changed": null,
+                "impact_expected": null,
+                "valid_from": "2026-10-20T22:46:17.266655+00:00"
+              }
+            ]
+          },
+          "Status": {
+            "current": "Complete",
+            "history": [
+              {
+                "value": "Complete",
+                "provenance": "standup",
+                "why_changed": null,
+                "impact_expected": null,
+                "valid_from": "2026-10-20T22:46:18.481714+00:00"
+              },
+              {
+                "value": "In progress",
+                "provenance": "standup",
+                "why_changed": null,
+                "impact_expected": null,
+                "valid_from": "2026-10-20T22:46:18.331237+00:00"
+              },
+              {
+                "value": "Planning",
+                "provenance": "kickoff-notes",
+                "why_changed": null,
+                "impact_expected": null,
+                "valid_from": "2026-10-20T22:46:17.284360+00:00"
+              }
+            ]
+          },
+          "Team": {
+            "current": "Alice (Frontend lead), Bob (Backend), Erin (QA)",
+            "history": [
+              {
+                "value": "Alice (Frontend lead), Bob (Backend), Erin (QA)",
+                "provenance": "standup",
+                "why_changed": "Erin joined",
+                "impact_expected": null,
+                "valid_from": "2026-10-20T22:46:18.262663+00:00"
+              },
+              {
+                "value": "Alice (Frontend), Bob (Backend)",
+                "provenance": "kickoff-notes",
+                "why_changed": null,
+                "impact_expected": null,
+                "valid_from": "2026-10-20T22:46:17.319293+00:00"
+              }
+            ]
+          }
+        }
+      },
+      "reexplanation": {
+        "id": "539174ed-82e2-4b3c-ad8b-7569a9b19246",
+        "title": "Website Redesign 23ed309722 second",
+        "summary": "Project to redesign the company website: deadline, status and team.",
+        "topic_kind": "project",
+        "fields": {
+          "Deadline": {
+            "current": "April 20",
+            "history": [
+              {
+                "value": "April 20",
+                "provenance": "chat-reexplanation",
+                "why_changed": null,
+                "impact_expected": null,
+                "valid_from": "2026-10-20T22:46:18.600226+00:00"
+              }
+            ]
+          }
+        }
+      }
+    },
+    "after_merge": {
+      "survivor": {
+        "id": "539174ed-82e2-4b3c-ad8b-7569a9b19246",
+        "title": "Website Redesign",
+        "summary": "Project to redesign the company website: deadline, status and team.",
+        "topic_kind": "project",
+        "fields": {
+          "Deadline": {
+            "current": "April 20",
+            "history": [
+              {
+                "value": "April 20",
+                "provenance": "chat-reexplanation",
+                "why_changed": null,
+                "impact_expected": null,
+                "valid_from": "2026-10-20T22:46:18.600226+00:00"
+              }
+            ]
+          },
+          "Status": {
+            "current": "Complete",
+            "history": [
+              {
+                "value": "Complete",
+                "provenance": "standup",
+                "why_changed": null,
+                "impact_expected": null,
+                "valid_from": "2026-10-20T22:46:18.481714+00:00"
+              },
+              {
+                "value": "In progress",
+                "provenance": "standup",
+                "why_changed": null,
+                "impact_expected": null,
+                "valid_from": "2026-10-20T22:46:18.331237+00:00"
+              },
+              {
+                "value": "Planning",
+                "provenance": "kickoff-notes",
+                "why_changed": null,
+                "impact_expected": null,
+                "valid_from": "2026-10-20T22:46:17.284360+00:00"
+              }
+            ]
+          },
+          "Team": {
+            "current": "Alice (Frontend lead), Bob (Backend), Erin (QA)",
+            "history": [
+              {
+                "value": "Alice (Frontend lead), Bob (Backend), Erin (QA)",
+                "provenance": "standup",
+                "why_changed": "Erin joined",
+                "impact_expected": null,
+                "valid_from": "2026-10-20T22:46:18.262663+00:00"
+              },
+              {
+                "value": "Alice (Frontend), Bob (Backend)",
+                "provenance": "kickoff-notes",
+                "why_changed": null,
+                "impact_expected": null,
+                "valid_from": "2026-10-20T22:46:17.319293+00:00"
+              }
+            ]
+          }
+        }
+      }
+    },
+    "loss": {
+      "lost_entries": {
+        "Deadline": [
+          {
+            "value": "April 20",
+            "provenance": "pm-email",
+            "why_changed": "vendor delay",
+            "impact_expected": "milestones slip about five weeks",
+            "valid_from": "2026-10-20T22:46:18.004751+00:00"
+          },
+          {
+            "value": "March 15",
+            "provenance": "kickoff-notes",
+            "why_changed": null,
+            "impact_expected": null,
+            "valid_from": "2026-10-20T22:46:17.266655+00:00"
+          }
+        ]
+      },
+      "lost_values": {
+        "Deadline": [
+          "March 15"
+        ]
+      },
+      "fields_lost": [],
+      "kept_fields": [
+        "Deadline",
+        "Status",
+        "Team"
+      ]
+    }
+  },
+  "turns": [
+    {
+      "question": "Q02",
+      "ability": "knowledge update",
+      "text": "What is the deadline of the Website Redesign?",
+      "ground_truth": "April 20",
+      "topic_key": "redesign",
+      "field": "Deadline",
+      "request": {
+        "messages": [
+          {
+            "role": "user",
+            "content": "What is the deadline of the Website Redesign?"
+          }
+        ],
+        "provider": "ollama"
+      },
+      "answer": "Based on the information in the topic schema, the Website Redesign project has a deadline of **April 20**. The status shows as \"Complete\".\n\nIs there anything specific about the deadline you'd like to know more about? I could check the field history if needed.",
+      "answer_contains_ground_truth": true,
+      "route": {
+        "intent": "query",
+        "intent_source": "classifier",
+        "tool_calls": [
+          "memory_list_topics",
+          "memory_get_topic_schema"
+        ]
+      },
+      "latency_ms": 4627.088,
+      "model": "qwen3.5:2b",
+      "provider": "ollama",
+      "tool_log": [
+        {
+          "tool": "memory_list_topics",
+          "args": {},
+          "result": {
+            "ok": true,
+            "topics": [
+              {
+                "id": "539174ed-82e2-4b3c-ad8b-7569a9b19246",
+                "title": "Website Redesign",
+                "summary": "Project to redesign the company website: deadline, status and team.",
+                "topic_kind": "project",
+                "archived": false
+              },
+              {
+                "id": "b4965ee0-2a71-4f9a-8892-a332a26e2fb1",
+                "title": "Lunch Preferences",
+                "summary": "What the team likes to eat when ordering lunch together.",
+                "topic_kind": "note",
+                "archived": false
+              },
+              {
+                "id": "e46d6846-906b-4c6c-a063-dd5ab70a72b2",
+                "title": "New Project Idea: Mobile App",
+                "summary": "Early brainstorm for a possible mobile app; nothing is planned yet.",
+                "topic_kind": "project",
+                "archived": false
+              },
+              {
+                "id": "42dcb3da-2f2d-4af2-9e6f-be443a312a3e",
+                "title": "Weekly Sync Meeting",
+                "summary": "Recurring weekly team meeting: day, time and room.",
+                "topic_kind": "meeting",
+                "archived": false
+              },
+              {
+                "id": "a1acde01-6b7d-483e-aaf4-d74416b27ad4",
+                "title": "Redesign Budget",
+                "summary": "Money approved for the website redesign and who signs it off.",
+                "topic_kind": "budget",
+                "archived": false
+              },
+              {
+                "id": "b8a9ac37-b5f9-4269-87c8-8d482e0ff709",
+                "title": "Design Vendor: Pixel Forge",
+                "summary": "External agency producing the website mockups.",
+                "topic_kind": "vendor",
+                "archived": false
+              },
+              {
+                "id": "9e086a0f-4451-4859-8c3f-16b664958622",
+                "title": "Redesign Milestones",
+                "summary": "Dated milestones that depend on the Website Redesign deadline.",
+                "topic_kind": "schedule",
+                "archived": false
+              },
+              {
+                "id": "6a2bc297-35fc-4b67-91e6-6ca704f512c0",
+                "title": "Brand Guidelines",
+                "summary": "Colours and logo files the website has to follow.",
+                "topic_kind": "guidelines",
+                "archived": false
+              },
+              {
+                "id": "40ebaade-ca93-41c9-ac20-17610909c420",
+                "title": "Website Redesign Phase 2",
+                "summary": "Follow-up project after the Website Redesign: deadline, status and team.",
+                "topic_kind": "project",
+                "archived": false
+              },
+              {
+                "id": "49670dcc-71f4-492b-8ada-d6749894fd48",
+                "title": "Marketing Budget",
+                "summary": "Money approved for the website launch campaign and who signs it off.",
+                "topic_kind": "budget",
+                "archived": false
+              },
+              {
+                "id": "c885162a-ec3e-4673-90ee-696d4ec4353f",
+                "title": "Design Review Meeting",
+                "summary": "Recurring design review meeting: day, time and room.",
+                "topic_kind": "meeting",
+                "archived": false
+              },
+              {
+                "id": "334fb4c7-be1f-4e39-8f70-f5cccb72c767",
+                "title": "Alice",
+                "summary": "Alice, frontend developer on the Website Redesign team.",
+                "topic_kind": "person",
+                "archived": false
+              },
+              {
+                "id": "7fc2e3aa-66f7-48ab-9f9d-fec688194e2e",
+                "title": "Website Analytics Report",
+                "summary": "Monthly traffic numbers for the current website.",
+                "topic_kind": "report",
+                "archived": false
+              },
+              {
+                "id": "f78d1078-c491-4eaf-abfd-c603653c4ad0",
+                "title": "Backend Engineer Hiring",
+                "summary": "Open backend engineer position and the interview pipeline.",
+                "topic_kind": "hiring",
+                "archived": false
+              }
+            ],
+            "topic_ids": [
+              "539174ed-82e2-4b3c-ad8b-7569a9b19246",
+              "b4965ee0-2a71-4f9a-8892-a332a26e2fb1",
+              "e46d6846-906b-4c6c-a063-dd5ab70a72b2",
+              "42dcb3da-2f2d-4af2-9e6f-be443a312a3e",
+              "a1acde01-6b7d-483e-aaf4-d74416b27ad4",
+              "b8a9ac37-b5f9-4269-87c8-8d482e0ff709",
+              "9e086a0f-4451-4859-8c3f-16b664958622",
+              "6a2bc297-35fc-4b67-91e6-6ca704f512c0",
+              "40ebaade-ca93-41c9-ac20-17610909c420",
+              "49670dcc-71f4-492b-8ada-d6749894fd48",
+              "c885162a-ec3e-4673-90ee-696d4ec4353f",
+              "334fb4c7-be1f-4e39-8f70-f5cccb72c767",
+              "7fc2e3aa-66f7-48ab-9f9d-fec688194e2e",
+              "f78d1078-c491-4eaf-abfd-c603653c4ad0"
+            ]
+          }
+        },
+        {
+          "tool": "memory_get_topic_schema",
+          "args": {
+            "topic_id": "539174ed-82e2-4b3c-ad8b-7569a9b19246",
+            "detail": "current"
+          },
+          "result": {
+            "ok": true,
+            "topic_id": "539174ed-82e2-4b3c-ad8b-7569a9b19246",
+            "title": "Website Redesign",
+            "summary": "Project to redesign the company website: deadline, status and team.",
+            "topic_kind": "project",
+            "archived": false,
+            "detail": "current",
+            "fields": {
+              "Deadline": {
+                "field_type": "string",
+                "ref_topic_id": null,
+                "salience": 1.1,
+                "value": "April 20"
+              },
+              "Status": {
+                "field_type": "string",
+                "ref_topic_id": null,
+                "salience": 1.1,
+                "value": "Complete"
+              },
+              "Team": {
+                "field_type": "string",
+                "ref_topic_id": null,
+                "salience": 1.1,
+                "value": "Alice (Frontend lead), Bob (Backend), Erin (QA)"
+              }
+            },
+            "salience": 1.1
+          }
+        }
+      ],
+      "state_violation": {
+        "present": true,
+        "condition": "C4",
+        "field": "Deadline",
+        "lost_entries": [
+          {
+            "value": "April 20",
+            "provenance": "pm-email",
+            "why_changed": "vendor delay",
+            "impact_expected": "milestones slip about five weeks",
+            "valid_from": "2026-10-20T22:46:18.004751+00:00"
+          },
+          {
+            "value": "March 15",
+            "provenance": "kickoff-notes",
+            "why_changed": null,
+            "impact_expected": null,
+            "valid_from": "2026-10-20T22:46:17.266655+00:00"
+          }
+        ],
+        "lost_values": [
+          "March 15"
+        ],
+        "current_after": "April 20"
+      },
+      "topic_changed_by_turn": false,
+      "hand_grade": {
+        "grade": null,
+        "note": null
+      }
+    },
+    {
+      "question": "Q06",
+      "ability": "knowledge update",
+      "text": "Who is on the website redesign team?",
+      "ground_truth": "Alice (Frontend lead), Bob (Backend), Erin (QA)",
+      "topic_key": "redesign",
+      "field": "Team",
+      "request": {
+        "messages": [
+          {
+            "role": "user",
+            "content": "Who is on the website redesign team?"
+          }
+        ],
+        "provider": "ollama"
+      },
+      "answer": "Based on the information in the graph:\n\n**Website Redesign Team:**\n- Alice (Frontend lead) - she is listed as working on the Homepage prototype\n- Bob (Backend)\n- Erin (QA)\n\nThe team consists of three people. I can see that \"Alice\" specifically has the role \"Frontend lead\" as documented in her profile.",
+      "answer_contains_ground_truth": true,
+      "route": {
+        "intent": "query",
+        "intent_source": "classifier",
+        "tool_calls": [
+          "memory_graph_snapshot",
+          "memory_get_topic_schema"
+        ]
+      },
+      "latency_ms": 4884.652,
+      "model": "qwen3.5:2b",
+      "provider": "ollama",
+      "tool_log": [
+        {
+          "tool": "memory_graph_snapshot",
+          "args": {},
+          "result": {
+            "ok": true,
+            "data": {
+              "nodes": [
+                {
+                  "id": "539174ed-82e2-4b3c-ad8b-7569a9b19246",
+                  "label": "Website Redesign",
+                  "title": "Website Redesign",
+                  "summary": "Project to redesign the company website: deadline, status and team.",
+                  "topic_kind": "project",
+                  "archived": false,
+                  "salience": 1.1,
+                  "fields": [
+                    {
+                      "name": "Deadline",
+                      "field_type": "string",
+                      "ref_topic_id": null,
+                      "current_value": "April 20",
+                      "history_len": 1
+                    },
+                    {
+                      "name": "Status",
+                      "field_type": "string",
+                      "ref_topic_id": null,
+                      "current_value": "Complete",
+                      "history_len": 3
+                    },
+                    {
+                      "name": "Team",
+                      "field_type": "string",
+                      "ref_topic_id": null,
+                      "current_value": "Alice (Frontend lead), Bob (Backend), Erin (QA)",
+                      "history_len": 2
+                    }
+                  ],
+                  "community": 0
+                },
+                {
+                  "id": "b4965ee0-2a71-4f9a-8892-a332a26e2fb1",
+                  "label": "Lunch Preferences",
+                  "title": "Lunch Preferences",
+                  "summary": "What the team likes to eat when ordering lunch together.",
+                  "topic_kind": "note",
+                  "archived": false,
+                  "salience": 1.0,
+                  "fields": [
+                    {
+                      "name": "Favorite cuisine",
+                      "field_type": "string",
+                      "ref_topic_id": null,
+                      "current_value": "Mexican",
+                      "history_len": 2
+                    },
+                    {
+                      "name": "Dietary note",
+                      "field_type": "string",
+                      "ref_topic_id": null,
+                      "current_value": "Two vegetarians",
+                      "history_len": 1
+                    }
+                  ],
+                  "community": 1
+                },
+                {
+                  "id": "e46d6846-906b-4c6c-a063-dd5ab70a72b2",
+                  "label": "New Project Idea: Mobile App",
+                  "title": "New Project Idea: Mobile App",
+                  "summary": "Early brainstorm for a possible mobile app; nothing is planned yet.",
+                  "topic_kind": "project",
+                  "archived": false,
+                  "salience": 1.0,
+                  "fields": [
+                    {
+                      "name": "Status",
+                      "field_type": "string",
+                      "ref_topic_id": null,
+                      "current_value": "Brainstorming",
+                      "history_len": 1
+                    },
+                    {
+                      "name": "Owner",
+                      "field_type": "string",
+                      "ref_topic_id": null,
+                      "current_value": "Carol",
+                      "history_len": 1
+                    }
+                  ],
+                  "community": 0
+                },
+                {
+                  "id": "42dcb3da-2f2d-4af2-9e6f-be443a312a3e",
+                  "label": "Weekly Sync Meeting",
+                  "title": "Weekly Sync Meeting",
+                  "summary": "Recurring weekly team meeting: day, time and room.",
+                  "topic_kind": "meeting",
+                  "archived": false,
+                  "salience": 1.0,
+                  "fields": [
+                    {
+                      "name": "Day",
+                      "field_type": "string",
+                      "ref_topic_id": null,
+                      "current_value": "Tuesday",
+                      "history_len": 1
+                    },
+                    {
+                      "name": "Time",
+                      "field_type": "string",
+                      "ref_topic_id": null,
+                      "current_value": "11:30",
+                      "history_len": 2
+                    },
+                    {
+                      "name": "Location",
+                      "field_type": "string",
+                      "ref_topic_id": null,
+                      "current_value": "Room 4B",
+                      "history_len": 1
+                    }
+                  ],
+                  "community": 2
+                },
+                {
+                  "id": "a1acde01-6b7d-483e-aaf4-d74416b27ad4",
+                  "label": "Redesign Budget",
+                  "title": "Redesign Budget",
+                  "summary": "Money approved for the website redesign and who signs it off.",
+                  "topic_kind": "budget",
+                  "archived": false,
+                  "salience": 1.0,
+                  "fields": [
+                    {
+                      "name": "Total",
+                      "field_type": "string",
+                      "ref_topic_id": null,
+                      "current_value": "$46,500",
+                      "history_len": 2
+                    },
+                    {
+                      "name": "Approver",
+                      "field_type": "string",
+                      "ref_topic_id": null,
+                      "current_value": "Dana",
+                      "history_len": 1
+                    }
+                  ],
+                  "community": 0
+                },
+                {
+                  "id": "b8a9ac37-b5f9-4269-87c8-8d482e0ff709",
+                  "label": "Design Vendor: Pixel Forge",
+                  "title": "Design Vendor: Pixel Forge",
+                  "summary": "External agency producing the website mockups.",
+                  "topic_kind": "vendor",
+                  "archived": false,
+                  "salience": 1.0,
+                  "fields": [
+                    {
+                      "name": "Mockups due",
+                      "field_type": "string",
+                      "ref_topic_id": null,
+                      "current_value": "March 22",
+                      "history_len": 2
+                    },
+                    {
+                      "name": "Contact",
+                      "field_type": "string",
+                      "ref_topic_id": null,
+                      "current_value": "Priya",
+                      "history_len": 1
+                    },
+                    {
+                      "name": "Delivery status",
+                      "field_type": "string",
+                      "ref_topic_id": null,
+                      "current_value": "Delivered",
+                      "history_len": 2
+                    }
+                  ],
+                  "community": 3
+                },
+                {
+                  "id": "9e086a0f-4451-4859-8c3f-16b664958622",
+                  "label": "Redesign Milestones",
+                  "title": "Redesign Milestones",
+                  "summary": "Dated milestones that depend on the Website Redesign deadline.",
+                  "topic_kind": "schedule",
+                  "archived": false,
+                  "salience": 1.0,
+                  "fields": [
+                    {
+                      "name": "Content freeze",
+                      "field_type": "string",
+                      "ref_topic_id": null,
+                      "current_value": "April 6",
+                      "history_len": 2
+                    },
+                    {
+                      "name": "User testing start",
+                      "field_type": "string",
+                      "ref_topic_id": null,
+                      "current_value": "April 13",
+                      "history_len": 2
+                    },
+                    {
+                      "name": "Launch",
+                      "field_type": "string",
+                      "ref_topic_id": null,
+                      "current_value": "April 20",
+                      "history_len": 2
+                    }
+                  ],
+                  "community": 0
+                },
+                {
+                  "id": "6a2bc297-35fc-4b67-91e6-6ca704f512c0",
+                  "label": "Brand Guidelines",
+                  "title": "Brand Guidelines",
+                  "summary": "Colours and logo files the website has to follow.",
+                  "topic_kind": "guidelines",
+                  "archived": false,
+                  "salience": 1.0,
+                  "fields": [
+                    {
+                      "name": "Primary color",
+                      "field_type": "string",
+                      "ref_topic_id": null,
+                      "current_value": "#1A73E8",
+                      "history_len": 1
+                    },
+                    {
+                      "name": "Logo version",
+                      "field_type": "string",
+                      "ref_topic_id": null,
+                      "current_value": "v3",
+                      "history_len": 1
+                    }
+                  ],
+                  "community": 4
+                },
+                {
+                  "id": "40ebaade-ca93-41c9-ac20-17610909c420",
+                  "label": "Website Redesign Phase 2",
+                  "title": "Website Redesign Phase 2",
+                  "summary": "Follow-up project after the Website Redesign: deadline, status and team.",
+                  "topic_kind": "project",
+                  "archived": false,
+                  "salience": 1.0,
+                  "fields": [
+                    {
+                      "name": "Deadline",
+                      "field_type": "string",
+                      "ref_topic_id": null,
+                      "current_value": "October 15",
+                      "history_len": 2
+                    },
+                    {
+                      "name": "Status",
+                      "field_type": "string",
+                      "ref_topic_id": null,
+                      "current_value": "Not started",
+                      "history_len": 1
+                    },
+                    {
+                      "name": "Team",
+                      "field_type": "string",
+                      "ref_topic_id": null,
+                      "current_value": "Alice (Frontend), Carol (Design)",
+                      "history_len": 1
+                    }
+                  ],
+                  "community": 0
+                },
+                {
+                  "id": "49670dcc-71f4-492b-8ada-d6749894fd48",
+                  "label": "Marketing Budget",
+                  "title": "Marketing Budget",
+                  "summary": "Money approved for the website launch campaign and who signs it off.",
+                  "topic_kind": "budget",
+                  "archived": false,
+                  "salience": 1.0,
+                  "fields": [
+                    {
+                      "name": "Total",
+                      "field_type": "string",
+                      "ref_topic_id": null,
+                      "current_value": "$15,000",
+                      "history_len": 1
+                    },
+                    {
+                      "name": "Approver",
+                      "field_type": "string",
+                      "ref_topic_id": null,
+                      "current_value": "Frank",
+                      "history_len": 1
+                    }
+                  ],
+                  "community": 0
+                },
+                {
+                  "id": "c885162a-ec3e-4673-90ee-696d4ec4353f",
+                  "label": "Design Review Meeting",
+                  "title": "Design Review Meeting",
+                  "summary": "Recurring design review meeting: day, time and room.",
+                  "topic_kind": "meeting",
+                  "archived": false,
+                  "salience": 1.0,
+                  "fields": [
+                    {
+                      "name": "Day",
+                      "field_type": "string",
+                      "ref_topic_id": null,
+                      "current_value": "Thursday",
+                      "history_len": 1
+                    },
+                    {
+                      "name": "Time",
+                      "field_type": "string",
+                      "ref_topic_id": null,
+                      "current_value": "14:00",
+                      "history_len": 1
+                    },
+                    {
+                      "name": "Location",
+                      "field_type": "string",
+                      "ref_topic_id": null,
+                      "current_value": "Room 2A",
+                      "history_len": 1
+                    }
+                  ],
+                  "community": 5
+                },
+                {
+                  "id": "334fb4c7-be1f-4e39-8f70-f5cccb72c767",
+                  "label": "Alice",
+                  "title": "Alice",
+                  "summary": "Alice, frontend developer on the Website Redesign team.",
+                  "topic_kind": "person",
+                  "archived": false,
+                  "salience": 1.0,
+                  "fields": [
+                    {
+                      "name": "Role",
+                      "field_type": "string",
+                      "ref_topic_id": null,
+                      "current_value": "Frontend lead",
+                      "history_len": 2
+                    },
+                    {
+                      "name": "Working on",
+                      "field_type": "string",
+                      "ref_topic_id": null,
+                      "current_value": "Homepage prototype",
+                      "history_len": 1
+                    }
+                  ],
+                  "community": 0
+                },
+                {
+                  "id": "7fc2e3aa-66f7-48ab-9f9d-fec688194e2e",
+                  "label": "Website Analytics Report",
+                  "title": "Website Analytics Report",
+                  "summary": "Monthly traffic numbers for the current website.",
+                  "topic_kind": "report",
+                  "archived": false,
+                  "salience": 1.0,
+                  "fields": [
+                    {
+                      "name": "Monthly visitors",
+                      "field_type": "string",
+                      "ref_topic_id": null,
+                      "current_value": "48,000",
+                      "history_len": 1
+                    },
+                    {
+                      "name": "Top page",
+                      "field_type": "string",
+                      "ref_topic_id": null,
+                      "current_value": "Pricing",
+                      "history_len": 1
+                    }
+                  ],
+                  "community": 6
+                },
+                {
+                  "id": "f78d1078-c491-4eaf-abfd-c603653c4ad0",
+                  "label": "Backend Engineer Hiring",
+                  "title": "Backend Engineer Hiring",
+                  "summary": "Open backend engineer position and the interview pipeline.",
+                  "topic_kind": "hiring",
+                  "archived": false,
+                  "salience": 1.0,
+                  "fields": [
+                    {
+                      "name": "Status",
+                      "field_type": "string",
+                      "ref_topic_id": null,
+                      "current_value": "Interviewing",
+                      "history_len": 1
+                    },
+                    {
+                      "name": "Candidates",
+                      "field_type": "string",
+                      "ref_topic_id": null,
+                      "current_value": "3",
+                      "history_len": 1
+                    }
+                  ],
+                  "community": 7
+                }
+              ],
+              "edges": [
+                {
+                  "from": "e46d6846-906b-4c6c-a063-dd5ab70a72b2",
+                  "to": "539174ed-82e2-4b3c-ad8b-7569a9b19246",
+                  "kind": "association",
+                  "edge_type": "related"
+                },
+                {
+                  "from": "a1acde01-6b7d-483e-aaf4-d74416b27ad4",
+                  "to": "539174ed-82e2-4b3c-ad8b-7569a9b19246",
+                  "kind": "association",
+                  "edge_type": "related"
+                },
+                {
+                  "from": "9e086a0f-4451-4859-8c3f-16b664958622",
+                  "to": "539174ed-82e2-4b3c-ad8b-7569a9b19246",
+                  "kind": "extension",
+                  "edge_type": "related"
+                },
+                {
+                  "from": "40ebaade-ca93-41c9-ac20-17610909c420",
+                  "to": "539174ed-82e2-4b3c-ad8b-7569a9b19246",
+                  "kind": "association",
+                  "edge_type": "related"
+                },
+                {
+                  "from": "334fb4c7-be1f-4e39-8f70-f5cccb72c767",
+                  "to": "539174ed-82e2-4b3c-ad8b-7569a9b19246",
+                  "kind": "extension",
+                  "edge_type": "related"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "tool": "memory_get_topic_schema",
+          "args": {
+            "topic_id": "334fb4c7-be1f-4e39-8f70-f5cccb72c767",
+            "detail": "current"
+          },
+          "result": {
+            "ok": true,
+            "topic_id": "334fb4c7-be1f-4e39-8f70-f5cccb72c767",
+            "title": "Alice",
+            "summary": "Alice, frontend developer on the Website Redesign team.",
+            "topic_kind": "person",
+            "archived": false,
+            "detail": "current",
+            "fields": {
+              "Role": {
+                "field_type": "string",
+                "ref_topic_id": null,
+                "salience": 1.1,
+                "value": "Frontend lead"
+              },
+              "Working on": {
+                "field_type": "string",
+                "ref_topic_id": null,
+                "salience": 1.1,
+                "value": "Homepage prototype"
+              }
+            },
+            "salience": 1.1
+          }
+        }
+      ],
+      "state_violation": {
+        "present": false,
+        "condition": null,
+        "field": "Team",
+        "lost_entries": [],
+        "lost_values": [],
+        "current_after": "Alice (Frontend lead), Bob (Backend), Erin (QA)"
+      },
+      "topic_changed_by_turn": false,
+      "hand_grade": {
+        "grade": null,
+        "note": null
+      }
+    },
+    {
+      "question": "Q11",
+      "ability": "knowledge update",
+      "text": "What is the current status of the website redesign project?",
+      "ground_truth": "Complete",
+      "topic_key": "redesign",
+      "field": "Status",
+      "request": {
+        "messages": [
+          {
+            "role": "user",
+            "content": "What is the current status of the website redesign project?"
+          }
+        ],
+        "provider": "ollama"
+      },
+      "answer": "The website redesign project status is **Complete**. Here's the current situation:\n\n**Status:** Complete\n\n**Deadline:** April 20\n\n**Team:**\n- Alice (Frontend lead)\n- Bob (Backend)\n- Erin (QA)\n\nAdditional context from related topics:\n- The Project \"Website Redesign\" was created on October 20, 2026.\n- There's also a separate \"Redesign Milestones\" topic that has dated milestones depending on the deadline, and a \"Website Redesign Phase 2\" project that follows the main one.",
+      "answer_contains_ground_truth": true,
+      "route": {
+        "intent": "query",
+        "intent_source": "classifier",
+        "tool_calls": [
+          "memory_list_topics",
+          "memory_get_topic"
+        ]
+      },
+      "latency_ms": 5064.248,
+      "model": "qwen3.5:2b",
+      "provider": "ollama",
+      "tool_log": [
+        {
+          "tool": "memory_list_topics",
+          "args": {},
+          "result": {
+            "ok": true,
+            "topics": [
+              {
+                "id": "539174ed-82e2-4b3c-ad8b-7569a9b19246",
+                "title": "Website Redesign",
+                "summary": "Project to redesign the company website: deadline, status and team.",
+                "topic_kind": "project",
+                "archived": false
+              },
+              {
+                "id": "b4965ee0-2a71-4f9a-8892-a332a26e2fb1",
+                "title": "Lunch Preferences",
+                "summary": "What the team likes to eat when ordering lunch together.",
+                "topic_kind": "note",
+                "archived": false
+              },
+              {
+                "id": "e46d6846-906b-4c6c-a063-dd5ab70a72b2",
+                "title": "New Project Idea: Mobile App",
+                "summary": "Early brainstorm for a possible mobile app; nothing is planned yet.",
+                "topic_kind": "project",
+                "archived": false
+              },
+              {
+                "id": "42dcb3da-2f2d-4af2-9e6f-be443a312a3e",
+                "title": "Weekly Sync Meeting",
+                "summary": "Recurring weekly team meeting: day, time and room.",
+                "topic_kind": "meeting",
+                "archived": false
+              },
+              {
+                "id": "a1acde01-6b7d-483e-aaf4-d74416b27ad4",
+                "title": "Redesign Budget",
+                "summary": "Money approved for the website redesign and who signs it off.",
+                "topic_kind": "budget",
+                "archived": false
+              },
+              {
+                "id": "b8a9ac37-b5f9-4269-87c8-8d482e0ff709",
+                "title": "Design Vendor: Pixel Forge",
+                "summary": "External agency producing the website mockups.",
+                "topic_kind": "vendor",
+                "archived": false
+              },
+              {
+                "id": "9e086a0f-4451-4859-8c3f-16b664958622",
+                "title": "Redesign Milestones",
+                "summary": "Dated milestones that depend on the Website Redesign deadline.",
+                "topic_kind": "schedule",
+                "archived": false
+              },
+              {
+                "id": "6a2bc297-35fc-4b67-91e6-6ca704f512c0",
+                "title": "Brand Guidelines",
+                "summary": "Colours and logo files the website has to follow.",
+                "topic_kind": "guidelines",
+                "archived": false
+              },
+              {
+                "id": "40ebaade-ca93-41c9-ac20-17610909c420",
+                "title": "Website Redesign Phase 2",
+                "summary": "Follow-up project after the Website Redesign: deadline, status and team.",
+                "topic_kind": "project",
+                "archived": false
+              },
+              {
+                "id": "49670dcc-71f4-492b-8ada-d6749894fd48",
+                "title": "Marketing Budget",
+                "summary": "Money approved for the website launch campaign and who signs it off.",
+                "topic_kind": "budget",
+                "archived": false
+              },
+              {
+                "id": "c885162a-ec3e-4673-90ee-696d4ec4353f",
+                "title": "Design Review Meeting",
+                "summary": "Recurring design review meeting: day, time and room.",
+                "topic_kind": "meeting",
+                "archived": false
+              },
+              {
+                "id": "334fb4c7-be1f-4e39-8f70-f5cccb72c767",
+                "title": "Alice",
+                "summary": "Alice, frontend developer on the Website Redesign team.",
+                "topic_kind": "person",
+                "archived": false
+              },
+              {
+                "id": "7fc2e3aa-66f7-48ab-9f9d-fec688194e2e",
+                "title": "Website Analytics Report",
+                "summary": "Monthly traffic numbers for the current website.",
+                "topic_kind": "report",
+                "archived": false
+              },
+              {
+                "id": "f78d1078-c491-4eaf-abfd-c603653c4ad0",
+                "title": "Backend Engineer Hiring",
+                "summary": "Open backend engineer position and the interview pipeline.",
+                "topic_kind": "hiring",
+                "archived": false
+              }
+            ],
+            "topic_ids": [
+              "539174ed-82e2-4b3c-ad8b-7569a9b19246",
+              "b4965ee0-2a71-4f9a-8892-a332a26e2fb1",
+              "e46d6846-906b-4c6c-a063-dd5ab70a72b2",
+              "42dcb3da-2f2d-4af2-9e6f-be443a312a3e",
+              "a1acde01-6b7d-483e-aaf4-d74416b27ad4",
+              "b8a9ac37-b5f9-4269-87c8-8d482e0ff709",
+              "9e086a0f-4451-4859-8c3f-16b664958622",
+              "6a2bc297-35fc-4b67-91e6-6ca704f512c0",
+              "40ebaade-ca93-41c9-ac20-17610909c420",
+              "49670dcc-71f4-492b-8ada-d6749894fd48",
+              "c885162a-ec3e-4673-90ee-696d4ec4353f",
+              "334fb4c7-be1f-4e39-8f70-f5cccb72c767",
+              "7fc2e3aa-66f7-48ab-9f9d-fec688194e2e",
+              "f78d1078-c491-4eaf-abfd-c603653c4ad0"
+            ]
+          }
+        },
+        {
+          "tool": "memory_get_topic",
+          "args": {
+            "topic_id": "539174ed-82e2-4b3c-ad8b-7569a9b19246"
+          },
+          "result": {
+            "ok": true,
+            "topic": {
+              "id": "539174ed-82e2-4b3c-ad8b-7569a9b19246",
+              "title": "Website Redesign",
+              "summary": "Project to redesign the company website: deadline, status and team.",
+              "topic_kind": "project",
+              "salience": 1.2000000000000002,
+              "failed_salience": 0.0,
+              "archived": false,
+              "fields": {
+                "Deadline": {
+                  "field_type": "string",
+                  "ref_topic_id": null,
+                  "salience": 1.2000000000000002,
+                  "value": "April 20",
+                  "history": [
+                    {
+                      "id": "411a165c-41db-4ca9-84e0-b7222ffcf1dc",
+                      "valid_from": "2026-10-20T22:46:18.600226+00:00",
+                      "value": "April 20",
+                      "why_changed": null,
+                      "impact_expected": null,
+                      "provenance": "chat-reexplanation",
+                      "operation": null
+                    }
+                  ],
+                  "history_count": 1
+                },
+                "Status": {
+                  "field_type": "string",
+                  "ref_topic_id": null,
+                  "salience": 1.2000000000000002,
+                  "value": "Complete",
+                  "history": [
+                    {
+                      "id": "cf0aaec1-2588-40a7-bbe6-cc7e59bddb91",
+                      "valid_from": "2026-10-20T22:46:18.481714+00:00",
+                      "value": "Complete",
+                      "why_changed": null,
+                      "impact_expected": null,
+                      "provenance": "standup",
+                      "operation": null
+                    },
+                    {
+                      "id": "48d6f2b7-e52f-4888-8cfe-753906ee218a",
+                      "valid_from": "2026-10-20T22:46:18.331237+00:00",
+                      "value": "In progress",
+                      "why_changed": null,
+                      "impact_expected": null,
+                      "provenance": "standup",
+                      "operation": null
+                    },
+                    {
+                      "id": "df4edfc3-ebc7-4cba-9a40-418cc6a19357",
+                      "valid_from": "2026-10-20T22:46:17.284360+00:00",
+                      "value": "Planning",
+                      "why_changed": null,
+                      "impact_expected": null,
+                      "provenance": "kickoff-notes",
+                      "operation": null
+                    }
+                  ],
+                  "history_count": 3
+                },
+                "Team": {
+                  "field_type": "string",
+                  "ref_topic_id": null,
+                  "salience": 1.2000000000000002,
+                  "value": "Alice (Frontend lead), Bob (Backend), Erin (QA)",
+                  "history": [
+                    {
+                      "id": "3598cf32-997b-4b39-af08-b87c8e1bb855",
+                      "valid_from": "2026-10-20T22:46:18.262663+00:00",
+                      "value": "Alice (Frontend lead), Bob (Backend), Erin (QA)",
+                      "why_changed": "Erin joined",
+                      "impact_expected": null,
+                      "provenance": "standup",
+                      "operation": null
+                    },
+                    {
+                      "id": "243903d5-6f89-478b-a1f1-09ff50baad8d",
+                      "valid_from": "2026-10-20T22:46:17.319293+00:00",
+                      "value": "Alice (Frontend), Bob (Backend)",
+                      "why_changed": null,
+                      "impact_expected": null,
+                      "provenance": "kickoff-notes",
+                      "operation": null
+                    }
+                  ],
+                  "history_count": 2
+                }
+              },
+              "topic_history": [
+                {
+                  "ts": "2026-10-20T22:46:17.244582+00:00",
+                  "kind": "created",
+                  "detail": {
+                    "title": "Website Redesign 23ed309722 second"
+                  }
+                }
+              ],
+              "created_at": "2026-10-20T22:46:17.244582+00:00",
+              "updated_at": "2026-10-20T22:46:31.502182+00:00"
+            }
+          }
+        }
+      ],
+      "state_violation": {
+        "present": false,
+        "condition": null,
+        "field": "Status",
+        "lost_entries": [],
+        "lost_values": [],
+        "current_after": "Complete"
+      },
+      "topic_changed_by_turn": false,
+      "hand_grade": {
+        "grade": null,
+        "note": null
+      }
+    }
+  ],
+  "environment": {
+    "model_warmed_up_s": 8.06,
+    "ollama_started_by_run": true,
+    "ollama_model_setting": "qwen3.5:2b"
+  }
+}

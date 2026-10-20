@@ -35,8 +35,16 @@ A value given its own end date that sits on top of the base value; the base valu
 _Avoid_: temporary value, exception
 
 **Current value**:
-The value valid at the asked time that memory has not expired; by default the asked time is now.
+The value valid at the asked time that memory has not expired and that is not archived; by default the asked time is now. If the valid value is archived, there is no current value.
 _Avoid_: latest value, head
+
+**Ended value**:
+A value whose valid time is over; memory still holds it as true for its own period.
+_Avoid_: expired (memory no longer holds an expired entry), invalidated
+
+**Superseded value**:
+A value whose validity a later statement ended; a value covered for a while by a scoped override is not superseded.
+_Avoid_: older value, overwritten value
 
 **As-of query**:
 A query about another date, on either time: what was true then, or what memory believed then.
@@ -142,8 +150,12 @@ The share of salience increments that went to the topic holding the answer; a me
 _Avoid_: salience accuracy
 
 **Baseline**:
-The comparison system put through the same checks: a last-write-wins row keyed by topic title and field.
-_Avoid_: reference implementation, straw man
+The comparison system put through the same checks: a versioned row per topic title and field that keeps every value with the time it was recorded, without salience, forgetting or edges.
+_Avoid_: reference implementation, straw man, reference GEM
+
+**Reference GEM**:
+Our own minimal system built to the paper's definitions of the six correctness conditions, with its simplifications declared; it shows what a system that satisfies the conditions answers. It is not MemState and not the baseline.
+_Avoid_: MemState reimplementation, mock, completed MemState
 
 **Scored transition**:
 A state change made through a GEM operator, whose effect the conformance suite judges.

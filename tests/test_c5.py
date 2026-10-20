@@ -170,3 +170,45 @@ def test_systems_whose_c5_2_verdict_is_absent_are_skipped():
 def test_no_measurable_difference_is_a_median_inside_the_combined_range():
     assert no_measurable_difference([10, 12], [11, 13]) is True
     assert no_measurable_difference([10, 11], [50, 60]) is False
+
+
+# -- the declared bound beside the active count, and F24
+
+class Bounded(ThresholdArchiver):
+    def __init__(self, resets_fielded=False, **kw):
+        super().__init__(**kw)
+        self.resets_fielded = resets_fielded
+
+    def _ingest(self, request):
+        if self.resets_fielded and request.get("fields"):
+            request = {**request, "salience": 1.0}  # a field write resets the topic's salience before any pass
+        return super()._ingest(request)
+
+    def _describe(self):
+        return {**super()._describe(), "declared_bound": {"topics": 500, "name": "soft limit"}}
+
+
+def test_the_natural_trajectory_text_states_the_declared_bound_beside_the_active_count():
+    out = run(Bounded)
+    (case,) = out["C5-2"].cases
+    assert "4 active topics at n=4 against declared bound 500 topics (soft limit)" in case.observation
+    assert out["C5-2"].measurements["declared_bound"] == {"topics": 500, "name": "soft limit"}
+    assert out["C5-2"].measurements["active_at_largest_n"] == {"n": 4, "active": 4}
+    assert "declared bound 500 topics" in out["C5-1"].cases[0].observation
+
+
+def test_a_system_declaring_no_bound_says_so():
+    (case,) = run(ThresholdArchiver)["C5-2"].cases
+    assert "the system declares no bound" in case.observation
+
+
+def test_a_topic_with_fields_reset_to_full_salience_and_never_forgotten_is_recorded_as_an_observation():
+    (obs,) = run(lambda: Bounded(resets_fielded=True))["C5-1"].observations
+    assert obs["name"] == "topic with fields not forgotten"
+    assert obs["reset"] is True and obs["forgotten"] is False and obs["stored_salience"] == 1.0
+    assert "F24" in obs["summary"]
+
+
+def test_a_topic_with_fields_that_is_forgotten_is_not_reported_as_reset():
+    (obs,) = run(Bounded)["C5-1"].observations
+    assert obs["forgotten"] is True and obs["reset"] is False

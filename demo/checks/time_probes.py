@@ -1,17 +1,22 @@
 """The six time-probe rows (report §9.6; story table in `demo/time_stories.py`), read as C1' (the value valid on a date).
 
 Seven stories, each on its own topic in its own fresh system (`ctx.fresh_system`); the lapsed-override row is stories
-4 and 5 together. Time probes use pass / fail / absent only:
+4 and 5 together. Each probe has two cells, kept in the verdict: "accepts dates" (`measurements["accepts_dates"]`: yes,
+no or partly, with the dates and the schema evidence beside it) and "answers correctly given dates" (the verdict).
+The verdict uses pass / fail / absent only:
 - pass: every asked date right and, on a system that keeps dated history, the history intact;
-- fail: any date wrong (or a write the system rejected), with the observation `"over-blocking"` when a control date is
-  the wrong one (a legitimate update or date blocked);
-- absent (as-of probe only): the system answered "true on Feb 10" and "believed on Feb 10" identically after
-  receiving `valid_at` / `recorded_at`; the probe evidence is both requests and answers.
+- fail: the needed dates are accepted and an asked date is wrong (or a write the system rejected), with the
+  observation `"over-blocking"` when a control date is the wrong one (a legitimate update or date blocked);
+- absent: a needed date is not accepted (`NEEDS`, per probe). The evidence is the schema reading
+  (`describe()["accepts"]`) and the answers the system gave to the same writes and asks. A system is never called wrong
+  for a date it cannot take (upstream reads absent on all six, F19). T5 on a system that accepts all three of its dates
+  and answers the "true on" and "believed on" questions identically is `fail`, not absent.
 
-A system receives dated writes and `valid_at` reads only if `describe()["accepts_valid_time"]` (the patch); the others
-get the same writes in the same order and the plain read for every date. The flags that applied are in every row's
-`measurements`. The as-of probe sends its dates to every system: ignoring
-them is what it observes. Dated paths are proven by the patch smoke runs (tickets 12/13), never by a MemState mock.
+A system receives the writes with the dates it accepts among the probe's needed ones, and `valid_at` reads if it
+accepts `valid_at`; a system that accepts none of the needed dates gets the same writes undated and the same plain
+read for every date. The as-of probe sends `valid_at` and `recorded_at` to every system (ignoring them is what it
+observes). The flags that applied are in every row's `measurements`. Dated paths are proven by the patch smoke runs
+(tickets 12/13), never by a MemState mock.
 """
 
 from __future__ import annotations
@@ -21,7 +26,7 @@ from dataclasses import dataclass, field
 from typing import Any
 
 from demo.checks import Ctx, Row, check
-from demo.adapter import Rejected, System, utc_now
+from demo.adapter import DATES, Rejected, System, utc_now
 from demo.reads import current_value, field_in_response
 from demo.time_stories import (AS_OF, FUTURE_DATED, FUTURE_ONLY, LAPSED_OVERRIDE_1, LAPSED_OVERRIDE_2, OUT_OF_ORDER,
                                RETROACTIVE, Story, history_intact, ingest_request, query_request, shift_story)
@@ -42,41 +47,77 @@ ROWS = [
 ]
 
 
+NEEDS = {"T1": ("valid_from",), "T2": ("valid_from",), "T3": ("valid_from",), "T6": ("valid_from",),
+         "T4": ("valid_from", "invalid_at"), "T5": ("valid_from", "valid_at", "recorded_at")}
+_WRITE_DATES = ("valid_from", "invalid_at")
+
+
 @dataclass(frozen=True)
 class Caps:
-    valid_time: bool  # dated writes and `valid_at` reads
-    recorded_at: bool
+    needed: tuple[str, ...]
+    accepts: dict
+    accepts_error: str | None
     keeps_history: bool
 
+    @property
+    def missing(self) -> list[str]:
+        return [d for d in self.needed if not self.accepts[d]]
+
+    @property
+    def dated(self) -> bool:
+        """At least one needed date is accepted; otherwise the writes go undated and every ask is a plain read."""
+        return len(self.missing) < len(self.needed)
+
+    @property
+    def write_dates(self) -> frozenset[str]:
+        return frozenset(d for d in _WRITE_DATES if self.dated and d in self.needed and self.accepts[d])
+
+    @property
+    def send_valid(self) -> bool:
+        return self.dated and bool(self.accepts["valid_at"])
+
+    @property
+    def accepts_dates(self) -> str:
+        return "yes" if not self.missing else "no" if not self.dated else "partly"
+
     def measurements(self) -> dict:
-        return {"accepts_valid_time": self.valid_time, "accepts_recorded_at": self.recorded_at}
+        return {"accepts_dates": self.accepts_dates, "dates_needed": ", ".join(self.needed),
+                "dates_missing": ", ".join(self.missing) or "none"}
+
+    def evidence(self) -> dict:
+        return {"probe": "the schema's date fields (describe()['accepts']) against the dates this probe needs",
+                "needed": list(self.needed), "accepts": dict(self.accepts), "missing": self.missing,
+                "accepts_error": self.accepts_error}
 
 
 @dataclass
 class Outcome:
     caps: Caps
     cases: list[Case] = field(default_factory=list)
+    stories: dict = field(default_factory=dict)  # per story id: the writes' fate and every answer, for the evidence
+    observations: list[dict] = field(default_factory=list)
 
 
-def _capabilities(system: System) -> Caps:
+def _capabilities(system: System, row: str) -> Caps:
     d = system.describe()
-    if d["accepts_valid_time"] is None or d["accepts_recorded_at"] is None:
+    needed = NEEDS[row]
+    if any(d["accepts"][n] is None for n in needed):
         raise RuntimeError(f"{system.label}: could not tell which dates the system accepts ({d['accepts_error']}); "
                            "refusing to guess")
-    return Caps(bool(d["accepts_valid_time"]), bool(d["accepts_recorded_at"]), bool(d["keeps_history"]))
+    return Caps(needed, {k: d["accepts"][k] for k in DATES}, d["accepts_error"], bool(d["keeps_history"]))
 
 
 def _answer(system: System, topic_id: str, name: str, request: dict) -> Any:
     return current_value(field_in_response(system.query(request), topic_id, name))
 
 
-def _write_story(system: System, story: Story, dated: bool, pause_after_first: bool = False
+def _write_story(system: System, story: Story, write_dates: frozenset[str], pause_after_first: bool = False
                  ) -> tuple[str | None, str | None]:
     """The story's writes in order. Returns (topic id, the moment noted after the first write). A rejected write
     raises `Rejected` to the caller."""
     topic_id, noted = None, None
     for i in range(len(story.writes)):
-        response = system.ingest(ingest_request(story, i, topic_id, dated))
+        response = system.ingest(ingest_request(story, i, topic_id, write_dates))
         topic_id = topic_id or response["topic_id"]
         if i == 0 and pause_after_first:
             noted = utc_now()
@@ -92,39 +133,66 @@ def _history_case(system: System, story: Story, topic_id: str) -> Case:
     return Case("history intact: no value lost, expired entries copied and linked", intact, why)
 
 
-def _run_story(ctx: Ctx, story: Story) -> Outcome:
+def _run_story(ctx: Ctx, story: Story, row: str, as_of: bool = False) -> Outcome:
+    """One story in a fresh system. The as-of story sends `valid_at` and `recorded_at` on every ask, to every system."""
     shifted = shift_story(story, ctx.run_day)
     with ctx.fresh_system(story.id) as s:
-        caps = _capabilities(s)
+        caps = _capabilities(s, row)
         out = Outcome(caps)
-        path = "dated path" if caps.valid_time else "plain path"
+        record = out.stories[story.id] = {"write_dates": sorted(caps.write_dates), "asked": []}
+        path = "dated path" if caps.dated else "plain path"
         try:
-            topic_id, _ = _write_story(s, shifted, caps.valid_time)
+            topic_id, noted = _write_story(s, shifted, caps.write_dates, pause_after_first=as_of)
         except Rejected as e:
+            record["write_rejected"] = str(e)
             out.cases = [Case(f"{a.label}: {story.title}", False,
                               f"[{path}] a write was {e}; the legitimate update was blocked", control=a.control)
                          for a in shifted.asks]
             return out
+        if as_of:
+            record.update({"noted_moment_after_first_write": noted, "gap_s": AS_OF_GAP_S})
+        answers = []
         for ask in shifted.asks:
-            name = f"{ask.label}: {ask.when.isoformat()} -> {ask.correct!r}"
-            request = query_request(ask, topic_id, send_valid=caps.valid_time)
-            how = "valid_at" if "valid_at" in request else "plain read"
+            request = query_request(ask, topic_id, send_valid=as_of or caps.send_valid, send_recorded=as_of,
+                                    recorded_at=noted)
+            result = {"asked": ask.label, "control": ask.control, "request": request}
             try:
-                got = _answer(s, topic_id, shifted.field, request)
+                result["answer"] = _answer(s, topic_id, shifted.field, request)
             except Rejected as e:
-                out.cases.append(Case(name, False, f"[{path}] the read was {e}", control=ask.control))
+                result.update(rejected=str(e), answer=None)
+            record["asked"].append(result)
+            answers.append(result)
+        if caps.missing:
+            return out  # absent: the answers are the evidence, not cases
+        for ask, r in zip(shifted.asks, answers):
+            when = f"{ask.when.isoformat()} " if ask.when else ""
+            name = f"{ask.label}: {when}-> {ask.correct!r}"
+            if "rejected" in r:
+                out.cases.append(Case(name, False, f"[{path}] the read was {r['rejected']}", control=ask.control))
                 continue
-            out.cases.append(Case(name, got == ask.correct,
-                                  f"[{path}] asked {ask.label} ({ask.when.isoformat()}, {how}): got {got!r}, "
-                                  f"correct {ask.correct!r}", control=ask.control))
-        if caps.valid_time and caps.keeps_history:
+            how = "recorded_at" if "recorded_at" in r["request"] else "valid_at" if "valid_at" in r["request"] \
+                else "plain read"
+            out.cases.append(Case(name, r["answer"] == ask.correct,
+                                  f"[{path}] asked {ask.label} ({how}): got {r['answer']!r}, correct {ask.correct!r}",
+                                  control=ask.control))
+        if as_of and answers[0].get("answer") == answers[1].get("answer"):
+            out.observations.append({"name": "identical answers",
+                                     "summary": "the \"true on\" and \"believed on\" questions got the same answer "
+                                                "although the system accepts recorded_at"})
+        if caps.dated and caps.keeps_history:
             out.cases.append(_history_case(s, shifted, topic_id))
     return out
 
 
-def _verdict(row: str, cases: list[Case], caps: Caps) -> Verdict:
+def _verdict(row: str, outcomes: list[Outcome], cases: list[Case] | None = None) -> Verdict:
+    """The row's verdict from one or more stories (all in the same kind of system, so the same capabilities)."""
+    caps = outcomes[0].caps
+    stories = {k: v for o in outcomes for k, v in o.stories.items()}
+    if caps.missing:
+        return Verdict.absent(row, {**caps.evidence(), "stories": stories}, measurements=caps.measurements())
+    cases = cases if cases is not None else outcomes[0].cases
     v = Verdict(row=row, verdict=PASS if all(c.held for c in cases) else FAIL, cases=cases,
-                measurements=caps.measurements())
+                measurements=caps.measurements(), observations=[o for out in outcomes for o in out.observations])
     if any(c.control and not c.held for c in cases):
         v.observations.append({"name": "over-blocking",
                                "summary": "a control date failed: the system blocks reads it should answer"})
@@ -132,50 +200,16 @@ def _verdict(row: str, cases: list[Case], caps: Caps) -> Verdict:
 
 
 def _prefixed(prefix: str, cases: list[Case]) -> list[Case]:
-    return [Case(f"{prefix}: {c.name}", c.held, c.observation, c.control) for c in cases]
-
-
-def _as_of(ctx: Ctx) -> Verdict:
-    """Both dates are sent to every system (ignoring them is what the probe observes). Absent when the two answers
-    are identical, which also reads `absent` on a system that accepts `recorded_at` but answers it wrongly."""
-    shifted = shift_story(AS_OF, ctx.run_day)
-    with ctx.fresh_system(AS_OF.id) as s:
-        caps = _capabilities(s)
-        try:
-            topic_id, noted = _write_story(s, shifted, caps.valid_time, pause_after_first=True)
-        except Rejected as e:
-            return _verdict("T5", [Case("as-of probe writes", False, f"a write was {e}", control=True)], caps)
-        results = []
-        for ask in shifted.asks:
-            request = query_request(ask, topic_id, send_valid=True, send_recorded=True, recorded_at=noted)
-            result = {"asked": ask.label, "control": ask.control, "request": request}
-            try:
-                results.append({**result, "answer": _answer(s, topic_id, shifted.field, request)})
-            except Rejected as e:
-                results.append({**result, "rejected": str(e), "answer": None})
-        if any("rejected" in r for r in results):
-            return _verdict("T5", [Case(a.label, False, r.get("rejected", "answered"), control=a.control)
-                                   for a, r in zip(shifted.asks, results)], caps)
-        first, second = (r["answer"] for r in results)
-        if first == second:
-            return Verdict.absent("T5", {
-                "probe": "the same plain-read answer to a valid_at question and a recorded_at question",
-                "noted_moment_after_first_write": noted, "gap_s": AS_OF_GAP_S, "asked": results},
-                measurements=caps.measurements())
-        cases = [Case(f"{ask.label} -> {ask.correct!r}", r["answer"] == ask.correct,
-                      f"asked {ask.label}: got {r['answer']!r}, correct {ask.correct!r}", control=ask.control)
-                 for ask, r in zip(shifted.asks, results)]
-        if caps.valid_time and caps.keeps_history:
-            cases.append(_history_case(s, shifted, topic_id))
-        return _verdict("T5", cases, caps)
+    return [Case(f"{prefix}: {c.name}", c.held, c.observation, c.control, f"{prefix}: {c.id}") for c in cases]
 
 
 @check(rows=ROWS)
 def time_probes(ctx: Ctx) -> list[Verdict]:
-    t1, t2, t3 = (_run_story(ctx, st) for st in (RETROACTIVE, OUT_OF_ORDER, FUTURE_DATED))
-    t4a, t4b = _run_story(ctx, LAPSED_OVERRIDE_1), _run_story(ctx, LAPSED_OVERRIDE_2)
-    t5 = _as_of(ctx)
-    t6 = _run_story(ctx, FUTURE_ONLY)
-    return [_verdict("T1", t1.cases, t1.caps), _verdict("T2", t2.cases, t2.caps), _verdict("T3", t3.cases, t3.caps),
-            _verdict("T4", _prefixed("story 1", t4a.cases) + _prefixed("story 2", t4b.cases), t4a.caps), t5,
-            _verdict("T6", t6.cases, t6.caps)]
+    t1, t2, t3 = (_run_story(ctx, st, row) for st, row in ((RETROACTIVE, "T1"), (OUT_OF_ORDER, "T2"),
+                                                           (FUTURE_DATED, "T3")))
+    t4a, t4b = _run_story(ctx, LAPSED_OVERRIDE_1, "T4"), _run_story(ctx, LAPSED_OVERRIDE_2, "T4")
+    t5 = _run_story(ctx, AS_OF, "T5", as_of=True)
+    t6 = _run_story(ctx, FUTURE_ONLY, "T6")
+    return [_verdict("T1", [t1]), _verdict("T2", [t2]), _verdict("T3", [t3]),
+            _verdict("T4", [t4a, t4b], _prefixed("story 1", t4a.cases) + _prefixed("story 2", t4b.cases)),
+            _verdict("T5", [t5]), _verdict("T6", [t6])]

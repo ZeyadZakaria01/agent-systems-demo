@@ -5,10 +5,10 @@ own "today". `shift_story(story, run_day)` moves every date by one offset so tha
 gaps between dates stay (a run on Oct 20 stores the budget story's Nov 5 as Oct 20 and Sep 1 as Aug 16).
 
 Asking: "today" is a plain read with no date (the server answers against its own clock, hence the shift); every other
-date is an as-of read with `valid_at`. Writes carry `valid_from` / `invalid_at` only for a system that accepts dates
-(`describe()["accepts_valid_time"]`, the patch), and the other rows' `valid_at` reads are sent only to such a system;
-the others get the same writes in the same order without dates. The as-of probe (`AS_OF`) is different: it sends
-`valid_at` and `recorded_at` to every system, because ignoring them is what it observes.
+date is an as-of read with `valid_at`. Writes carry `valid_from` / `invalid_at` only for the dates the system accepts
+(`describe()["accepts"]`, per date), and `valid_at` reads are sent only to a system that accepts `valid_at`; a system
+that accepts none of a probe's needed dates gets the same writes in the same order without dates. The as-of probe
+(`AS_OF`) is different: it sends `valid_at` and `recorded_at` to every system, because ignoring them is what it observes.
 
 `Ask.correct` is the right answer (`NO_VALUE` = the field has no current value). `Ask.recency` is the answer of a
 system whose current value is the last one written (the table's "upstream expected" column, which the baseline
@@ -96,6 +96,7 @@ LAPSED_OVERRIDE_2 = Story(
     "lapsed-override-2", "T4", "Lapsed scoped override, plain statement during the override", "Budget", _d(11, 5),
     writes=_BUDGET + (Write("$100", _d(10, 10)),),  # "now $100"
     asks=(_today(_d(11, 5), "$100", "$100", control=True),
+          Ask("Oct 15", VALID, _d(10, 15), "$100", "$100"),  # "a plain statement ends the override"
           Ask("Oct 5", VALID, _d(10, 5), "$80", "$100")))
 
 FUTURE_ONLY = Story(
@@ -131,15 +132,16 @@ def iso(day: date) -> str:
     return datetime.combine(day, time.min, tzinfo=timezone.utc).isoformat()
 
 
-def ingest_request(story: Story, index: int, topic_id: str | None, dated: bool) -> dict:
+def ingest_request(story: Story, index: int, topic_id: str | None, write_dates: frozenset[str] = frozenset()) -> dict:
     """Write number `index` of the story: the topic is created by the first, versioned by the rest.
-    Same value, order and provenance for every system; the dates are added only when `dated`."""
+    Same value, order and provenance for every system; a date is added only if its name (`valid_from`,
+    `invalid_at`) is in `write_dates`."""
     write = story.writes[index]
     field: dict[str, Any] = {"name": story.field, "value": write.value, "provenance": f"time-probe:{story.id}"}
-    if dated:
+    if "valid_from" in write_dates:
         field["valid_from"] = iso(write.valid_from)
-        if write.invalid_at is not None:
-            field["invalid_at"] = iso(write.invalid_at)
+    if "invalid_at" in write_dates and write.invalid_at is not None:
+        field["invalid_at"] = iso(write.invalid_at)
     if index == 0:
         return {"placement": "new_topic", "title": f"Time probe: {story.title}", "topic_kind": "time-probe",
                 "fields": [field]}

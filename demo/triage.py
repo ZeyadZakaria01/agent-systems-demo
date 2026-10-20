@@ -4,7 +4,7 @@ Only the system adapter is used. `play` sends each event as a scored `/v1` place
 topic back (a UI read: no salience bump) to compare its title and current values, and, for an event that writes edges
 and a system that reports them, its related edges, with the state the storyline expects; a difference is a write-path
 finding reported apart from the questions. `ask` sends each question as a plain query (the
-default stages, `top_k` 8; the baseline's own top 10) and sorts it with StateMemBench's first triage question
+default stages, `top_k` 8, the baseline's top 8 too) and sorts it with StateMemBench's first triage question
 (`docs/papers/2608.19652v1.md:455`, "is the gold fact in context? (no -> retrieval failure)"):
 
 - answered: the read returned the labelled topic and the ground-truth value is current in the labelled field;
@@ -29,7 +29,7 @@ from demo.reads import NO_VALUE, current_value, field_in_response
 from demo.storyline import Event, Question, Storyline
 
 CORRECT, SEARCH_FAILURE, MEMORY_FAILURE = "correct", "search failure", "memory failure"
-DEFAULT_TOP_K = 8  # MemState's default; the baseline declares its own (10) in `describe()["top_k"]`
+DEFAULT_TOP_K = 8  # MemState's default; a system declares its own in `describe()["top_k"]` (the baseline's is 8 as well)
 EPS = 1e-6
 
 

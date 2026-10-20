@@ -44,7 +44,7 @@ def new_run_dir(results_root: Path, runtime_root: Path) -> RunDir:
 
 
 def slug(text: str) -> str:
-    return re.sub(r"[^a-z0-9]+", "-", text.lower()).strip("-")
+    return re.sub(r"[^a-z0-9]+", "-", text.lower().replace("′", "prime")).strip("-")  # C4' must not share C4's file
 
 
 def snapshot_path(system_id: str, check_id: str, tag: str | None = None) -> str:

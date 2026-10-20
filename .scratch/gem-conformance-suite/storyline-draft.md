@@ -18,7 +18,7 @@ Departures:
 
 - Every system receives the same events, in order, on a fresh database. The `When` label on each event is for the reader only; no dates are sent.
 - After every event the run compares title, current field values, and (where the system reports them) the topic's outgoing related edges with the folded expected state; the baseline has no edges, so those are n/a.
-- Each question is asked as a plain read: default stages, `top_k` 8 on MemState, the baseline's own top 10. **Answered** = the read returned the answer topic and the ground-truth value is current in the labelled field. A wrong answer is a **search failure** if the answer topic was not returned, a **memory failure** if it was returned with a wrong stored value.
+- Each question is asked as a plain read: default stages, `top_k` 8 on MemState and on the baseline. **Answered** = the read returned the answer topic and the ground-truth value is current in the labelled field. A wrong answer is a **search failure** if the answer topic was not returned, a **memory failure** if it was returned with a wrong stored value.
 - **Reinforcement precision** = salience increments to the answer topic ÷ all increments over the questions (equals Precision@k because every returned topic is bumped); no verdict, n/a on the baseline.
 
 ## Topics
@@ -120,4 +120,4 @@ Abilities: information extraction 4, knowledge update 11. Every answer is one st
 - Several questions share ground-truth strings with other topics (April 20 is on Website Redesign and Redesign Milestones); the labelled topic decides which one counts.
 - Dependent topics (milestones, Alice's role in the team list) are updated by explicit events here, because every event is a perfect placement; whether MemState would propagate a deadline change by itself is C3's question, not this one.
 - All values are strings so a read is judged by exact match; changing a value's wording changes the ground truth in the same place.
-- **The store is small.** The storyline creates 14 topics, so a `top_k` 8 read returns most of them and the baseline's top 10 returns nearly all. Phase 2, Marketing Budget and Design Review Meeting are look-alikes so a paraphrased question can rank the wrong topic; they do not guarantee a search failure. Report whatever the recorded run gives.
+- **The store is small.** The storyline creates 14 topics, so a `top_k` 8 read returns most of them, and so does the baseline's top 8. Phase 2, Marketing Budget and Design Review Meeting are look-alikes so a paraphrased question can rank the wrong topic; they do not guarantee a search failure. Report whatever the recorded run gives.

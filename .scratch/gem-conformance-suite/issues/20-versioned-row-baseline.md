@@ -4,13 +4,25 @@
 
 **Blocked by:** 01 (C1 tracer bullet)
 
-**Status:** ready-for-agent
+**Status:** resolved
 
-- [ ] `demo/baseline.py` is a versioned row: an append-only history per (title, field) with the time each value was recorded, one transaction per write (all fields of a write apply, or none), in-process. The last-write-wins row, its top-10 query and its "no history" behaviour are removed.
-- [ ] It accepts the ingest shape but **rejects empty and `null` values**, like a NOT NULL / CHECK constraint: the write returns `Rejected` and nothing is saved (the whole write, since a write is one transaction).
-- [ ] A second `new_topic` with an existing title appends to that topic's history, so no merge ever occurs. It has no salience (reads return none), archived flag, edges or valid-time dates; each missing capability is confirmed by a probe so the rows can read `absent` (ADR 0002). A read returns the latest recorded value and changes nothing.
-- [ ] It exposes `current` and the history with recorded times through `read_topic`, and answers a `recorded_at` read from its history. `describe()["accepts"]` is true for `recorded_at` only; `valid_from`, `invalid_at` and `valid_at` are false.
-- [ ] Its query embeds with MiniLM and returns the top 8. The deviations table lists the versioned row's settings instead of the old top-10 survey setting.
+- [x] `demo/baseline.py` is a versioned row: an append-only history per (title, field) with the time each value was recorded, one transaction per write (all fields of a write apply, or none), in-process. The last-write-wins row, its top-10 query and its "no history" behaviour are removed.
+- [x] It accepts the ingest shape but **rejects empty and `null` values**, like a NOT NULL / CHECK constraint: the write returns `Rejected` and nothing is saved (the whole write, since a write is one transaction).
+- [x] A second `new_topic` with an existing title appends to that topic's history, so no merge ever occurs. It has no salience (reads return none), archived flag, edges or valid-time dates; each missing capability is confirmed by a probe so the rows can read `absent` (ADR 0002). A read returns the latest recorded value and changes nothing.
+- [x] It exposes `current` and the history with recorded times through `read_topic`, and answers a `recorded_at` read from its history. `describe()["accepts"]` is true for `recorded_at` only; `valid_from`, `invalid_at` and `valid_at` are false.
+- [x] Its query embeds with MiniLM and returns the top 8. The deviations table lists the versioned row's settings instead of the old top-10 survey setting.
 - [ ] The suite's tests run every check in-process against it and assert the verdicts "Expected verdicts" lists for the versioned row: C1 pass; C2(a) n/a, so not-scored (no merge occurs; the test shows the check's arrangement cannot be met); C2(b) pass; C2(c) absent; C2(d) pass; C3 absent; C4 pass (merge and forgetting cases n/a; empty and `null` writes rejected); C5 mechanism and natural trajectory absent; C6 clause 1 and clause 2 absent; all six time probes absent; C4′ absent. They also assert the observations a reader relies on: the rejected empty and `null` writes with nothing saved, and salience reading none.
-- [ ] The tests of resolved tickets 01, 04, 05, 06, 07, 08, 09 and 10 that pinned the old baseline's verdicts are updated to the versioned row's; none pins a MemState verdict.
-- [ ] A suite test asserts a storyline search failure on the versioned row when the labelled topic falls outside the top 8.
+- [x] The tests of resolved tickets 01, 04, 05, 06, 07, 08, 09 and 10 that pinned the old baseline's verdicts are updated to the versioned row's; none pins a MemState verdict.
+- [x] A suite test asserts a storyline search failure on the versioned row when the labelled topic falls outside the top 8.
+
+## Comments
+
+- 2026-10-21, T20: built.
+  - `demo/baseline.py` is the versioned row (append-only `{value, provenance, why_changed, recorded_at}` per (title, field); validate-then-apply writes; `""` / `null` give `Rejected(422)` and save nothing, not even the topic; same-title `new_topic` appends; no salience / archived / edges / dates; MiniLM top 8; `recorded_at` reads answered from history; history returned on `explain`). `describe()` carries `"accepts": {valid_from: False, invalid_at: False, valid_at: False, recorded_at: True}`.
+  - Checks changed minimally so the row reads as predicted: C2(a) and C4's merge case treat a same-topic append as "arrangement not met" (`held=None`) instead of a held case; C6 clause 1 and 2 return `absent` (salience read as probe evidence) when salience is not tracked. Deviations table, README line, `storyline_draft.py` text, journal entry added.
+  - Tests updated: 01 (`test_c1`: both cases held, plus no-history and claims-history stand-ins), 04 (`test_c2a`: not-scored), 05 (`test_c2b_c2c_c3`: stand-ins now write history entries), 06 (`test_c4`: pass, 2 n/a, rejected empty / null with the current value kept, 501 entries kept), 07 (`test_c6`: absent), 08 (`test_c5` already absent), 09 (`test_time_probes`), 10 (`test_triage`, `test_storyline`: top 8; search failure when the labelled topic is outside the top 8), `test_baseline_adapter` rewritten.
+  - Smoke: `FASTEMBED_CACHE_PATH=... .venv/bin/python -m demo.run --systems baseline --results-root /tmp/gem20results` (in-process): C1 pass; C2(a) not-scored; C2(b) not-scored; C2(c) absent; C3 absent; C4 pass (2 cases n/a); C5-1/C5-2 absent; C6-1/C6-2 absent; T1-T4, T6 fail, T5 pass (before merging ticket 21; after it all six read absent); storyline 15/15 correct at top_k 8.
+  - Merged gem-suite with ticket 21: the tests assert all six time probes `absent` (accepts recorded_at only; evidence shows `valid_at` ignored, `recorded_at` answered).
+  - Departure (box 6 left unticked): C2(b) pass and C2(d) pass are not reachable before ticket 22 (C2(b) `ref_topic_id` input, C2(d) row); C4' absent needs ticket 25's probe. The test pins C2(b) as built (`not-scored`) and flips with ticket 22. See the `docs/journal.md` entry "Ticket 20".
+
+- 2026-10-21, orchestrator: resolved on merge (e313fb8). The unticked verdict box carries over: ticket 22 flips the C2(b) baseline test to pass and adds C2(d); ticket 25 adds the versioned-row C4′ `absent` assertion.

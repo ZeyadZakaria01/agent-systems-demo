@@ -6,8 +6,70 @@ from typing import Any
 
 import httpx
 
-from demo.adapter import Rejected, System
+from demo.adapter import DATES, Rejected, System
 from demo.server import ServerInfo
+
+# [INFERENCE: code reading] `Policies.topic_count_soft_limit`: the forgetting pass runs once the topic count reaches it.
+DECLARED_BOUND = {"topics": 500, "name": "topic_count_soft_limit"}
+CHAT_TIMEOUT_S = 600.0
+
+
+def with_current(field: dict, dates_accepted: bool) -> dict:
+    """The field with an explicit `current`: the entry, or `None` for "no value". A server that states `current` itself
+    (the patch must, since its history is ordered by valid time) is taken at its word. Upstream's stored topic lists
+    history newest first and its current entry is `history[0]` (`datamodel/fields.py:77`); that fallback is right only
+    where no date is accepted, so a system that accepts any date and omits `current` raises instead of giving a silent
+    wrong answer."""
+    if "current" not in field:
+        if dates_accepted:
+            raise RuntimeError("the system accepts dates but returned a field without `current`; refusing the "
+                               "newest-entry fallback, which would read the wrong entry")
+        field["current"] = field["history"][0] if field.get("history") else None
+    return field
+
+
+def request_properties(document: dict) -> set[str]:
+    """Every property name of a model reachable from a request body of the OpenAPI document, through `$ref`, `anyOf`,
+    `items` and nested properties. Models are found by use, not by name, so a name variant (`FieldWrite-Input`) does
+    not matter; a response model that merely returns a property (upstream's history entry returns `valid_from`) is not
+    a request model and does not count."""
+    schemas = document["components"]["schemas"]
+    pending = [body.get("content", {}).get("application/json", {}).get("schema", {})
+               for path in document.get("paths", {}).values() for op in path.values() if isinstance(op, dict)
+               for body in [op.get("requestBody", {})]]
+    seen: set[str] = set()
+    found: set[str] = set()
+    while pending:
+        node = pending.pop()
+        if not isinstance(node, dict):
+            continue
+        if "$ref" in node:
+            name = node["$ref"].rsplit("/", 1)[-1]
+            if name not in seen and name in schemas:
+                seen.add(name)
+                pending.append(schemas[name])
+            continue
+        props = node.get("properties", {})
+        found |= set(props)
+        pending += list(props.values())
+        pending += [node.get("items"), node.get("additionalProperties")]
+        pending += node.get("anyOf", []) + node.get("allOf", []) + node.get("oneOf", [])
+    return found
+
+
+def request_date_fields(document: dict) -> set[str]:
+    """The dates a server accepts, read from its OpenAPI document: those among `DATES` that are request properties
+    (a write model for `valid_from` / `invalid_at`, a query model for `valid_at` / `recorded_at`)."""
+    return set(DATES) & request_properties(document)
+
+
+SOURCE_FIELD = "source_message"  # the field-write property a source message travels in (C4' probe)
+
+
+def source_surface(document: dict) -> dict:
+    """The C4' probe's look at the API: every request property and every path whose name says "source", sorted."""
+    return {"request_properties": sorted(p for p in request_properties(document) if "source" in p.lower()),
+            "paths": sorted(p for p in document.get("paths", {}) if "source" in p.lower())}
 
 
 class MemStateSystem(System):
@@ -22,6 +84,7 @@ class MemStateSystem(System):
         self.base_url = base_url
         self.server = server or ServerInfo()
         self.http = httpx.Client(base_url=base_url, timeout=timeout)
+        self._dates: dict | None = None  # the schema's verdict, read once and only if it was readable
 
     def close(self) -> None:
         self.http.close()
@@ -51,16 +114,19 @@ class MemStateSystem(System):
     def _query(self, request: dict) -> dict:
         return self._call("POST", "/v1/query", json=request).json()
 
+    def _chat(self, request: dict) -> dict:
+        # a local 2B model with tool rounds can take minutes on the laptop: the client waits longer than for /v1
+        return self._call("POST", "/api/llm/chat", json=request, timeout=CHAT_TIMEOUT_S).json()
+
     def _read_topic(self, topic_id: str) -> dict | None:
         topic = self._get_or_none(f"/api/ui/topics/{topic_id}")
         if topic is None:
             return None
+        dates_accepted = None
         for f in topic["fields"].values():
-            # Explicit `current` per field: entry, or None for "no value". Upstream's stored topic lists history
-            # newest first and its current entry is history[0] (`datamodel/fields.py:77`). A server that states
-            # `current` itself (the patch must, since its history is ordered by valid time) is taken at its word.
-            if "current" not in f:
-                f["current"] = f["history"][0] if f.get("history") else None
+            if "current" not in f and dates_accepted is None:
+                dates_accepted = any(self._date_capabilities()["accepts"].values())
+            with_current(f, bool(dates_accepted))
         return topic
 
     def _list_topic_ids(self, include_archived: bool) -> list[str]:
@@ -88,18 +154,20 @@ class MemStateSystem(System):
         raise ValueError(f"unknown setup action {action!r}")
 
     def _date_capabilities(self) -> dict:
-        """What the server's own OpenAPI schema declares: dated writes (one schema with `valid_from` and
-        `invalid_at`) with `valid_at` reads, and `recorded_at` reads. All schemas are searched, so a model-name variant
-        (`FieldWrite-Input`) does not matter. Unreadable schema: both flags `None` and the reason is returned."""
+        """What the server's own OpenAPI schema declares, one flag per date (`request_date_fields`). Unreadable
+        schema: every flag `None` and the reason is returned."""
+        if self._dates is not None:
+            return self._dates
         try:
-            schemas = self._call("GET", "/openapi.json").json()["components"]["schemas"]
+            document = self._call("GET", "/openapi.json").json()
+            properties = request_properties(document)
+            surface = source_surface(document)
         except Exception as e:
-            return {"accepts_valid_time": None, "accepts_recorded_at": None,
+            return {"accepts": {d: None for d in DATES}, "accepts_source": None, "source_surface": None,
                     "accepts_error": f"could not read /openapi.json: {type(e).__name__}: {e}"}
-        props = [set(sch.get("properties", {})) for sch in schemas.values()]
-        return {"accepts_valid_time": any({"valid_from", "invalid_at"} <= p for p in props)
-                and any("valid_at" in p for p in props),
-                "accepts_recorded_at": any("recorded_at" in p for p in props), "accepts_error": None}
+        self._dates = {"accepts": {d: d in properties for d in DATES}, "accepts_source": SOURCE_FIELD in properties,
+                       "source_surface": surface, "accepts_error": None}
+        return self._dates
 
     def _probe(self, method: str, path: str) -> dict | None:
         r = self.http.request(method, path)  # no redirects followed, no raise on 4xx/5xx: the status is the finding
@@ -117,4 +185,4 @@ class MemStateSystem(System):
             db_path, health_error = self.server.db_path, f"{type(e).__name__}: {e}"
         return {"url": self.base_url, "db_path": db_path, "commit": self.server.commit,
                 "engine": self.server.engine_line, "source_dir": self.server.source_dir,
-                "keeps_history": True, **self._date_capabilities(), "health_error": health_error}
+                "keeps_history": True, "declared_bound": DECLARED_BOUND, **self._date_capabilities(), "health_error": health_error}

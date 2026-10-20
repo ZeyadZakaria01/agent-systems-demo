@@ -1,7 +1,7 @@
 """Storyline triage and reinforcement precision (spec stories 38-40; `demo/storyline.py`, `demo/triage.py`).
 
 The storyline's events are sent as `/v1` placements on a fresh database, then its questions are read with the
-default stages and `top_k` 8 (the baseline: its top 10). This is a measurement, not a scorecard row: the row is not
+default stages and `top_k` 8 (the baseline: top 8 too). This is a measurement, not a scorecard row: the row is not
 on the scorecard (`on_scorecard=False`), its numbers go to `demo/storyline_tables.py` (triage counts per system, and
 reinforcement precision beside C6 clause 1, which carries no verdict). The verdict only summarises the questions: one
 case per question, held when the read answered it.

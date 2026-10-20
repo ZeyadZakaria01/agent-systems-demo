@@ -64,7 +64,7 @@ def render(story: Storyline = WEBSITE_REDESIGN) -> str:
         "for the reader only; no dates are sent.",
         "- After every event the run compares title, current field values, and (where the system reports them) the "
         "topic's outgoing related edges with the folded expected state; the baseline has no edges, so those are n/a.",
-        "- Each question is asked as a plain read: default stages, `top_k` 8 on MemState, the baseline's own top 10. "
+        "- Each question is asked as a plain read: default stages, `top_k` 8 on MemState and on the baseline. "
         "**Answered** = the read returned the answer topic and the ground-truth value is current in the labelled field. "
         "A wrong answer is a **search failure** if the answer topic was not returned, a **memory failure** if it was "
         "returned with a wrong stored value.",
@@ -113,7 +113,7 @@ def render(story: Storyline = WEBSITE_REDESIGN) -> str:
               "- All values are strings so a read is judged by exact match; changing a value's wording changes the "
               "ground truth in the same place.",
               f"- **The store is small.** The storyline creates {len(titles)} topics, so a `top_k` 8 read returns "
-              f"most of them and the baseline's top 10 returns nearly all. Phase 2, Marketing Budget and Design Review "
+              f"most of them, and so does the baseline's top 8. Phase 2, Marketing Budget and Design Review "
               f"Meeting are look-alikes so a paraphrased question can rank the wrong topic; they do not guarantee a "
               f"search failure. Report whatever the recorded run gives.",
               ""]

@@ -54,8 +54,8 @@ def test_the_storyline_runs_on_the_baseline_and_every_question_is_triaged():
     t = m["triage"]
     assert t["questions"] == len(WEBSITE_REDESIGN.questions)
     assert t["correct"] + t["search_failures"] + t["memory_failures"] == t["questions"]
-    assert m["top_k"] == 10  # the baseline's own query
-    assert m["events"]["mismatches"] == []  # last write wins: every event leaves the expected current values
+    assert m["top_k"] == 8  # the versioned row's own query (top 8)
+    assert m["events"]["mismatches"] == []  # the latest recorded value is current: every event leaves the expected current values
     assert m["reinforcement"] is None  # no salience on the baseline
     assert {c.held for c in verdict.cases} <= {True, False}
     assert len(verdict.cases) == len(WEBSITE_REDESIGN.questions)

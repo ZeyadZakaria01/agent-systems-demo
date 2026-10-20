@@ -1,17 +1,26 @@
-"""C4 (provenance preservation): a field history survives an update, a merge and archiving, empty and
+"""C4 (provenance preservation): a field history survives an update, a merge and real forgetting, empty and
 null writes must not replace the current value, and a 501-write case decides the 500-entry cap.
 
-The update path is the control (an ordinary March 15 → April 20 that should keep both entries). Empty and
-null writes are the trap (implied by C2/C4, not part of C4's definition; report §9.4). The cap case writes one value
-with `new_topic` and 500 more with `version_field` (501 writes) and records whether the first value is still in the
-history: the run decides whether the oldest entry is dropped.
+Cases (spec "Stricter check pass criteria"): (1) update survives, the control: an ordinary March 15 -> April 20 keeps
+both entries. (2) Merge keeps history; n/a where the system has no merge (a second same-title write appends to the same
+topic). (3) Real forgetting keeps history: a topic with fields, ingested at salience 0.01, must reach forgetting through
+the system's own operations (the count gate is driven past `ramp.FORGET_GATE` with field-less fillers, a field-less
+control at 0.01 shows the pass ran), and its history and provenance are intact after. The case is n/a where the system
+has no archived flag, where the pass is not shown to run, and where the pass ran (the control is archived) and the topic
+with fields was not forgotten: that is confirmed by the run (upstream, F24: any field write resets the topic's salience
+to the field average, 1.0). No editor archive write is ever used. (4) `version_field` with `""` and separately with
+`null` does not replace April 20 (empty and null writes are the trap: implied by C2/C4, not part of C4's definition;
+report §9.4). (5) The cap: one `new_topic` and 500 `version_field` writes (501) to one field, then is the first value
+still readable, in the history or in the field's `archived_history` (overflow the cap moved out of the active history;
+the reference GEM archives it, upstream drops it, F21)? The verdict rests on the cases that could run.
 
-The baseline has no history: C4 fails, with the observations a scorecard reader relies on (lost earlier
-value, empty value becoming current). MemState outcomes come only from a recorded run.
+`archived_history` is the one key the adapter contract adds for the cap case: on a stored field, the entries archived
+as overflow, newest first, each shaped like a history entry. A system that deletes overflow has no such key.
 """
 
 from __future__ import annotations
 
+from demo import ramp
 from demo.adapter import Rejected, System
 from demo.checks import Ctx, check
 from demo.merge import DEADLINE, FIELD, NEWER, NEWER_PROVENANCE, OLDER, OLDER_PROVENANCE, trigger_and_await_merge
@@ -22,6 +31,7 @@ CLAIM = ("C4 (provenance preservation): revision and forgetting preserve the pro
          "reachable units.")
 CAP_WRITES = 501  # 1 new_topic + 500 version_field
 CAP_FIRST = "v000"
+LOW_SALIENCE = 0.01
 
 
 def _field(topic: dict | None, name: str = FIELD) -> dict | None:
@@ -78,33 +88,59 @@ def _update_case(s: System) -> tuple[Case, bool]:
     held = current == NEWER and _holds_both(history)
     lost = history is None or not any(e.get("value") == OLDER for e in history)
     return Case("history survives a value update", held, f"current={current!r}, history={_fmt(history)!r}",
-                control=True), lost
+                control=True, id="update"), lost
 
 
 def _merge_case(s: System) -> Case:
     name = "history survives a merge"
     outcome = trigger_and_await_merge(s, "Vendor Contract", DEADLINE)
     if not outcome.merged:
-        return Case(name, None, f"no merge seen within {outcome.waited.elapsed:.1f}s (timeout)")
+        return Case(name, None, f"no merge seen within {outcome.waited.elapsed:.1f}s (timeout)", id="merge")
     history = history_entries(s, outcome.survivor_id)
     if outcome.pair.upserted:
-        return Case(name, _holds_both(history), f"upsert (no duplicate); history={_fmt(history, provenance=False)!r}")
+        return Case(name, None, "arrangement not met: the second write went to the same topic, so no duplicate was "
+                                f"created and no merge occurs; not a case; history={_fmt(history, provenance=False)!r}",
+                    id="merge")
     return Case(name, _holds_both(history), f"survivor {outcome.survivor_id} ({outcome.dropped_state} dropped); "
-                                            f"history={_fmt(history)!r}")
+                                            f"history={_fmt(history)!r}", id="merge")
 
 
-def _archive_case(s: System) -> Case:
-    name = "history survives archiving"
-    topic_id = _write_deadline(s, "Website Redesign (archive)")
-    archived = s.setup_write("patch_topic", label="archive after the history is written (values untouched)",
-                             topic_id=topic_id, archived=True)
-    if archived is None:
-        return Case(name, None, "the system has no archived flag (setup write returned nothing)")
-    history = history_entries(s, topic_id)
-    topic = s.read_topic(topic_id)
-    flag = None if topic is None else topic.get("archived")
-    return Case(name, flag is True and _holds_both(history),
-                f"archived={flag!r}, history={_fmt(history, provenance=False)!r}")
+def _forgetting_case(s: System) -> tuple[Case, dict]:
+    """Real forgetting: the field-bearing topic reaches forgetting only through the system's own operations."""
+    name = "history survives real forgetting"
+    if ramp.archive_stats(s)["archived"] is None:
+        return Case(name, None, "the system has no archived flag, so no topic is forgotten", id="forgetting"), {"ran": False}
+    target_id = s.ingest({
+        "placement": "new_topic", "title": "Old Vendor (forgetting)", "topic_kind": "project", "salience": LOW_SALIENCE,
+        "fields": [{"name": FIELD, "value": OLDER, "provenance": OLDER_PROVENANCE}]})["topic_id"]
+    s.ingest({"placement": "version_field", "topic_id": target_id,
+              "fields": [{"name": FIELD, "value": NEWER, "provenance": NEWER_PROVENANCE, "why_changed": "vendor delay"}]})
+    control_id = s.ingest({"placement": "new_topic", "title": "Library Card (forgetting control)",
+                           "summary": "Field-less and never read; shows the forgetting pass ran",
+                           "salience": LOW_SALIENCE})["topic_id"]
+
+    def archived(topic_id: str) -> bool:
+        return (s.read_topic(topic_id) or {}).get("archived") is True
+
+    if not archived(control_id):
+        for i in range(max(0, ramp.FORGET_GATE - ramp.archive_stats(s)["total"])):
+            ramp.filler(s, i)
+        s.ingest({"placement": "new_topic", "title": "Filler trigger",
+                  "summary": "Ingested after the topic count reached the gate; its response schedules the pass"})
+        s.wait_until(lambda: archived(control_id), ramp.ARCHIVE_WAIT_S)
+    topic = s.read_topic(target_id) or {}
+    evidence = {"ran": archived(control_id), "target_salience": topic.get("salience"),
+                "target_archived": topic.get("archived"), "topics": ramp.archive_stats(s)["total"]}
+    if not evidence["ran"]:
+        return Case(name, None, f"forgetting was not shown to run: the never-read control at {LOW_SALIENCE} was not "
+                                f"archived after {evidence['topics']} topics"), evidence
+    if topic.get("archived") is not True:
+        return Case(name, None, f"the pass ran (the control is archived) but a topic with fields ingested at "
+                                f"{LOW_SALIENCE} was not forgotten: salience {topic.get('salience')!r}, "
+                                f"archived={topic.get('archived')!r}; it cannot be forgotten through the system's own "
+                                "operations", id="forgetting"), evidence
+    history = history_entries(s, target_id)
+    return Case(name, _holds_both(history), f"forgotten; history={_fmt(history)!r}", id="forgetting"), evidence
 
 
 def _empty_write(system: System, topic_id: str, value: object) -> tuple[object, str]:
@@ -123,8 +159,8 @@ def _empty_cases(s: System) -> tuple[list[Case], object, object]:
     """`""` and `null` written over April 20: the cases, and what became current for each."""
     empty, empty_obs = _empty_write(s, _write_deadline(s, "Website Redesign (empty write)"), "")
     null, null_obs = _empty_write(s, _write_deadline(s, "Website Redesign (null write)"), None)
-    return ([Case(f'version_field with "" does not replace {NEWER}', empty == NEWER, empty_obs),
-             Case(f"version_field with null does not replace {NEWER}", null == NEWER, null_obs)], empty, null)
+    return ([Case(f'version_field with "" does not replace {NEWER}', empty == NEWER, empty_obs, id="empty-string"),
+             Case(f"version_field with null does not replace {NEWER}", null == NEWER, null_obs, id="null")], empty, null)
 
 
 def _cap_case(s: System) -> tuple[Case, dict]:
@@ -137,11 +173,18 @@ def _cap_case(s: System) -> tuple[Case, dict]:
         s.ingest({"placement": "version_field", "topic_id": topic_id,
                   "fields": [{"name": FIELD, "value": f"v{i:03d}", "provenance": f"cap-{i}"}]})
     values = _fmt(history_entries(s, topic_id), provenance=False)
-    present = bool(values) and CAP_FIRST in values
+    in_history = bool(values) and CAP_FIRST in values
     length = None if values is None else len(values)
-    case = Case(f"the first value is still in the history after {CAP_WRITES} writes (1 new_topic + {CAP_WRITES - 1} "
-                "version_field)", present, f"length={length}, first {CAP_FIRST!r} present={present}")
-    return case, {"writes": CAP_WRITES, "first": CAP_FIRST, "first_present": present, "length": length,
+    overflow = _fmt((_field(s.read_topic(topic_id)) or {}).get("archived_history"), provenance=False)
+    in_overflow = bool(overflow) and CAP_FIRST in overflow
+    present = in_history or in_overflow
+    where = "in the history" if in_history else "in the archived overflow" if in_overflow else "nowhere"
+    case = Case(f"the first value is still readable after {CAP_WRITES} writes (1 new_topic + {CAP_WRITES - 1} "
+                "version_field), in the history or as archived overflow", present,
+                f"length={length}, archived overflow={0 if overflow is None else len(overflow)}, "
+                f"first {CAP_FIRST!r} readable {where}", id="cap")
+    return case, {"writes": CAP_WRITES, "first": CAP_FIRST, "first_present": present, "first_in_history": in_history,
+                  "first_in_archived_overflow": in_overflow, "length": length,
                   "newest": values[0] if values else None}
 
 
@@ -150,10 +193,10 @@ def c4(ctx: Ctx) -> Verdict:
     s = ctx.system
     update, lost = _update_case(s)
     merge = _merge_case(s)
-    archive = _archive_case(s)
+    forgetting, forgetting_run = _forgetting_case(s)
     empty_cases, empty_current, null_current = _empty_cases(s)
     cap, history_cap = _cap_case(s)
-    cases = [update, merge, archive, *empty_cases, cap]
+    cases = [update, merge, forgetting, *empty_cases, cap]
     observations = [
         {"name": "lost earlier value", "lost": lost,
          "summary": (f"the earlier value {OLDER} is missing after the update"
@@ -162,5 +205,6 @@ def c4(ctx: Ctx) -> Verdict:
          "empty_current": empty_current == "", "null_current": null_current is None,
          "summary": f'empty write current={empty_current!r}; null write current={null_current!r}'},
     ]
-    measurements = {"history_cap": history_cap, "keeps_history": s.describe()["keeps_history"]}
+    measurements = {"history_cap": history_cap, "forgetting": forgetting_run,
+                    "keeps_history": s.describe()["keeps_history"]}
     return Verdict.from_cases("C4", cases, observations=observations, measurements=measurements)

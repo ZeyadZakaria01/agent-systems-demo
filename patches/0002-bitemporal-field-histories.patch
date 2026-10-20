@@ -1,0 +1,726 @@
+From 792476027e175996bb1cf6b352f018c2e481c7b9 Mon Sep 17 00:00:00 2001
+From: Zeyad Zakaria <zeyad.zakaria@ctchealth.ch>
+Date: Wed, 21 Oct 2026 01:47:34 +0300
+Subject: [PATCH 2/2] Bitemporal field histories: dated entries, valid-time
+ reads, keep-and-copy on changed ends
+
+---
+ src/memstate/api/ui_api.py         |   1 +
+ src/memstate/core/executor.py      |  71 ++++----
+ src/memstate/core/models.py        |  12 ++
+ src/memstate/datamodel/fields.py   | 144 +++++++++++++++-
+ src/memstate/store/graph_store.py  |  43 +++--
+ tests/test_bitemporal_histories.py | 255 +++++++++++++++++++++++++++++
+ 6 files changed, 478 insertions(+), 48 deletions(-)
+ create mode 100644 tests/test_bitemporal_histories.py
+
+diff --git a/src/memstate/api/ui_api.py b/src/memstate/api/ui_api.py
+index 79fb8df..c65d1e5 100644
+--- a/src/memstate/api/ui_api.py
++++ b/src/memstate/api/ui_api.py
+@@ -155,6 +155,7 @@ def ui_get_topic(topic_id: str, store: GraphStore = Depends(get_graph_store)) ->
+         out_fields[name] = {
+             "field_type": rec.field_type,
+             "ref_topic_id": rec.ref_topic_id,
++            "current": (lambda c: c.model_dump() if c else None)(rec.current_entry()),
+             "history": [e.model_dump() for e in rec.history],
+         }
+     th_raw = row.get("topic_history_json")
+diff --git a/src/memstate/core/executor.py b/src/memstate/core/executor.py
+index 7b2bd54..0507904 100644
+--- a/src/memstate/core/executor.py
++++ b/src/memstate/core/executor.py
+@@ -16,7 +16,7 @@ from memstate.core.models import (
+     QueryResponse,
+     TopicBundle,
+ )
+-from memstate.datamodel.fields import new_history_entry
++from memstate.datamodel.fields import FieldHistoryEntry, new_history_entry, parse_when
+ from memstate.datamodel.mappers import topic_from_graph_row
+ from memstate.embeddings import default_text_embedder
+ from memstate.embeddings.base import EmbeddingProvider
+@@ -117,9 +117,12 @@ class Executor:
+             )
+             applied.append(f"created_topic:{tid}")
+             for fw in req.fields:
++                _now = _utc_iso()
+                 entry = new_history_entry(
+                     value=fw.value,
+-                    valid_from=_utc_iso(),
++                    valid_from=fw.valid_from or _now,
++                    created_at=_now,
++                    invalid_at=fw.invalid_at,
+                     provenance=fw.provenance,
+                     why_changed=fw.why_changed,
+                     impact_expected=fw.impact_expected,
+@@ -151,9 +154,12 @@ class Executor:
+                 raise ValueError("topic not found")
+             tid = req.topic_id
+             for fw in req.fields:
++                _now = _utc_iso()
+                 entry = new_history_entry(
+                     value=fw.value,
+-                    valid_from=_utc_iso(),
++                    valid_from=fw.valid_from or _now,
++                    created_at=_now,
++                    invalid_at=fw.invalid_at,
+                     provenance=fw.provenance,
+                     why_changed=fw.why_changed,
+                     impact_expected=fw.impact_expected,
+@@ -191,9 +197,12 @@ class Executor:
+             if not self._store.topic_exists(req.topic_id):
+                 raise ValueError("topic not found")
+             fw = req.fields[0]
++            _now = _utc_iso()
+             entry = new_history_entry(
+                 value=fw.value,
+-                valid_from=_utc_iso(),
++                valid_from=fw.valid_from or _now,
++                created_at=_now,
++                invalid_at=fw.invalid_at,
+                 provenance=fw.provenance,
+                 why_changed=fw.why_changed,
+                 impact_expected=fw.impact_expected,
+@@ -227,44 +236,38 @@ class Executor:
+ 
+         raise ValueError("unknown placement")
+ 
++    @staticmethod
++    def _version_out(e: FieldHistoryEntry) -> FieldVersionOut:
++        return FieldVersionOut(
++            id=e.id,
++            value=e.value,
++            valid_from=e.valid_from or None,
++            invalid_at=e.invalid_at,
++            created_at=e.created_at or None,
++            expired_at=e.expired_at,
++            operation=e.operation,
++            replaces_entry_id=e.replaces_entry_id,
++            corrected_by_entry_id=e.corrected_by_entry_id,
++            provenance=e.provenance,
++            why_changed=e.why_changed,
++            impact_expected=e.impact_expected,
++        )
++
+     def _field_bundle(
+         self, tid: str, fn: str, req: QueryRequest
+     ) -> FieldOut | None:
+         tf = self._store.get_field_with_history(tid, fn)
+-        if not tf:
++        if not tf or not tf.history:
+             return None
+-        cur_e = tf.current_entry()
++        valid_at = parse_when(req.valid_at)
++        cur_e = tf.current_entry(valid_at)
+         want_temporal = "temporal" in req.stages
+-        want_structural = "structural" in req.stages
+-        if want_structural and not want_temporal and not cur_e:
+-            return None
+-        cur_out = None
+-        if cur_e:
+-            cur_out = FieldVersionOut(
+-                id=cur_e.id,
+-                value=cur_e.value,
+-                valid_from=cur_e.valid_from or None,
+-                provenance=cur_e.provenance,
+-                why_changed=cur_e.why_changed,
+-                impact_expected=cur_e.impact_expected,
+-            )
++        cur_out = self._version_out(cur_e) if cur_e else None
+         hist_out: list[FieldVersionOut] = []
+-        if want_temporal and req.explain:
+-            hist_out = [
+-                FieldVersionOut(
+-                    id=e.id,
+-                    value=e.value,
+-                    valid_from=e.valid_from or None,
+-                    provenance=e.provenance,
+-                    why_changed=e.why_changed,
+-                    impact_expected=e.impact_expected,
+-                )
+-                for e in tf.history
+-            ]
++        if (want_temporal and req.explain) or valid_at is not None:
++            hist_out = [self._version_out(e) for e in tf.history]
+         elif cur_out:
+             hist_out = [cur_out]
+-        if not cur_out and not hist_out:
+-            return None
+         return FieldOut(
+             name=fn,
+             field_type=tf.field_type,
+@@ -274,6 +277,8 @@ class Executor:
+         )
+ 
+     def query(self, req: QueryRequest) -> QueryResponse:
++        if req.valid_at is not None and parse_when(req.valid_at) is None:
++            raise ValueError(f"valid_at is not a date: {req.valid_at!r}")
+         qv = np.array(self._emb.embed([req.q])[0])
+         loaded = self._load_embedding_vectors()
+         sim_map: dict[str, float] = {}
+diff --git a/src/memstate/core/models.py b/src/memstate/core/models.py
+index 9daf22a..d3e4b40 100644
+--- a/src/memstate/core/models.py
++++ b/src/memstate/core/models.py
+@@ -27,6 +27,10 @@ class FieldWrite(BaseModel):
+     why_changed: str | None = None
+     impact_expected: str | None = None
+     provenance: str = "api"
++    valid_from: str | None = None
++    """When the value became true (ISO date or datetime). Default: write time."""
++    invalid_at: str | None = None
++    """When the value stops being true; omit for an ordinary update."""
+ 
+ 
+ class EdgeWrite(BaseModel):
+@@ -68,12 +72,20 @@ class QueryRequest(BaseModel):
+     top_k: int = 8
+     topic_ids: list[str] | None = None
+     field_names: list[str] | None = None
++    valid_at: str | None = None
++    """Return the value true at this time (ISO date or datetime); counts as a history request."""
+ 
+ 
+ class FieldVersionOut(BaseModel):
+     id: str
+     value: Any = None
+     valid_from: str | None = None
++    invalid_at: str | None = None
++    created_at: str | None = None
++    expired_at: str | None = None
++    operation: str | None = None
++    replaces_entry_id: str | None = None
++    corrected_by_entry_id: str | None = None
+     provenance: str | None = None
+     why_changed: str | None = None
+     impact_expected: str | None = None
+diff --git a/src/memstate/datamodel/fields.py b/src/memstate/datamodel/fields.py
+index 03a15f9..4d4516a 100644
+--- a/src/memstate/datamodel/fields.py
++++ b/src/memstate/datamodel/fields.py
+@@ -4,6 +4,7 @@ from __future__ import annotations
+ 
+ import json
+ import uuid
++from datetime import datetime, timezone
+ from typing import Any, Literal
+ 
+ from pydantic import BaseModel, ConfigDict, Field, field_validator
+@@ -42,6 +43,11 @@ class FieldHistoryEntry(BaseModel):
+     impact_expected: str | None = None
+     provenance: str = "api"
+     operation: str | None = None
++    invalid_at: str | None = None
++    created_at: str = ""
++    expired_at: str | None = None
++    replaces_entry_id: str | None = None
++    corrected_by_entry_id: str | None = None
+ 
+ 
+ class TopicField(BaseModel):
+@@ -74,8 +80,9 @@ class TopicField(BaseModel):
+             return 1.0
+         return max(0.0, min(10.0, x))
+ 
+-    def current_entry(self) -> FieldHistoryEntry | None:
+-        return self.history[0] if self.history else None
++    def current_entry(self, at: datetime | None = None) -> FieldHistoryEntry | None:
++        """The entry valid at `at` (default now); expired entries never count."""
++        return resolve_valid(self.history, at or datetime.now(timezone.utc))
+ 
+ 
+ def new_history_entry(
+@@ -86,10 +93,15 @@ def new_history_entry(
+     why_changed: str | None = None,
+     impact_expected: str | None = None,
+     operation: str | None = None,
++    invalid_at: str | None = None,
++    created_at: str | None = None,
+ ) -> FieldHistoryEntry:
++    now = utc_now_iso()
+     return FieldHistoryEntry(
+         id=str(uuid.uuid4()),
+         valid_from=valid_from,
++        invalid_at=invalid_at,
++        created_at=created_at or now,
+         value=value,
+         why_changed=why_changed,
+         impact_expected=impact_expected,
+@@ -98,6 +110,134 @@ def new_history_entry(
+     )
+ 
+ 
++def utc_now_iso() -> str:
++    return datetime.now(timezone.utc).isoformat()
++
++
++_MIN_TIME = datetime.min.replace(tzinfo=timezone.utc)
++
++
++def parse_when(raw: str | None) -> datetime | None:
++    """Parse an ISO date or datetime (naive means UTC); None when it is not a date."""
++    if not raw or not isinstance(raw, str):
++        return None
++    s = raw.strip()
++    if s.endswith(("Z", "z")):
++        s = s[:-1] + "+00:00"
++    try:
++        d = datetime.fromisoformat(s)
++    except ValueError:
++        return None
++    return d if d.tzinfo else d.replace(tzinfo=timezone.utc)
++
++
++def effective_from(e: FieldHistoryEntry) -> datetime:
++    """Start of an entry's validity. A `valid_from` that is not a date keeps arrival order,
++    so the entry starts when it was written."""
++    return parse_when(e.valid_from) or parse_when(e.created_at) or _MIN_TIME
++
++
++def _validity_ends(live: list[FieldHistoryEntry]) -> dict[str, datetime | None]:
++    """End of each live entry's validity. An entry with its own `invalid_at` ends there; any
++    other entry is valid until the next such entry's start (end-dated entries layer over it)."""
++    ranked = sorted(enumerate(live), key=lambda ie: (effective_from(ie[1]), -ie[0]))
++    plain = [e for _, e in ranked if not parse_when(e.invalid_at)]
++    ends: dict[str, datetime | None] = {}
++    for i, e in enumerate(plain):
++        ends[e.id] = effective_from(plain[i + 1]) if i + 1 < len(plain) else None
++    for e in live:
++        own = parse_when(e.invalid_at)
++        if own:
++            ends[e.id] = own
++    return ends
++
++
++def resolve_valid(history: list[FieldHistoryEntry], at: datetime) -> FieldHistoryEntry | None:
++    """Value valid at `at`: expired entries are ignored; when several are valid the shorter
++    validity wins, then the later recorded one."""
++    live = [e for e in history if not e.expired_at]
++    ends = _validity_ends(live)
++    best: tuple[float, int] | None = None
++    best_e: FieldHistoryEntry | None = None
++    for idx, e in enumerate(live):
++        start = effective_from(e)
++        end = ends.get(e.id)
++        if start > at or (end is not None and end <= at):
++            continue
++        span = float("inf") if end is None else (end - start).total_seconds()
++        key = (span, idx)  # idx 0 is the latest recorded among equals
++        if best is None or key < best:
++            best, best_e = key, e
++    return best_e
++
++
++def _insert_ordered(history: list[FieldHistoryEntry], entry: FieldHistoryEntry) -> None:
++    """History is newest valid_from first; an equal start puts the later recorded first."""
++    start = effective_from(entry)
++    for i, h in enumerate(history):
++        if effective_from(h) <= start:
++            history.insert(i, entry)
++            return
++    history.append(entry)
++
++
++def _expire_and_copy(
++    history: list[FieldHistoryEntry],
++    old: FieldHistoryEntry,
++    *,
++    invalid_at: str | None,
++    now: str,
++) -> FieldHistoryEntry:
++    """Keep-and-copy (ADR 0005): mark `old` expired, append a corrected copy with the same
++    provenance and the new stored end (None = value retracted from its start)."""
++    copy = old.model_copy(
++        update={
++            "id": str(uuid.uuid4()),
++            "invalid_at": invalid_at if invalid_at is not None else old.valid_from,
++            "created_at": now,
++            "expired_at": None,
++            "operation": "interval_corrected",
++            "replaces_entry_id": old.id,
++            "corrected_by_entry_id": None,
++        }
++    )
++    old.expired_at = now
++    old.corrected_by_entry_id = copy.id
++    _insert_ordered(history, copy)
++    return copy
++
++
++def write_entry(history: list[FieldHistoryEntry], entry: FieldHistoryEntry, max_history: int) -> None:
++    """Append a write to `history` (mutates it). An ordinary update stores no end date on the
++    entry it replaces. A plain statement that starts inside an end-dated entry's stored
++    validity changes that stored end, so that entry is kept, expired and copied."""
++    now = utc_now_iso()
++    if not entry.created_at:
++        entry.created_at = now
++    if not entry.valid_from:
++        entry.valid_from = entry.created_at
++    start = parse_when(entry.valid_from)
++    if start is not None and not parse_when(entry.invalid_at):
++        for old in [e for e in history if not e.expired_at]:
++            end = parse_when(old.invalid_at)
++            old_start = parse_when(old.valid_from)
++            if end is not None and old_start is not None and old_start <= start < end:
++                _expire_and_copy(history, old, invalid_at=entry.valid_from, now=now)
++    _insert_ordered(history, entry)
++    del history[max_history:]
++
++
++def retract_entry(history: list[FieldHistoryEntry], entry_id: str, max_history: int) -> FieldHistoryEntry:
++    """Retract a value: keep it with `expired_at` and append a linked copy that is valid
++    nowhere (its end equals its start). Returns the copy."""
++    for old in history:
++        if old.id == entry_id and not old.expired_at:
++            copy = _expire_and_copy(history, old, invalid_at=None, now=utc_now_iso())
++            del history[max_history:]
++            return copy
++    raise ValueError(f"no live history entry: {entry_id}")
++
++
+ class TopicFields(BaseModel):
+     """Map field name -> TopicField."""
+ 
+diff --git a/src/memstate/store/graph_store.py b/src/memstate/store/graph_store.py
+index 21a14db..9e73e7a 100644
+--- a/src/memstate/store/graph_store.py
++++ b/src/memstate/store/graph_store.py
+@@ -18,6 +18,8 @@ from memstate.datamodel.fields import (
+     is_nested_fields_bundle_value,
+     nested_bundle_inner_fields,
+     new_history_entry,
++    retract_entry,
++    write_entry,
+ )
+ from memstate.schema import init_graph
+ 
+@@ -419,7 +421,7 @@ class GraphStore:
+         rec = tf.fields.get(field_name)
+         if not rec:
+             return None
+-        cur = rec.history[0] if rec.history else None
++        cur = rec.current_entry()
+         h = [cur] if cur else []
+         return TopicField(field_type=rec.field_type, ref_topic_id=rec.ref_topic_id, history=h)
+ 
+@@ -464,13 +466,24 @@ class GraphStore:
+             rec.field_type = field_type  # type: ignore[assignment]
+         if ref_topic_id is not _UNSET:
+             rec.ref_topic_id = ref_topic_id if ref_topic_id else None
+-        rec.history.insert(0, entry)
+-        if len(rec.history) > max_history:
+-            rec.history = rec.history[:max_history]
++        write_entry(rec.history, entry, max_history)
+         self._set_topic_fields(topic_id, tf)
+         self.sync_topic_salience_from_fields(topic_id)
+         return str(entry.id)
+ 
++    def retract_field_entry(
++        self, topic_id: str, field_name: str, entry_id: str, *, max_history: int = 500
++    ) -> str:
++        """Retract a value (keep and copy, ADR 0005); returns the id of the linked copy."""
++        tf = self._get_topic_fields(topic_id)
++        rec = tf.fields.get(field_name)
++        if rec is None:
++            raise ValueError(f"field not found: {field_name}")
++        copy = retract_entry(rec.history, entry_id, max_history)
++        self._set_topic_fields(topic_id, tf)
++        self.sync_topic_salience_from_fields(topic_id)
++        return copy.id
++
+     def set_field_ref(
+         self,
+         topic_id: str,
+@@ -1122,15 +1135,19 @@ class GraphStore:
+         tf = self._get_topic_fields(topic_id)
+         if field_name in tf.fields and tf.fields[field_name].history:
+             rec = tf.fields[field_name]
+-            cur_e = rec.history[0]
+-            current = {
+-                "id": cur_e.id,
+-                "value": cur_e.value,
+-                "valid_from": cur_e.valid_from,
+-                "provenance": cur_e.provenance,
+-                "why_changed": cur_e.why_changed,
+-                "impact_expected": cur_e.impact_expected,
+-            }
++            cur_e = rec.current_entry()
++            current = (
++                {
++                    "id": cur_e.id,
++                    "value": cur_e.value,
++                    "valid_from": cur_e.valid_from,
++                    "provenance": cur_e.provenance,
++                    "why_changed": cur_e.why_changed,
++                    "impact_expected": cur_e.impact_expected,
++                }
++                if cur_e
++                else None
++            )
+             hist = [
+                 {
+                     "id": e.id,
+diff --git a/tests/test_bitemporal_histories.py b/tests/test_bitemporal_histories.py
+new file mode 100644
+index 0000000..023a0c6
+--- /dev/null
++++ b/tests/test_bitemporal_histories.py
+@@ -0,0 +1,255 @@
++"""Step 2a: dated field histories, valid-time reads, keep-and-copy (ADR 0005)."""
++
++from __future__ import annotations
++
++import os
++import tempfile
++import uuid
++from datetime import datetime, timezone
++from pathlib import Path
++
++import pytest
++
++from memstate.api.ui_api import ui_get_topic
++from memstate.core.executor import Executor
++from memstate.core.models import FieldWrite, IngestRequest, QueryRequest
++from memstate.datamodel.fields import new_history_entry
++from memstate.embeddings.base import HashEmbeddingProvider
++from memstate.schema import init_graph
++from memstate.store.graph_store import GraphStore
++from memstate.store.kuzu_adapter import KuzuGraph, clear_kuzu_graph_cache
++
++Y = 2025
++
++
++def d(month: int, day: int) -> str:
++    return datetime(Y, month, day, tzinfo=timezone.utc).isoformat()
++
++
++def dt(month: int, day: int) -> datetime:
++    return datetime(Y, month, day, tzinfo=timezone.utc)
++
++
++@pytest.fixture()
++def ex() -> Executor:
++    fd, path = tempfile.mkstemp(suffix=".kuzu")
++    os.close(fd)
++    clear_kuzu_graph_cache()
++    g = KuzuGraph(str(Path(path).resolve()))
++    init_graph(g)
++    return Executor(GraphStore(g), embedder=HashEmbeddingProvider(384))
++
++
++def make_topic(ex: Executor) -> str:
++    return ex.ingest(IngestRequest(placement="new_topic", title=f"t-{uuid.uuid4()}")).topic_id
++
++
++def write(ex: Executor, tid: str, value: str, valid_from=None, invalid_at=None) -> None:
++    ex.ingest(
++        IngestRequest(
++            placement="extend_topic",
++            topic_id=tid,
++            fields=[FieldWrite(name="f", value=value, valid_from=valid_from, invalid_at=invalid_at)],
++        )
++    )
++
++
++def rec(ex: Executor, tid: str):
++    return ex.store.get_field_with_history(tid, "f")
++
++
++def val_at(ex: Executor, tid: str, at: datetime):
++    e = rec(ex, tid).current_entry(at)
++    return e.value if e else None
++
++
++def test_undated_write_behaves_as_upstream(ex: Executor) -> None:
++    tid = make_topic(ex)
++    write(ex, tid, "a")
++    e = rec(ex, tid).history[0]
++    assert e.valid_from == e.created_at and e.invalid_at is None and e.expired_at is None
++
++
++def test_ordinary_update_leaves_two_entries_and_no_end(ex: Executor) -> None:
++    tid = make_topic(ex)
++    write(ex, tid, "a")
++    write(ex, tid, "b")
++    h = rec(ex, tid).history
++    assert [e.value for e in h] == ["b", "a"]
++    assert all(e.invalid_at is None and e.expired_at is None for e in h)
++    assert rec(ex, tid).current_entry().value == "b"
++
++
++def test_dated_entries_ordered_by_valid_from_and_late_older_value(ex: Executor) -> None:
++    tid = make_topic(ex)
++    write(ex, tid, "pro", valid_from=d(10, 1))
++    write(ex, tid, "basic", valid_from=d(8, 1))  # arrives later, older
++    h = rec(ex, tid).history
++    assert [e.value for e in h] == ["pro", "basic"]
++    assert h[1].invalid_at is None and h[1].expired_at is None and len(h) == 2
++    assert val_at(ex, tid, dt(9, 1)) == "basic"
++    assert val_at(ex, tid, dt(10, 20)) == "pro"
++    assert val_at(ex, tid, dt(7, 1)) is None
++
++
++def test_equal_valid_from_later_recorded_wins(ex: Executor) -> None:
++    tid = make_topic(ex)
++    write(ex, tid, "first", valid_from=d(6, 1))
++    write(ex, tid, "second", valid_from=d(6, 1))
++    assert val_at(ex, tid, dt(7, 1)) == "second"
++
++
++def test_future_dated_value_not_current_yet(ex: Executor) -> None:
++    tid = make_topic(ex)
++    write(ex, tid, "basic", valid_from=d(6, 1))
++    write(ex, tid, "premium", valid_from=d(12, 1))
++    assert val_at(ex, tid, dt(11, 20)) == "basic"
++    assert val_at(ex, tid, dt(12, 5)) == "premium"
++
++
++def test_only_future_value_has_no_current(ex: Executor) -> None:
++    tid = make_topic(ex)
++    future = datetime(2999, 1, 1, tzinfo=timezone.utc).isoformat()
++    write(ex, tid, "premium", valid_from=future)
++    assert rec(ex, tid).current_entry() is None
++    out = ex.query(QueryRequest(q="x"))
++    f = [f for b in out.candidates if b.topic_id == tid for f in b.fields if f.name == "f"][0]
++    assert f.current is None
++    assert "current" in f.model_dump() and f.model_dump()["current"] is None
++
++
++def test_end_dated_value_stays_current_until_its_end(ex: Executor) -> None:
++    tid = make_topic(ex)
++    write(ex, tid, "x", valid_from=d(9, 1), invalid_at=d(10, 1))
++    assert val_at(ex, tid, dt(9, 15)) == "x"
++    assert val_at(ex, tid, dt(10, 15)) is None
++    assert len(rec(ex, tid).history) == 1
++
++
++def test_override_layers_over_base_and_lapses(ex: Executor) -> None:
++    tid = make_topic(ex)
++    write(ex, tid, "$50", valid_from=d(9, 1))
++    write(ex, tid, "$80", valid_from=d(10, 1), invalid_at=d(11, 1))
++    h = rec(ex, tid).history
++    assert len(h) == 2 and all(e.expired_at is None for e in h)
++    assert val_at(ex, tid, dt(9, 20)) == "$50"
++    assert val_at(ex, tid, dt(10, 15)) == "$80"
++    assert val_at(ex, tid, dt(11, 5)) == "$50"
++
++
++def test_plain_statement_ends_override_with_keep_and_copy(ex: Executor) -> None:
++    tid = make_topic(ex)
++    write(ex, tid, "$50", valid_from=d(9, 1))
++    write(ex, tid, "$80", valid_from=d(10, 1), invalid_at=d(11, 1))
++    write(ex, tid, "$100", valid_from=d(10, 10))
++    h = rec(ex, tid).history
++    assert len(h) == 4  # base, override (expired), corrected copy, $100
++    orig = next(e for e in h if e.value == "$80" and e.expired_at)
++    copy = next(e for e in h if e.operation == "interval_corrected")
++    assert copy.replaces_entry_id == orig.id and orig.corrected_by_entry_id == copy.id
++    assert copy.invalid_at == d(10, 10) and copy.provenance == orig.provenance
++    assert orig.invalid_at == d(11, 1)  # original untouched apart from expired_at
++    assert val_at(ex, tid, dt(11, 5)) == "$100"
++    assert val_at(ex, tid, dt(10, 15)) == "$100"  # plain statement ended the override
++    assert val_at(ex, tid, dt(10, 5)) == "$80"
++    assert val_at(ex, tid, dt(9, 20)) == "$50"
++
++
++def test_plain_statement_outside_override_changes_nothing_stored(ex: Executor) -> None:
++    tid = make_topic(ex)
++    write(ex, tid, "$80", valid_from=d(10, 1), invalid_at=d(11, 1))
++    write(ex, tid, "$100", valid_from=d(12, 1))
++    h = rec(ex, tid).history
++    assert len(h) == 2 and all(e.expired_at is None for e in h)
++
++
++def test_retraction_keeps_and_copies(ex: Executor) -> None:
++    tid = make_topic(ex)
++    write(ex, tid, "a", valid_from=d(1, 1))
++    write(ex, tid, "b", valid_from=d(2, 1))
++    b = rec(ex, tid).history[0]
++    cid = ex.store.retract_field_entry(tid, "f", b.id)
++    h = rec(ex, tid).history
++    assert len(h) == 3
++    orig = next(e for e in h if e.id == b.id)
++    copy = next(e for e in h if e.id == cid)
++    assert orig.expired_at and orig.corrected_by_entry_id == cid
++    assert copy.replaces_entry_id == b.id and copy.operation == "interval_corrected"
++    assert val_at(ex, tid, dt(3, 1)) == "a"
++
++
++def test_copies_count_toward_cap(ex: Executor) -> None:
++    tid = make_topic(ex)
++    write(ex, tid, "base", valid_from=d(1, 1))
++    for i in range(4):
++        ex.store.append_field_history(
++            tid, "f", new_history_entry(value=i, valid_from=d(2, 1 + i), provenance="p"), max_history=3
++        )
++    assert len(rec(ex, tid).history) == 3
++
++
++def test_expired_hidden_unless_history_requested(ex: Executor) -> None:
++    tid = make_topic(ex)
++    write(ex, tid, "$80", valid_from=d(10, 1), invalid_at=d(11, 1))
++    write(ex, tid, "$100", valid_from=d(10, 10))
++
++    def field(req: QueryRequest):
++        out = ex.query(req)
++        return [f for b in out.candidates if b.topic_id == tid for f in b.fields if f.name == "f"][0]
++
++    plain = field(QueryRequest(q="x"))
++    assert plain.current.value == "$100"
++    assert [v.value for v in plain.history] == ["$100"]
++    full = field(QueryRequest(q="x", explain=True))
++    assert any(v.expired_at for v in full.history) and len(full.history) == 3
++    asked = field(QueryRequest(q="x", valid_at=d(10, 5)))
++    assert asked.current.value == "$80" and asked.current.operation == "interval_corrected"
++    assert any(v.expired_at for v in asked.history)
++
++
++def test_valid_at_picks_value_and_raises_salience(ex: Executor) -> None:
++    tid = make_topic(ex)
++    write(ex, tid, "old", valid_from=d(1, 1))
++    write(ex, tid, "new", valid_from=d(3, 1))
++    before = float(ex.store.get_topic(tid)["salience"])
++    out = ex.query(QueryRequest(q="x", valid_at=d(2, 1)))
++    f = [f for b in out.candidates if b.topic_id == tid for f in b.fields][0]
++    assert f.current.value == "old"
++    assert float(ex.store.get_topic(tid)["salience"]) > before
++
++
++def test_unparseable_valid_from_keeps_arrival_order(ex: Executor) -> None:
++    tid = make_topic(ex)
++    for i in range(3):
++        write(ex, tid, f"v{i}", valid_from=f"t{i}")
++    h = rec(ex, tid).history
++    assert [e.value for e in h] == ["v2", "v1", "v0"]
++    assert rec(ex, tid).current_entry().value == "v2"
++
++
++def test_bad_valid_at_is_rejected(ex: Executor) -> None:
++    make_topic(ex)
++    with pytest.raises(ValueError):
++        ex.query(QueryRequest(q="x", valid_at="not a date"))
++
++
++def test_ui_topic_read_returns_current(ex: Executor) -> None:
++    tid = make_topic(ex)
++    write(ex, tid, "a", valid_from=d(1, 1))
++    future = datetime(2999, 1, 1, tzinfo=timezone.utc).isoformat()
++    ex.ingest(
++        IngestRequest(
++            placement="extend_topic", topic_id=tid, fields=[FieldWrite(name="g", value="z", valid_from=future)]
++        )
++    )
++    out = ui_get_topic(tid, store=ex.store)
++    assert out["fields"]["f"]["current"]["value"] == "a"
++    assert "current" in out["fields"]["g"] and out["fields"]["g"]["current"] is None
++
++
++def test_openapi_declares_dates() -> None:
++    from memstate.api.main import app
++
++    schemas = app.openapi()["components"]["schemas"]
++    assert {"valid_from", "invalid_at"} <= set(schemas["FieldWrite"]["properties"])
++    assert "valid_at" in schemas["QueryRequest"]["properties"]
+-- 
+2.55.0
+

@@ -366,3 +366,60 @@ One entry per difficulty, newest last. Fields: expected, observed, evidence, res
 - Observed: the edge step is a `MATCH … MERGE` that silently does nothing, so the ingest succeeds and C2(b) came out not-scored (F17). While ratifying the verdict rule, I first recommended scoring that outcome `fail`, reasoning from the paper's "commits atomically or aborts". The user challenged that reasoning, and the code showed it was wrong: no step failed, so nothing was aborted or partly committed. A field `ref_topic_id` is validated mid-write, though, and a probe using it shows a real partial commit: HTTP 400 with the topic and first field stored (F23).
 - Resolution: proposed in "Ratify verdict rules set during the build": C2(b) switches its input to a field `ref_topic_id` pointing to a missing topic; the edge case stays as a soundness observation.
 - Lesson: before scoring an outcome against a guarantee, check in the code that the test input actually reaches the guarantee's failure path.
+### The "precise reading of C1" framing did not survive an adversarial review `report:`
+- Expected (2026-10-20): C1′ could be presented as the precise reading of C1 (report §1 item 13, §7.5), and a reference GEM built to C1–C6 would show "the gap is in the conditions" (ticket 37).
+- Observed: the two framings contradict each other. The challenge list (`.scratch/interview-package/assets/challenge-conditions-baseline-suite-probes.md`, C1 and C2) computed each reading of Definition 4 over `demo/time_stories.py`: reading `t` as valid time fixes T1 and T2. A cut-off at the question date fixes T3 and T6. T4 needs an end date and T5 a second timestamp, neither of which Definition 4 has. The same review found that plain Graphiti fails T3, T4 and T6 by code reading [INFERENCE], and that the dict baseline cannot back "database guarantees are necessary but not sufficient".
+- Resolution: "Answer the challenge list": C1′ is an amendment (one clarification, two additions); reference GEM phase 1 uses the kindest reading; the model is described as "standard bitemporal, in the form Zep uses"; the baseline becomes a versioned row.
+- Lesson: before claiming a definition is a reading of the paper's, compute what the paper's own wording returns on each test case; and run an adversarial review of the claims before building to them.
+
+### A README grep missed the authors' own "NOT Full Implementation"
+- Expected: a pattern search of `MemState/README.md` for "not implement|prototype|partial|…" would surface any completeness disclaimer.
+- Observed: it matched only line 107 ("research prototype… proof-of-concept"). I told the user the README never says it is incomplete. The heading at line 5 reads "(It is Proof-of-Concept, NOT Full Implementation)", which a search for "full implementation" found.
+- Resolution: ADR 0002 cites `MemState/README.md:5`.
+- Lesson: before denying that a source says something, search for the user's exact words, not only my paraphrases of them.
+
+## 2026-10-21
+
+### "Any schema" date detection reads upstream as accepting `valid_from`
+- Expected: searching every schema in `/openapi.json` for each date key (spec: "one flag per date, read over all schemas") gives all four flags False on upstream, as the combined flag did.
+- Observed: the first smoke run of the four-flag adapter raised on every probe: `valid_from` is a property of upstream's history-entry response model (`MemState/src/memstate/datamodel/fields.py:39`), so `valid_from` read True and the adapter refused the `history[0]` fallback on an upstream topic. The old rule (`valid_from` and `invalid_at` in one schema) had hidden this.
+- Resolution: `request_date_fields` (`demo/memstate_system.py`) reads a date from the models reachable from a request body (through `$ref`, `items`, `anyOf`), by use not by name; a response model that returns `valid_from` does not count. Departure from the spec's "all schemas" wording; unit-tested on a schema document with a response model carrying `valid_from`. Re-run: all four flags False, all six probes absent.
+- Lesson: a field's presence in some schema says nothing about direction; check which models a request uses before reading a capability from the schema.
+
+### Departures from the ticket wording
+- T5 is `absent` when any of its needed dates (`valid_from`, `valid_at`, `recorded_at`) is not accepted, not only `recorded_at`: the ticket's table lists all three, and the pre-registered versioned-row cell reads "absent (accepts `recorded_at`, not `valid_at`)". It is `fail` when all three are accepted and the two answers are identical.
+- A system that accepts `valid_at` but none of a probe's needed dates gets the plain read (same writes undated), as the spec says for "accepts none of the needed dates"; if any needed date is accepted, `valid_at` is sent whenever the system accepts it, also on T1, T2, T3, T4 and T6, whose needed lists do not name it.
+- The absent verdicts carry no cases; the answers are in `probe_evidence.stories.<id>.asked`.
+
+
+### Ticket 20: the versioned row's expected verdicts depend on checks that later tickets rewrite `report:`
+- Date: 2026-10-21
+- Expected: swapping the baseline for the versioned row (append-only history with recorded time, one transaction per write, empty and `null` rejected, top 8) gives the spec's "Expected verdicts" column on the checks as built.
+- Observed: three rows differ from the column only because of the check, not the row. (1) C2(a) and C4's merge case scored a same-topic append as a held case (`pass`), because an upsert was treated as "nothing dropped"; the arrangement cannot be met when no duplicate exists, so both are now `n/a` (C2(a) reads `not-scored`). (2) C6 scored a system that tracks no salience `fail`; the spec now says `absent` confirmed by a probe, so both clauses return `absent` with the salience read as the evidence (this supersedes ticket 07's entry above). (3) C2(b) on the edge-to-a-missing-topic input reads `not-scored` (the row stores no edges and reports none applied), while "Expected verdicts" says `pass` after ticket 22 (the time probes read `absent` once ticket 21's per-probe date detection merged).
+- Evidence: `tests/test_c2a.py`, `tests/test_c4.py`, `tests/test_c6.py`, `tests/test_c2b_c2c_c3.py`, `tests/test_time_probes.py` (baseline tests).
+- Resolution: (1) and (2) fixed in the checks in this ticket; (3) C2(b) is pinned as built (`not-scored`), its flip to `pass` left to ticket 22.
+- Lesson: pre-registering a verdict for a system is also pre-registering the check's arrangement; run the check on the stand-in before trusting the column.
+
+### Ticket 22: revised checks, and where the build departed from the ticket wording
+- Date: 2026-10-21
+- Expected: apply the spec's revised checks to C2(a)/(b), C4, C5, C6 and add C2(d); smoke on upstream and step 1 reproduces the "Expected verdicts" (C2(b) fail, C2(d) pass, C4 partial with one n/a, C6 clause 2 pass).
+- Observed: all five matched. Departures: (1) the versioned row needed a foreign-key check (`ref_topic_id` must name a stored topic) to read C2(b) `pass`; it is the same all-or-nothing rule ticket 20 gave it. (2) C2(a) is now one case (existence) instead of twenty; the per-repetition rows stay in `measurements.per_repetition`. (3) C4's real-forgetting case drives the forgetting pass with field-less fillers and a field-less control at 0.01 (the control shows the pass ran), so "n/a, confirmed by the run" needs no editor write; the cap case reads archived overflow from a field's `archived_history` key, which is a new adapter contract for the reference GEM. (4) `describe()` gained `declared_bound` (upstream: 500, `topic_count_soft_limit`; other systems must declare theirs for C5's text). (5) C6 clause 2 looks for a forgetting pass after each read and only forces one if none was seen; the filler ingests themselves are not observed one by one.
+- Evidence: `docs/findings.md` "Revised checks on upstream and step 1"; tests in `tests/test_c2a.py`, `test_c2b_c2c_c3.py`, `test_c2d.py`, `test_c4.py`, `test_c5.py`, `test_c6.py`.
+- Resolution: as built.
+- Lesson: a check's n/a on one system needs the run to show the pass happened (the control), otherwise "cannot be forgotten" and "forgetting never ran" read the same.
+
+### Ticket 17: the bad-merge chat run
+- Expected: asking Q02 plus questions on fields only the original topic held would show a loss on those fields after the merge (ticket 17 comment, 2026-10-20).
+- Observed: upstream's merge copies a field the keeper lacks, so `Team` and `Status` survived with their histories (F25); only the history of a field both topics hold (`Deadline`) is lost. The turns on Q06 and Q11 therefore record no state violation, and the C4 contrast rests on Q02's field.
+- Observed: the chat answer is not stable across takes of the same state. Take 1 (recording deleted by mistake while re-recording after a matcher fix; its replay output: Q02 "April 20", Q06 correct, Q11 "I don't know" with a false-positive word match on "completed") ; take 2 answered Q02 "I don't have access to that information" (kept in `demo/recordings/attempts/`); take 3, the case on the scorecard, answered all three correctly. The kept take is the one that shows the "answer looks right" contrast the ticket asks for, chosen with the other two disclosed; no claim about how often a 2B model answers right follows from n = 1.
+- Resolution: the answer-versus-ground-truth hint is a whole-word match (a substring match read "completed" as "Complete"); every turn keeps an empty hand-grade slot. Recording from a worktree: the venv, `MemState/` and the Ollama state live in the main checkout (`demo/paths.py`); the command in a recording uses the interpreter it was run with.
+- Lesson: a recorder should refuse to delete its own evidence: re-recording to fix a rendering detail cost the first take. Fix the renderer, replay the old file; record again only for new evidence.
+- Lock: this run held `/tmp/gem-suite-live.lock` (session rule); the README's command uses the repo's `server.lock` like the other runner commands.
+
+### Committing in `MemState-patched/` trips the suite's pre-commit hook
+- Date: 2026-10-21
+- Expected: a commit on `bitemporal` goes through the shared hooks like any other.
+- Observed: `.githooks/pre-commit` saw staged files under `tests/`, resolved the venv from the submodule's git dir (`.git/modules/.venv/bin/python`, not found) and reported the offline suite red. The hook is written for the suite's `demo/` and `tests/`, not for the submodule's own `tests/`.
+- Evidence: `/tmp/pre-commit-pytest.*` from the failed commit.
+- Resolution: committed step 2 with `git -c core.hooksPath=<dir holding only the commit-msg hook> commit`, so attribution stripping still ran; the patch's tests were run by hand first (57 passed). Not `--no-verify`.
+- Lesson: patch-step commits need their own pre-commit story (the hook should skip when the repo is the submodule); later steps hit it again.

@@ -31,9 +31,10 @@ from pathlib import Path
 
 from demo import live
 from demo.adapter import utc_now
-from demo.changes import CHAIN, changes_per_step, render_change_table
+from demo.changes import CHAIN, case_changes_per_step, changes_per_step, render_change_table
 from demo.checks import Check, discover, natural_key
 from demo.deviations import DEVIATIONS
+from demo.chat_recording import RECORDINGS_ROOT, latest_per_case, render_chat_cases, results_payload
 from demo.evidence import RunDir, new_run_dir, write_results
 from demo.failures import detail as _detail, errored as _errored, run_check
 from demo.latency_tables import with_latency
@@ -56,10 +57,11 @@ class RunResult:
 def run_recorded(systems: list[str], checks: list[Check], results_root: Path, command: str,
                  run_day: date | None = None, columns: tuple[Column, ...] = COLUMNS,
                  runtime_root: Path | None = None, registry: dict[str, SystemSpec] | None = None,
-                 log=print) -> RunResult:
+                 recordings_dir: Path | None = None, log=print) -> RunResult:
     registry = registry or SYSTEMS
     run_day = run_day or date.today()
     run = new_run_dir(results_root, runtime_root or SHARED_ROOT / ".runtime" / "gem-suite")
+    chats = latest_per_case(recordings_dir or RECORDINGS_ROOT)  # read once: the run prints what existed at its start
     started = utc_now()
     verdicts: list[Verdict] = []
     rows = sorted((r for c in checks for r in c.rows if r.on_scorecard), key=lambda r: natural_key(r.id))
@@ -75,6 +77,8 @@ def run_recorded(systems: list[str], checks: list[Check], results_root: Path, co
             scorecard += "\n\n### Per-step change table\n\n" + render_change_table(rows, scored)
         if storyline := render_storyline(verdicts):
             scorecard += "\n\n" + storyline
+        if chat_cases := render_chat_cases(chats):  # recorded chat runs (ticket 17), replayed from demo/recordings/
+            scorecard += "\n\n" + chat_cases
         scorecard = with_latency(scorecard, verdicts)
         scorecard += "\n\n" + SCOPE_NOTE + "\n\n### Deviations\n\n" + render_deviations()
         (run.dir / "scorecard.md").write_text(scorecard + "\n")
@@ -87,9 +91,11 @@ def run_recorded(systems: list[str], checks: list[Check], results_root: Path, co
             "verdicts": [v.to_dict() for v in verdicts],
             "counts": {c.title(verdicts): counts(c, rows, verdicts) for c in columns},
             "change_table": {"chain": list(CHAIN), "measured": measured(scored, CHAIN),
-                             "changes": changes_per_step(rows, scored)},
+                             "changes": changes_per_step(rows, scored),
+                             "case_changes": case_changes_per_step(rows, scored)},
             "servers": run.events,
             "deviations": [d.__dict__ for d in DEVIATIONS],
+            "chat_cases": results_payload(chats),
         })
         return scorecard
 

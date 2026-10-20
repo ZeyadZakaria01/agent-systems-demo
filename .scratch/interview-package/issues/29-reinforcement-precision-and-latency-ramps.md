@@ -26,3 +26,7 @@ Resolved 2026-10-20 (Q1–Q5 accepted; Q1 and Q2 revised once). Facts: every `/v
 - **Q5, budget.** Replaces the one-week budget of Review of the demo plan: built in two days with subagents, nothing cut. Commit 2 is the critical path (commit 3 builds on it, per-commit runs need all three); the suite is built in parallel against the API in Bitemporal history model and API; runs are serial on the laptop.
 
 Applied: report §9.2 (Repeats, Search vs. memory, Measurements) and §9.4 C6 row; `GLOSSARY.md` (Search failure, Memory failure, Reinforcement precision); map.
+
+## Comments
+
+- 2026-10-20, from the user: Q4 changes. The ×3 ramps on the final commits run at the end if time allows. When they don't run, each ramp is reported as one run with no range, labelled provisional (as F22 already is), and no "no measurable difference" claim is made. Applied to spec story 43 and report §9.2 (Repeats).

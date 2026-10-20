@@ -1,4 +1,4 @@
-"""Storyline triage and reinforcement precision, in-process on the baseline. Seam: the system adapter.
+"""Storyline triage and reinforcement precision, in-process on the baseline (the versioned row). Seam: the system adapter.
 
 MemState verdicts are never pinned here; they come from recorded runs. The systems below that report salience or
 edges are generic System subclasses of the baseline, not mocks of MemState.
@@ -15,7 +15,7 @@ def topic(n: int, key: str, title: str, summary: str, name: str, value: str) -> 
 
 
 def crowded_storyline() -> Storyline:
-    """Twelve topics that look like the question and one that does not: the labelled one falls outside the top 10."""
+    """Twelve topics that look like the question and one that does not: the labelled one falls outside the top 8."""
     distractors = tuple(topic(i, f"d{i}", f"Budget review meeting agenda item {i}",
                               "Agenda for the quarterly budget review meeting", "Owner", f"person {i}")
                         for i in range(1, 13))
@@ -26,11 +26,11 @@ def crowded_storyline() -> Storyline:
                             "north"),))
 
 
-def test_a_baseline_wrong_answer_is_a_search_failure_when_the_labelled_topic_falls_outside_the_top_10():
+def test_a_baseline_wrong_answer_is_a_search_failure_when_the_labelled_topic_falls_outside_the_top_8():
     run = run_storyline(Baseline(), crowded_storyline())
     (outcome,) = run.outcomes
     assert outcome.outcome == SEARCH_FAILURE
-    assert outcome.returned is False and len(outcome.returned_ids) == 10  # the baseline's top-10 query
+    assert outcome.returned is False and len(outcome.returned_ids) == 8  # the versioned row's top-8 query
     assert run.triage == {"questions": 1, "correct": 0, "search_failures": 1, "memory_failures": 0}
 
 
@@ -113,7 +113,7 @@ def test_a_labelled_topic_that_is_not_returned_is_not_bumped_so_precision_is_zer
     run = run_storyline(BumpsReturnedTopics(), crowded_storyline())
     r = run.reinforcement
     assert (r.labelled_increments, r.questions_bumped) == (0.0, 0)
-    assert r.all_increments == 1.0 and r.precision == 0.0  # ten returned topics, +0.1 each
+    assert abs(r.all_increments - 0.8) < 1e-9 and r.precision == 0.0  # eight returned topics, +0.1 each
 
 
 def test_reinforcement_precision_is_not_applicable_on_the_baseline():
