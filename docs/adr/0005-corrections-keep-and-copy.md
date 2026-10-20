@@ -1,0 +1,3 @@
+# Corrections keep and copy field-history entries
+
+When a later write shortens an entry's validity, the patched MemState keeps the old entry, marks it `expired_at`, and appends a corrected copy (`operation: "interval_corrected"`, `replaces_entry_id`, `corrected_by_entry_id`) carrying the original provenance. Graphiti, whose time model the patch adopts, instead edits the old fact in place (`graphiti_core/utils/maintenance/edge_operations.py:779-780`, commit `6e3e3cb`); that loses what memory believed before, so "what did memory believe on Feb 10?" returns nothing after a correction, and it breaks GEM's append-not-overwrite rule for C4 (2605.26252 lines 214, 273). Copies count toward MemState's 500-entry history cap, whose truncation already breaks C4 upstream.
