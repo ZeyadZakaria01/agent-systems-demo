@@ -1,0 +1,175 @@
+"""Patch steps: resolving, checking out and returning, on a throwaway git repo (real git, no MemState)."""
+
+import json
+import subprocess
+from datetime import date
+
+import pytest
+
+from demo.checks import discover
+from demo.run import run_recorded
+from demo.steps import PatchRepo, StepError
+from demo.systems import SYSTEMS, default_systems, step_label, step_spec
+
+
+def git(path, *args):
+    return subprocess.run(["git", "-C", str(path), *args], check=True, capture_output=True, text=True).stdout.strip()
+
+
+@pytest.fixture
+def repo(tmp_path):
+    """A base commit and a branch `bitemporal` with two commits on top."""
+    path = tmp_path / "patched"
+    path.mkdir()
+    git(path, "init", "-q", "-b", "main")
+    git(path, "config", "user.email", "t@example.com")
+    git(path, "config", "user.name", "t")
+    (path / "f.txt").write_text("upstream\n")
+    git(path, "add", ".")
+    git(path, "commit", "-q", "-m", "upstream")
+    base = git(path, "rev-parse", "HEAD")
+    git(path, "checkout", "-q", "-b", "bitemporal")
+    for n in (1, 2):
+        (path / "f.txt").write_text(f"step {n}\n")
+        git(path, "commit", "-q", "-am", f"step {n}")
+    return PatchRepo(path=path, base=base, branch="bitemporal")
+
+
+def test_steps_are_the_commits_above_upstream_oldest_first(repo):
+    steps = repo.steps()
+    assert len(steps) == 2
+    assert git(repo.path, "log", "--format=%s", "--reverse", f"{repo.base}..bitemporal").split("\n") == ["step 1", "step 2"]
+    assert repo.step_commit(1) == steps[0] and repo.step_commit(2) == steps[1]
+
+
+def test_checkout_step_detaches_at_that_commit_and_returning_restores_the_branch(repo):
+    commit = repo.checkout_step(1)
+    assert git(repo.path, "rev-parse", "HEAD") == commit
+    assert git(repo.path, "branch", "--show-current") == ""  # detached
+    assert (repo.path / "f.txt").read_text() == "step 1\n"
+    repo.return_to_branch()
+    assert git(repo.path, "branch", "--show-current") == "bitemporal"
+    assert (repo.path / "f.txt").read_text() == "step 2\n"
+
+
+def test_a_step_that_does_not_exist_is_named_with_the_commits_that_do(repo):
+    with pytest.raises(StepError, match=r"step 3 does not exist: bitemporal has 2 commit"):
+        repo.checkout_step(3)
+    assert git(repo.path, "branch", "--show-current") == "bitemporal"  # nothing was touched
+
+
+def test_a_dirty_worktree_is_refused_and_left_alone(repo):
+    (repo.path / "f.txt").write_text("my uncommitted work\n")
+    with pytest.raises(StepError, match="uncommitted changes"):
+        repo.checkout_step(1)
+    assert git(repo.path, "branch", "--show-current") == "bitemporal"
+    assert (repo.path / "f.txt").read_text() == "my uncommitted work\n"
+
+
+def test_untracked_files_do_not_count_as_dirty(repo):
+    (repo.path / "scratch.txt").write_text("x")
+    repo.checkout_step(1)
+
+
+def test_registered_step_systems_are_labelled_with_step_and_commit():
+    assert {"step1", "step2", "step3"} <= set(SYSTEMS)
+    assert step_label(2, "089b823d2a44c65e539db51173770ee499ce80b2") == "bitemporal patch step 2 (089b823, LadybugDB)"
+
+
+def test_a_run_without_systems_measures_only_the_steps_that_exist(repo):
+    # two commits on the throwaway repo: step 3 is left out, everything else stays in registry order
+    assert default_systems(repo) == ["upstream", "step1", "step2", "baseline"]
+    git(repo.path, "reset", "-q", "--hard", "HEAD~1")
+    assert default_systems(repo) == ["upstream", "step1", "baseline"]
+
+
+@pytest.mark.parametrize("operation", ["MERGE_HEAD", "CHERRY_PICK_HEAD", "REVERT_HEAD", "BISECT_LOG", "rebase-merge"])
+def test_an_operation_in_progress_is_refused(repo, operation):
+    marker = git(repo.path, "rev-parse", "--path-format=absolute", "--git-path", operation)
+    if operation == "rebase-merge":
+        import os
+        os.makedirs(marker)
+    else:
+        open(marker, "w").write(repo.head() + "\n")
+    with pytest.raises(StepError, match=f"operation in progress \\({operation}\\)"):
+        repo.checkout_step(1)
+    assert git(repo.path, "branch", "--show-current") == "bitemporal"
+
+
+def test_the_runner_checks_the_step_out_for_its_checks_and_returns_to_the_branch_even_when_they_fail(repo, tmp_path):
+    seen = []
+
+    class Boom(Exception):
+        pass
+
+    def opened(tag_id, run):
+        seen.append((git(repo.path, "branch", "--show-current"), repo.head()))
+        raise Boom("server did not start")
+
+    spec = step_spec(1, repo, open_fn=opened)
+    c1 = next(c for c in discover() if c.id == "C1")
+    run = run_recorded(["step1"], [c1], tmp_path, "cmd", run_day=date(2026, 10, 20),
+                       registry={"step1": spec}, runtime_root=tmp_path / "rt", log=lambda *_: None)
+    assert seen == [("", repo.step_commit(1))]  # detached, at step 1, while its check ran
+    (v,) = run.verdicts
+    assert v.verdict == "error" and "server did not start" in v.error
+    assert git(repo.path, "branch", "--show-current") == "bitemporal"
+
+
+def test_a_missing_step_gives_error_verdicts_naming_the_missing_step_and_touches_nothing(repo, tmp_path):
+    spec = step_spec(3, repo, open_fn=lambda *_: pytest.fail("must not open"))
+    c1 = next(c for c in discover() if c.id == "C1")
+    run = run_recorded(["step3"], [c1], tmp_path, "cmd", run_day=date(2026, 10, 20),
+                       registry={"step3": spec}, runtime_root=tmp_path / "rt", log=lambda *_: None)
+    (v,) = run.verdicts
+    assert v.verdict == "error" and "step 3 does not exist" in v.error
+    assert git(repo.path, "branch", "--show-current") == "bitemporal"
+
+
+def test_a_dirty_worktree_gives_error_verdicts_not_a_clobbered_checkout(repo, tmp_path):
+    (repo.path / "f.txt").write_text("mine\n")
+    spec = step_spec(1, repo, open_fn=lambda *_: pytest.fail("must not open"))
+    c1 = next(c for c in discover() if c.id == "C1")
+    run = run_recorded(["step1"], [c1], tmp_path, "cmd", run_day=date(2026, 10, 20),
+                       registry={"step1": spec}, runtime_root=tmp_path / "rt", log=lambda *_: None)
+    assert run.verdicts[0].verdict == "error" and "uncommitted changes" in run.verdicts[0].error
+    assert (repo.path / "f.txt").read_text() == "mine\n"
+
+
+def run_step1(repo, tmp_path, opened=None):
+    spec = step_spec(1, repo, open_fn=opened or (lambda *_: pytest.fail("must not open")))
+    c1 = next(c for c in discover() if c.id == "C1")
+    return run_recorded(["step1"], [c1], tmp_path, "cmd", run_day=date(2026, 10, 20), registry={"step1": spec},
+                        runtime_root=tmp_path / "rt", log=lambda *_: None)
+
+
+def test_a_refused_setup_leaves_a_detached_worktree_with_a_tracked_edit_exactly_where_it_was(repo, tmp_path):
+    # a developer amending step 1 (HEAD detached at it, an edit to a tracked file): the run refuses and does not
+    # carry the edit over to `bitemporal` in teardown
+    git(repo.path, "checkout", "-q", "--detach", repo.step_commit(1))
+    (repo.path / "f.txt").write_text("amending step 1\n")
+    head = repo.head()
+    run = run_step1(repo, tmp_path)
+    assert run.verdicts[0].verdict == "error" and "uncommitted changes" in run.verdicts[0].error
+    assert repo.head() == head and git(repo.path, "branch", "--show-current") == ""
+    assert (repo.path / "f.txt").read_text() == "amending step 1\n"
+    assert not any("teardown_error" in e for e in run_events(run))
+
+
+def test_a_refused_setup_for_an_operation_in_progress_does_not_move_the_worktree(repo, tmp_path):
+    open(git(repo.path, "rev-parse", "--path-format=absolute", "--git-path", "MERGE_HEAD"), "w").write(repo.head() + "\n")
+    run = run_step1(repo, tmp_path)
+    assert "operation in progress" in run.verdicts[0].error
+    assert git(repo.path, "branch", "--show-current") == "bitemporal"
+
+
+def test_a_setup_that_switched_is_undone_by_teardown_even_when_it_fails_after_the_checkout(repo, tmp_path, monkeypatch):
+    # HEAD moves, then verification fails: the worktree must still go back to the branch
+    monkeypatch.setattr(PatchRepo, "head", lambda self: "0" * 40 if git(self.path, "branch", "--show-current") == "" else git(self.path, "rev-parse", "HEAD"))
+    run = run_step1(repo, tmp_path)
+    assert "checked out step 1 but HEAD is" in run.verdicts[0].error
+    assert git(repo.path, "branch", "--show-current") == "bitemporal"
+
+
+def run_events(run):
+    return json.loads((run.dir / "results.json").read_text())["servers"]

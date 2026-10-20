@@ -4,7 +4,7 @@ Review demo for *Is Agent Memory a Database? Rethinking Data Foundations for Lon
 
 ## Status
 
-Environment ready and live-verified (MemState, Groq, Ollama on CUDA; LadybugDB beside Kuzu). The demo design is decided: [report §9](docs/report/gem-limitations-and-directions.md#9-demo-time-correct-governed-memory), with the decisions behind it on the wayfinder map (`.scratch/interview-package/map.md`). **No demo code exists yet**; `scripts/probe_memstate.py` holds the probes behind findings F7–F12, and the build spec is `.scratch/gem-conformance-suite/spec.md` (ready to build).
+Environment ready and live-verified (MemState, Groq, Ollama on CUDA; LadybugDB beside Kuzu). The demo design is decided: [report §9](docs/report/gem-limitations-and-directions.md#9-demo-time-correct-governed-memory), with the decisions behind it on the wayfinder map (`.scratch/interview-package/map.md`). The conformance suite is being built from `.scratch/gem-conformance-suite/spec.md`: the `demo/` package runs check C1 in recorded mode on upstream MemState and on the baseline (see "Run the conformance suite"); `scripts/probe_memstate.py` holds the probes behind findings F7–F12.
 
 ## Layout
 
@@ -30,6 +30,8 @@ Environment ready and live-verified (MemState, Groq, Ollama on CUDA; LadybugDB b
 | `.scratch/interview-package/` | Wayfinder map and decision tickets. |
 | `AGENTS.md`, `CLAUDE.md` | Instructions for coding agents; `CLAUDE.md` imports `AGENTS.md`. |
 | `scripts/` | Start scripts for MemState and Ollama, the think-off proxy, and `probe_memstate.py` (HTTP probes for C3, salience, merge and a topic ramp; findings F7–F12). |
+| `demo/` | The GEM conformance suite: system adapters (`client.py` MemState over HTTP, `baseline.py`), the verdict model, checks (`demo/checks/`, one module per condition, discovered by the runner), the runner and scorecard (`run.py`), the per-step patch runs (`steps.py`) and change table (`changes.py`). `demo/results/` holds one directory per run (verdicts, snapshots, logs); git-ignored. |
+| `tests/` | The suite's own pytest: checks run in-process against the baseline, no server. |
 | `.githooks/` | `commit-msg` hook that strips AI attribution from commit messages. |
 | `docs/papers/*.pdf` | Local copies of the papers, next to their Markdown conversions. Git-ignored. |
 
@@ -99,6 +101,53 @@ Kuzu holds an exclusive file lock on the database. If the project lives in a syn
 ## Demo
 
 A GEM conformance suite checks MemState's stored state, not only its answers, against the guarantees the paper claims, beside a last-write-wins baseline; the contribution is a bitemporal extension of MemState's field histories on LadybugDB, with time probes measured before and after. The design (tests, verdict scale, baseline, extension, scorecard) lives in one place: [report §9](docs/report/gem-limitations-and-directions.md#9-demo-time-correct-governed-memory). Terms are defined in [`GLOSSARY.md`](GLOSSARY.md).
+
+### Run the conformance suite
+
+Recorded mode runs each check on a fresh database per system (a MemState server started by `scripts/run_memstate.sh` on a fresh absolute DB, stopped when the check ends; the baseline in-process) and writes `demo/results/<run id>/` with `results.json`, `scorecard.md`, one snapshot per (system, check) and the server logs. The runner starts a server on port 8765 and does not take the machine-wide lock itself, so wrap it when other agents or servers share the machine:
+
+```bash
+flock /home/zeyad/work/agent-systems-demo-wt/server.lock .venv/bin/python -m demo.run --systems upstream,baseline --checks C1
+flock /home/zeyad/work/agent-systems-demo-wt/server.lock .venv/bin/python -m demo.run --systems upstream,baseline --checks 'C2(a)'            # merge violation rate (20 repetitions)
+flock /home/zeyad/work/agent-systems-demo-wt/server.lock .venv/bin/python -m demo.run --systems upstream,baseline --checks 'C2(b),C2(c),C3'   # atomicity, declarative policies, propagation
+flock /home/zeyad/work/agent-systems-demo-wt/server.lock .venv/bin/python -m demo.run --systems upstream,baseline --checks C4               # history survival, empty writes, 501-update cap
+flock /home/zeyad/work/agent-systems-demo-wt/server.lock .venv/bin/python -m demo.run --systems upstream,step1,baseline --checks C5-1,C5-2 --ramp-repeats 1  # C5 mechanism, natural trajectory, latency ramps
+.venv/bin/python -m demo.run --list    # checks and systems
+.venv/bin/python -m pytest             # the suite's tests: baseline only, no server
+```
+
+Rows so far: `C1` (control), `C2(a)` (merge violation rate, 20 repetitions), `C2(b)` / `C2(c)` / `C3`, `C4` (history survival, empty/`null` writes, 501-update cap; `demo/checks/c4_history.py`; the update path is the control), the two C5 rows `C5-1` / `C5-2` (`demo/checks/c5_topic_ramp.py`; mechanism and natural trajectory, one check each; `--checks C5-1,C5-2` prints the latency table at 100 / 250 / 500 / 1,000 / 2,000, `--ramp-repeats` defaults to 1), the two C6 clauses `C6-1` / `C6-2` (`demo/checks/c6_retrieval_adaptation.py`; clause 2 ingests 500+ topics on its own fresh database to make the forgetting pass run, so it takes tens of seconds on a server), and time probes `T1`–`T6` (`--checks T1` runs all six; seven fresh DBs, about 20 s on upstream). `--systems` and `--checks` default to everything registered (`demo/systems.py`) and discovered (`demo/checks/`). The output is the scorecard (the claim column, each cell's verdict with its snapshot link, fails and absences counted separately), the staleness windows a check reported (each cites its run), the deviations table, and a block that pastes into `docs/findings.md` (command, DB path, key output). Smoke runs under `demo/results/` are not evidence of record. To add a check, drop a module in `demo/checks/` (see the docstring of `demo/checks/__init__.py`); to add a system, write a `System` subclass (`demo/client.py`) and register a `SystemSpec` in `demo/systems.py`; to add a scorecard column, add a `Column` in `demo/scorecard.py`.
+
+Patch steps: `step1`, `step2`, `step3` are the commits of `bitemporal` above upstream (`git -C MemState-patched rev-list --reverse 945d7c4..bitemporal`, `demo/steps.py`). A step's `setup` checks its commit out detached in the shared `MemState-patched/` (refused if tracked files there are modified), its checks run on a `--patched` server on a fresh `.lbug`, and `teardown` returns to `bitemporal`, also after an error, but only if that step's `setup` actually moved HEAD (a refused dirty worktree, or one with a rebase, merge or cherry-pick in progress, stays exactly as it was); the server's commit must equal the step's. Without `--systems` a run measures the steps that exist (today one; a step that does not exist gives error verdicts naming the commit count). The scorecard's patch column shows the last step measured, and the per-step change table (`demo/changes.py`; also under `change_table` in `results.json`) lists upstream, step 1, step 2 and step 3 per row, marking cells whose verdict differs from the nearest earlier real verdict of that row and naming the system compared with (step 1 against upstream, verdict for verdict). An `error` cell is shown unmarked and is never a baseline. A verdict from a random-ID test reports its counts in `Verdict.measurements["random_id_counts"] = {"<label>": [count, of]}`; the table shows them and never compares them.
+
+### Live mode (watch it in the Graph Explorer)
+
+Live mode drives a MemState server that is **already running**, so the Graph Explorer (`http://127.0.0.1:8765/ui/`) shows field histories growing and salience changing while the checks run. Start the server yourself on a fresh absolute DB (under the machine-wide lock when others share the machine), then:
+
+```bash
+flock /home/zeyad/work/agent-systems-demo-wt/server.lock bash scripts/run_memstate.sh /abs/fresh/path/memstate.kuzu   # terminal 1: you own this server
+.venv/bin/python -m demo.run --mode live --url http://127.0.0.1:8765 --delay 5                                       # terminal 2
+.venv/bin/python -m demo.run --mode live --url http://127.0.0.1:8765 --step --checks C1                               # Enter after every step
+```
+
+- The runner never starts or stops a server and takes no lock. It refuses to run if nothing answers at `--url`.
+- One database for the whole run. To keep the checks apart, every title a check writes gets ` [live <check> <HHMMSS>]` appended (the time keeps a second run against the same server from duplicating the first run's titles, which the Reasoner would merge). Limits: a check that forces a fixed topic id collides with another that forces the same id (error verdict), and an empty title is not rewritten.
+- Pace: `--delay N` sleeps N seconds after every write or query (the topic badge in the Explorer is its salience; the topic detail shows the value timeline); `--step` waits for Enter instead (Ctrl-D runs on). State reads are not paced. The Explorer does not auto-refresh: press its refresh button after each step.
+- `--checks` selects rows as in recorded mode; without it, every check discovered at that time runs. `--as upstream` (default) says which system the server is, for checks restricted by `systems=`; `--systems` is not accepted.
+- Everything is labelled live: verdict system `live`, `results.json` has `"mode": "live"`, the scorecard file is `scorecard-live.md` headed "LIVE RUN - not a result of record", every printed line starts with `[LIVE]`. Output goes to `demo/results-live/<run id>/` (git-ignored), never to `demo/results/`; a results root inside the recorded one is refused. A live run never enters the scorecard of record.
+- A live check sees a shared database, so checks that assume an empty one (counts of all topics, the 500-topic forgetting threshold) are not meaningful live; use recorded mode for evidence.
+
+Smoke evidence (2026-10-20, upstream on a fresh DB, `--step` and `--delay`): screenshots of the Explorer are in [`docs/live-mode/`](docs/live-mode/): `step2-detail-after-version-field.png` (the `Deadline` timeline holds `April 20` current over `March 15`), `step1-detail-new-topic.png` against `step4-detail-after-second-query.png` (salience 1 → 1.2000000000000002 after two reads), `step1-new-topic.png` (overview right after the first write: badge 1 on the new topic, 1.2 on the earlier runs' topics) and `final-overview.png` (the new topic's badge is now 1.2 too). See `docs/findings.md` F14.
+
+Extension points:
+
+- A check needing several fresh databases (a story each, a ramp per repeat) uses `with ctx.fresh_system("tag") as s:`; each gets its own server (MemState) and snapshot, one at a time (opening a second while one is open raises `SystemBusy`, and `ctx.system` stays open until the check ends, so use one style per check). A row may be assembled from several of them (`Verdict.snapshots` lists every snapshot).
+- A `SystemSpec` may carry `setup(run)` / `teardown(run)` hooks around all of that system's checks in a run (ticket 03: check out a patch step, return to `bitemporal`); `teardown` runs after errors too, and a failing `setup` gives that system's checks error verdicts.
+- Every adapter field has an explicit `current` (entry, or `None` for "no value"; `{"value": None}` is a written `null`). Read it with `demo.reads.current_value` (`NO_VALUE` vs `None`). A patch server must state `current` in its stored-topic fields, because its history is ordered by valid time and `history[0]` is only upstream's definition of current.
+- A check reads capabilities from `system.describe()` (`keeps_history`), never from a missing key. `wait_until` returns `Waited(elapsed, timed_out)`.
+- A check reads `describe()["accepts_valid_time"]` (dated writes and `valid_at` reads) and `describe()["accepts_recorded_at"]` (`recorded_at` reads), never from a name. `MemStateSystem` searches every schema in `/openapi.json` for those keys, so ticket 12 can flip T1–T4 and T6 before ticket 13 lands `recorded_at`. The flags are recorded in each time-probe row's `measurements`. The stories and the story shift live in `demo/time_stories.py`.
+- A check that raises, a server that dies or will not start, or a failing setup becomes `error` verdicts with whatever evidence could be captured; `results.json` is rewritten after every check (`"complete": false` until the end).
+- The storyline (`demo/storyline.py`: 29 events on the Website Redesign example, 15 questions each labelled with a LongMemEval ability, a ground truth and the topic holding the answer) runs as the `Storyline` check (`--checks Storyline`). It is a measurement, not a scorecard row (`Row(..., on_scorecard=False)`): the output gains the triage counts (correct, search failures, memory failures), a per-question table and reinforcement precision beside C6 clause 1 (`demo/storyline_tables.py`). The human-reviewable draft is `.scratch/gem-conformance-suite/storyline-draft.md`, regenerated by `python -m demo.storyline_draft`.
 
 ## Source
 

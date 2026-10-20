@@ -132,3 +132,118 @@ One entry per difficulty, newest last. Fields: expected, observed, evidence, res
 - Observed: the name derives from the commit subject, so my first subject ("Port to LadybugDB: ...") gave a long, differently cased name.
 - Resolution: the commit subject is `port to ladybugdb` (body gives the detail), then re-exported; rebuilding in a throwaway worktree with `git am patches/*.patch` gave tree `ef3ed91…`, identical to `bitemporal`.
 - Lesson: choose the commit subject for the file name it will produce.
+
+### Ticket 01: C1 as written would fail the baseline, which §9.3 expects to pass `report:`
+- Expected: the C1 check (default read returns only April 20, temporal read returns the full history) passes on both upstream and the baseline, as report §9.3 and the ticket predict.
+- Observed: the baseline keeps no history, so its temporal read can never return `March 15`. Scored literally, the second case would fail the baseline, contradicting "C1 pass" for the baseline; the paper puts history preservation under C4, and C1's wording only restricts when prior values may appear.
+- Resolution: the baseline's history reads as the nothing-value `None`; the C1 case "temporal read returns the full history" is recorded as not applicable (`held=None`, with the observation "the system keeps no history") and does not count toward the verdict. Upstream still has to return `['April 20', 'March 15']` for the case to hold. Verdict scale: `Verdict.from_cases` ignores `held=None` cases and gives `not-scored` only when none applies.
+- Lesson: a check that needs a capability must treat a missing capability as "does not apply" (and say so in the evidence), leaving the capability's own row (C4) to score its absence.
+
+### Edit tool resolved a relative path in the main checkout
+- Expected: editing `README.md` with the cwd of the shell (the worktree) changes the worktree's file.
+- Observed: the agent's working directory was the main checkout, so a relative `README.md` hashed to the main checkout's file; the edit was rejected (stale tag) before anything changed. `git status` in both checkouts stayed as expected.
+- Resolution: use absolute worktree paths for every edit and read of repo files (the `cwd` of `bash` is separate from the edit tool's).
+- Lesson: in a worktree-based build, address files by absolute path; a hash mismatch on a file just read is the signal that the wrong checkout was addressed.
+
+### Ticket 09: the dated paths and the patch detection cannot be run yet `report:`
+- Expected: build the time probes so the patch rows can flip later.
+- Observed: the patch does not exist at this commit, so only upstream and the baseline were run. The flags `accepts_valid_time` (dated writes + `valid_at`) and `accepts_recorded_at` are read from every schema in `/openapi.json`, not by model-name prefix; upstream gives both False (proved by the smoke run). Ticket 12 lands the first without the second; T1–T4/T6 then use the dated path. The patch's True is [INFERENCE] until tickets 12/13 run it. The dated request construction is unit-tested as pure functions; the dated read/write path and `history_intact` against real patch entries are not.
+- Resolution: an unreadable schema (`None` plus `accepts_error`) makes the time probes raise instead of guessing; a readable schema that simply lacks the keys is False, recorded in each row's `measurements`.
+- Lesson: detect a capability from what the server declares, and say which parts were proven only on the side that exists.
+
+### Ticket 09: the time-probe check is registered under its first row
+- Expected: `--checks T5` selects the as-of probe.
+- Observed: the runner selects a check by its id (the first row, T1) or any of its rows, but runs the whole check: all seven story servers start (measured 19 s on upstream, 2026-10-20 smoke `demo/results/20261020-101957`, seven fresh DBs) and every row's cell links all seven snapshots (`Verdict.snapshots` is per check). A smoke run for one row costs the whole check.
+- Resolution: none needed; stories are the unit of freshness the spec asks for.
+- Lesson: a multi-row check costs the sum of its rows; keep single-row checks apart when a row needs to be rerun alone.
+
+### Ticket 07: C6 on the baseline is "fail", not "absent", and the suite's own reads must not bump salience `report:`
+- Expected: baseline C6 fails both clauses with salience unchanged (spec "Baseline"), and salience can be read without disturbing it.
+- Observed: the baseline reads salience as `None` (a nothing-value); scoring that as `absent` would need probe evidence and contradict the spec's "C6 both fail". On MemState every `/v1/query` adds +0.1 to each returned topic, including the suite's own reads, so a read-by-query would corrupt the salience being measured.
+- Resolution: salience cases fail when salience is not tracked, with the observation "not tracked"; salience is read only through `read_topic` (`GET /api/ui/topics/{id}`, never bumps) and the only `/v1/query` calls are the counted retrievals, so the expected rise is the number of retrievals that returned the topic.
+- Lesson: a measurement read must be a different endpoint from the operation being measured whenever the operation writes on read.
+
+### Ticket 16: live output vanished when piped; one DB made same-title topics of later runs duplicates
+- Expected: `python -m demo.run --mode live ... | tee log` shows each step as it happens, and a rerun against the same server starts clean.
+- Observed: Python block-buffers stdout into a pipe/file, so the step lines and the `--step` prompt only appeared at exit (seen: a run log with only its first line while the run was mid-delay); and the second run reused `Website Redesign [live C1]`, an exact-title duplicate the Reasoner would merge.
+- Resolution: live logging and the prompt `flush`; titles carry `<check> <HHMMSS of the run>` (`demo/live.py`).
+- Lesson: anything a presenter watches must flush; "distinct titles per check" must also mean distinct across runs on one DB.
+
+### Ticket 03: the step teardown moved a worktree its setup had refused `report:`
+- Expected: a run that refuses a dirty `MemState-patched/` leaves it untouched ("refuses without damaging it").
+- Observed (review, throwaway repo): HEAD detached at step 1 with a tracked file edited (a developer amending a step); `setup` refused, but `teardown` still ran `git checkout bitemporal` and carried the edit onto the branch (`53cfa9e` → `bitemporal 2e34735`, ` M g` still dirty). With an edit overlapping a file that differs between the commits the checkout would fail instead, only logged as a `teardown_error`. My test only covered a worktree already on `bitemporal`, where the checkout is a no-op.
+- Resolution: `setup` compares HEAD and branch before and after; `teardown` returns to `bitemporal` only if it moved. The clean check also refuses a rebase, merge, cherry-pick, revert or bisect in progress. Tests cover a tracked edit on a detached HEAD.
+- Lesson: a teardown must undo what its setup did, not assert a fixed end state; test the refusal from a non-default starting state.
+
+### Port 8765 was busy when the smoke run was started
+- Expected: `ss -ltn | grep 8765` is empty before a run, as the conventions require.
+- Observed: it showed a listener, another agent's server; the run, wrapped in `flock …/server.lock`, waited and the port was free when its server started.
+- Resolution: none needed; the lock serialised the runs.
+- Lesson: look at the port after taking the lock, not before; a listener seen before the lock is held is someone else's run.
+
+### Ticket 05: C2(b) first scored a clean rejection as pass, against the spec `report:`
+- Expected: the spec's classification (story 21: error with state persisted is fail; success with the edge reported applied is a soundness issue; neither outcome is not-scored) covers every system.
+- Observed: while building I judged that a clean rejection (error, nothing persisted) demonstrates atomicity and scored it `pass`, "extending" the wording. Review found the spec and ticket say not-scored and had not been amended. Upstream is the soundness outcome, not the clean rejection: it succeeds and reports the edge applied (F17).
+- Evidence: F17 (upstream: 200, `applied` lists `edge:<missing id>`, no edge stored); `tests/test_c2b_c2c_c3.py` (`test_a_clean_rejection_is_neither_outcome_so_not_scored` and the soundness tests, on fake systems that subclass the baseline; no MemState verdict is pinned).
+- Resolution: clean rejection is `not-scored` with no observation; only error + persisted is `fail`; success + edge reported applied is `not-scored` and records "soundness issue" both as an observation and in the case text (also when the system's edges are unreadable).
+- Lesson: do not widen a scale the spec fixed; if a case looks unscored-but-meaningful, log it and ask for a spec amendment.
+
+### Ticket 05: a negative C3 result is a bounded wait, not a poll
+- Expected: `wait_until` can detect when B is revised, so the dependent-topic window is measured.
+- Observed: upstream never revises B, so the wait always times out; it can only say "not within 5 s", and a positive window can only be measured on a system that propagates (the tests use a fake).
+- Evidence: F17 (both pairs: `March 20` before, right after and after 5.0 s with the wait timed out; upstream DBs under `.runtime/gem-suite/20261020-102020/upstream-c3/`).
+- Resolution: the window reads "unbounded (C3 absent)" and cites the C3 run, which records the wait length (`revision_wait_s`); F7's fixed 2 s became a 5 s poll every 0.1 s. "B reflects" counts only B's fields, summary, kind, title or archived flag changing; events and salience do not.
+- Lesson: report a window for an absent capability together with the wait that bounded the observation.
+
+### Ticket 04: "dropped holds the newer value" is arrangeable without a forced id
+- Expected: every C2(a) repetition has the topic that will be dropped hold the newer value (spec story 20).
+- Observed: `/v1/ingest new_topic` assigns a uuid4 and the merge keeps the lower id (F9). Two same-title writes therefore make "dropped holds newer" a coin flip; the first recorded run's 7/20 stale-current rate measured that chance, not a merge defect. The journal previously said this was "only controllable with a forced id".
+- Resolution: write two `/v1 new_topic` under distinct titles, read the ids, write March 15 through `/v1` onto the lower id and April 20 onto the higher, then a labelled setup `PATCH title` (title only) and a `/v1 extend_topic` with `fields: []` to trigger the scan. All 20 repetitions then meet the precondition. The baseline cannot retitle and falls back to upsert (0/20, pass).
+- Lesson: a random-id merge that keeps the lower id is still fully arrangeable from `/v1` plus a title-only setup write; do not treat chance as a measurement of the merge.
+
+### Ticket 10: the storyline is a measurement, but a check must return a scorecard row
+- Expected: the storyline (triage counts, reinforcement precision) is one more check in `demo/checks/`.
+- Observed: `Check.execute` demands one `Verdict` per declared `Row`, and the runner builds the scorecard from every declared row, so a storyline "row" would appear in the scorecard and its counts, which the spec lists without it (story 8) and which reinforcement precision (no verdict, story 14, 40) must not join.
+- Resolution: `Row` gained `on_scorecard: bool = True`; the storyline row sets it to `False`, so the runner leaves it off the scorecard but keeps its verdict, with the triage and reinforcement numbers in `measurements`, in `results.json` and the snapshot; `demo/storyline_tables.py` renders the tables from those measurements and the runner appends them to the printed scorecard.
+- Lesson: a measurement that is not a verdict still needs a home in the check model; flag it on the row rather than special-casing its id in the scorecard.
+
+### Ticket 10: the first storyline had nothing to triage
+- Expected: some questions end as search or memory failures on a smoke run.
+- Observed: the first draft stored 11 topics, so `top_k` 8 returned most of the store and all 15 questions were answered (old F14, superseded).
+- Resolution: dropped two low-value updates and spent them on look-alike distractors (Website Redesign Phase 2, Marketing Budget, Design Review Meeting) and paraphrased questions. 29 of 30 events used. The recorded run after that change is the storyline F-entry; failures are not tuned for.
+- Lesson: a retrieval triage needs confusable neighbours, not just a topic count above `top_k`.
+
+### Ticket 10: a Storyline-only run printed an empty per-step change table
+- Expected: the per-step change table appears only when a scorecard row ran on upstream or a patch step (a baseline-only run has none).
+- Observed: the smoke run (`--checks Storyline --systems upstream,baseline`) printed an empty table: `measured(verdicts)` treats the off-scorecard Storyline verdict as an upstream measurement.
+- Evidence: `demo/results/20261020-104437/scorecard.md`; `results.json` `change_table.measured = ["upstream"]` with `changes: {}`.
+- Resolution: `save` counts chain systems from verdicts whose row is on the scorecard; a Storyline-only run now has `measured: []` and no table.
+- Lesson: anything that decides "was this system measured" from the verdict list must skip rows with `on_scorecard=False`, not only the scorecard renderer.
+
+### Ticket 06: empty and null writes are accepted and become current `report:`
+- Expected: `version_field` with `""` or `null` is rejected and April 20 stays current (or at least the empty value does not replace it).
+- Observed: both writes returned 200; current became `""` and `None` (F21). `FieldWrite.value` is typed `Any`, so `null` passes validation; `/v1` has no empty-value guard (the chat tool does).
+- Evidence: F21; `demo/results/20261020-105907/snapshots/upstream/c4.json`.
+- Resolution: both empty cases fail on upstream; the baseline fails them the same way. The C4 row is **partial** on upstream because the update and archive cases still hold.
+- Lesson: an implied C2/C4 postcondition is not enforced on `/v1`; the run, not the type annotation, decides the empty-write case.
+
+### Ticket 06: 501 updates leave 500 entries and drop the first `report:`
+- Expected: the `[INFERENCE]` that `max_history=500` drops the oldest is decided by a run.
+- Observed: after 501 `version_field` writes the stored history length is 500, `v000` is gone, newest is `v500`.
+- Evidence: F21, `measurements.history_cap`.
+- Resolution: the cap case fails on upstream; `TopicFields.cap_history` is still unused, the real cap is the slice in `graph_store.py`.
+- Lesson: a documented cap that is not called can still be real on another path; the 501-update case measures the path `/v1` actually takes.
+
+### Ticket 08: the forgetting pass runs, but the natural trajectory never archives anyone `report:`
+- Expected: C5's natural trajectory might show some archived topics as the store grows to 2,000.
+- Observed: C5-1 **pass** (a 0.01 canary is archived at 501 topics on upstream and step 1). C5-2 **fail**: archived = 0 at every ramp size (F22, same as F10). Default salience is 1.0 and only rises; nothing falls below 0.05 without a setup write.
+- Evidence: F22, `demo/results/20261020-110721/`.
+- Resolution: mechanism and natural trajectory are separate rows; the mechanism proves the pass exists, the natural trajectory proves it never fires on ordinary undated writes.
+- Lesson: a working forgetting implementation can still leave C5's bound unmet if nothing ever decays.
+
+### Ticket 08: one check for two C5 rows linked every ramp snapshot to the mechanism cell
+- Expected: each scorecard row links only the databases it used (C6's pattern: one check per row).
+- Observed: the smoke ran C5-1 and C5-2 as one function, so both cells listed the mechanism snapshot and all five ramp snapshots.
+- Evidence: F22 scorecard cells.
+- Resolution: split into two `@check` functions so C5-1 opens only `c5-mech` and C5-2 opens the ramp DBs. Verdicts unchanged; the next recorded run will have the split snapshot lists.
+- Lesson: two rows in one `execute` share the session's snapshot list; follow C6 when the databases differ.

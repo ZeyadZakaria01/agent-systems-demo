@@ -148,6 +148,10 @@ A state change made through a GEM operator, whose effect the conformance suite j
 A direct edit that arranges a starting state for a check and is never itself judged.
 _Avoid_: fixture, seed (when the write bypasses GEM operators)
 
+**System adapter**:
+The one interface through which every check drives and reads a memory system: scored transitions (`ingest`, `query`), reads of stored state, labelled setup writes, `wait_until` and `describe`. A capability the system lacks reads as a nothing-value, never as an error. MemState (upstream or patched, over HTTP) and the baseline each have one; adding a system means writing one adapter.
+_Avoid_: driver, client (MemState's HTTP client is only one adapter's transport)
+
 **Staleness window**:
 The time between a transition and the moment the state that depends on it reflects it.
 _Avoid_: lag, delay, consistency gap

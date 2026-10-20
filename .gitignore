@@ -5,3 +5,5 @@
 .runtime/
 __pycache__/
 MemState-patched/
+demo/results/
+demo/results-live/
