@@ -28,6 +28,7 @@ Used by `/wayfinder`. The **map** is a file with one **child** file per ticket.
 - **Blocking**: a `Blocked by: NN, NN` line near the top. A ticket is unblocked when every file it lists is `resolved`.
 - **Frontier**: scan `.scratch/<effort>/issues/` for files that are open, unblocked, and unclaimed; first by number wins.
 - **Claim**: set `Status: claimed` and save before any work.
-- **Resolve**: append the answer under an `## Answer` heading, set `Status: resolved`, then append a context pointer (gist + link) to the map's Decisions-so-far in `map.md`.
+- **Resolve**: append the answer under an `## Answer` heading, set `Status: resolved`, then append a context pointer to the map's Decisions-so-far in `map.md`: a one-sentence gist (≤ 400 chars, enforced by `.githooks/pre-commit`) + link; detail stays in the ticket's Answer.
+- **Filing a review**: before a review's items become a ticket, triage each against existing tickets, findings and the report: *new*, *already covered* (cite where), or *weak* (why). File only the new ones.
 - **Close (out of scope)**: append the reason under `## Closed`, set `Status: closed`, and add one line to the map's Out of scope section. A closed ticket never returns to the frontier.
 - **Conditional questions**: blocking references tickets only. A question that waits on a condition rather than a ticket is either resolved with its default answer (revisit by opening a new ticket) or kept as fog in Not yet specified.

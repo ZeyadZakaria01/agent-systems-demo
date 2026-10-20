@@ -38,12 +38,13 @@ DEPARTURES_FROM_PAPER = (
 
 ROW = "Storyline"  # the id of the check's row, shared by the check and its tables
 
-# Four of LongMemEval's five abilities (docs/papers/2512.12818.md:539-546); abstention has no answer topic, so it is not labelled.
+# Two of LongMemEval's five abilities (docs/papers/2512.12818.md:539-546): every storyline answer is one stored value,
+# the latest (knowledge update) or the only one written (information extraction). Temporal reasoning and multi-session
+# reasoning are not asked: time validity is tested by the time probes and the "two weeks ago" chat run, and
+# multi-session reasoning is not measured. Abstention has no answer topic, so triage cannot sort it; it is not measured.
 INFORMATION_EXTRACTION = "information extraction"
-MULTI_SESSION_REASONING = "multi-session reasoning"
-TEMPORAL_REASONING = "temporal reasoning"
 KNOWLEDGE_UPDATE = "knowledge update"
-ABILITIES = (INFORMATION_EXTRACTION, MULTI_SESSION_REASONING, TEMPORAL_REASONING, KNOWLEDGE_UPDATE)
+ABILITIES = (INFORMATION_EXTRACTION, KNOWLEDGE_UPDATE)
 
 
 @dataclass(frozen=True)
@@ -259,7 +260,7 @@ WEBSITE_REDESIGN = Storyline(
               writes=(_w("Role", "Frontend developer", "standup"), _w("Working on", "Homepage prototype", "standup")),
               edges=(Edge("redesign", "extension"),)),
         Event("E20", "Week 1", "Alice is promoted to frontend lead.", "version_field", "alice",
-              writes=(_w("Role", "Frontend lead", "standup", "Bob moved to the API migration"),)),
+              writes=(_w("Role", "Frontend lead", "standup", "promoted after the homepage prototype"),)),
         Event("E21", "Week 1", "Erin joins as QA, and Alice is now the frontend lead on the team.", "version_field",
               "redesign",
               writes=(_w("Team", "Alice (Frontend lead), Bob (Backend), Erin (QA)", "standup", "Erin joined"),)),
@@ -294,13 +295,13 @@ WEBSITE_REDESIGN = Storyline(
         Question("Q04", "What time is the weekly sync meeting?", KNOWLEDGE_UPDATE, "meeting", "Time", "11:30"),
         Question("Q05", "On which day is the weekly sync meeting held?", INFORMATION_EXTRACTION, "meeting", "Day",
                  "Tuesday"),
-        Question("Q06", "Who is on the website redesign team?", MULTI_SESSION_REASONING, "redesign", "Team",
+        Question("Q06", "Who is on the website redesign team?", KNOWLEDGE_UPDATE, "redesign", "Team",
                  "Alice (Frontend lead), Bob (Backend), Erin (QA)"),
         Question("Q07", "What is Alice's role on the website project?", KNOWLEDGE_UPDATE, "alice", "Role",
                  "Frontend lead"),
-        Question("Q08", "When does user testing start for the website redesign?", TEMPORAL_REASONING, "milestones",
+        Question("Q08", "When does user testing start for the website redesign?", KNOWLEDGE_UPDATE, "milestones",
                  "User testing start", "April 13"),
-        Question("Q09", "When is the website launch milestone?", TEMPORAL_REASONING, "milestones", "Launch", "April 20"),
+        Question("Q09", "When is the website launch milestone?", KNOWLEDGE_UPDATE, "milestones", "Launch", "April 20"),
         Question("Q10", "Who approves the redesign budget?", INFORMATION_EXTRACTION, "budget", "Approver", "Dana"),
         Question("Q11", "What is the current status of the website redesign project?", KNOWLEDGE_UPDATE, "redesign",
                  "Status", "Complete"),
@@ -311,7 +312,7 @@ WEBSITE_REDESIGN = Storyline(
                  "Room 4B"),
         Question("Q14", "What cuisine does the team want for lunch?", KNOWLEDGE_UPDATE, "lunch", "Favorite cuisine",
                  "Mexican"),
-        Question("Q15", "When is the design vendor's mockup delivery due?", TEMPORAL_REASONING, "vendor", "Mockups due",
+        Question("Q15", "When is the design vendor's mockup delivery due?", KNOWLEDGE_UPDATE, "vendor", "Mockups due",
                  "March 22"),
     ),
 )

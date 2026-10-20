@@ -1,0 +1,37 @@
+#!/bin/sh
+# Guardrails for every clone and worktree (enabled by: git config core.hooksPath .githooks).
+# 1. The report is edited only on `main` (single source of truth; gem-suite carries a stale copy).
+# 2. Wayfinder map lines added or changed stay gists: at most 400 characters.
+# 3. Staged suite code (demo/, tests/) must keep the offline suite green.
+set -eu
+staged="$(git diff --cached --name-only --diff-filter=ACMR)"
+[ -n "$staged" ] || exit 0
+branch="$(git rev-parse --abbrev-ref HEAD)"
+fail=0
+
+if [ "$branch" != "main" ] && printf '%s\n' "$staged" | grep -q '^docs/report/'; then
+  echo "pre-commit: docs/report/ is edited only on main (this branch: $branch)." >&2
+  fail=1
+fi
+
+for map in $(printf '%s\n' "$staged" | grep -E '^\.scratch/[^/]+/map\.md$' || true); do
+  long="$(git diff --cached -U0 -- "$map" | grep '^+' | grep -v '^+++' | awk 'length($0) > 401 { print length($0) - 1 }')"
+  if [ -n "$long" ]; then
+    echo "pre-commit: $map has added lines over 400 characters ($(echo $long | tr '\n' ' ')chars)." >&2
+    echo "  Keep map lines a one-sentence gist + link; detail goes in the ticket's Answer." >&2
+    fail=1
+  fi
+done
+
+if printf '%s\n' "$staged" | grep -qE '^(demo|tests)/' && [ -d tests ]; then
+  py="$(dirname "$(git rev-parse --path-format=absolute --git-common-dir)")/.venv/bin/python"
+  if ! "$py" -m pytest -q >/tmp/pre-commit-pytest.$$ 2>&1; then
+    tail -n 20 /tmp/pre-commit-pytest.$$ >&2
+    echo "pre-commit: offline suite is red; full log /tmp/pre-commit-pytest.$$" >&2
+    fail=1
+  else
+    rm -f /tmp/pre-commit-pytest.$$
+  fi
+fi
+
+exit "$fail"

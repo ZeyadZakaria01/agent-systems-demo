@@ -19,3 +19,5 @@
 ## Comments
 
 Merged as `e80bc58`; reviewed and fixed in `16f2bd5` (history read from `read_topic` and requires `expired_at`; control flag in the T5 absent evidence). Smoke F19; dated/recorded-time paths still unproven until tickets 12/13.
+
+- 2026-10-21, spec revision (this ticket stays resolved): the scoring changes to two cells per probe ("accepts dates", "answers correctly given dates"), per-probe date detection, `absent` when a needed date is not accepted and `fail` when accepted and wrong, T5 absent only when `recorded_at` is not accepted, and story 2 of the lapsed override gains the Oct 15 → $100 ask (ticket 21). The probes move to their own scorecard section (ticket 31).

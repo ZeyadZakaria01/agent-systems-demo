@@ -4,7 +4,7 @@ Scored transitions go through /v1/ingest and /v1/query; state is read through
 GET /api/ui/topics and /api/ui/graph. Run each probe against a server started on a
 fresh absolute DB (scripts/run_memstate.sh /abs/path/memstate.kuzu).
 
-Usage: probe_memstate.py {c3,salience,merge,ramp} [--base URL] [--out FILE] [probe options]
+Usage: probe_memstate.py {c3,salience,merge,ramp,partial-commit,field-salience} [--base URL] [--out FILE] [options]
 """
 
 from __future__ import annotations
@@ -211,9 +211,31 @@ def probe_ramp(c: Client, args) -> dict:
     return {"probe": "ramp", "steps": out, "salience_min_first200": min(sal), "salience_max_first200": max(sal)}
 
 
+def probe_partial_commit(c: Client, args) -> dict:
+    """One new_topic whose second field refs a topic that does not exist: is anything stored after the error?"""
+    missing = str(uuid.uuid4())
+    title = f"Website Redesign {uuid.uuid4().hex[:6]}"
+    r = c.http.post("/v1/ingest", json={
+        "placement": "new_topic", "title": title, "topic_kind": "project",
+        "fields": [field("March 15", "Deadline", "kickoff-notes"),
+                   {**field("Alice", "Owner", "kickoff-notes"), "ref_topic_id": missing}]})
+    stored = [t for t in (c.topic(tid) for tid in c.topic_ids(True)) if t and t["title"] == title]
+    return {"probe": "partial-commit", "missing_ref_topic_id": missing, "status": r.status_code, "body": r.text[:300],
+            "topics_stored": len(stored), "fields_stored": {n: current(t, n) for t in stored for n in t["fields"]}}
+
+
+def probe_field_salience(c: Client, args) -> dict:
+    """A new_topic asks for salience 0.01 and carries one field: what salience is stored?"""
+    r, _ = c.ingest({"placement": "new_topic", "title": f"Old Vendor {uuid.uuid4().hex[:6]}", "salience": 0.01,
+                     "fields": [field("Bob", "Contact", "email")]})
+    t = c.topic(r["topic_id"])
+    return {"probe": "field-salience", "requested_salience": 0.01, "applied": r["applied"],
+            "stored_salience": t["salience"], "archived": t["archived"]}
+
+
 def main() -> None:
     ap = argparse.ArgumentParser()
-    ap.add_argument("probe", choices=["c3", "salience", "merge", "ramp"])
+    ap.add_argument("probe", choices=["c3", "salience", "merge", "ramp", "partial-commit", "field-salience"])
     ap.add_argument("--base", default="http://127.0.0.1:8765")
     ap.add_argument("--out")
     ap.add_argument("--repeats", type=int, default=20)
@@ -221,7 +243,7 @@ def main() -> None:
     ap.add_argument("--queries", type=int, default=20)
     args = ap.parse_args()
     c = Client(args.base)
-    res = {"health": c.health(), **globals()[f"probe_{args.probe}"](c, args)}
+    res = {"health": c.health(), **globals()[f"probe_{args.probe.replace('-', '_')}"](c, args)}
     text = json.dumps(res, indent=2, default=str)
     if args.out:
         Path(args.out).parent.mkdir(parents=True, exist_ok=True)

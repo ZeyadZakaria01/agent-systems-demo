@@ -16,3 +16,5 @@
 ## Comments
 
 Merged as `e8e86e4`; reviewed and fixed in `16f2bd5` (C2(b) matches under live title scopes, C2(c) whole-word match, C3 waits 15 s from the update). Smoke F17; C3 not re-recorded with the new wait.
+
+- 2026-10-21, spec revision (this ticket stays resolved): C2(b)'s input becomes a second field with a missing `ref_topic_id` (F23, ticket 22); the edge input stays as a separate observation (F17). C3 and C2(c) get stricter pass criteria (ticket 24): a flag because of the extension edge with an association-edge control, and a runtime-added policy that rejects a violating write. Upstream stays `absent` on both.

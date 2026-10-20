@@ -200,3 +200,30 @@ DBs (all under `/home/zeyad/work/agent-systems-demo/.runtime/gem-suite/20261020-
 With one repeat the ingest range is 0 (one per-repeat median), so the rule "no measurable difference" can only fire for ingest when the medians are equal; the run printed one note: upstream vs step1 at n = 2,000, query: no measurable difference (389.067 / 328.793 ms, the query ranges overlap). Every other adjacent comparison is outside the range. **The step 1 (LadybugDB) vs upstream (Kuzu) latency gap is provisional**: one repeat and 5 reads per ramp, no 3x run yet. The run showed a client-side single read is noisy: an earlier single-sample query at upstream n = 500 read 219 ms in run 110721 and 321 ms in run 114251, which is why the table now takes several reads per ramp. The settle time says nothing about the Reasoner; the archived count never changed.
 
 **Earlier pre-split run (110721, 1 repeat, single query sample per ramp, `--checks C5-1` ran both rows as one check; DBs `/home/zeyad/work/agent-systems-demo/.runtime/gem-suite/20261020-110721/`, relative paths in its original text were these):** upstream ingest 30.8 / 32.7 / 31.0 / 41.7 / 54.5 ms and query 170.6 / 222.7 / 218.9 / 268.0 / 359.3 ms at 100 / 250 / 500 / 1,000 / 2,000; step 1 ingest 18.8 / 18.7 / 18.9 / 29.0 / 43.9 ms and query 83.2 / 143.6 / 130.0 / 204.8 / 272.9 ms. Baseline ingest about 0.001 ms; its query is MiniLM over the whole store (0.5 s at n = 100, 4.2 s at n = 2,000) and is an in-process baseline, not an engine comparison.
+
+## F23. Upstream commits part of a rejected ingest: an error on the second field leaves the topic and the first field stored (C2(b) atomicity broken)
+
+Run (2026-10-20, first seen with a throwaway script; reproduced 2026-10-21 with the committed probe): from the main checkout, `flock /home/zeyad/work/agent-systems-demo-wt/server.lock scripts/run_memstate.sh /home/zeyad/work/agent-systems-demo/.runtime/retro-probes-20261021/memstate.kuzu`, then `.venv/bin/python scripts/probe_memstate.py partial-commit` (upstream `945d7c4`, Kuzu). Key output of the reproduction: `"status": 400`, `"topics_stored": 1`, `"fields_stored": {"Deadline": "March 15"}`. First run's DB: `/home/zeyad/work/agent-systems-demo/.runtime/c2b-ref-probe-20261020-233656/memstate.kuzu`.
+
+The probe sent one `/v1/ingest new_topic` "Website Redesign" with two fields: `Deadline="March 15"`, and `Owner="Alice"` with `ref_topic_id` set to a fresh uuid4 that is no topic. Observed: HTTP **400** `{"detail":"ref_topic_id not found: b4aff4e3-…"}`. In the stored state afterwards, 1 topic "Website Redesign" exists with fields `{'Deadline': 'March 15'}`, and the missing id is not a topic. The server was stopped (`port_free_after_stop: true`).
+
+So the request was rejected, yet the topic and its first field were committed. That breaks the paper's "the transition either commits atomically or aborts" (`docs/papers/2605.26252v1.md:291`). This is the spec's partial-commit outcome (error with the topic persisted → fail).
+
+Cause [INFERENCE from code]: `Executor` creates the topic, then appends each field in turn (`MemState/src/memstate/core/executor.py:105-140`). `append_field_history` raises on a missing `ref_topic_id` (`store/graph_store.py:450-452`). No store call is wrapped in a transaction: a grep finds no transaction, BEGIN, COMMIT or rollback in `store/` or `core/executor.py`.
+
+F17's input differs: an edge, not a field, points to the missing topic. `add_related_edge` (`graph_store.py:1081-1088`) is a `MATCH … MERGE` that silently creates nothing, so no step fails and atomicity is never exercised. Its finding stands as a separate response-soundness issue: an edge is reported as applied but is not stored.
+
+## F24. On upstream, a topic with fields cannot be forgotten through `/v1`: its salience is reset to the field average (1.0)
+
+Run (2026-10-20, first seen with a throwaway script; reproduced 2026-10-21 with the committed probe): same server and DB as F23's reproduction, then `.venv/bin/python scripts/probe_memstate.py field-salience` (upstream `945d7c4`, Kuzu). Key output of the reproduction: `"requested_salience": 0.01`, `"stored_salience": 1.0`, `"archived": false`. First run's DB: `/home/zeyad/work/agent-systems-demo/.runtime/c4-forget-probe-20261020-234103/memstate.kuzu`.
+
+The probe sent one `/v1/ingest new_topic` "Old Vendor" with `salience: 0.01` and one field (`Contact="Bob"`). The ingest returned HTTP 200 with `applied = [created_topic:…, field:Contact]`. The stored topic then read **salience 1.0**, `archived: false`. The server was stopped (`port_free_after_stop: true`).
+
+Cause [INFERENCE from code]:
+- Every field write calls `sync_topic_salience_from_fields`, which sets the topic's salience to the average field salience (`MemState/src/memstate/store/graph_store.py:214-218`, `185-189`).
+- `FieldWrite` has no salience (`core/models.py:22-30`).
+- Reads only bump salience upward, and the forgetting pass archives only below 0.05 (`core/executor.py:353-362`); nothing decays.
+
+So a topic with fields stays at or above 1.0 and is never archived by forgetting. Only field-less topics can be (F15, F22).
+
+Consequence for the suite: C4's "history survives forgetting" case cannot reach forgetting on upstream through `/v1`. Today it archives with a labelled editor write (audit A7). This is the same mechanism as F15's durability observation, where a field write reset a reinforced 0.13 to 1.0.

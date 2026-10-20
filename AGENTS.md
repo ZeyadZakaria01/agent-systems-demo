@@ -5,8 +5,8 @@ Interview package for Prof. Essam Mansour: a demo of MemState (the GEM paper's s
 ## Rules
 
 - `MemState/` is upstream at `945d7c4` and stays byte-for-byte unmodified. Measure it as published, over its HTTP API. Changes to MemState live in a separate patched worktree.
-- A claim about MemState behaviour enters `docs/findings.md`, the report, or the slides only with a reproducing run (command, DB path, key output). Claims from reading code carry `[INFERENCE]`.
-- Commit messages and PR bodies contain the change description and human co-authors only. `.githooks/commit-msg` strips AI attribution; each clone enables it with `git config core.hooksPath .githooks`.
+- A claim about MemState behaviour enters `docs/findings.md`, the report, or the slides only with a reproducing run (command, DB path, key output); the command runs a script committed in the repo (probes go in `scripts/probe_memstate.py`). Claims from reading code carry `[INFERENCE]`.
+- Commit messages and PR bodies contain the change description and human co-authors only. `.githooks/` strips AI attribution (`commit-msg`) and guards commits (`pre-commit`: report only on `main`, map lines ≤ 400 chars, offline suite green); each clone enables it with `git config core.hooksPath .githooks`.
 - Record each difficulty when it happens in `docs/journal.md`: date, expected, observed, evidence, resolution, lesson. Tag `report:` when the report should cite it.
 
 ## Running
@@ -16,7 +16,8 @@ Before starting MemState or Ollama, read the README section "Run MemState"; the 
 ## Docs
 
 - `docs/papers/`: the papers as Markdown (GEM, MAFBench, the two surveys, Zep, Hindsight, MemTX, StateMemBench), their PDFs, and `2605.26252v1-alignment.md` (code vs paper). Cite the paper text, not a paraphrase.
-- `docs/report/gem-limitations-and-directions.md`: the report, single source of truth; its §9 is the demo design. Edit here, never a copy elsewhere.
+- `docs/report/gem-limitations-and-directions.md`: the report, single source of truth; its §9 is the demo design. Edit it only on `main`. Until `gem-suite` merges, the conformance-suite spec and build tickets are edited only on `gem-suite` (worktree `../agent-systems-demo-wt/integration/`).
+- `MemState/docs/` (HTML): upstream's own design docs (`data-model/`, `operations/`). Read them, and the code they describe, before stating what MemState intends or recommending a design that departs from it.
 - `docs/findings.md`: MemState facts proven by runs. Append when a run proves or disproves something.
 - `docs/journal.md`: difficulties and lessons.
 

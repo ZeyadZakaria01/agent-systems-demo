@@ -10,8 +10,7 @@ from collections import Counter
 
 from demo.paths import REPO_ROOT
 from demo.scorecard import esc
-from demo.storyline import (ABILITIES, DEPARTURES_FROM_PAPER, KEPT_FROM_PAPER, MULTI_SESSION_REASONING,
-                            TEMPORAL_REASONING, WEBSITE_REDESIGN, Event, Storyline)
+from demo.storyline import ABILITIES, DEPARTURES_FROM_PAPER, KEPT_FROM_PAPER, WEBSITE_REDESIGN, Event, Storyline
 
 DRAFT_PATH = REPO_ROOT / ".scratch" / "gem-conformance-suite" / "storyline-draft.md"
 
@@ -25,26 +24,20 @@ def _writes(event: Event) -> str:
     return "<br>".join(out) or "—"
 
 
-def _points(story: Storyline) -> tuple[str, list, str, str]:
-    """What the review points below name, derived from the data: temporal question ids, the multi-session
-    questions and the events that built their answer, and ground truths held by more than one topic."""
-    temporal = ", ".join(q.id for q in story.questions if q.ability == TEMPORAL_REASONING)
-    multi = [q for q in story.questions if q.ability == MULTI_SESSION_REASONING]
-    multi_events = ", ".join(e.id for q in multi for e in story.events
-                             if e.topic == q.topic and any(w.name == q.field for w in e.writes))
+def _shared_truths(story: Storyline) -> str:
+    """Ground truths held by more than one topic at the end, which the review notes name."""
     holders: dict = {}
     for state in story.expected_after(story.events[-1].id).values():
         for value in state.fields.values():
             holders.setdefault(value, []).append(state.title)
     truths = {q.truth for q in story.questions}
-    shared = "; ".join(f"{value} is on {' and '.join(titles)}" for value, titles in holders.items()
-                       if value in truths and len(titles) > 1)
-    return temporal, multi, multi_events, shared
+    return "; ".join(f"{value} is on {' and '.join(titles)}" for value, titles in holders.items()
+                     if value in truths and len(titles) > 1)
 
 
 def render(story: Storyline = WEBSITE_REDESIGN) -> str:
     titles = story.titles
-    temporal, multi, multi_events, shared = _points(story)
+    shared = _shared_truths(story)
     abilities = Counter(q.ability for q in story.questions)
     final = story.expected_after(story.events[-1].id)
     lines = [
@@ -105,16 +98,13 @@ def render(story: Storyline = WEBSITE_REDESIGN) -> str:
         lines.append(f"| {q.id} | {q.ability} | {esc(q.text)} | {esc(q.truth)} | {esc(titles[q.topic])} (`{q.topic}`) "
                      f"| {esc(q.field)} |")
     lines += ["", "Abilities: " + ", ".join(f"{a} {abilities[a]}" for a in ABILITIES if abilities[a])
-              + ". Abstention (answer: \"not stored\") is not labelled: it has no answer topic.",
+              + ". Every answer is one stored value. Temporal reasoning and multi-session reasoning are not asked: "
+              "time validity is tested by the six time probes and the \"two weeks ago\" chat run, and multi-session "
+              "reasoning is not measured. Abstention (answer: \"not stored\") is not asked: it has no answer topic, "
+              "so search-vs-memory triage cannot sort it.",
               "",
-              "## Points to decide in review",
+              "## Notes",
               "",
-              f"- **Temporal reasoning** is labelled where the answer is a date that moved or was set ({temporal}); no "
-              "date arithmetic is asked of the memory. Say if you want these relabelled or a real arithmetic "
-              "question added (it would need a stored value that is the computed answer).",
-              f"- **Multi-session reasoning** has {len(multi)} question(s) ({', '.join(q.id for q in multi)}): the "
-              f"answer was built over several events ({multi_events}). More would need answers that "
-              "combine two topics, which one answer topic cannot label.",
               f"- Several questions share ground-truth strings with other topics ({shared}); the labelled topic "
               "decides which one counts.",
               "- Dependent topics (milestones, Alice's role in the team list) are updated by explicit events here, "

@@ -63,7 +63,7 @@ Departures:
 | E17 | Content freeze moves to April 6. | Redesign Milestones | Content freeze = April 6 (provenance pm-email; why: deadline moved) | — |
 | E18 | The vendor charges a rush fee, so the budget grows to $46,500. | Redesign Budget | Total = $46,500 (provenance finance-email; why: vendor rush fee) | — |
 | E19 | Alice comes up in every thread, so she gets her own topic: frontend developer, prototyping the homepage. | Alice | Role = Frontend developer (provenance standup)<br>Working on = Homepage prototype (provenance standup) | → Website Redesign (extension) |
-| E20 | Alice is promoted to frontend lead. | Alice | Role = Frontend lead (provenance standup; why: Bob moved to the API migration) | — |
+| E20 | Alice is promoted to frontend lead. | Alice | Role = Frontend lead (provenance standup; why: promoted after the homepage prototype) | — |
 | E21 | Erin joins as QA, and Alice is now the frontend lead on the team. | Website Redesign | Team = Alice (Frontend lead), Bob (Backend), Erin (QA) (provenance standup; why: Erin joined) | — |
 | E22 | The weekly sync moves to 11:30 because of a design review. | Weekly Sync Meeting | Time = 11:30 (provenance calendar; why: clash with the design review) | — |
 | E23 | The redesign is now in progress. | Website Redesign | Status = In progress (provenance standup) | — |
@@ -102,23 +102,21 @@ Departures:
 | Q03 | knowledge update | What is the total budget for the website redesign? | $46,500 | Redesign Budget (`budget`) | Total |
 | Q04 | knowledge update | What time is the weekly sync meeting? | 11:30 | Weekly Sync Meeting (`meeting`) | Time |
 | Q05 | information extraction | On which day is the weekly sync meeting held? | Tuesday | Weekly Sync Meeting (`meeting`) | Day |
-| Q06 | multi-session reasoning | Who is on the website redesign team? | Alice (Frontend lead), Bob (Backend), Erin (QA) | Website Redesign (`redesign`) | Team |
+| Q06 | knowledge update | Who is on the website redesign team? | Alice (Frontend lead), Bob (Backend), Erin (QA) | Website Redesign (`redesign`) | Team |
 | Q07 | knowledge update | What is Alice's role on the website project? | Frontend lead | Alice (`alice`) | Role |
-| Q08 | temporal reasoning | When does user testing start for the website redesign? | April 13 | Redesign Milestones (`milestones`) | User testing start |
-| Q09 | temporal reasoning | When is the website launch milestone? | April 20 | Redesign Milestones (`milestones`) | Launch |
+| Q08 | knowledge update | When does user testing start for the website redesign? | April 13 | Redesign Milestones (`milestones`) | User testing start |
+| Q09 | knowledge update | When is the website launch milestone? | April 20 | Redesign Milestones (`milestones`) | Launch |
 | Q10 | information extraction | Who approves the redesign budget? | Dana | Redesign Budget (`budget`) | Approver |
 | Q11 | knowledge update | What is the current status of the website redesign project? | Complete | Website Redesign (`redesign`) | Status |
 | Q12 | knowledge update | How much money is set aside for the site revamp? | $46,500 | Redesign Budget (`budget`) | Total |
 | Q13 | information extraction | Which room do the weekly team gatherings use? | Room 4B | Weekly Sync Meeting (`meeting`) | Location |
 | Q14 | knowledge update | What cuisine does the team want for lunch? | Mexican | Lunch Preferences (`lunch`) | Favorite cuisine |
-| Q15 | temporal reasoning | When is the design vendor's mockup delivery due? | March 22 | Design Vendor: Pixel Forge (`vendor`) | Mockups due |
+| Q15 | knowledge update | When is the design vendor's mockup delivery due? | March 22 | Design Vendor: Pixel Forge (`vendor`) | Mockups due |
 
-Abilities: information extraction 4, multi-session reasoning 1, temporal reasoning 3, knowledge update 7. Abstention (answer: "not stored") is not labelled: it has no answer topic.
+Abilities: information extraction 4, knowledge update 11. Every answer is one stored value. Temporal reasoning and multi-session reasoning are not asked: time validity is tested by the six time probes and the "two weeks ago" chat run, and multi-session reasoning is not measured. Abstention (answer: "not stored") is not asked: it has no answer topic, so search-vs-memory triage cannot sort it.
 
-## Points to decide in review
+## Notes
 
-- **Temporal reasoning** is labelled where the answer is a date that moved or was set (Q08, Q09, Q15); no date arithmetic is asked of the memory. Say if you want these relabelled or a real arithmetic question added (it would need a stored value that is the computed answer).
-- **Multi-session reasoning** has 1 question(s) (Q06): the answer was built over several events (E02, E21). More would need answers that combine two topics, which one answer topic cannot label.
 - Several questions share ground-truth strings with other topics (April 20 is on Website Redesign and Redesign Milestones); the labelled topic decides which one counts.
 - Dependent topics (milestones, Alice's role in the team list) are updated by explicit events here, because every event is a perfect placement; whether MemState would propagate a deadline change by itself is C3's question, not this one.
 - All values are strings so a read is judged by exact match; changing a value's wording changes the ground truth in the same place.
