@@ -67,12 +67,22 @@ git config core.hooksPath .githooks   # once per clone: strips AI co-author trai
 cp MemState/.env.example MemState/.env   # then set GROQ_API_KEY (optional; MemState's own .gitignore keeps it out of git)
 uv venv -p 3.12 .venv
 uv pip install -p .venv -e 'MemState[embedding]' 'kuzu==0.11.3' 'ladybug==0.21.2' httpx pytest pytest-asyncio
-scripts/run_memstate.sh [/abs/path/memstate.kuzu]   # default: fresh DB under .runtime/
+scripts/run_memstate.sh [/abs/path/memstate.kuzu]   # upstream on Kuzu; default: .runtime/memstate-kuzu-<ts>/memstate.kuzu
+scripts/run_memstate.sh --patched [/abs/path/memstate.lbug]   # patched copy on LadybugDB; default: .runtime/memstate-ladybug-<ts>/memstate.lbug
 ```
+
+`--patched` puts `MemState-patched/src` (from the main checkout, also when run from a worktree) first on `PYTHONPATH`, ahead of the venv's editable install of `MemState/`. Both modes print the engine module (`kuzu` or `ladybug`) and the source folder before the server starts. A database written by one engine cannot be opened by the other.
 
 The script serves on 127.0.0.1:8765 with `MEMSTATE_GROQ_MODEL=openai/gpt-oss-120b`, caches the embedding model in `.cache/fastembed`, passes the Groq key from `MemState/.env` as `MEMSTATE_GROQ_API_KEY` (with this pydantic-settings version, upstream's plain `GROQ_API_KEY` fallback is silently dropped), and refuses to start if MemState would fall back to hash embeddings. Kuzu is archived upstream (final release 0.11.3); this setup pins that version. `pip install -e` rewrites the tracked `MemState/src/memstate.egg-info/`; run `git -C MemState checkout -- src/memstate.egg-info` afterwards to keep the clone pristine.
 
-`MemState/` is a git submodule pinned at `945d7c4`; `git submodule status` shows the pin and a `+` prefix if it ever drifts. The patched copy used by the demo lives in a `MemState-patched/` worktree of the submodule (git-ignored here) on branch `bitemporal`: three commits on `945d7c4` (port to LadybugDB, bitemporal field histories, merge by valid time), committed in this repo as `patches/0001-port-to-ladybugdb.patch`, `0002-bitemporal-field-histories.patch` and `0003-merge-by-valid-time.patch` (not yet built). Rebuild it with `git -C MemState worktree add -b bitemporal ../MemState-patched 945d7c4 && git -C MemState-patched am "$PWD"/patches/*.patch`. The patch runs on LadybugDB and upstream on Kuzu ([ADR 0006](docs/adr/0006-patch-on-ladybugdb-upstream-on-kuzu.md)); a database written by one engine cannot be opened by the other.
+`MemState/` is a git submodule pinned at `945d7c4`; `git submodule status` shows the pin and a `+` prefix if it ever drifts. The patched copy used by the demo lives in a `MemState-patched/` worktree of the submodule (git-ignored here) on branch `bitemporal`: three commits on `945d7c4` (port to LadybugDB, bitemporal field histories, merge by valid time), committed in this repo as `patches/0001-port-to-ladybugdb.patch` (built; commit 1 changes only the `kuzu_adapter.py` import and the `pyproject.toml` dependency), `0002-bitemporal-field-histories.patch` and `0003-merge-by-valid-time.patch` (not yet built). Rebuild it from the repo root, with `MemState/` initialised:
+
+```bash
+git -C MemState worktree add -b bitemporal ../MemState-patched 945d7c4
+git -C MemState-patched am "$PWD"/patches/*.patch
+```
+
+Recreating the worktree this way from `patches/` gave the same tree as `bitemporal`. Upstream's 39 tests pass unedited against the patched source: `cd MemState-patched && PYTHONPATH=$PWD/src ../.venv/bin/python -m pytest` (`PYTHONPATH` must precede the editable install, which points at `MemState/src`). The patch runs on LadybugDB and upstream on Kuzu ([ADR 0006](docs/adr/0006-patch-on-ladybugdb-upstream-on-kuzu.md)); a database written by one engine cannot be opened by the other.
 
 Local LLM (optional): Ollama 0.35.1 installed user-locally in `~/.local/ollama` (official Linux tarball, CUDA 13 backend; driver 580 / CUDA 13.0, RTX 3060 Laptop compute 8.6) serving `qwen3.5:2b` with a 16k context:
 

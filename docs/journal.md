@@ -114,3 +114,21 @@ One entry per difficulty, newest last. Fields: expected, observed, evidence, res
 - Observed: `scripts/run_memstate.sh` never set `MEMSTATE_OLLAMA_MODEL`, so the server falls back to upstream's `llama3.2:latest` (`MemState/src/memstate/config.py:21`). Run from the repo root: `.venv/bin/python -c 'from memstate.config import Settings; print(Settings().ollama_model)'` printed `llama3.2:latest`; `~/.ollama/models/manifests/registry.ollama.ai/library/` holds only `qwen3.5`. A chat request without `"model"` would ask Ollama for a model it lacks [INFERENCE: no chat call made].
 - Resolution: the script exports `MEMSTATE_OLLAMA_MODEL="${MEMSTATE_OLLAMA_MODEL:-qwen3.5:2b}"`; with it set, the same command prints `qwen3.5:2b`. Found while designing the "two weeks ago" chat case (Time probes and their controls).
 - Lesson: when a wrapper script pins one setting of a service (base URL), check the settings that pair with it (model name).
+
+### Run script fails in a fresh git worktree
+- Expected: `scripts/run_memstate.sh` starts MemState from any checkout of this repo, so parallel build agents can each work in their own worktree.
+- Observed: in a new worktree `MemState/` is empty (submodule not initialised) and `.venv/`, `.cache/` and `.runtime/` are git-ignored, so absent. `scripts/run_memstate.sh` exited 2 with `sed: can't read .../MemState/.env: No such file or directory`.
+- Resolution: the script resolves a `SHARED` root from `git rev-parse --git-common-dir` (the main checkout) and takes the venv, embedding cache, `MemState/.env` and default `.runtime/` DB folder from it. Run from the worktree, it served `{"status":"ok"}` on `/health` with `MEMSTATE_KUZU_PATH=/tmp/hz/memstate.kuzu`; the server was stopped afterwards and the main checkout stayed clean. `ROOT` (the worktree) is still where the script `cd`s.
+- Lesson: a script that reads git-ignored state by relative-to-script paths works only in the checkout that holds that state; resolve shared state from the git common dir.
+
+### Editable install would shadow the patched source
+- Expected: the patched copy's 39 tests and the `--patched` server import `MemState-patched/src`.
+- Observed: the venv's `__editable__.memstate-0.1.0.pth` contains `/home/zeyad/work/agent-systems-demo/MemState/src`, so a plain `import memstate` loads upstream. Reinstalling would rewrite the tracked `MemState/src/memstate.egg-info`.
+- Resolution: `PYTHONPATH=<MemState-patched>/src` precedes `.pth` entries; no install is done. Check: `memstate.__file__` was `.../MemState-patched/src/memstate/__init__.py`, `store.kuzu_adapter.kuzu.__name__` was `ladybug`, `'kuzu' in sys.modules` was `False`, and `pytest` reported `39 passed`. `git -C MemState status` stayed clean.
+- Lesson: after pointing a path at a modified copy, print where the module loaded from instead of assuming.
+
+### Patch file name
+- Expected: `git format-patch` writes `patches/0001-port-to-ladybugdb.patch`.
+- Observed: the name derives from the commit subject, so my first subject ("Port to LadybugDB: ...") gave a long, differently cased name.
+- Resolution: the commit subject is `port to ladybugdb` (body gives the detail), then re-exported; rebuilding in a throwaway worktree with `git am patches/*.patch` gave tree `ef3ed91…`, identical to `bitemporal`.
+- Lesson: choose the commit subject for the file name it will produce.
