@@ -1,12 +1,12 @@
 """Storyline triage and reinforcement precision, in-process on the baseline. Seam: the system adapter.
 
-MemState verdicts are never pinned here; they come from recorded runs. The salience-keeping system below is a second
-adapter implementation (the baseline plus the bump rule the paper states), not a mock of MemState.
+MemState verdicts are never pinned here; they come from recorded runs. The systems below that report salience or
+edges are generic System subclasses of the baseline, not mocks of MemState.
 """
 
 from demo.baseline import Baseline
 from demo.storyline import KNOWLEDGE_UPDATE, Edge, Event, Question, Storyline, Write
-from demo.triage import CORRECT, MEMORY_FAILURE, SEARCH_FAILURE, run_storyline
+from demo.triage import CORRECT, MEMORY_FAILURE, SEARCH_FAILURE, QuestionOutcome, _reinforcement, run_storyline
 
 
 def topic(n: int, key: str, title: str, summary: str, name: str, value: str) -> Event:
@@ -67,8 +67,9 @@ def test_a_returned_labelled_topic_with_the_wrong_stored_value_is_a_memory_failu
     assert [e.matched for e in run.events] == [True, False]
 
 
-class KeepsSalience(Baseline):
-    """The baseline plus the paper's retrieval rule: every returned topic gains 0.1 (a second adapter, not MemState)."""
+class BumpsReturnedTopics(Baseline):
+    """A generic System subclass: the baseline plus a salience that every returned topic gains 0.1 on. It models no
+    MemState behaviour; it only gives the triage code a system that reports salience."""
 
     def __init__(self):
         super().__init__("baseline with salience")
@@ -99,7 +100,7 @@ def three_topics_two_questions() -> Storyline:
 
 
 def test_reinforcement_precision_is_labelled_increments_over_all_increments_and_equals_precision_at_k():
-    run = run_storyline(KeepsSalience(), three_topics_two_questions())
+    run = run_storyline(BumpsReturnedTopics(), three_topics_two_questions())
     r = run.reinforcement
     # each question returns all three topics (+0.1 each); only the labelled one of each question counts: 0.2 / 0.6
     assert (r.labelled_increments, r.all_increments) == (0.2, 0.6)
@@ -109,7 +110,7 @@ def test_reinforcement_precision_is_labelled_increments_over_all_increments_and_
 
 
 def test_a_labelled_topic_that_is_not_returned_is_not_bumped_so_precision_is_zero():
-    run = run_storyline(KeepsSalience(), crowded_storyline())
+    run = run_storyline(BumpsReturnedTopics(), crowded_storyline())
     r = run.reinforcement
     assert (r.labelled_increments, r.questions_bumped) == (0.0, 0)
     assert r.all_increments == 1.0 and r.precision == 0.0  # ten returned topics, +0.1 each
@@ -121,6 +122,20 @@ def test_reinforcement_precision_is_not_applicable_on_the_baseline():
     assert all(o.increments_labelled is None for o in run.outcomes)
 
 
+def outcome(question, labelled, every, returned):
+    return QuestionOutcome(question, "knowledge update", "q", "t", "a", "id-a", CORRECT, returned, 1 if returned else None,
+                           ["id-a", "id-b"], "t", labelled, every)
+
+
+def test_reinforcement_precision_is_the_summed_labelled_over_the_summed_all_increments():
+    r = _reinforcement([outcome("Q1", 0.1, 0.2, True), outcome("Q2", 0.0, 0.2, False)])
+    assert (r.labelled_increments, r.all_increments, r.questions_bumped, r.questions) == (0.1, 0.4, 1, 2)
+    assert abs(r.precision - 0.25) < 1e-9
+    assert abs(r.precision_at_k - 0.25) < 1e-9 and r.matches_precision_at_k is True  # 1 labelled of 4 returned
+    assert _reinforcement([outcome("Q1", None, None, True)]) is None  # no salience: not applicable
+    assert _reinforcement([outcome("Q1", 0.0, 0.0, False)]).precision is None  # nothing was bumped
+
+
 def linked_storyline() -> Storyline:
     a = topic(1, "a", "Website Redesign", "Project to redesign the company website", "Deadline", "April 20")
     b = Event("E02", "t", "said b", "new_topic", "b", title="Redesign Milestones",
@@ -129,8 +144,9 @@ def linked_storyline() -> Storyline:
     return Storyline(events=(a, b), questions=())
 
 
-class ReportsEdges(Baseline):
-    """The baseline plus an edge list in `read_state`, shaped like MemState's graph edges; `keep=False` drops them."""
+class ListsEdges(Baseline):
+    """A generic System subclass: the baseline plus an edge list in `read_state`, in the adapter's edge shape;
+    `keep=False` drops them. It models no MemState behaviour."""
 
     def __init__(self, keep: bool):
         super().__init__("baseline with edges")
@@ -148,10 +164,10 @@ class ReportsEdges(Baseline):
 
 
 def test_edges_are_compared_where_the_system_reports_them_and_a_missing_edge_is_a_write_path_finding():
-    kept = run_storyline(ReportsEdges(keep=True), linked_storyline())
+    kept = run_storyline(ListsEdges(keep=True), linked_storyline())
     assert [(e.edges_declared, e.edges_compared, e.matched) for e in kept.events] == [(False, False, True),
                                                                                     (True, True, True)]
-    lost = run_storyline(ReportsEdges(keep=False), linked_storyline())
+    lost = run_storyline(ListsEdges(keep=False), linked_storyline())
     assert lost.events[1].matched is False and "edges" in lost.events[1].observation
 
 

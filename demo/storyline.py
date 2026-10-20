@@ -36,13 +36,14 @@ DEPARTURES_FROM_PAPER = (
     "same-title topic would be merged and C2 tests that.",
 )
 
-# LongMemEval's five abilities (docs/papers/2512.12818.md:539-546); the storyline labels four (no abstention).
+ROW = "Storyline"  # the id of the check's row, shared by the check and its tables
+
+# Four of LongMemEval's five abilities (docs/papers/2512.12818.md:539-546); abstention has no answer topic, so it is not labelled.
 INFORMATION_EXTRACTION = "information extraction"
 MULTI_SESSION_REASONING = "multi-session reasoning"
 TEMPORAL_REASONING = "temporal reasoning"
 KNOWLEDGE_UPDATE = "knowledge update"
-ABSTENTION = "abstention"
-ABILITIES = (INFORMATION_EXTRACTION, MULTI_SESSION_REASONING, TEMPORAL_REASONING, KNOWLEDGE_UPDATE, ABSTENTION)
+ABILITIES = (INFORMATION_EXTRACTION, MULTI_SESSION_REASONING, TEMPORAL_REASONING, KNOWLEDGE_UPDATE)
 
 
 @dataclass(frozen=True)

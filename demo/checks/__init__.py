@@ -11,8 +11,8 @@ To add a check, drop a module `demo/checks/<name>.py` that decorates a function:
 - The function gets a `Ctx` (`ctx.system` is the system adapter on a fresh database, `ctx.run_day` the run's date),
   uses only the adapter, and returns a `Verdict` (or a list, one per declared row). A check needing several fresh
   databases (a story each, a ramp per repeat) uses `with ctx.fresh_system(tag) as s:`, one at a time, each with its
-  own snapshot (`demo/session.py`). It does not start servers, write snapshots or set `system` / `snapshot` /
-  `snapshots` on the verdict: the runner does.
+  own snapshot (`demo/session.py`). It does not start servers, write snapshots or set `system` / `snapshots` on the
+  verdict: the runner does.
 - Read fields with `demo.reads.current_value` (it returns `NO_VALUE` for "no current value", `None` for a written
   `null`), and read capabilities from `system.describe()` (`keeps_history`), never from missing keys.
 - Modules starting with `_` are skipped. No list needs editing: `discover()` imports every module here.
@@ -32,7 +32,7 @@ from dataclasses import dataclass
 from datetime import date
 from typing import Callable
 
-from demo.client import System
+from demo.adapter import System
 from demo.session import Session
 from demo.verdict import Verdict
 

@@ -5,13 +5,13 @@ step 1 is the first commit on top of upstream). `checkout_step(n)` checks one ou
 worktree; `return_to_branch()` goes back to `bitemporal` (the runner's `teardown` hook calls it, also after an error).
 Step N is whatever the Nth commit is: until the patch is complete there are fewer than three, and the steps that
 exist are the ones measured (`demo/systems.py` registers `step1`..`step3`; a step that does not exist fails its
-setup with the commit count; ticket 15 enforces exactly three).
+setup with the commit count; the patch is meant to have exactly three).
 
 Callers hold the machine-wide server lock (a checkout swaps the code a running server would load). "Dirty" means
 tracked files modified or staged (what a checkout can clobber or refuse; untracked files do not count) or a rebase,
 merge, cherry-pick, revert or bisect in progress. A setup that refuses leaves the worktree exactly where it was, and
-so does its teardown: the step's setup compares `position()` before and after, and only if HEAD moved does the
-teardown return to `bitemporal`.
+so does its teardown; once a setup completed the checkout (even when HEAD was already at the step) its teardown
+returns to `bitemporal`.
 """
 
 from __future__ import annotations

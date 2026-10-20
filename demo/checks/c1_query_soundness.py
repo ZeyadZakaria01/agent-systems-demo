@@ -5,8 +5,8 @@ from demo.checks import Ctx, check
 from demo.reads import current_value, field_in_response, history_values, read_request
 from demo.verdict import Case, Verdict
 
-CLAIM = ("C1 (query soundness): the response reflects the most recent non-archived value as current; "
-         "prior values appear only when the query explicitly requests historical context.")
+CLAIM = ("C1 (query soundness), by construction (§4.3): the response reflects the most recent non-archived value as "
+         "current; prior values appear only when the query explicitly requests historical context.")
 
 
 @check(row="C1", claim=CLAIM, control=True)

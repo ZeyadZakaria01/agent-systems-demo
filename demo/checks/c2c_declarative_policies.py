@@ -6,10 +6,12 @@ or config surface would sit if it existed, and the config-like routes the server
 `/api/ui/datamodel`). It also searches the schema for the names of MemState's numeric governance knobs
 (`Policies` in `core/models.py`, [INFERENCE] from code: constructed with defaults, never read from a request).
 
-Verdict: no route, schema or property names policies (or rules, constraints, invariants, triggers), no candidate route
-answers, and no schema carries event + condition + action together -> **absent**, with the probe attached. A surface
-found is not scored here: the check raises, so the run shows an error until a person extends the probe to exercise it.
-A system with no API at all (the baseline) answers every probe with nothing, which is the evidence.
+Verdict: no route or schema is named for policies (or rules, constraints, invariants, triggers) as a whole word of its
+name (`/v1/policies`, `PolicyRule`); a property named so (`trigger_count` in some schema) is recorded as evidence only,
+no candidate route answers, and no schema carries event + condition + action together -> **absent**,
+with the probe attached. A policy-bearing route or schema is not scored here: the check raises, so the run shows an
+error until a person extends the probe to exercise it. A system with no API at all (the baseline) answers every probe
+with nothing, which is the evidence.
 """
 
 import re
@@ -20,7 +22,8 @@ from demo.verdict import Verdict
 CLAIM = ("C2 (transition soundness), by construction (§4.3): every transition respects P_t, the declarative "
          "policies ⟨event, condition, action⟩.")
 
-POLICY_TERMS = re.compile(r"polic|rule|constraint|invariant|trigger", re.IGNORECASE)
+POLICY_WORDS = frozenset({"policy", "policies", "rule", "rules", "constraint", "constraints", "invariant",
+                          "invariants", "trigger", "triggers"})
 TRIPLE = ("event", "condition", "action")
 # `Policies` in MemState's core/models.py (the numeric knobs); searched for in the schema, never assumed present
 KNOB_NAMES = ("max_field_history", "max_topics_for_forget_scan", "forget_salience_threshold",
@@ -44,6 +47,12 @@ def _types(prop: dict) -> set[str]:
     return kinds
 
 
+def _policy_named(name: str) -> bool:
+    """Does a whole word of the name (split at camelCase and at every non-alphanumeric) say policy?"""
+    words = re.split(r"[^A-Za-z0-9]+", re.sub(r"(?<=[a-z0-9])(?=[A-Z])", " ", name))
+    return any(w.lower() in POLICY_WORDS for w in words)
+
+
 def _read_schema(openapi: dict) -> dict:
     schemas = openapi.get("components", {}).get("schemas", {})
     props = {name: sorted(spec.get("properties", {})) for name, spec in schemas.items()}
@@ -51,9 +60,9 @@ def _read_schema(openapi: dict) -> dict:
                      for name, s in schemas.items() for p, spec in s.get("properties", {}).items()
                      if _types(spec) & {"integer", "number"})
     paths = {path: sorted(ops) for path, ops in openapi.get("paths", {}).items()}
-    names = [*paths, *schemas, *(p for ps in props.values() for p in ps)]
     return {"paths": paths, "schema_properties": props, "numeric_properties": numeric,
-            "policy_term_hits": sorted({n for n in names if POLICY_TERMS.search(n)}),
+            "policy_term_hits": sorted({n for n in [*paths, *schemas] if _policy_named(n)}),
+            "policy_term_property_hits": sorted({p for ps in props.values() for p in ps if _policy_named(p)}),
             "triple_schemas": sorted(n for n, ps in props.items() if all(t in ps for t in TRIPLE))}
 
 
@@ -77,7 +86,7 @@ def c2c(ctx: Ctx) -> Verdict:
     answering = sorted(p for p, status in guessed.items() if status not in (None, 404))
     surface = []
     if schema is not None:
-        surface += [f"named in the API schema: {n}" for n in schema["policy_term_hits"]]
+        surface += [f"route or schema named for policies in the API schema: {n}" for n in schema["policy_term_hits"]]
         surface += [f"schema with event, condition and action: {n}" for n in schema["triple_schemas"]]
     surface += [f"route answers: {p} ({guessed[p]})" for p in answering]
     if schema is None:
@@ -85,7 +94,7 @@ def c2c(ctx: Ctx) -> Verdict:
                    f"guessed policy/config routes answering: {answering or 'none'}")
     else:
         reachable = [p for p, r in config_like.items() if r is not None and r["status"] == 200]
-        finding = (f"no policy-like route, schema or property in {len(schema['paths'])} routes; "
+        finding = (f"no policy-named route or schema in {len(schema['paths'])} routes; "
                    f"{len(schema['numeric_properties'])} numeric parameters in the schema; "
                    f"policy knob names in the schema: {knobs_in_schema or 'none'}; "
                    f"config-like routes that answer: {reachable or 'none'}; "
@@ -94,7 +103,7 @@ def c2c(ctx: Ctx) -> Verdict:
         "api_schema": None if schema is None else {"status": openapi_probe["status"], **schema},
         "docs_status": docs, "guessed_route_status": guessed, "config_like_routes": config_like,
         "policy_knob_names_in_schema": knobs_in_schema, "describe": s.describe(),
-        "searched_terms": POLICY_TERMS.pattern, "searched_triple": TRIPLE, "finding": finding,
+        "searched_words": sorted(POLICY_WORDS), "searched_triple": TRIPLE, "finding": finding,
     }
     if surface:
         raise RuntimeError("C2(c): a policy-like surface was found, which this probe does not score; extend the "

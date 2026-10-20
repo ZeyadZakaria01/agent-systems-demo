@@ -7,9 +7,11 @@ What differs from recorded mode (`demo/run.py`):
 - One database for the whole run, not a fresh one per check. To keep the checks apart, every title a check writes is
   suffixed ` [live <check id> <HHMMSS of the run>]` (and `--<tag>` inside `ctx.fresh_system(tag)`; the time keeps a
   second run against the same server from duplicating the first run's titles), so the Reasoner's exact-title
-  duplicate detection never merges topics of two checks. A check that forces a fixed topic id collides when two
-  checks force the same id (the server answers 500; the verdict is `error`), and a check that writes an EMPTY title
-  (stored `untitled`) can still be merged with another's; neither is rewritten.
+  duplicate detection never merges topics of two checks (F9 shows an exact-title merge on upstream; that the
+  suffix prevents it across checks is [INFERENCE], not run). A check that forces a fixed topic id collides when two
+  checks force the same id ([INFERENCE]: the server would answer 500 and the verdict would be `error`; not run),
+  and a check that writes an EMPTY title (stored `untitled`) can still be merged with another's
+  ([INFERENCE]); neither is rewritten.
 - Pace: `--delay N` sleeps N seconds after every write or query (visible in the Graph Explorer); `--step` waits for
   Enter instead. State reads for the snapshot are not paced.
 - Everything is labelled live: verdicts carry system `live`, `results.json` has `"mode": "live"`, the scorecard file
@@ -30,15 +32,15 @@ from typing import Callable
 
 import httpx
 
+from demo.adapter import System, utc_now
 from demo.checks import Check, natural_key
-from demo.client import MemStateSystem, System, utc_now
 from demo.deviations import DEVIATIONS
-from demo.evidence import RunDir, capture, new_run_dir, slug, write_results, write_snapshots
+from demo.evidence import new_run_dir, RunDir, slug, write_results
+from demo.failures import run_check
+from demo.latency_tables import with_latency
+from demo.memstate_system import MemStateSystem
 from demo.paths import REPO_ROOT, RESULTS_ROOT
-from demo.failures import detail as _detail, errored as _errored
 from demo.scorecard import Column, counts, render_scorecard
-from demo.session import Session
-from demo.latency_tables import render_latency
 from demo.storyline_tables import render_storyline
 from demo.verdict import Verdict
 
@@ -70,10 +72,16 @@ class LiveSystem(MemStateSystem):
             params["title"] = suffixed(params["title"], self.scope)
         return params
 
+    def _scoped_ingest(self, request: dict) -> dict:
+        """Only a new topic carries a title of its own."""
+        return self._scoped(request) if request.get("placement") == "new_topic" else request
+
+    def _scoped_setup(self, action: str, params: dict) -> dict:
+        return self._scoped(params) if action in ("create_topic", "patch_topic") else params
+
     def ingest(self, request: dict) -> dict:
         response = super().ingest(request)
-        scoped = self._scoped(request) if request.get("placement") == "new_topic" else request
-        target = scoped.get("title") or str(request.get("topic_id", ""))[:8]
+        target = self._scoped_ingest(request).get("title") or str(request.get("topic_id", ""))[:8]
         self.pace(f"ingest {request.get('placement')} {target!r} "
                   f"fields {[f'{f.get('name')}={f.get('value')!r}' for f in request.get('fields') or []]}")
         return response
@@ -92,10 +100,10 @@ class LiveSystem(MemStateSystem):
     # Titles are scoped in the transport methods, below the log; the pause is in the public methods, above it, so
     # `--delay`/`--step` never enter a recorded `latency_ms` or `finished_at`.
     def _ingest(self, request: dict) -> dict:
-        return super()._ingest(self._scoped(request) if request.get("placement") == "new_topic" else request)
+        return super()._ingest(self._scoped_ingest(request))
 
     def _setup_write(self, action: str, params: dict) -> dict | None:
-        return super()._setup_write(action, self._scoped(params) if action in ("create_topic", "patch_topic") else params)
+        return super()._setup_write(action, self._scoped_setup(action, params))
 
     def _describe(self) -> dict:
         return {**super()._describe(), "live": True, "title_scope": self.scope}
@@ -160,8 +168,7 @@ def run_live(url: str, checks: list[Check], results_root: Path, command: str, as
         scorecard = f"**{BANNER}**\n\n" + render_scorecard(rows, (column,), verdicts)
         if storyline := render_storyline(verdicts):
             scorecard += "\n\n" + storyline
-        if latency := render_latency(verdicts):
-            scorecard += "\n\n" + latency
+        scorecard = with_latency(scorecard, verdicts)
         (run.dir / "scorecard-live.md").write_text(scorecard + "\n")
         write_results(run, {
             "run_id": run.id, "mode": "live", "label": BANNER, "complete": complete, "command": command,
@@ -185,29 +192,19 @@ def run_live(url: str, checks: list[Check], results_root: Path, command: str, as
 def _run_check(run: RunDir, check: Check, connect: Callable, pace: Callable[[str], None]) -> list[Verdict]:
     def open_system(tag: str | None):
         scope = check.id if tag is None else f"{check.id}--{slug(tag)}"
-        return _live_cm(connect(f"{scope} {run.id[9:15]}", pace))
+        return CloseOnly(connect(f"{scope} {time_of(run.id)}", pace))
 
-    session = Session(open_system, lambda system, tag, t0, t1: capture(LIVE, check.id, system, tag, t0, t1))
-    notes: list[str] = []
-    try:
-        try:
-            verdicts = check.execute(session)
-        except Exception as e:
-            verdicts = _errored(check, LIVE, _detail(e))
-    finally:
-        try:
-            session.close()
-        except Exception as e:
-            notes.append(f"cleanup after the check failed: {type(e).__name__}: {e}")
-    for v in verdicts:
-        v.system = LIVE
-        v.observations.extend(["live run: one shared database, titles suffixed per check", *notes])
-    write_snapshots(run, session.captured, verdicts)
-    return verdicts
+    return run_check(run, check, LIVE, open_system, observations=({"name": "live run",
+                                                                  "summary": "one shared database, titles suffixed per check"},))
 
 
-class _live_cm:
-    """Context manager over a `LiveSystem`: closes the HTTP client only; the server is not ours to stop."""
+def time_of(run_id: str) -> str:
+    """The HHMMSS part of a run id (`YYYYMMDD-HHMMSS[-n]`)."""
+    return run_id.split("-")[1]
+
+
+class CloseOnly:
+    """Context manager over a system: closes its HTTP client only; the server is not ours to stop."""
 
     def __init__(self, system: System) -> None:
         self.system = system

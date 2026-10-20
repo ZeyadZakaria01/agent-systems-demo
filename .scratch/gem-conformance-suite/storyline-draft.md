@@ -1,4 +1,4 @@
-# Storyline draft: the Website Redesign example (for review, ticket 11)
+# Storyline draft: the Website Redesign example (for review)
 
 Generated from `demo/storyline.py` by `python -m demo.storyline_draft`; edit the data there and regenerate. Recorded-run numbers (triage counts, reinforcement precision, unexpected-state counts) live in `docs/findings.md` under the storyline F-entry for the date of that run; they are not copied here.
 
@@ -118,8 +118,8 @@ Abilities: information extraction 4, multi-session reasoning 1, temporal reasoni
 ## Points to decide in review
 
 - **Temporal reasoning** is labelled where the answer is a date that moved or was set (Q08, Q09, Q15); no date arithmetic is asked of the memory. Say if you want these relabelled or a real arithmetic question added (it would need a stored value that is the computed answer).
-- **Multi-session reasoning** has one question (Q06): the team list was built over two sessions (E02 kickoff, E21 standup after Erin joined and Alice was promoted). More would need answers that combine two topics, which one answer topic cannot label.
-- Several questions share ground-truth strings with other topics (April 20 is both the redesign deadline and the launch milestone); the labelled topic decides which one counts.
-- Dependent topics (milestones, Alice's role in the team list) are updated by explicit events here (E15–E17, E21), because every event is a perfect placement; whether MemState would propagate a deadline change by itself is C3's question, not this one.
+- **Multi-session reasoning** has 1 question(s) (Q06): the answer was built over several events (E02, E21). More would need answers that combine two topics, which one answer topic cannot label.
+- Several questions share ground-truth strings with other topics (April 20 is on Website Redesign and Redesign Milestones); the labelled topic decides which one counts.
+- Dependent topics (milestones, Alice's role in the team list) are updated by explicit events here, because every event is a perfect placement; whether MemState would propagate a deadline change by itself is C3's question, not this one.
 - All values are strings so a read is judged by exact match; changing a value's wording changes the ground truth in the same place.
 - **The store is small.** The storyline creates 14 topics, so a `top_k` 8 read returns most of them and the baseline's top 10 returns nearly all. Phase 2, Marketing Budget and Design Review Meeting are look-alikes so a paraphrased question can rank the wrong topic; they do not guarantee a search failure. Report whatever the recorded run gives.

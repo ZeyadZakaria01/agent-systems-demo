@@ -4,12 +4,16 @@
 
 **Blocked by:** None (can start immediately)
 
-**Status:** ready-for-agent
+**Status:** resolved
 
-- [ ] Commit 1 changes only the `kuzu_adapter.py` import (`import ladybug as kuzu`) and the `pyproject.toml` dependency (`ladybug==0.21.2`). Nothing is renamed and MemState's README is untouched.
-- [ ] `MemState/` stays byte-for-byte unmodified, and `src/memstate.egg-info` is restored after any editable install.
-- [ ] `--patched` points `PYTHONPATH` at the patched source. Default DB paths become `.runtime/memstate-kuzu-<ts>/memstate.kuzu` and `.runtime/memstate-ladybug-<ts>/memstate.lbug`. The script prints the loaded engine module and the source folder. Without `--patched` it behaves as before, apart from the folder name.
-- [ ] `patches/0001-port-to-ladybugdb.patch` is exported with `git format-patch 945d7c4..bitemporal -o patches/`. The README's two commands rebuild `MemState-patched/` from the pinned submodule, which is shown by recreating the worktree from the patch files.
-- [ ] Upstream's 39 tests pass unedited in the patched copy.
-- [ ] Smoke run: a `--patched` server answers `/health` and completes one `/v1/ingest` + `/v1/query` round trip. The startup lines name ladybug and `MemState-patched/`.
-- [ ] The README documents `--patched` and the rebuild.
+- [x] Commit 1 changes only the `kuzu_adapter.py` import (`import ladybug as kuzu`) and the `pyproject.toml` dependency (`ladybug==0.21.2`). Nothing is renamed and MemState's README is untouched.
+- [x] `MemState/` stays byte-for-byte unmodified, and `src/memstate.egg-info` is restored after any editable install.
+- [x] `--patched` points `PYTHONPATH` at the patched source. Default DB paths become `.runtime/memstate-kuzu-<ts>/memstate.kuzu` and `.runtime/memstate-ladybug-<ts>/memstate.lbug`. The script prints the loaded engine module and the source folder. Without `--patched` it behaves as before, apart from the folder name.
+- [x] `patches/0001-port-to-ladybugdb.patch` is exported with `git format-patch 945d7c4..bitemporal -o patches/`. The README's two commands rebuild `MemState-patched/` from the pinned submodule, which is shown by recreating the worktree from the patch files.
+- [x] Upstream's 39 tests pass unedited in the patched copy.
+- [x] Smoke run: a `--patched` server answers `/health` and completes one `/v1/ingest` + `/v1/query` round trip. The startup lines name ladybug and `MemState-patched/`.
+- [x] The README documents `--patched` and the rebuild.
+
+## Comments
+
+Merged as `bed6162` (`bitemporal` @ `089b823`); reviewed and fixed in `16f2bd5` (`--patched` argument loop, README patched-copy section); the patched-server smoke (/health, one ingest + query) is recorded in the journal.

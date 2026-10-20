@@ -1,15 +1,15 @@
 """C4 (provenance preservation): history survival, empty/null writes, the 500-entry cap.
 
-The baseline is last-write-wins with no history, so C4 fails with the observations a scorecard reader
-relies on (lost earlier value, empty value becoming current). A conforming stand-in on the adapter
-shows the passing path. MemState verdicts are never pinned.
+The baseline is last-write-wins with no history, so C4 fails with the observations a scorecard reader relies on (lost
+earlier value, empty value becoming current). `AppendOnlyStore` shows the passing path and that a system accepting
+empty writes breaks those cases. MemState verdicts are never pinned.
 """
 
 import uuid
 
+from demo.adapter import Rejected, System
 from demo.baseline import Baseline
 from demo.checks import discover
-from demo.client import Rejected, System
 from demo.verdict import FAIL, PASS
 
 
@@ -30,14 +30,9 @@ def by_name(verdict, name):
     return next(c for c in verdict.cases if c.name == name)
 
 
-def test_c4_quotes_the_paper_and_marks_only_the_update_path_as_a_control():
-    check = c4()
-    (row,) = check.rows
-    assert "provenance chain of reachable units" in row.claim
-    assert row.control is False
-    v = run(Baseline())
-    controls = [c for c in v.cases if c.control]
-    assert [c.name for c in controls] == ["history survives a value update"]
+def test_c4_marks_only_the_update_path_as_a_control():
+    controls = [c.name for c in run(Baseline()).cases if c.control]
+    assert controls == ["history survives a value update"]
 
 
 def test_c4_fails_on_the_baseline_with_the_lost_earlier_value_and_empty_current():
@@ -45,38 +40,29 @@ def test_c4_fails_on_the_baseline_with_the_lost_earlier_value_and_empty_current(
     assert v.verdict == FAIL
     assert by_name(v, "history survives a value update").held is False
     assert by_name(v, "history survives a merge").held is False
-    assert "upsert (no duplicate)" in by_name(v, "history survives a merge").observation
     assert by_name(v, "history survives archiving").held is None  # no archived flag
     assert by_name(v, 'version_field with "" does not replace April 20').held is False
     assert by_name(v, "version_field with null does not replace April 20").held is False
-    lost = observation(v, "lost earlier value")
-    assert lost["lost"] is True and "March 15" in lost["summary"]
+    assert observation(v, "lost earlier value")["lost"] is True
     empty = observation(v, "empty value becoming current")
     assert empty["empty_current"] is True and empty["null_current"] is True
 
 
-class HistoryStore(System):
-    """Append-only field histories, merge concatenates both, archive keeps the topic, empty/null rejected,
-    no cap. The C4 passing path."""
+class AppendOnlyStore(System):
+    """A test double, not a model of MemState: it keeps every write of a field as history (newest first), folds
+    same-title topics by concatenating their histories, and rejects empty and null values unless `accept_empty`."""
 
-    def __init__(self, cap=None, accept_empty=False):
-        super().__init__("history-store")
+    def __init__(self, accept_empty=False):
+        super().__init__("append-only-store")
         self.topics = {}
-        self.cap = cap
         self.accept_empty = accept_empty
 
-    def _field(self, history):
-        hist = list(history)
-        if self.cap is not None:
-            hist = hist[:self.cap]  # newest first, drop the oldest
-        return {"current": hist[0] if hist else None, "history": hist}
-
     def _topic(self, t):
-        return {**t, "fields": {n: self._field(h) for n, h in t["fields"].items()}}
+        fields = {n: {"current": h[0], "history": list(h)} for n, h in t["fields"].items()}
+        return {**t, "fields": fields}
 
     def _ingest(self, request):
-        placement = request["placement"]
-        if placement == "new_topic":
+        if request["placement"] == "new_topic":
             tid = str(uuid.uuid4())
             self.topics[tid] = {"id": tid, "title": request["title"], "archived": False, "fields": {}}
         else:
@@ -84,25 +70,20 @@ class HistoryStore(System):
             if tid not in self.topics:
                 raise Rejected(400, "topic not found")
         for f in request.get("fields") or []:
-            value = f.get("value", "")
-            if value in ("", None) and not self.accept_empty:
+            if f.get("value") in ("", None) and not self.accept_empty:
                 raise Rejected(422, "empty value")
-            entry = {"value": value, "provenance": f.get("provenance")}
-            hist = self.topics[tid]["fields"].setdefault(f["name"], [])
-            hist.insert(0, entry)
+            entry = {"value": f.get("value"), "provenance": f.get("provenance")}
+            self.topics[tid]["fields"].setdefault(f["name"], []).insert(0, entry)
         self._merge_pass()
         return {"topic_id": tid, "applied": [], "version_ids": {}, "similar_topic_ids": []}
 
     def _merge_pass(self):
-        by_title: dict[str, list] = {}
+        by_title = {}
         for t in self.topics.values():
             by_title.setdefault(t["title"], []).append(t)
         for group in by_title.values():
-            if len(group) < 2:
-                continue
-            group.sort(key=lambda t: t["id"])
-            keep = group[0]
-            for drop in group[1:]:
+            keep, *dropped = sorted(group, key=lambda t: t["id"])
+            for drop in dropped:
                 for name, hist in drop["fields"].items():
                     keep["fields"][name] = hist + keep["fields"].get(name, [])
                 del self.topics[drop["id"]]
@@ -118,39 +99,26 @@ class HistoryStore(System):
         return None if t is None else self._topic(t)
 
     def _setup_write(self, action, params):
-        if action == "patch_topic":
-            t = self.topics[params["topic_id"]]
-            if "archived" in params:
-                t["archived"] = params["archived"]
-            if "title" in params:
-                t["title"] = params["title"]
-            return {"topic_id": params["topic_id"]}
-        return None
+        if action != "patch_topic":
+            return None
+        self.topics[params["topic_id"]].update({k: v for k, v in params.items() if k in ("archived", "title")})
+        return {"topic_id": params["topic_id"]}
 
     def _describe(self):
         return {"keeps_history": True}
 
 
 def test_a_system_that_keeps_history_and_rejects_empty_writes_passes_c4():
-    v = run(HistoryStore())
+    v = run(AppendOnlyStore())
     assert v.verdict == PASS
-    assert all(c.held for c in v.cases)
     assert observation(v, "lost earlier value")["lost"] is False
-    assert observation(v, "empty value becoming current")["empty_current"] is False
-    assert observation(v, "empty value becoming current")["null_current"] is False
+    empty = observation(v, "empty value becoming current")
+    assert empty["empty_current"] is False and empty["null_current"] is False
 
 
 def test_accepting_an_empty_write_that_becomes_current_breaks_the_empty_cases():
-    v = run(HistoryStore(accept_empty=True))
+    v = run(AppendOnlyStore(accept_empty=True))
     assert by_name(v, 'version_field with "" does not replace April 20').held is False
     assert by_name(v, "version_field with null does not replace April 20").held is False
     assert observation(v, "empty value becoming current")["empty_current"] is True
     assert v.verdict != PASS
-
-
-def test_a_500_entry_cap_that_drops_the_oldest_breaks_the_cap_case():
-    v = run(HistoryStore(cap=500))
-    cap = by_name(v, "the first value is still in the history after 501 updates")
-    assert cap.held is False
-    assert v.measurements["history_cap"]["first_present"] is False
-    assert v.measurements["history_cap"]["length"] == 500

@@ -3,7 +3,7 @@
 `ctx.system` is the check's default system: opened on first use, closed (and its evidence captured) when the check
 ends. `ctx.fresh_system(tag)` is a context manager opening ANOTHER fresh system (a fresh database, and for MemState a
 fresh server) for the length of its `with` block; each gets its own snapshot, so a row can be assembled from several
-(ticket 09: one fresh DB per time-probe story; ticket 08: one per ramp repeat).
+(one fresh DB per time-probe story, one per ramp repeat).
 
 One system at a time (one server at a time, port 8765): opening a system while another is open raises `SystemBusy`.
 That includes the default system, which stays open until the check ends, so a check that uses `fresh_system` should
@@ -15,7 +15,7 @@ from __future__ import annotations
 from contextlib import contextmanager, nullcontext
 from typing import Callable, ContextManager, Iterator
 
-from demo.client import System, utc_now
+from demo.adapter import System, utc_now
 
 OpenSystem = Callable[[str | None], ContextManager[System]]  # tag (None = the default system) -> a system, cleaned on exit
 Capture = Callable[[System, str | None, str, str], dict]  # (system, tag, started_at, finished_at) -> evidence

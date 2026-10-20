@@ -4,11 +4,15 @@
 
 **Blocked by:** 01 (C1 tracer bullet)
 
-**Status:** ready-for-agent
+**Status:** resolved
 
-- [ ] C2(a) creates two topics with the same title, where the one to be dropped holds the newer value. It triggers the Reasoner's merge through `/v1` only and checks which value is current. It repeats 20 times with random topic IDs and distinct titles, reports the violation rate, and gives a verdict on the scale.
-- [ ] Background effects are awaited by polling state with a timeout (`wait_until`). Each wait is logged apart from client latency.
-- [ ] The merge revision window (duplicate-creating ingest → merge visible) is reported as the median and range over the 20 repetitions.
-- [ ] The merge extras are run and recorded: three topics sharing one title; an active topic merged into an archived duplicate (archived by a labelled setup write); and whether the dropped topic is deleted, recorded as the observation "topic deleted on merge".
-- [ ] The suite's tests assert C2(a) value pass and a violation rate of 0/20 on the baseline.
-- [ ] Smoke run: a recorded upstream run prints the violation rate, the window and the extras, with snapshots.
+- [x] C2(a) creates two topics with the same title, where the one to be dropped holds the newer value. It triggers the Reasoner's merge through `/v1` only and checks which value is current. It repeats 20 times with random topic IDs and distinct titles, reports the violation rate, and gives a verdict on the scale.
+- [x] Background effects are awaited by polling state with a timeout (`wait_until`). Each wait is logged apart from client latency.
+- [x] The merge revision window (duplicate-creating ingest → merge visible) is reported as the median and range over the 20 repetitions.
+- [x] The merge extras are run and recorded: three topics sharing one title; an active topic merged into an archived duplicate (archived by a labelled setup write); and whether the dropped topic is deleted, recorded as the observation "topic deleted on merge".
+- [x] The suite's tests assert C2(a) value pass and a violation rate of 0/20 on the baseline.
+- [x] Smoke run: a recorded upstream run prints the violation rate, the window and the extras, with snapshots.
+
+## Comments
+
+Merged as `85ef4ae`; reviewed and fixed in `16f2bd5` (dropped-holds-newer enforced, upserts counted apart, tests through the adapter with a generic stand-in). Smoke F18.

@@ -16,7 +16,7 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
 
-from demo.client import System
+from demo.adapter import System
 from demo.verdict import Verdict
 
 
@@ -84,7 +84,6 @@ def write_snapshots(run: RunDir, captured: list[dict], verdicts: list[Verdict]) 
         paths.append(rel)
     for v in verdicts:
         v.snapshots = list(paths)
-        v.snapshot = paths[0] if paths else None
     return paths
 
 

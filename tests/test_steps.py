@@ -1,15 +1,17 @@
 """Patch steps: resolving, checking out and returning, on a throwaway git repo (real git, no MemState)."""
 
 import json
+import os
 import subprocess
 from datetime import date
+from pathlib import Path
 
 import pytest
 
 from demo.checks import discover
 from demo.run import run_recorded
 from demo.steps import PatchRepo, StepError
-from demo.systems import SYSTEMS, default_systems, step_label, step_spec
+from demo.systems import default_systems, step_spec
 
 
 def git(path, *args):
@@ -71,11 +73,6 @@ def test_untracked_files_do_not_count_as_dirty(repo):
     repo.checkout_step(1)
 
 
-def test_registered_step_systems_are_labelled_with_step_and_commit():
-    assert {"step1", "step2", "step3"} <= set(SYSTEMS)
-    assert step_label(2, "089b823d2a44c65e539db51173770ee499ce80b2") == "bitemporal patch step 2 (089b823, LadybugDB)"
-
-
 def test_a_run_without_systems_measures_only_the_steps_that_exist(repo):
     # two commits on the throwaway repo: step 3 is left out, everything else stays in registry order
     assert default_systems(repo) == ["upstream", "step1", "step2", "baseline"]
@@ -87,10 +84,9 @@ def test_a_run_without_systems_measures_only_the_steps_that_exist(repo):
 def test_an_operation_in_progress_is_refused(repo, operation):
     marker = git(repo.path, "rev-parse", "--path-format=absolute", "--git-path", operation)
     if operation == "rebase-merge":
-        import os
         os.makedirs(marker)
     else:
-        open(marker, "w").write(repo.head() + "\n")
+        Path(marker).write_text(repo.head() + "\n")
     with pytest.raises(StepError, match=f"operation in progress \\({operation}\\)"):
         repo.checkout_step(1)
     assert git(repo.path, "branch", "--show-current") == "bitemporal"
@@ -157,18 +153,23 @@ def test_a_refused_setup_leaves_a_detached_worktree_with_a_tracked_edit_exactly_
 
 
 def test_a_refused_setup_for_an_operation_in_progress_does_not_move_the_worktree(repo, tmp_path):
-    open(git(repo.path, "rev-parse", "--path-format=absolute", "--git-path", "MERGE_HEAD"), "w").write(repo.head() + "\n")
+    Path(git(repo.path, "rev-parse", "--path-format=absolute", "--git-path", "MERGE_HEAD")).write_text(repo.head() + "\n")
     run = run_step1(repo, tmp_path)
     assert "operation in progress" in run.verdicts[0].error
     assert git(repo.path, "branch", "--show-current") == "bitemporal"
 
 
-def test_a_setup_that_switched_is_undone_by_teardown_even_when_it_fails_after_the_checkout(repo, tmp_path, monkeypatch):
-    # HEAD moves, then verification fails: the worktree must still go back to the branch
-    monkeypatch.setattr(PatchRepo, "head", lambda self: "0" * 40 if git(self.path, "branch", "--show-current") == "" else git(self.path, "rev-parse", "HEAD"))
-    run = run_step1(repo, tmp_path)
-    assert "checked out step 1 but HEAD is" in run.verdicts[0].error
+def test_a_clean_worktree_already_detached_at_the_step_is_still_returned_to_the_branch(repo, tmp_path):
+    # what a crashed earlier run leaves behind: the checkout is already where the step wants it, so setup moves
+    # nothing, yet the run must still end on `bitemporal`
+    git(repo.path, "checkout", "-q", "--detach", repo.step_commit(1))
+    run = run_step1(repo, tmp_path, opened=_server_down)
+    assert run.verdicts[0].verdict == "error" and "server did not start" in run.verdicts[0].error
     assert git(repo.path, "branch", "--show-current") == "bitemporal"
+
+
+def _server_down(tag_id, run):
+    raise RuntimeError("server did not start")
 
 
 def run_events(run):

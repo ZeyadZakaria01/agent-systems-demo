@@ -21,9 +21,9 @@ from dataclasses import dataclass, field
 from typing import Any
 
 from demo.checks import Ctx, Row, check
-from demo.client import Rejected, System, utc_now
-from demo.reads import current_value, field_in_response, read_request
-from demo.time_stories import (AS_OF, PLAIN, FUTURE_DATED, FUTURE_ONLY, LAPSED_OVERRIDE_1, LAPSED_OVERRIDE_2, OUT_OF_ORDER,
+from demo.adapter import Rejected, System, utc_now
+from demo.reads import current_value, field_in_response
+from demo.time_stories import (AS_OF, FUTURE_DATED, FUTURE_ONLY, LAPSED_OVERRIDE_1, LAPSED_OVERRIDE_2, OUT_OF_ORDER,
                                RETROACTIVE, Story, history_intact, ingest_request, query_request, shift_story)
 from demo.verdict import FAIL, PASS, Case, Verdict
 
@@ -85,9 +85,10 @@ def _write_story(system: System, story: Story, dated: bool, pause_after_first: b
 
 
 def _history_case(system: System, story: Story, topic_id: str) -> Case:
-    """The patch's history-intact case, read from the stored topic's history (explain read)."""
-    response = system.query(read_request(topic_id, explain=True))
-    intact, why = history_intact(story, field_in_response(response, topic_id, story.field))
+    """The patch's history-intact case, read from the stored topic's entries (`read_topic`), not from a query
+    response, which need not carry `expired_at` or `replaces_entry_id`."""
+    stored = ((system.read_topic(topic_id) or {}).get("fields") or {}).get(story.field)
+    intact, why = history_intact(story, stored)
     return Case("history intact: no value lost, expired entries copied and linked", intact, why)
 
 
@@ -105,10 +106,11 @@ def _run_story(ctx: Ctx, story: Story) -> Outcome:
                          for a in shifted.asks]
             return out
         for ask in shifted.asks:
-            how = "plain read" if ask.axis == PLAIN or not caps.valid_time else "valid_at"
             name = f"{ask.label}: {ask.when.isoformat()} -> {ask.correct!r}"
+            request = query_request(ask, topic_id, send_valid=caps.valid_time)
+            how = "valid_at" if "valid_at" in request else "plain read"
             try:
-                got = _answer(s, topic_id, shifted.field, query_request(ask, topic_id, caps.valid_time))
+                got = _answer(s, topic_id, shifted.field, request)
             except Rejected as e:
                 out.cases.append(Case(name, False, f"[{path}] the read was {e}", control=ask.control))
                 continue
@@ -124,7 +126,8 @@ def _verdict(row: str, cases: list[Case], caps: Caps) -> Verdict:
     v = Verdict(row=row, verdict=PASS if all(c.held for c in cases) else FAIL, cases=cases,
                 measurements=caps.measurements())
     if any(c.control and not c.held for c in cases):
-        v.observations.append("over-blocking")
+        v.observations.append({"name": "over-blocking",
+                               "summary": "a control date failed: the system blocks reads it should answer"})
     return v
 
 
@@ -144,12 +147,12 @@ def _as_of(ctx: Ctx) -> Verdict:
             return _verdict("T5", [Case("as-of probe writes", False, f"a write was {e}", control=True)], caps)
         results = []
         for ask in shifted.asks:
-            request = query_request(ask, topic_id, True, True, recorded_at=noted)
+            request = query_request(ask, topic_id, send_valid=True, send_recorded=True, recorded_at=noted)
+            result = {"asked": ask.label, "control": ask.control, "request": request}
             try:
-                results.append({"asked": ask.label, "request": request,
-                                "answer": _answer(s, topic_id, shifted.field, request)})
+                results.append({**result, "answer": _answer(s, topic_id, shifted.field, request)})
             except Rejected as e:
-                results.append({"asked": ask.label, "request": request, "rejected": str(e), "answer": None})
+                results.append({**result, "rejected": str(e), "answer": None})
         if any("rejected" in r for r in results):
             return _verdict("T5", [Case(a.label, False, r.get("rejected", "answered"), control=a.control)
                                    for a, r in zip(shifted.asks, results)], caps)
@@ -157,8 +160,8 @@ def _as_of(ctx: Ctx) -> Verdict:
         if first == second:
             return Verdict.absent("T5", {
                 "probe": "the same plain-read answer to a valid_at question and a recorded_at question",
-                "noted_moment_after_first_write": noted, "gap_s": AS_OF_GAP_S, "asked": results,
-                **caps.measurements()}, measurements=caps.measurements())
+                "noted_moment_after_first_write": noted, "gap_s": AS_OF_GAP_S, "asked": results},
+                measurements=caps.measurements())
         cases = [Case(f"{ask.label} -> {ask.correct!r}", r["answer"] == ask.correct,
                       f"asked {ask.label}: got {r['answer']!r}, correct {ask.correct!r}", control=ask.control)
                  for ask, r in zip(shifted.asks, results)]

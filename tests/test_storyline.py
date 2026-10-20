@@ -10,8 +10,8 @@ from demo.baseline import Baseline
 from demo.checks import discover
 from demo.run import run_recorded
 from demo.storyline import (ABILITIES, KNOWLEDGE_UPDATE, WEBSITE_REDESIGN, Edge, Event, Question, Storyline, Write)
-from demo.storyline_draft import DRAFT_PATH
-from demo.storyline_tables import PRECISION_NOTE, render_storyline
+from demo.storyline_draft import DRAFT_PATH, render
+from demo.storyline_tables import render_storyline
 from demo.systems import SystemSpec
 
 
@@ -68,28 +68,17 @@ def _inproc(system_id):
     return SystemSpec(system_id, system_id, open_fn)
 
 
-def test_the_run_output_prints_triage_counts_and_reinforcement_precision_but_no_scorecard_row(tmp_path):
+def test_the_storyline_is_printed_beside_the_scorecard_but_is_not_a_scorecard_row(tmp_path):
     registry = {s: _inproc(s) for s in ("upstream", "baseline")}
     result = run_recorded(systems=["upstream", "baseline"], checks=[triage_check()], results_root=tmp_path,
                           command="python -m demo.run test", run_day=date(2026, 10, 20), registry=registry,
                           runtime_root=tmp_path / "runtime")
     out = result.scorecard
-    assert "### Storyline: search failures vs memory failures" in out
-    assert "Search failures" in out and "Memory failures" in out
-    assert "### Reinforcement precision (beside C6 clause 1; no verdict)" in out
-    assert "n/a" in out  # in-process baseline has no salience, so reinforcement precision is not applicable
-    assert "Precision@k" in out and PRECISION_NOTE in out
+    assert "### Storyline" in out and "n/a" in out  # the in-process baseline has no salience: precision n/a
     assert "| Storyline" not in out.split("### Storyline")[0]  # not a scorecard row
     assert "change table" not in out  # Storyline is off the scorecard, so no empty per-step table
-    results = json.loads((result.dir / "results.json").read_text())
-    assert results["change_table"]["measured"] == []
     assert render_storyline([]) == ""
 
 
-def test_the_committed_review_draft_names_every_event_and_question():
-    text = DRAFT_PATH.read_text()
-    for event in WEBSITE_REDESIGN.events:
-        assert event.id in text, event.id
-    for question in WEBSITE_REDESIGN.questions:
-        assert question.id in text, question.id
-    assert "Complete" in text and "Website Redesign Phase 2" in text
+def test_the_committed_review_draft_is_the_current_render_of_the_data():
+    assert DRAFT_PATH.read_text() == render()

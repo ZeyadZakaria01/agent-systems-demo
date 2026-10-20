@@ -1,4 +1,4 @@
-"""Triggering the Reasoner's duplicate merge and waiting for it (C2(a), the merge extras).
+"""Triggering the Reasoner's duplicate merge and waiting for it (C2(a), C4's merge case, the merge extras).
 
 MemState merges topics with the same title in a background task after every `/v1/ingest` response; a query never
 merges, and nothing reports completion. So a merge is triggered the only way the `/v1` API allows (write a second
@@ -25,12 +25,40 @@ from __future__ import annotations
 
 import uuid
 from dataclasses import dataclass
+from enum import StrEnum
 
-from demo.client import System, Waited
+from demo.adapter import System, Waited
 from demo.reads import NO_VALUE, current_value
 
 DEFAULT_TIMEOUT_S = 15.0
 DEFAULT_INTERVAL_S = 0.05
+FIELD = "Deadline"
+OLDER, NEWER = "March 15", "April 20"
+OLDER_PROVENANCE, NEWER_PROVENANCE = "kickoff-notes", "pm-email"
+
+
+class DroppedState(StrEnum):
+    DELETED = "deleted"  # the dropped topic reads as missing
+    ARCHIVED = "archived"
+
+
+class SurvivorHeld(StrEnum):
+    NEWER = "newer"
+    OLDER = "older"
+
+
+@dataclass(frozen=True)
+class PairSpec:
+    """What a duplicate pair carries: one field written twice, `older` first, `newer` second."""
+
+    older_value: object = OLDER
+    newer_value: object = NEWER
+    field: str = FIELD
+    older_provenance: str = OLDER_PROVENANCE
+    newer_provenance: str = NEWER_PROVENANCE
+
+
+DEADLINE = PairSpec()
 
 
 def unique_title(stem: str) -> str:
@@ -66,27 +94,37 @@ class MergeOutcome:
     waited: Waited | None  # None when the system upserted (no duplicate, nothing to wait for)
     survivor_id: str | None
     dropped_id: str | None
-    dropped_state: str | None  # "deleted" (reads as missing) or "archived"
+    dropped_state: DroppedState | None
 
     @property
     def window_s(self) -> float | None:
         return None if self.waited is None or self.waited.timed_out else self.waited.elapsed
 
+    @property
+    def survivor_held(self) -> SurvivorHeld | None:
+        """Which of the pair's values the survivor was written with; `None` without a merge of two topics."""
+        if self.survivor_id is None or self.pair.upserted:
+            return None
+        return SurvivorHeld.NEWER if self.survivor_id == self.pair.newer_id else SurvivorHeld.OLDER
 
-def create_duplicate_pair(system: System, title: str, older_value: object, newer_value: object,
-                          field: str = "Deadline", older_provenance: str = "kickoff-notes",
-                          newer_provenance: str = "pm-email") -> Pair:
+    @property
+    def dropped_held_newer(self) -> bool | None:
+        """Did the dropped topic hold the newer value (the arrangement C2(a) needs)? `None` when nothing was dropped."""
+        return None if self.dropped_id is None else self.dropped_id == self.pair.newer_id
+
+
+def create_duplicate_pair(system: System, title: str, spec: PairSpec = DEADLINE) -> Pair:
     """Write `title` twice through `/v1/ingest new_topic`; the second response ends the call (the merge trigger)."""
-    older = system.ingest(new_topic(title, field, older_value, older_provenance))["topic_id"]
-    newer = system.ingest(new_topic(title, field, newer_value, newer_provenance))["topic_id"]
-    return Pair(title, field, older, newer, older_value, newer_value)
+    older = system.ingest(new_topic(title, spec.field, spec.older_value, spec.older_provenance))["topic_id"]
+    newer = system.ingest(new_topic(title, spec.field, spec.newer_value, spec.newer_provenance))["topic_id"]
+    return Pair(title, spec.field, older, newer, spec.older_value, spec.newer_value)
 
 
-def topic_gone_or_archived(system: System, topic_id: str) -> str | None:
+def topic_gone_or_archived(system: System, topic_id: str) -> DroppedState | None:
     topic = system.read_topic(topic_id)
     if topic is None:
-        return "deleted"
-    return "archived" if topic.get("archived") else None
+        return DroppedState.DELETED
+    return DroppedState.ARCHIVED if topic.get("archived") else None
 
 
 def await_merge(system: System, pair: Pair, timeout: float = DEFAULT_TIMEOUT_S,
@@ -103,9 +141,7 @@ def await_merge(system: System, pair: Pair, timeout: float = DEFAULT_TIMEOUT_S,
     return MergeOutcome(pair, False, waited, None, None, None)
 
 
-def create_retitled_pair(system: System, stem: str, older_value: object, newer_value: object,
-                         field: str = "Deadline", older_provenance: str = "kickoff-notes",
-                         newer_provenance: str = "pm-email") -> Pair | None:
+def create_retitled_pair(system: System, stem: str, spec: PairSpec = DEADLINE) -> Pair | None:
     """Arrange a duplicate pair whose higher-id (to be dropped) topic holds the newer value; `None` when the system
     cannot retitle a topic (the two topics written so far stay, under distinct titles)."""
     tag = unique_title(stem)
@@ -113,26 +149,22 @@ def create_retitled_pair(system: System, stem: str, older_value: object, newer_v
                           "fields": []})["topic_id"] for n in ("first", "second")]
     lower, higher = sorted(ids)
     system.ingest({"placement": "extend_topic", "topic_id": lower,
-                   "fields": [{"name": field, "value": older_value, "provenance": older_provenance}]})
+                   "fields": [{"name": spec.field, "value": spec.older_value, "provenance": spec.older_provenance}]})
     system.ingest({"placement": "extend_topic", "topic_id": higher,
-                   "fields": [{"name": field, "value": newer_value, "provenance": newer_provenance}]})
+                   "fields": [{"name": spec.field, "value": spec.newer_value, "provenance": spec.newer_provenance}]})
     for topic_id in (lower, higher):
         done = system.setup_write("patch_topic", label="give the pair one title (the editor never writes a value)",
                                   topic_id=topic_id, title=tag)
         if done is None:
             return None
     system.ingest({"placement": "extend_topic", "topic_id": lower, "fields": []})  # the merge trigger
-    return Pair(tag, field, lower, higher, older_value, newer_value)
+    return Pair(tag, spec.field, lower, higher, spec.older_value, spec.newer_value)
 
 
-def trigger_and_await_merge(system: System, title: str, older_value: object, newer_value: object,
-                            field: str = "Deadline", timeout: float = DEFAULT_TIMEOUT_S,
-                            older_provenance: str = "kickoff-notes", newer_provenance: str = "pm-email") -> MergeOutcome:
+def trigger_and_await_merge(system: System, title: str, spec: PairSpec = DEADLINE,
+                            timeout: float = DEFAULT_TIMEOUT_S) -> MergeOutcome:
     """The dropped-holds-newer pair when the system can retitle, else the plain same-title pair; then the wait."""
-    pair = create_retitled_pair(system, title, older_value, newer_value, field, older_provenance, newer_provenance)
-    if pair is None:
-        pair = create_duplicate_pair(system, unique_title(title), older_value, newer_value, field,
-                                     older_provenance, newer_provenance)
+    pair = create_retitled_pair(system, title, spec) or create_duplicate_pair(system, unique_title(title), spec)
     return await_merge(system, pair, timeout)
 
 

@@ -15,7 +15,7 @@ class Deviation:
 
 DEVIATIONS: tuple[Deviation, ...] = (
     Deviation("MemState's intent router",
-              "each chat request first makes an extra Ollama call that routes to query, ingest or both",
+              "[INFERENCE, from reading the chat code] each chat request first makes an extra Ollama call that routes to query, ingest or both",
               "as shipped: no `intent_override`; the route of every turn is recorded",
               "the chat runs show MemState as published, not a tuned path"),
     Deviation("Ollama model default",
@@ -32,6 +32,10 @@ DEVIATIONS: tuple[Deviation, ...] = (
               "a reproducible engine; the engine line of each server is in its snapshot"),
     Deviation("Baseline retrieval settings",
               "the baseline has no settings of its own",
-              "survey settings: MiniLM embeddings (the model MemState uses), top-k 10, temperature 0.3 if generation is added",
+              "survey settings: MiniLM embeddings (the model MemState uses), top-k 10",
               "the baseline differs from MemState in structure, not in embedder"),
+    Deviation("Duplicate pairs for C2(a) and C4's merge case",
+              "a duplicate arises from two same-title `/v1 new_topic` writes; which topic the merge drops is chance (random ids)",
+              "two topics written through `/v1` under distinct titles, the older value on the lower id and the newer on the higher, then both given one title by a labelled setup `PATCH title` (an editor edit; values are written through `/v1` only); a system with no retitle path gets the plain same-title writes. The merge extras of C2(a) also retitle three topics, and force a low id and archive one topic, by labelled setup writes",
+              "MemState keeps the lower id (F9), so this makes the dropped topic hold the newer value in every repetition; F9 recorded the stale value current in 10/20 on random ids"),
 )

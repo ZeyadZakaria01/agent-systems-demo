@@ -1,4 +1,5 @@
-"""The runner: `python -m demo.run` (recorded mode).
+"""The runner: `python -m demo.run`, recorded mode (below) or `--mode live` against a running server (`demo/live.py`:
+`--url`, `--as`, `--delay`, `--step`).
 
 Recorded mode: per system, per check, a fresh database (a server started with `scripts/run_memstate.sh` for MemState
 systems, stopped when the check ends; the baseline in-process); results go to `demo/results/<run id>/`.
@@ -28,20 +29,19 @@ from dataclasses import dataclass
 from datetime import date
 from pathlib import Path
 
-from demo.checks import Check, discover, natural_key
-from demo.changes import CHAIN, changes_per_step, measured, render_change_table
-from demo.client import utc_now
-from demo.deviations import DEVIATIONS
 from demo import live
-from demo.evidence import RunDir, capture, new_run_dir, write_results, write_snapshots
-from demo.failures import detail as _detail, errored as _errored
+from demo.adapter import utc_now
+from demo.changes import CHAIN, changes_per_step, render_change_table
+from demo.checks import Check, discover, natural_key
+from demo.deviations import DEVIATIONS
+from demo.evidence import RunDir, new_run_dir, write_results
+from demo.failures import detail as _detail, errored as _errored, run_check
+from demo.latency_tables import with_latency
 from demo.paths import REPO_ROOT, RESULTS_ROOT, SERVER_LOCK, SHARED_ROOT
-from demo.scorecard import COLUMNS, Column, counts, render_deviations, render_scorecard
-from demo.session import Session
-from demo.latency_tables import render_latency
+from demo.scorecard import COLUMNS, SCOPE_NOTE, Column, counts, render_deviations, render_scorecard
 from demo.storyline_tables import render_storyline
 from demo.systems import SYSTEMS, SystemSpec, default_systems
-from demo.verdict import Verdict
+from demo.verdict import Verdict, measured
 from demo.windows import render_windows
 
 
@@ -65,19 +65,18 @@ def run_recorded(systems: list[str], checks: list[Check], results_root: Path, co
     rows = sorted((r for c in checks for r in c.rows if r.on_scorecard), key=lambda r: natural_key(r.id))
 
     def save(complete: bool) -> str:
+        # only scorecard rows: a Storyline-only run still has upstream verdicts, which must not print an empty table
+        scored = [v for v in verdicts if any(r.id == v.row for r in rows)]
         windows = render_windows(verdicts)
         scorecard = render_scorecard(rows, columns, verdicts)
         if windows:
             scorecard += f"\n\n### Staleness windows\n\n{windows}"
-        # only scorecard rows: a Storyline-only run still has upstream verdicts, which must not print an empty table
-        chain_verdicts = [v for v in verdicts if any(r.id == v.row for r in rows)]
-        if measured(chain_verdicts):  # the table is about upstream and the patch steps; a baseline-only run has none
-            scorecard += "\n\n### Per-step change table\n\n" + render_change_table(rows, verdicts)
+        if measured(scored, CHAIN):  # the table is about upstream and the patch steps; a baseline-only run has none
+            scorecard += "\n\n### Per-step change table\n\n" + render_change_table(rows, scored)
         if storyline := render_storyline(verdicts):
             scorecard += "\n\n" + storyline
-        if latency := render_latency(verdicts):
-            scorecard += "\n\n" + latency
-        scorecard += "\n\n### Deviations\n\n" + render_deviations()
+        scorecard = with_latency(scorecard, verdicts)
+        scorecard += "\n\n" + SCOPE_NOTE + "\n\n### Deviations\n\n" + render_deviations()
         (run.dir / "scorecard.md").write_text(scorecard + "\n")
         write_results(run, {
             "run_id": run.id, "mode": "recorded", "complete": complete, "command": command,
@@ -87,8 +86,8 @@ def run_recorded(systems: list[str], checks: list[Check], results_root: Path, co
             "rows": [{"id": r.id, "claim": r.claim, "control": r.control} for r in rows],
             "verdicts": [v.to_dict() for v in verdicts],
             "counts": {c.title(verdicts): counts(c, rows, verdicts) for c in columns},
-            "change_table": {"chain": list(CHAIN), "measured": measured(chain_verdicts),
-                             "changes": changes_per_step(rows, verdicts)},
+            "change_table": {"chain": list(CHAIN), "measured": measured(scored, CHAIN),
+                             "changes": changes_per_step(rows, scored)},
             "servers": run.events,
             "deviations": [d.__dict__ for d in DEVIATIONS],
         })
@@ -132,23 +131,7 @@ def _run_one(run: RunDir, spec: SystemSpec, check: Check, run_day: date) -> list
     def open_system(tag: str | None):
         return spec.open(check.id if tag is None else f"{check.id}--{tag}", run)
 
-    session = Session(open_system, lambda system, tag, t0, t1: capture(spec.id, check.id, system, tag, t0, t1))
-    notes: list[str] = []
-    try:
-        try:
-            verdicts = check.execute(session, run_day)
-        except Exception as e:  # a crashing check, a server that never started or died: recorded, the run goes on
-            verdicts = _errored(check, spec.id, _detail(e))
-    finally:  # also on Ctrl-C: the open system's server must be stopped
-        try:
-            session.close()
-        except Exception as e:  # e.g. the server would not stop; its port stays busy and the next open will say so
-            notes.append(f"cleanup after the check failed: {type(e).__name__}: {e}")
-    for v in verdicts:
-        v.system = spec.id
-        v.observations.extend(notes)
-    write_snapshots(run, session.captured, verdicts)
-    return verdicts
+    return run_check(run, check, spec.id, open_system, run_day)
 
 
 def pasteable_command(argv: list[str]) -> str:
@@ -157,10 +140,8 @@ def pasteable_command(argv: list[str]) -> str:
 
 
 def _observation_text(o) -> str:
-    """A string as is; a dict by its `summary`, else its `name` (the full dict lives in results.json)."""
-    if isinstance(o, dict):
-        return str(o.get("summary") or o.get("name") or "(structured observation, see results.json)")
-    return str(o)
+    """An observation is a dict: its `summary`, else its `name` (the full dict lives in results.json)."""
+    return str(o.get("summary") or o.get("name") or "(structured observation, see results.json)")
 
 
 def _cases_text(cases) -> str:
@@ -234,18 +215,17 @@ def main(argv: list[str] | None = None) -> int:
                                          "patch steps beyond the commits on bitemporal are left out)")
     ap.add_argument("--checks", help="comma-separated row or check ids (default: all)")
     ap.add_argument("--results-root", type=Path, help="default demo/results (recorded) or demo/results-live (live)")
-    live = ap.add_argument_group("live mode (--mode live; see demo/live.py)")
-    live.add_argument("--url", help="the running MemState server to drive, e.g. http://127.0.0.1:8765 (required)")
-    live.add_argument("--as", dest="as_system", default="upstream", help="system id the server is, for the checks' filter")
-    live.add_argument("--delay", type=float, default=0, help="seconds to pause after every write or query")
-    live.add_argument("--step", action="store_true", help="wait for Enter after every write or query")
+    live_group = ap.add_argument_group("live mode (--mode live; see demo/live.py)")
+    live_group.add_argument("--url", help="the running MemState server to drive, e.g. http://127.0.0.1:8765 (required)")
+    live_group.add_argument("--as", dest="as_system", default="upstream", help="system id the server is, for the checks' filter")
+    live_group.add_argument("--delay", type=float, default=0, help="seconds to pause after every write or query")
+    live_group.add_argument("--step", action="store_true", help="wait for Enter after every write or query")
     ap.add_argument("--ramp-repeats", type=int, default=1,
                     help="times to run each C5 latency ramp (1 while building, 3 for the run of record)")
     ap.add_argument("--list", action="store_true", help="list checks and systems, then exit")
     args = ap.parse_args(argv)
-    import demo.checks.c5_topic_ramp as c5mod
     import demo.ramp as ramp
-    ramp.REPEATS = c5mod.REPEATS = max(1, args.ramp_repeats)
+    ramp.REPEATS = max(1, args.ramp_repeats)
 
     available = discover()
     if args.list:

@@ -33,18 +33,15 @@ NO_VALUE = _NoValue()
 def current_value(field: dict | None) -> Any:
     """Current value of a field, or `NO_VALUE`.
 
-    A field that states `current` (adapter output, query responses) is taken at its word: `None` there means no
-    current value (even if history exists, e.g. a future-dated entry), an entry's `value` may itself be `None` (a
-    `null` write). Only a raw stored-topic field without a `current` key falls back to its newest-first
-    `history[0]`, which is upstream's definition of current (`datamodel/fields.py:77`).
+    Every field the suite reads states `current` itself: query responses, and stored topics once the adapter has
+    normalised them (`MemStateSystem._read_topic`; upstream's `history[0]` rule lives only there). `None` means no
+    current value (even if history exists, e.g. a future-dated entry); an entry's `value` may itself be `None`
+    (a `null` write).
     """
     if field is None:
         return NO_VALUE
-    if "current" in field:
-        entry = field["current"]
-        return NO_VALUE if entry is None else entry.get("value")
-    history = field.get("history")
-    return history[0].get("value") if history else NO_VALUE
+    entry = field["current"]
+    return NO_VALUE if entry is None else entry.get("value")
 
 
 def history_values(field: dict | None) -> list | None:

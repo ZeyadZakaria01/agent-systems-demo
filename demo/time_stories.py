@@ -6,7 +6,9 @@ gaps between dates stay (a run on Oct 20 stores the budget story's Nov 5 as Oct 
 
 Asking: "today" is a plain read with no date (the server answers against its own clock, hence the shift); every other
 date is an as-of read with `valid_at`. Writes carry `valid_from` / `invalid_at` only for a system that accepts dates
-(`describe()["accepts_valid_time"]`, the patch); `recorded_at` is sent to a system that declares `accepts_recorded_at`; the others get the same writes in the same order without dates.
+(`describe()["accepts_valid_time"]`, the patch), and the other rows' `valid_at` reads are sent only to such a system;
+the others get the same writes in the same order without dates. The as-of probe (`AS_OF`) is different: it sends
+`valid_at` and `recorded_at` to every system, because ignoring them is what it observes.
 
 `Ask.correct` is the right answer (`NO_VALUE` = the field has no current value). `Ask.recency` is the answer of a
 system whose current value is the last one written (the table's "upstream expected" column, which the baseline
@@ -144,7 +146,7 @@ def ingest_request(story: Story, index: int, topic_id: str | None, dated: bool) 
     return {"placement": "version_field", "topic_id": topic_id, "fields": [field]}
 
 
-def query_request(ask: Ask, topic_id: str, send_valid: bool, send_recorded: bool = False,
+def query_request(ask: Ask, topic_id: str, *, send_valid: bool, send_recorded: bool = False,
                   recorded_at: str | None = None) -> dict:
     """The read for one asked date: a plain read for "today", and `valid_at` / `recorded_at` on the same read
     otherwise when the flag for that axis is set (otherwise the plain read, whatever the date)."""
@@ -159,11 +161,15 @@ def query_request(ask: Ask, topic_id: str, send_valid: bool, send_recorded: bool
 
 
 def history_intact(story: Story, field: dict | None) -> tuple[bool, str]:
-    """The patch's history check against its entry model (spec, step 2): no written value is lost, and every entry
-    carrying `expired_at` has a copy with the same value pointing back at it through `replaces_entry_id`."""
+    """The patch's history check against its entry model (spec, step 2), on the stored field: every entry has the
+    `expired_at` key (None while live), no written value is lost, and every entry with `expired_at` set has a copy
+    with the same value pointing back at it through `replaces_entry_id`."""
     history = (field or {}).get("history")
     if not history:
         return False, "no history returned"
+    unshaped = [e.get("id") for e in history if "expired_at" not in e]
+    if unshaped:
+        return False, f"entries without an expired_at key (not patch-shaped): {unshaped}"
     kept = {e.get("value") for e in history}
     lost = [w.value for w in story.writes if w.value not in kept]
     ids = {e.get("id") for e in history}

@@ -8,7 +8,9 @@ Outcomes (spec stories 17, 21; report §9.4):
   edges) -> atomicity is not testable with this input: **not-scored**.
 
 The verdict comes from the run only. The check reads the stored state afterwards (every topic, plus edges) to see what
-persisted, matching on the unique title so it never depends on the response of a failed request.
+persisted. A failed request has no response to name the topic, so the topic is found by the title the system stores
+it under: the check's title, with the scope suffix a live server adds (`describe()["title_scope"]`, as the storyline
+does) when there is one. A topic the response names is found by its id.
 """
 
 import uuid
@@ -16,7 +18,7 @@ import uuid
 import httpx
 
 from demo.checks import Ctx, check
-from demo.client import Rejected
+from demo.adapter import Rejected
 from demo.reads import NO_VALUE, current_value
 from demo.verdict import Case, Verdict
 
@@ -24,6 +26,11 @@ CLAIM = ("C2 (transition soundness), by construction (§4.3): every transition r
          "evaluated before an atomic commit.")
 TITLE = "Website Redesign"
 CASE = "an ingest with valid fields and an invalid edge commits nothing (all or nothing)"
+
+
+def _verdict(held: bool | None, observation: str, evidence: dict, observations: list[dict] | None = None) -> Verdict:
+    return Verdict.from_cases("C2(b)", [Case(CASE, held=held, observation=observation)],
+                              observations=observations or [], measurements={"evidence": evidence})
 
 
 @check(row="C2(b)", claim=CLAIM)
@@ -42,23 +49,24 @@ def c2b(ctx: Ctx) -> Verdict:
     except httpx.HTTPStatusError as e:  # the server answered with a 5xx: still an error outcome
         error = f"server error {e.response.status_code}"
 
+    scope = s.describe().get("title_scope")
+    stored_title = f"{TITLE} [live {scope}]" if scope else TITLE
+    named_id = (response or {}).get("topic_id")
     state = s.read_state()
-    topics = [t for t in state["topics"].values() if t.get("title") == TITLE]
+    topics = [t for t in state["topics"].values()
+              if t.get("title") == stored_title or (named_id is not None and t.get("id") == named_id)]
     persisted = {name: current_value(t["fields"].get(name)) for t in topics for name in fields}
     persisted = {n: v for n, v in persisted.items() if v is not NO_VALUE}
-    stored = (f"topics titled {TITLE!r}: {len(topics)}; fields stored: {persisted or 'none'}; "
+    stored = (f"topics titled {stored_title!r}: {len(topics)}; fields stored: {persisted or 'none'}; "
               f"missing target created as a topic: {missing_id in state['topics']}")
     evidence = {"request": request, "response": response, "error": error, "missing_topic_id": missing_id,
                 "stored": stored}
 
     if error is not None:
         if topics or persisted:
-            return Verdict.from_cases("C2(b)", [Case(CASE, held=False, observation=f"partial commit: the system "
-                                                     f"errored ({error}) but {stored}")],
-                                      measurements={"evidence": evidence})
-        return Verdict.from_cases("C2(b)", [Case(CASE, held=None, observation=(
-            f"neither outcome: the system errored ({error}) and nothing persisted ({stored}); atomicity is not "
-            "scored on this input"))], measurements={"evidence": evidence})
+            return _verdict(False, f"partial commit: the system errored ({error}) but {stored}", evidence)
+        return _verdict(None, f"neither outcome: the system errored ({error}) and nothing persisted ({stored}); "
+                              "atomicity is not scored on this input", evidence)
 
     applied = (response or {}).get("applied") or []
     reported = f"edge:{missing_id}" in applied
@@ -66,14 +74,10 @@ def c2b(ctx: Ctx) -> Verdict:
     edge_exists = None if edges is None else any(missing_id in (e.get("from"), e.get("to")) for e in edges)
     stored_edge = {None: "the system's edges are not readable", False: "no edge is stored",
                    True: "a dangling edge is stored"}[edge_exists]
-    observations = []
     if reported:
         issue = (f"soundness issue: the response lists edge:{missing_id} as applied, but the target topic does not "
                  f"exist and {stored_edge}")
-        observations.append(issue)
-        why = f"{issue}; the ingest succeeded, so atomicity is not testable with this input; {stored}"
-    else:
-        why = (f"neither outcome: the ingest succeeded without reporting the edge applied; {stored_edge}; atomicity is "
-               f"not testable with this input; {stored}")
-    return Verdict.from_cases("C2(b)", [Case(CASE, held=None, observation=why)], observations=observations,
-                              measurements={"evidence": evidence})
+        return _verdict(None, f"{issue}; the ingest succeeded, so atomicity is not testable with this input; {stored}",
+                        evidence, [{"name": "soundness issue", "summary": issue}])
+    return _verdict(None, f"neither outcome: the ingest succeeded without reporting the edge applied; {stored_edge}; "
+                          f"atomicity is not testable with this input; {stored}", evidence)

@@ -1,20 +1,22 @@
 """Identical undated writes and plain reads for C5 and the latency ramps.
 
 One generator drives both (spec stories 26, 41, 43). Sizes 100 / 250 / 500 / 1,000 / 2,000, each on its own
-fresh database. `--ramp-repeats` (default 1 while building, 3 for the run of record) lives here so the check
-and the runner share it. Tests monkeypatch `STEPS` and `FORGET_GATE`.
+fresh database. `--ramp-repeats` (default 1 while building, 3 for the run of record) is set on this module by the
+runner, and the check reads every constant through it (`ramp.REPEATS`), so a test patches each constant once.
+Each ramp takes `QUERY_SAMPLES` plain reads, so the query latency has a median and a range.
 """
 
 from __future__ import annotations
 
 import statistics
 
-from demo.client import System
+from demo.adapter import System
 
 STEPS = (100, 250, 500, 1000, 2000)
 FORGET_GATE = 500  # Policies.topic_count_soft_limit; the forgetting pass runs once the topic count (archived included) reaches it
 FORGET_THRESHOLD = 0.05
 REPEATS = 1
+QUERY_SAMPLES = 5
 ARCHIVE_WAIT_S = 20.0
 
 
@@ -41,8 +43,8 @@ def filler(system: System, i: int) -> dict:
 
 def archive_stats(system: System) -> dict:
     """`{total, archived}`. `archived` is `None` when the system has no archived flag (the baseline)."""
-    if hasattr(system, "list_topic_ids"):
-        all_ids = system.list_topic_ids(include_archived=True)
+    all_ids = system.list_topic_ids(include_archived=True)
+    if all_ids is not None:
         live = system.list_topic_ids(include_archived=False)
         return {"total": len(all_ids), "archived": len(all_ids) - len(live)}
     topics = system.read_state()["topics"]

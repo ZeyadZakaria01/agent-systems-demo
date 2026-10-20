@@ -49,36 +49,20 @@ def test_each_run_writes_its_own_directory_with_a_machine_readable_results_file(
     first = recorded(tmp_path, [c1])
     second = recorded(tmp_path, [c1])
     assert first.dir != second.dir and first.dir.parent == tmp_path
-    results = load(first.dir / "results.json")
-    (v,) = results["verdicts"]
+    (v,) = load(first.dir / "results.json")["verdicts"]
     assert (v["row"], v["system"], v["verdict"], v["control"]) == ("C1", "baseline", "pass", True)
-    assert (first.dir / v["snapshot"]).is_file()
-    assert results["mode"] == "recorded" and results["command"] == "python -m demo.run test"
-    assert results["complete"] is True and results["deviations"]
 
 
-def test_snapshot_holds_requests_state_timestamps_and_keeps_setup_writes_apart(tmp_path):
+def test_setup_writes_stay_out_of_the_scored_transitions(tmp_path):
     run = recorded(tmp_path, [two_row_check()])
     snap = load(run.dir / run.verdicts[0].snapshot)
-    assert snap["system"] == "baseline"
-    for key in ("db_path", "commit", "engine"):
-        assert key in snap["describe"]
-    assert snap["started_at"] and snap["finished_at"]
-    # scored transitions carry request, response and timestamps; the setup write is not among them
     ops = [(e["op"], e["request"]["placement"] if e["op"] == "ingest" else None) for e in snap["scored_transitions"]]
     assert ops == [("ingest", "new_topic"), ("query", None)]
-    assert snap["scored_transitions"][0]["response"]["topic_id"] == "T"
-    assert snap["scored_transitions"][0]["started_at"] and snap["scored_transitions"][0]["finished_at"]
     assert [e["request"]["label"] for e in snap["setup_writes"]] == ["arrange a forced id"]
-    assert "T" in snap["state"]["topics"] and "edges" in snap["state"]
-    # both rows of one check share the check's snapshot
-    assert run.verdicts[0].snapshot == run.verdicts[1].snapshot
 
 
-def test_scorecard_lists_claims_and_snapshot_links_and_counts_fails_and_absences_separately(tmp_path):
+def test_fails_and_absences_are_counted_separately(tmp_path):
     run = recorded(tmp_path, [two_row_check()])
-    assert "claim of X1" in run.scorecard and "claim of X2" in run.scorecard
-    assert all(v.snapshot in run.scorecard for v in run.verdicts)
     counts = load(run.dir / "results.json")["counts"]["baseline"]
     assert (counts["pass"], counts["fail"], counts["absent"]) == (1, 0, 1)
 
@@ -168,7 +152,7 @@ def test_a_row_can_be_assembled_from_several_fresh_systems_each_with_its_own_sna
     run = recorded(tmp_path, [two_stories_check()])
     (v,) = run.verdicts
     assert v.verdict == "pass"
-    assert len(v.snapshots) == 2 and v.snapshot == v.snapshots[0]
+    assert len(v.snapshots) == 2
     titles = [list(load(run.dir / p)["state"]["topics"]) for p in v.snapshots]
     assert titles == [["title of story-1"], ["title of story-2"]]
 

@@ -24,7 +24,7 @@ from __future__ import annotations
 from dataclasses import asdict, dataclass, field
 from typing import Any
 
-from demo.client import System
+from demo.adapter import System
 from demo.reads import NO_VALUE, current_value, field_in_response
 from demo.storyline import Event, Question, Storyline
 
@@ -207,4 +207,4 @@ def _reinforcement(outcomes: list[QuestionOutcome]) -> Reinforcement | None:
         labelled_increments=labelled, all_increments=everything, precision=precision,
         questions_bumped=sum(1 for o in outcomes if o.increments_labelled > EPS), questions=len(outcomes),
         precision_at_k=at_k,
-        matches_precision_at_k=None if precision is None or at_k is None else abs(precision - at_k) < 1e-6)
+        matches_precision_at_k=None if precision is None or at_k is None else abs(precision - at_k) < EPS)

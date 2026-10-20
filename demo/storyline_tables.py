@@ -5,19 +5,20 @@ precision (shown beside C6 clause 1, without a verdict). Reads `Verdict.measurem
 
 from __future__ import annotations
 
+from demo.scorecard import esc
+from demo.storyline import ROW
+from demo.triage import DEFAULT_TOP_K
 from demo.verdict import ERROR, Verdict
 
-ROW = "Storyline"
 NOT_APPLICABLE = "n/a"
 PRECISION_NOTE = (
     "Reinforcement precision = salience increments to the labelled topic / all increments over the storyline "
     "questions. It carries no verdict. Because every returned topic is bumped, it equals Precision@k (micro-averaged "
     "over the questions: labelled topics returned / topics returned), at most 1/k per question with one labelled "
-    "topic (1/8 at the default top_k of 8). n/a: the system keeps no salience.")
-
-
-def _esc(text: object) -> str:
-    return str(text).replace("|", "\\|").replace("\n", " ")
+    f"topic (1/{DEFAULT_TOP_K} at the default top_k of {DEFAULT_TOP_K}). n/a: the system keeps no salience. "
+    "Limit: only the storyline's own topics are read for salience, so on a live server that already holds other "
+    "topics a bumped foreign topic is not in 'all increments' and precision can read above Precision@k "
+    "([INFERENCE]: not run against a live database; the 'DIFFERENT' flag would show it).")
 
 
 def _by_system(verdicts: list[Verdict]) -> dict[str, Verdict]:
@@ -32,7 +33,7 @@ def _measured(v: Verdict) -> dict | None:
     return None if v.verdict == ERROR else v.measurements.get("storyline")
 
 
-def _pct(x: float | None) -> str:
+def _ratio(x: float | None) -> str:
     return NOT_APPLICABLE if x is None else f"{x:.3f}"
 
 
@@ -43,11 +44,11 @@ def render_triage(verdicts: list[Verdict]) -> str:
     for sid, v in systems.items():
         m = _measured(v)
         if m is None:
-            lines.append(f"| {_esc(sid)} | | error: {_esc((v.error or '').splitlines()[0] if v.error else '')} | | | | |")
+            lines.append(f"| {esc(sid)} | | error: {esc((v.error or '').splitlines()[0] if v.error else '')} | | | | |")
             continue
         t, e = m["triage"], m["events"]
         edges = f"edges compared on {e['edges_compared']} of {e['with_edges']}" if e["edges_compared"] else "edges n/a"
-        lines.append(f"| {_esc(sid)} | {m['top_k']} | {t['questions']} | {t['correct']} | {t['search_failures']} | "
+        lines.append(f"| {esc(sid)} | {m['top_k']} | {t['questions']} | {t['correct']} | {t['search_failures']} | "
                      f"{t['memory_failures']} | {e['total'] - e['matched']} of {e['total']} ({edges}) |")
     return "\n".join(lines)
 
@@ -65,11 +66,11 @@ def render_questions(verdicts: list[Verdict]) -> str:
     if not systems:
         return ""
     first = next(iter(systems.values()))
-    lines = ["| Q | Ability | Question | Ground truth | " + " | ".join(_esc(s) for s in systems) + " |",
+    lines = ["| Q | Ability | Question | Ground truth | " + " | ".join(esc(s) for s in systems) + " |",
              "|---|---|---|---|" + "---|" * len(systems)]
     for i, o in enumerate(first["questions"]):
-        cells = " | ".join(_esc(_cell(m["questions"][i])) for m in systems.values())
-        lines.append(f"| {o['question']} | {_esc(o['ability'])} | {_esc(o['text'])} | {_esc(o['truth'])} | {cells} |")
+        cells = " | ".join(esc(_cell(m["questions"][i])) for m in systems.values())
+        lines.append(f"| {o['question']} | {esc(o['ability'])} | {esc(o['text'])} | {esc(o['truth'])} | {cells} |")
     return "\n".join(lines)
 
 
@@ -83,12 +84,12 @@ def render_reinforcement(verdicts: list[Verdict]) -> str:
             continue
         r = m["reinforcement"]
         if r is None:
-            lines.append(f"| {_esc(sid)} | {NOT_APPLICABLE} | {NOT_APPLICABLE} | {NOT_APPLICABLE} | "
+            lines.append(f"| {esc(sid)} | {NOT_APPLICABLE} | {NOT_APPLICABLE} | {NOT_APPLICABLE} | "
                          f"{NOT_APPLICABLE} | {NOT_APPLICABLE} |")
             continue
         equal = {True: "equal", False: "DIFFERENT"}.get(r["matches_precision_at_k"], "")
-        lines.append(f"| {_esc(sid)} | {r['labelled_increments']:g} | {r['all_increments']:g} | {_pct(r['precision'])} | "
-                     f"{r['questions_bumped']} of {r['questions']} | {_pct(r['precision_at_k'])} ({equal}) |")
+        lines.append(f"| {esc(sid)} | {r['labelled_increments']:g} | {r['all_increments']:g} | {_ratio(r['precision'])} | "
+                     f"{r['questions_bumped']} of {r['questions']} | {_ratio(r['precision_at_k'])} ({equal}) |")
     return "\n".join(lines)
 
 

@@ -2,12 +2,15 @@
 
 Scale (ADR 0002): pass = every applicable case held; partial = some held; fail = the capability is implemented
 and every case broke; absent = a probe confirmed the capability missing (the probe evidence is mandatory);
-not-scored = no case applied (C2(b)'s "neither outcome" rule). `ERROR` is not part of the scale: the check
-crashed, and the scorecard shows it as such.
+not-scored = no case applied (C2(b)'s "neither outcome" rule; `from_cases` also gives it when every case is
+`held=None`, e.g. a nothing-value on the system). A verdict resting on fewer cases than were run shows
+`(n case(s) n/a)` in the scorecard cell. `ERROR` is not part of the scale: the check crashed, and the scorecard
+shows it as such.
 
 `measurements` carries numbers a row reports beside its verdict (violation rate, windows, latencies);
-`observations` carries findings that are not verdicts (over-blocking, salience not durable, route log).
-The runner fills `system`, `snapshot` and `snapshots`; checks never set them.
+`observations` carries findings that are not verdicts (over-blocking, salience not durable, route log), each a dict with a
+`name` and, when it reads in one line, a `summary`.
+The runner fills `system` and `snapshots`; checks never set them.
 """
 
 from __future__ import annotations
@@ -40,7 +43,6 @@ class Verdict:
     measurements: dict = field(default_factory=dict)
     control: bool = False
     system: str | None = None
-    snapshot: str | None = None  # the first of `snapshots`: the link the scorecard shows
     snapshots: list[str] = field(default_factory=list)  # one per fresh system the check opened, in order
     error: str | None = None
 
@@ -71,6 +73,11 @@ class Verdict:
     def errored(cls, row: str, error: str, **kwargs: Any) -> "Verdict":
         return cls(row=row, verdict=ERROR, error=error, **kwargs)
 
+    @property
+    def snapshot(self) -> str | None:
+        """The first of `snapshots`: the link a one-system row shows."""
+        return self.snapshots[0] if self.snapshots else None
+
     def to_dict(self) -> dict:
         return asdict(self)
 
@@ -82,3 +89,8 @@ def last_verdict(verdicts: list[Verdict], system_id: str, row_id: str) -> Verdic
         if v.system == system_id and v.row == row_id:
             found = v
     return found
+
+
+def measured(verdicts: list[Verdict], systems: tuple[str, ...]) -> list[str]:
+    """The ids in `systems` that have at least one verdict, in the order given."""
+    return [s for s in systems if any(v.system == s for v in verdicts)]

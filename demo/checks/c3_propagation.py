@@ -3,26 +3,28 @@
 Two pairs, each with A `Deadline = March 15` and B `Date = March 20`: B -> A (the edge is written with B) and A -> B (the
 edge is added to A by `extend_topic`). A is updated through `version_field` to `April 20`; B is read from the stored state
 before, through `/v1/query` right after the update (the window), and from the stored state after `wait_until` saw B
-change or the wait ran out (`REVISION_WAIT_S`). B "reflects" the update when its title, summary, kind, archived flag or
+change or the wait ran out (`REVISION_WAIT_S`, the same 15 s the C2(a) merge wait uses: a slow background revision must not read as absent; the wait is counted from the update's response). B "reflects" the update when its title, summary, kind, archived flag or
 fields (current values and histories) changed; events, key set and salience do not count (our own reads bump
 salience, and an unrelated event would not be propagation). The check cannot judge a repair, only that B changed. The edge is checked in the stored state first: a missing edge is a broken probe, not an absence.
 
 Verdict: every pair reflected -> pass; some -> partial; none -> **absent**, with both pairs' observations as the probe
-evidence (ADR 0002). The dependent-topic staleness window is reported from the same run: seconds from the update to B
-reflecting it, or "unbounded (C3 absent)" when it never did within the wait.
+evidence (ADR 0002). The dependent-topic staleness window is reported from the same run: seconds from the update's
+response to B reflecting it, or "unbounded (C3 absent)" when it never did within the wait.
 """
 
 import json
+import time
 from dataclasses import asdict, dataclass
 from statistics import median
 
 from demo.checks import Ctx, check
 from demo.reads import current_value, field_in_response, read_request
+from demo.merge import DEFAULT_TIMEOUT_S
 from demo.verdict import Case, Verdict
 
 CLAIM = ("C3 (dependency consistency): updating a unit triggers evaluation of units linked by propagation-bearing "
          "edges. Claimed by §4's opening ('by construction'); not listed in §4.3.")
-REVISION_WAIT_S = 5.0  # bounded wait for the background revision (F7 used a fixed 2 s)
+REVISION_WAIT_S = DEFAULT_TIMEOUT_S  # bounded wait for the background revision (F7 used a fixed 2 s)
 EDGE_KIND = "extension"
 WINDOW = "Dependent-topic staleness window"
 DIRECTIONS = ("B->A", "A->B")
@@ -95,8 +97,11 @@ def _probe_pair(s, direction: str, n: int) -> Pair:
     update = s.ingest({"placement": "version_field", "topic_id": a_id,
                        "fields": [{"name": "Deadline", "value": "April 20", "provenance": "pm-email",
                                    "why_changed": "vendor delay"}]})
+    t_update = time.perf_counter()  # the window starts when the update's response is back
     in_window = _stale_read(s, b_id)
-    waited = s.wait_until(lambda: _signature(s.read_topic(b_id)) != before, REVISION_WAIT_S)
+    waited = s.wait_until(lambda: _signature(s.read_topic(b_id)) != before,
+                          max(REVISION_WAIT_S - (time.perf_counter() - t_update), 0.0))
+    wait_s = time.perf_counter() - t_update
     b_after = s.read_topic(b_id)
     f_before, f_after = b_before["fields"].get("Date") or {}, b_after["fields"].get("Date") or {}
     return Pair(
@@ -106,7 +111,7 @@ def _probe_pair(s, direction: str, n: int) -> Pair:
         b_date_after_wait=current_value(f_after or None), b_date_read_after_wait=_stale_read(s, b_id),
         b_history_after=[e.get("value") for e in f_after.get("history") or []],
         b_topic_events_after=[h.get("kind") for h in b_after.get("topic_history") or []],
-        b_topic_keys_after=sorted(b_after), wait_s=waited.elapsed, reflected=not waited.timed_out)
+        b_topic_keys_after=sorted(b_after), wait_s=wait_s, reflected=not waited.timed_out)
 
 
 def _window_value(pairs: list[Pair]) -> str:
@@ -130,11 +135,11 @@ def c3(ctx: Ctx) -> Verdict:
                               f"{'' if p.reflected else ' (wait ran out)'}; A is {p.a_deadline_now!r}; edge stored: "
                               f"{'no edges in this system' if p.edge_linked is None else p.edge_linked}")
              for p in pairs]
-    window = [{"name": WINDOW, "value": _window_value(pairs), "source_row": "C3"}]
+    window = [{"name": WINDOW, "value": _window_value(pairs)}]
     measurements = {"windows": window, "revision_wait_s": REVISION_WAIT_S}
     if not any(p.reflected for p in pairs):
         return Verdict.absent("C3", {"probe": "F7: update A, read B before and after revision, both pairs",
                                      "pairs": [asdict(p) for p in pairs], "wait_s": REVISION_WAIT_S}, cases=cases,
                               measurements=measurements)
     return Verdict.from_cases("C3", cases, measurements=measurements,
-                              observations=[{"pairs": [asdict(p) for p in pairs]}])
+                              observations=[{"name": "pairs", "pairs": [asdict(p) for p in pairs]}])

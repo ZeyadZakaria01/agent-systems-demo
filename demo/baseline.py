@@ -4,6 +4,10 @@ It accepts the `/v1/ingest` shape and writes whatever arrives (`""` and `null` i
 with an existing title upserts. It keeps no history, salience, archived flag, edges or dates, so those read as
 `None` (nothing-values). Its semantic query embeds with MiniLM (the same model MemState uses) and returns the top
 10 (survey setting); a read changes nothing. The topic id is the title.
+
+The baseline is strict about placement, on purpose: `extend_topic` / `version_field` on an unknown topic and a
+`version_field` with other than one field are `Rejected`, as MemState's own validation does ([INFERENCE], from
+reading the API code), so a check never scores the baseline on a write MemState would refuse; it never upserts there.
 """
 
 from __future__ import annotations
@@ -12,7 +16,7 @@ from typing import Any
 
 import numpy as np
 
-from demo.client import Rejected, System
+from demo.adapter import Rejected, System
 
 TOP_K = 10
 MODEL = "sentence-transformers/all-MiniLM-L6-v2"

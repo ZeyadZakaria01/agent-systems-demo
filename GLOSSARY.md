@@ -125,6 +125,10 @@ _Avoid_: temporal test, date test
 Failing a control: the system rejects an update it should have accepted.
 _Avoid_: false positive, regression
 
+**Storyline**:
+One scripted scenario on the Website Redesign example: a fixed list of `/v1` events then labelled questions (each with a LongMemEval ability, a ground truth and the topic holding the answer), run as a measurement beside the scorecard, not a scorecard row.
+_Avoid_: dataset, benchmark
+
 **Search failure**:
 A wrong answer where the read did not return the topic that holds the answer (StateMemBench's retrieval failure).
 _Avoid_: bad RAG, retrieval miss

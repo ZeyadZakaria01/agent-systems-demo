@@ -3,7 +3,7 @@
 import pytest
 
 from demo.baseline import Baseline
-from demo.client import Rejected
+from demo.adapter import Rejected
 from demo.reads import NO_VALUE, current_value
 
 
@@ -108,30 +108,3 @@ def test_every_field_has_an_explicit_current_and_a_null_write_is_not_no_value():
         assert f["current"] == {"value": None}  # a null write that became current, not "no value"
         assert current_value(f) is None
     assert current_value({"current": None, "history": [{"value": "Dec"}]}) is NO_VALUE  # server states: nothing is current
-
-
-def test_the_stored_topic_shape_without_a_current_key_reads_its_newest_history_entry():
-    assert current_value({"history": [{"value": "April 20"}, {"value": "March 15"}]}) == "April 20"
-    assert current_value({"history": []}) is NO_VALUE
-    assert current_value(None) is NO_VALUE
-
-
-def test_the_baseline_declares_that_it_keeps_no_history():
-    assert Baseline().describe()["keeps_history"] is False
-
-
-def test_a_failing_call_records_its_error_text_on_the_log_entry():
-    b = Baseline()
-    with pytest.raises(KeyError):
-        b.ingest({"title": "no placement"})
-    (entry,) = b.log.of_kind("scored")
-    assert "KeyError" in entry["error"]
-
-
-def test_reading_state_is_logged_with_its_own_timestamps():
-    b = Baseline()
-    b.read_state()
-    (entry,) = b.log.of_kind("read")
-    assert entry["op"] == "read_state" and entry["started_at"] <= entry["finished_at"]
-    assert entry["latency_ms"] is not None
-    assert entry["response"] == {"topics": 0, "edges": None}

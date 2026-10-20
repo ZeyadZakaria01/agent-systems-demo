@@ -12,19 +12,31 @@ ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 SHARED="$(cd "$(git -C "$ROOT" rev-parse --path-format=absolute --git-common-dir)/.." && pwd)"
 PY="$SHARED/.venv/bin/python"
 
+PATCHED=0 DB_ARG=""
+for arg in "$@"; do
+  if [[ "$arg" == "--patched" ]]; then
+    PATCHED=1
+  elif [[ -z "$DB_ARG" && "$arg" != -* ]]; then
+    DB_ARG="$arg"
+  else
+    echo "usage: $0 [--patched] [ABSOLUTE_DB_PATH]" >&2; exit 2
+  fi
+done
+
 # The venv's editable install points at MemState/src; PYTHONPATH wins over that .pth entry.
-if [[ "${1:-}" == "--patched" ]]; then
-  shift
+if [[ "$PATCHED" == 1 ]]; then
   SRC="$SHARED/MemState-patched/src"
   [[ -d "$SRC/memstate" ]] || { echo "ERROR: $SRC missing; rebuild MemState-patched/ (README, Run MemState)" >&2; exit 1; }
   export PYTHONPATH="$SRC${PYTHONPATH:+:$PYTHONPATH}"
   DEFAULT_DB="$SHARED/.runtime/memstate-ladybug-$(date +%Y%m%d-%H%M%S)/memstate.lbug"
+  ABSOLUTE_MSG="DB path must be absolute"
 else
   DEFAULT_DB="$SHARED/.runtime/memstate-kuzu-$(date +%Y%m%d-%H%M%S)/memstate.kuzu"
+  ABSOLUTE_MSG="Kuzu path must be absolute"
 fi
 # Upstream's setting name is MEMSTATE_KUZU_PATH even when the patched copy opens a LadybugDB file.
-export MEMSTATE_KUZU_PATH="${1:-$DEFAULT_DB}"
-[[ "$MEMSTATE_KUZU_PATH" = /* ]] || { echo "DB path must be absolute" >&2; exit 1; }
+export MEMSTATE_KUZU_PATH="${DB_ARG:-$DEFAULT_DB}"
+[[ "$MEMSTATE_KUZU_PATH" = /* ]] || { echo "$ABSOLUTE_MSG" >&2; exit 1; }
 export FASTEMBED_CACHE_PATH="$SHARED/.cache/fastembed"
 export MEMSTATE_GROQ_MODEL=openai/gpt-oss-120b
 export MEMSTATE_API_HOST=127.0.0.1 MEMSTATE_API_PORT=8765

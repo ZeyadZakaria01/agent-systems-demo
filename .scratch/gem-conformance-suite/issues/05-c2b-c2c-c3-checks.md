@@ -4,11 +4,15 @@
 
 **Blocked by:** 01 (C1 tracer bullet)
 
-**Status:** ready-for-agent
+**Status:** resolved
 
-- [ ] C2(b) sends one `/v1/ingest new_topic` with valid fields and an edge to a non-existent topic, then classifies the outcome. An error with the topic or fields persisted is a partial commit (fail). Success with the edge reported applied is a soundness issue, reported as an observation. Neither outcome means not-scored.
-- [ ] C2(c) probes for declarative policies and scores absent, with the probe evidence attached, when the system exposes only numeric knobs.
-- [ ] C3 links B → A with an extension edge, and a second pair A → B. It updates A and reads B before and after revision. The verdict follows the scale, and absent only with that run as evidence.
-- [ ] The dependent-topic staleness window is reported. When C3 is absent it reads "unbounded (C3 absent)" and cites the C3 run.
-- [ ] The suite's tests assert, on the baseline: C2(b) not-scored, C2(c) absent, C3 absent.
-- [ ] Smoke run: a recorded upstream run prints all three rows and the window, with snapshots.
+- [x] C2(b) sends one `/v1/ingest new_topic` with valid fields and an edge to a non-existent topic, then classifies the outcome. An error with the topic or fields persisted is a partial commit (fail). Success with the edge reported applied is a soundness issue, reported as an observation. Neither outcome means not-scored.
+- [x] C2(c) probes for declarative policies and scores absent, with the probe evidence attached, when the system exposes only numeric knobs.
+- [x] C3 links B → A with an extension edge, and a second pair A → B. It updates A and reads B before and after revision. The verdict follows the scale, and absent only with that run as evidence.
+- [x] The dependent-topic staleness window is reported. When C3 is absent it reads "unbounded (C3 absent)" and cites the C3 run.
+- [x] The suite's tests assert, on the baseline: C2(b) not-scored, C2(c) absent, C3 absent.
+- [x] Smoke run: a recorded upstream run prints all three rows and the window, with snapshots.
+
+## Comments
+
+Merged as `e8e86e4`; reviewed and fixed in `16f2bd5` (C2(b) matches under live title scopes, C2(c) whole-word match, C3 waits 15 s from the update). Smoke F17; C3 not re-recorded with the new wait.

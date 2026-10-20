@@ -1,7 +1,7 @@
-"""Render the storyline as the human-reviewable draft `.scratch/gem-conformance-suite/storyline-draft.md` (ticket 11).
+"""Render the storyline as the human-reviewable draft `.scratch/gem-conformance-suite/storyline-draft.md`.
 
 `python -m demo.storyline_draft` rewrites the file from `demo/storyline.py` (the data stays the single source; edit the
-data, then regenerate). A test checks that every event and question id in the data appears in the committed draft.
+data, then regenerate). A test checks that the committed draft equals this render.
 """
 
 from __future__ import annotations
@@ -9,13 +9,11 @@ from __future__ import annotations
 from collections import Counter
 
 from demo.paths import REPO_ROOT
-from demo.storyline import ABILITIES, DEPARTURES_FROM_PAPER, KEPT_FROM_PAPER, WEBSITE_REDESIGN, Event, Storyline
+from demo.scorecard import esc
+from demo.storyline import (ABILITIES, DEPARTURES_FROM_PAPER, KEPT_FROM_PAPER, MULTI_SESSION_REASONING,
+                            TEMPORAL_REASONING, WEBSITE_REDESIGN, Event, Storyline)
 
 DRAFT_PATH = REPO_ROOT / ".scratch" / "gem-conformance-suite" / "storyline-draft.md"
-
-
-def _esc(text: object) -> str:
-    return str(text).replace("|", "\\|").replace("\n", " ")
 
 
 def _writes(event: Event) -> str:
@@ -27,12 +25,30 @@ def _writes(event: Event) -> str:
     return "<br>".join(out) or "—"
 
 
+def _points(story: Storyline) -> tuple[str, list, str, str]:
+    """What the review points below name, derived from the data: temporal question ids, the multi-session
+    questions and the events that built their answer, and ground truths held by more than one topic."""
+    temporal = ", ".join(q.id for q in story.questions if q.ability == TEMPORAL_REASONING)
+    multi = [q for q in story.questions if q.ability == MULTI_SESSION_REASONING]
+    multi_events = ", ".join(e.id for q in multi for e in story.events
+                             if e.topic == q.topic and any(w.name == q.field for w in e.writes))
+    holders: dict = {}
+    for state in story.expected_after(story.events[-1].id).values():
+        for value in state.fields.values():
+            holders.setdefault(value, []).append(state.title)
+    truths = {q.truth for q in story.questions}
+    shared = "; ".join(f"{value} is on {' and '.join(titles)}" for value, titles in holders.items()
+                       if value in truths and len(titles) > 1)
+    return temporal, multi, multi_events, shared
+
+
 def render(story: Storyline = WEBSITE_REDESIGN) -> str:
     titles = story.titles
+    temporal, multi, multi_events, shared = _points(story)
     abilities = Counter(q.ability for q in story.questions)
     final = story.expected_after(story.events[-1].id)
     lines = [
-        "# Storyline draft: the Website Redesign example (for review, ticket 11)",
+        "# Storyline draft: the Website Redesign example (for review)",
         "",
         "Generated from `demo/storyline.py` by `python -m demo.storyline_draft`; edit the data there and regenerate. "
         "Recorded-run numbers (triage counts, reinforcement precision, unexpected-state counts) live in "
@@ -69,40 +85,40 @@ def render(story: Storyline = WEBSITE_REDESIGN) -> str:
     ]
     for e in story.events:
         if e.placement == "new_topic":
-            lines.append(f"| `{e.topic}` | {_esc(e.title)} | {_esc(e.topic_kind)} | {e.id} | {_esc(e.summary)} |")
+            lines.append(f"| `{e.topic}` | {esc(e.title)} | {esc(e.topic_kind)} | {e.id} | {esc(e.summary)} |")
     lines += ["", "## Events", "",
               "| Event | The user says | Topic | Fields written | Edges |",
               "|---|---|---|---|---|"]
     for e in story.events:
         edges = ", ".join(f"→ {titles[x.to]} ({x.kind})" for x in e.edges) or "—"
-        lines.append(f"| {e.id} | {_esc(e.said)} | {_esc(titles[e.topic])} | {_esc(_writes(e))} | {_esc(edges)} |")
+        lines.append(f"| {e.id} | {esc(e.said)} | {esc(titles[e.topic])} | {esc(_writes(e))} | {esc(edges)} |")
     lines += ["", "## Expected state at the end (one row per topic)", "",
               "| Topic | Title | Current fields | Outgoing edges |",
               "|---|---|---|---|"]
     for key, state in final.items():
         fields = "; ".join(f"{k} = {v}" for k, v in state.fields.items())
         edges = ", ".join(f"→ {titles[t]} ({k})" for t, k in state.edges) or "—"
-        lines.append(f"| `{key}` | {_esc(state.title)} | {_esc(fields)} | {_esc(edges)} |")
+        lines.append(f"| `{key}` | {esc(state.title)} | {esc(fields)} | {esc(edges)} |")
     lines += ["", "## Questions", "",
               "| Q | Ability | Question | Ground-truth answer | Answer topic | Field |", "|---|---|---|---|---|---|"]
     for q in story.questions:
-        lines.append(f"| {q.id} | {q.ability} | {_esc(q.text)} | {_esc(q.truth)} | {_esc(titles[q.topic])} (`{q.topic}`) "
-                     f"| {_esc(q.field)} |")
+        lines.append(f"| {q.id} | {q.ability} | {esc(q.text)} | {esc(q.truth)} | {esc(titles[q.topic])} (`{q.topic}`) "
+                     f"| {esc(q.field)} |")
     lines += ["", "Abilities: " + ", ".join(f"{a} {abilities[a]}" for a in ABILITIES if abilities[a])
               + ". Abstention (answer: \"not stored\") is not labelled: it has no answer topic.",
               "",
               "## Points to decide in review",
               "",
-              "- **Temporal reasoning** is labelled where the answer is a date that moved or was set (Q08, Q09, Q15); no "
+              f"- **Temporal reasoning** is labelled where the answer is a date that moved or was set ({temporal}); no "
               "date arithmetic is asked of the memory. Say if you want these relabelled or a real arithmetic "
               "question added (it would need a stored value that is the computed answer).",
-              "- **Multi-session reasoning** has one question (Q06): the team list was built over two sessions "
-              "(E02 kickoff, E21 standup after Erin joined and Alice was promoted). More would need answers that "
+              f"- **Multi-session reasoning** has {len(multi)} question(s) ({', '.join(q.id for q in multi)}): the "
+              f"answer was built over several events ({multi_events}). More would need answers that "
               "combine two topics, which one answer topic cannot label.",
-              "- Several questions share ground-truth strings with other topics (April 20 is both the redesign "
-              "deadline and the launch milestone); the labelled topic decides which one counts.",
-              "- Dependent topics (milestones, Alice's role in the team list) are updated by explicit events here "
-              "(E15–E17, E21), because every event is a perfect placement; whether MemState would propagate a deadline "
+              f"- Several questions share ground-truth strings with other topics ({shared}); the labelled topic "
+              "decides which one counts.",
+              "- Dependent topics (milestones, Alice's role in the team list) are updated by explicit events here, "
+              "because every event is a perfect placement; whether MemState would propagate a deadline "
               "change by itself is C3's question, not this one.",
               "- All values are strings so a read is judged by exact match; changing a value's wording changes the "
               "ground truth in the same place.",

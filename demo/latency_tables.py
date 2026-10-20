@@ -1,59 +1,103 @@
-"""Latency table for the C5 ramps. `render_latency` returns "" when no C5-2 run is in the verdicts."""
+"""Latency table for the C5 ramps. `render_latency` returns "" when no C5-2 run is in the verdicts.
+
+Every ramp has one ingest median, `QUERY_SAMPLES` query reads and one settle time (the poll floor is 0.1 s; it is
+not a Reasoner wait). `aggregate` folds the repeats of one (system, n) into a median and a min-max range; a
+difference of medians inside the larger range is reported as "no measurable difference" (spec story 43), for
+ingest and for query, between ADJACENT chain steps only (the registry order in `demo/systems.py`). Systems whose
+C5-2 verdict is `absent` (the baseline) are left out.
+"""
 
 from __future__ import annotations
 
 import statistics
 
 from demo.ramp import no_measurable_difference
-from demo.verdict import Verdict
+from demo.systems import SYSTEMS
+from demo.verdict import ABSENT, Verdict
 
 NOTE = ("A difference of medians no larger than the larger sample range is reported as "
-        "no measurable difference (spec story 43).")
+        "no measurable difference (spec story 43). Ingest samples are the per-repeat medians, query samples are every "
+        "plain read; with one repeat the ingest range is 0.")
+METRICS = ("ingest", "query", "settle")
 
 
-def _rows(verdicts: list[Verdict]) -> list[dict]:
+def _stats(samples: list[float]) -> dict | None:
+    if not samples:
+        return None
+    return {"median": round(statistics.median(samples), 3), "min": round(min(samples), 3),
+            "max": round(max(samples), 3), "samples": list(samples)}
+
+
+def aggregate(verdicts: list[Verdict]) -> list[dict]:
+    """One entry per (system, n) of every C5-2 verdict that is not `absent`: `ingest` / `query` / `settle` hold
+    `{median, min, max, samples}` (or None), `archived` the sorted archived counts seen, `repeats` the ramp count."""
     out = []
     for v in verdicts:
-        if v.row != "C5-2":
+        if v.row != "C5-2" or v.verdict == ABSENT:
             continue
+        by_n: dict[int, list[dict]] = {}
         for r in v.measurements.get("ramps") or []:
-            out.append({"system": v.system, **r})
+            by_n.setdefault(r["n"], []).append(r)
+        for n, ramps in sorted(by_n.items()):
+            out.append({
+                "system": v.system, "n": n, "repeats": len(ramps),
+                "ingest": _stats([r["ingest_median_ms"] for r in ramps if r.get("ingest_median_ms") is not None]),
+                "query": _stats([q for r in ramps for q in r.get("query_samples_ms") or []]),
+                "settle": _stats([r["settle_s"] for r in ramps if r.get("settle_s") is not None]),
+                "archived": sorted({r["archived"] for r in ramps if r.get("archived") is not None}),
+            })
     return out
 
 
+def _adjacent_pairs(systems: list[str]) -> list[tuple[str, str]]:
+    """Consecutive registry ids that both have rows: upstream -> step1 -> step2 -> step3, never baseline or a gap."""
+    order = [s for s in SYSTEMS if s != "baseline"]
+    return [(a, b) for a, b in zip(order, order[1:]) if a in systems and b in systems]
+
+
+def no_difference_notes(entries: list[dict]) -> list[str]:
+    by_key = {(e["system"], e["n"]): e for e in entries}
+    notes = []
+    for a, b in _adjacent_pairs(sorted({e["system"] for e in entries})):
+        for n in sorted({n for _, n in by_key}):
+            ea, eb = by_key.get((a, n)), by_key.get((b, n))
+            if ea is None or eb is None:
+                continue
+            for metric in ("ingest", "query"):
+                sa, sb = ea[metric], eb[metric]
+                if sa and sb and no_measurable_difference(sa["samples"], sb["samples"]):
+                    notes.append(f"{a} vs {b} at n={n}, {metric}: no measurable difference "
+                                 f"(medians {sa['median']} / {sb['median']} ms)")
+    return notes
+
+
+def _cell(stat: dict | None) -> str:
+    return "—" if stat is None else f"{stat['median']} ({stat['min']}–{stat['max']})"
+
+
 def render_latency(verdicts: list[Verdict]) -> str:
-    rows = _rows(verdicts)
-    if not rows:
+    entries = aggregate(verdicts)
+    if not entries:
         return ""
     lines = [
         "### Latency ramps",
         "",
-        "| System | n | repeat | ingest median (ms) | query (ms) | Reasoner wait (s) | archived |",
+        "Median (min–max) over the repeats of each (system, n).",
+        "",
+        "| System | n | repeats | ingest (ms) | query (ms) | settle time (poll floor 0.1 s) (s) | archived |",
         "|---|---:|---:|---:|---:|---:|---:|",
     ]
-    for r in rows:
-        arch = "n/a" if r.get("archived") is None else r["archived"]
-        lines.append(
-            f"| {r.get('system') or '—'} | {r['n']} | {r['repeat']} | {r.get('ingest_median_ms') if r.get('ingest_median_ms') is not None else '—'} "
-            f"| {r.get('query_ms') if r.get('query_ms') is not None else '—'} | {r.get('reasoner_wait_s') if r.get('reasoner_wait_s') is not None else '—'} "
-            f"| {arch} |"
-        )
-    by_sys_n: dict[tuple, list[float]] = {}
-    for r in rows:
-        if r.get("ingest_median_ms") is None:
-            continue
-        by_sys_n.setdefault((r.get("system"), r["n"]), []).append(r["ingest_median_ms"])
-    systems = sorted({s for s, _ in by_sys_n})
-    notes = []
-    if len(systems) >= 2:
-        for n in sorted({n for _, n in by_sys_n}):
-            samples = {s: by_sys_n.get((s, n), []) for s in systems}
-            pairs = [(systems[i], systems[j]) for i in range(len(systems)) for j in range(i + 1, len(systems))]
-            for a, b in pairs:
-                if samples[a] and samples[b] and no_measurable_difference(samples[a], samples[b]):
-                    notes.append(f"{a} vs {b} at n={n}: no measurable difference "
-                                 f"(medians {statistics.median(samples[a]):.1f} / {statistics.median(samples[b]):.1f} ms)")
+    for e in entries:
+        archived = "n/a" if not e["archived"] else "/".join(str(a) for a in e["archived"])
+        lines.append(f"| {e['system'] or '—'} | {e['n']} | {e['repeats']} | {_cell(e['ingest'])} "
+                     f"| {_cell(e['query'])} | {_cell(e['settle'])} | {archived} |")
     lines += ["", NOTE]
-    if notes:
+    if notes := no_difference_notes(entries):
         lines += ["", *[f"- {n}" for n in notes]]
     return "\n".join(lines)
+
+
+def with_latency(scorecard: str, verdicts: list[Verdict]) -> str:
+    """The scorecard with the latency table appended when there is one (shared by the recorded and live runners)."""
+    latency = render_latency(verdicts)
+    return scorecard + "\n\n" + latency if latency else scorecard

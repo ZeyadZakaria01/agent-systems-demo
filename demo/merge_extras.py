@@ -13,11 +13,11 @@ from __future__ import annotations
 
 import uuid
 
-from demo.client import System
-from demo.merge import DEFAULT_INTERVAL_S, DEFAULT_TIMEOUT_S, new_topic, topic_gone_or_archived, unique_title
+from demo.adapter import System
+from demo.merge import (DEFAULT_INTERVAL_S, DEFAULT_TIMEOUT_S, FIELD, NEWER, NEWER_PROVENANCE, OLDER, DroppedState,
+                        new_topic, topic_gone_or_archived, unique_title)
 from demo.reads import NO_VALUE, current_value, history_values, read_request
 
-FIELD = "Deadline"
 LOW_ID_PREFIX = "00000000-0000-4000-8000-"  # followed by 12 random hex digits: sorts below any uuid4 (the keeper)
 
 
@@ -34,7 +34,7 @@ def _survivor_view(system: System, topic_id: str) -> dict:
 
 def three_same_title(system: System, timeout: float = DEFAULT_TIMEOUT_S, interval: float = DEFAULT_INTERVAL_S) -> dict:
     title = unique_title("Vendor Contract (three)")
-    values = ["March 15", "April 20", "May 31"]
+    values = [OLDER, NEWER, "May 31"]
     ids = [system.ingest(new_topic(f"{title} {i + 1}", FIELD, v, f"source-{i + 1}"))["topic_id"]
            for i, v in enumerate(values)]
     retitled = all(system.setup_write("patch_topic", label="give the three topics one title (values untouched)",
@@ -77,11 +77,11 @@ def active_into_archived(system: System, timeout: float = DEFAULT_TIMEOUT_S,
         return {"name": "active topic merged into an archived duplicate", "skipped": True,
                 "summary": "skipped: the system has no editor path to force an id and archive a topic"}
     system.ingest({"placement": "extend_topic", "topic_id": low_id,
-                   "fields": [{"name": FIELD, "value": "March 15", "provenance": "archived-copy"}]})
+                   "fields": [{"name": FIELD, "value": OLDER, "provenance": "archived-copy"}]})
     system.setup_write("patch_topic", label="archive the duplicate before the active one is written",
                        topic_id=low_id, archived=True)
-    active_id = system.ingest(new_topic(title, FIELD, "April 20", "pm-email"))["topic_id"]
-    waited = system.wait_until(lambda: topic_gone_or_archived(system, active_id) == "deleted", timeout, interval)
+    active_id = system.ingest(new_topic(title, FIELD, NEWER, NEWER_PROVENANCE))["topic_id"]
+    waited = system.wait_until(lambda: topic_gone_or_archived(system, active_id) == DroppedState.DELETED, timeout, interval)
     keeper = _survivor_view(system, low_id)
     active_state = topic_gone_or_archived(system, active_id)
     in_v1 = any(c["topic_id"] == low_id for c in system.query(read_request(low_id, explain=True))["candidates"])
@@ -90,10 +90,10 @@ def active_into_archived(system: System, timeout: float = DEFAULT_TIMEOUT_S,
         "archived_id": low_id, "active_id": active_id, "timed_out": waited.timed_out,
         "window_s": None if waited.timed_out else waited.elapsed, "active_topic_state": active_state or "still active",
         "survivor": keeper, "survivor_retrievable_through_v1": in_v1,
-        "values_written": {"archived": "March 15", "active": "April 20"},
+        "values_written": {"archived": OLDER, "active": NEWER},
     }
     out["summary"] = (f"active topic {out['active_topic_state']}; survivor {low_id} archived={keeper['archived']} "
                       f"current={keeper['current']!r} history={keeper['history']!r}; "
-                      f"survivor retrievable through /v1 read: {in_v1}; written: archived 'March 15', active 'April 20'"
+                      f"survivor retrievable through /v1 read: {in_v1}; written: archived {OLDER!r}, active {NEWER!r}"
                       + (" [merge not seen within the timeout]" if waited.timed_out else ""))
     return out

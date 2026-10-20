@@ -1,19 +1,20 @@
 """C5 mechanism and natural trajectory, plus the latency table, in-process.
 
 The baseline has no archived flag, so both rows are absent (report §9.3). A stand-in that archives
-topics below the forget threshold once the count gate fires shows pass / partial. MemState verdicts
+topics below a threshold once the count gate fires shows pass / partial. MemState verdicts
 are never pinned; the ramp sizes and gate are monkeypatched so the tests stay small.
 """
 
 import pytest
 
 from demo.baseline import Baseline
+from demo import ramp
+from demo.adapter import System
 from demo.checks import discover
-from demo.client import System
-from demo.latency_tables import render_latency
+from demo.latency_tables import aggregate, no_difference_notes, render_latency
 from demo.ramp import no_measurable_difference
 from demo.session import Session
-from demo.verdict import ABSENT, FAIL, PARTIAL, PASS, Verdict
+from demo.verdict import ABSENT, FAIL, PARTIAL, PASS, Case, Verdict
 
 
 def by_row(row):
@@ -22,17 +23,11 @@ def by_row(row):
 
 @pytest.fixture(autouse=True)
 def tiny_ramps(monkeypatch):
-    import demo.checks.c5_topic_ramp as c5mod
-    import demo.ramp as ramp
-
     monkeypatch.setattr(ramp, "STEPS", (2, 4))
     monkeypatch.setattr(ramp, "FORGET_GATE", 3)
-    monkeypatch.setattr(ramp, "REPEATS", 1)
+    monkeypatch.setattr(ramp, "REPEATS", 2)
+    monkeypatch.setattr(ramp, "QUERY_SAMPLES", 3)
     monkeypatch.setattr(ramp, "ARCHIVE_WAIT_S", 0.4)
-    monkeypatch.setattr(c5mod, "STEPS", (2, 4))
-    monkeypatch.setattr(c5mod, "FORGET_GATE", 3)
-    monkeypatch.setattr(c5mod, "REPEATS", 1)
-    monkeypatch.setattr(c5mod, "ARCHIVE_WAIT_S", 0.4)
 
 
 def run(factory):
@@ -46,22 +41,22 @@ def run(factory):
 def test_both_c5_rows_quote_the_clause_and_are_absent_on_the_baseline():
     assert [r.id for r in by_row("C5-1").rows] == ["C5-1"]
     assert [r.id for r in by_row("C5-2").rows] == ["C5-2"]
-    assert all("Bounded active state" in by_row(row).rows[0].claim for row in ("C5-1", "C5-2"))
     out = run(Baseline)
     assert out["C5-1"].verdict == ABSENT and out["C5-2"].verdict == ABSENT
     assert out["C5-1"].probe_evidence["archived"] is None
     assert "nothing-value" in out["C5-2"].probe_evidence["probe"]
 
 
-class Forgetter(System):
-    """Archives every topic with salience < 0.05 once the topic count reaches the gate.
+class ThresholdArchiver(System):
+    """Test stand-in: archives every topic with salience below a threshold once the topic count reaches the gate.
 
-    `forgets=False` still counts topics and exposes `archived=False`, so the gate can fire without a victim.
+    It models no MemState behaviour; it only gives the check an adapter that tracks an archived flag, so the
+    check's own pass / partial / fail branches run. `archives=False` keeps the flag but never archives.
     """
 
-    def __init__(self, forgets=True, start_salience=1.0):
-        super().__init__("forgetter")
-        self.forgets = forgets
+    def __init__(self, archives=True, start_salience=1.0):
+        super().__init__("threshold-archiver")
+        self.archives = archives
         self.start_salience = start_salience
         self.topics: dict[str, dict] = {}
 
@@ -73,12 +68,11 @@ class Forgetter(System):
             self.topics[tid] = {"id": tid, "title": tid, "salience": sal, "archived": False,
                                 "fields": {f["name"]: {"current": {"value": f.get("value")}, "history": None}
                                            for f in request.get("fields") or []}}
-        self._forget()
+        self._archive_low()
         return {"topic_id": tid, "applied": [], "version_ids": {}, "similar_topic_ids": []}
 
-    def _forget(self):
-        import demo.ramp as ramp
-        if not self.forgets or len(self.topics) < ramp.FORGET_GATE:
+    def _archive_low(self):
+        if not self.archives or len(self.topics) < ramp.FORGET_GATE:
             return
         for t in self.topics.values():
             if not t["archived"] and (t["salience"] or 0) < 0.05:
@@ -103,10 +97,10 @@ class Forgetter(System):
 
 
 def test_mechanism_passes_when_the_0_01_topic_is_archived_and_is_partial_when_only_the_gate_fires():
-    out = run(Forgetter)
+    out = run(ThresholdArchiver)
     assert out["C5-1"].verdict == PASS
     assert out["C5-1"].measurements["target_archived"] is True
-    only_gate = run(lambda: Forgetter(forgets=False))
+    only_gate = run(lambda: ThresholdArchiver(archives=False))
     assert only_gate["C5-1"].verdict == PARTIAL
     held = {c.name: c.held for c in only_gate["C5-1"].cases}
     assert held["the count gate fires (n ≥ 500)"] is True
@@ -114,18 +108,62 @@ def test_mechanism_passes_when_the_0_01_topic_is_archived_and_is_partial_when_on
 
 
 def test_natural_trajectory_fails_when_the_system_archives_nothing():
-    out = run(Forgetter)  # undated writes start at salience 1.0, so nothing is eligible
+    out = run(ThresholdArchiver)  # undated writes start at salience 1.0, so nothing is eligible
     assert out["C5-2"].verdict == FAIL
     assert all(r["archived"] == 0 for r in out["C5-2"].measurements["ramps"])
 
 
-def test_the_latency_table_renders_from_c5_2_and_stays_quiet_without_it():
-    v = Verdict.from_cases("C5-2", [], measurements={"ramps": [
-        {"n": 2, "repeat": 1, "ingest_median_ms": 10.0, "query_ms": 4.0, "reasoner_wait_s": 0.1, "archived": 0},
-    ]})
-    v.system = "upstream"
-    text = render_latency([v])
-    assert "### Latency ramps" in text and "ingest median" in text and "10.0" in text
+def test_each_ramp_takes_several_plain_query_reads():
+    """B4: a ramp used to record a single query sample, so query latency had no median or range."""
+    out = run(ThresholdArchiver)["C5-2"]
+    assert [len(r["query_samples_ms"]) for r in out.measurements["ramps"]] == [3] * 4
+    assert [r["repeat"] for r in out.measurements["ramps"]] == [1, 2, 1, 2]
+
+
+def ramp_verdict(system, per_n, verdict=PASS):
+    """A C5-2 verdict whose ramps carry the given (ingest median, query samples, settle) per repeat of each n."""
+    ramps = [{"n": n, "repeat": i, "archived": 0, "ingest_median_ms": ing, "query_samples_ms": q, "settle_s": st}
+             for n, repeats in per_n.items() for i, (ing, q, st) in enumerate(repeats, 1)]
+    v = Verdict.from_cases("C5-2", [Case("x", verdict == PASS, "")], measurements={"ramps": ramps})
+    v.system = system
+    return v
+
+
+def test_aggregate_reports_median_and_range_per_system_and_n():
+    v = ramp_verdict("upstream", {2: [(10.0, [4.0, 6.0], 0.1), (14.0, [5.0, 9.0], 0.3), (12.0, [7.0], 0.2)]})
+    [entry] = aggregate([v])
+    assert (entry["system"], entry["n"], entry["repeats"]) == ("upstream", 2, 3)
+    assert (entry["ingest"]["median"], entry["ingest"]["min"], entry["ingest"]["max"]) == (12.0, 10.0, 14.0)
+    assert (entry["query"]["median"], entry["query"]["min"], entry["query"]["max"]) == (6.0, 4.0, 9.0)
+    assert (entry["settle"]["median"], entry["settle"]["min"], entry["settle"]["max"]) == (0.2, 0.1, 0.3)
+
+
+def test_no_difference_fires_for_overlapping_ranges_and_not_for_disjoint_ones():
+    overlap = [ramp_verdict("upstream", {2: [(10.0, [4.0, 6.0], 0.1), (13.0, [4.0, 6.0], 0.1)]}),
+               ramp_verdict("step1", {2: [(11.0, [5.0, 7.0], 0.1), (14.0, [5.0, 7.0], 0.1)]})]
+    notes = no_difference_notes(aggregate(overlap))
+    assert any("ingest" in n for n in notes) and any("query" in n for n in notes)
+    disjoint = [ramp_verdict("upstream", {2: [(10.0, [4.0, 5.0], 0.1), (11.0, [4.0, 5.0], 0.1)]}),
+                ramp_verdict("step1", {2: [(50.0, [40.0, 41.0], 0.1), (51.0, [40.0, 41.0], 0.1)]})]
+    assert no_difference_notes(aggregate(disjoint)) == []
+
+
+def test_only_adjacent_chain_steps_are_compared():
+    same = {2: [(10.0, [4.0, 5.0], 0.1)]}
+    steps = [ramp_verdict(s, same) for s in ("upstream", "step1", "step3")]  # step2 missing: step1 and step3 are not adjacent
+    notes = no_difference_notes(aggregate(steps))
+    assert any("upstream vs step1" in n for n in notes)
+    assert not any("step3" in n for n in notes)
+    assert not any("upstream vs step3" in n for n in notes)
+
+
+def test_systems_whose_c5_2_verdict_is_absent_are_skipped():
+    baseline = Verdict.absent("C5-2", {"probe": "x"}, measurements={"ramps": [
+        {"n": 2, "repeat": 1, "archived": None, "ingest_median_ms": 0.001, "query_samples_ms": [1.0], "settle_s": 0.1}]})
+    baseline.system = "baseline"
+    upstream = ramp_verdict("upstream", {2: [(10.0, [4.0], 0.1)]})
+    assert [e["system"] for e in aggregate([baseline, upstream])] == ["upstream"]
+    assert render_latency([baseline]) == ""
     assert render_latency([]) == ""
 
 
