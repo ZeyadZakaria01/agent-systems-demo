@@ -1,0 +1,223 @@
+{
+  "system": "reference-gem-p1",
+  "label": "reference GEM (phase 1)",
+  "check": "C2(b)",
+  "tag": null,
+  "describe": {
+    "system": "reference GEM (phase 1)",
+    "url": null,
+    "db_path": null,
+    "commit": null,
+    "engine": "in-process reference GEM, phase 1",
+    "keeps_history": true,
+    "accepts_error": null,
+    "declared_bound": {
+      "topics": 500,
+      "name": "\u03b2"
+    },
+    "accepts_source": true,
+    "latency_comparable": false,
+    "source_surface": {
+      "request_properties": [
+        "source_message"
+      ],
+      "paths": []
+    },
+    "c6_clause_2_seeds": {
+      "target": 0.06,
+      "control": 0.06
+    },
+    "embedder": "sentence-transformers/all-MiniLM-L6-v2",
+    "top_k": 8,
+    "parameters": {
+      "theta_archive": 0.05,
+      "lambda": 0.9925386444712004,
+      "decay_horizon": 400,
+      "beta": 500,
+      "bump": 0.1,
+      "history_cap": 500,
+      "top_k": 8,
+      "salience_on_archive": 0.5,
+      "propagation": "one hop, extension edges, either direction",
+      "revision": "after every ingest",
+      "phase": 1
+    },
+    "accepts": {
+      "valid_from": true,
+      "invalid_at": false,
+      "valid_at": true,
+      "recorded_at": false
+    }
+  },
+  "describe_error": null,
+  "started_at": "2026-10-21T17:44:22.527828+00:00",
+  "finished_at": "2026-10-21T17:44:22.528006+00:00",
+  "scored_transitions": [
+    {
+      "seq": 0,
+      "kind": "scored",
+      "op": "ingest",
+      "request": {
+        "placement": "new_topic",
+        "title": "Website Redesign",
+        "topic_kind": "project",
+        "fields": [
+          {
+            "name": "Deadline",
+            "value": "March 15",
+            "provenance": "kickoff-notes"
+          },
+          {
+            "name": "Owner",
+            "value": "Alice",
+            "provenance": "kickoff-notes",
+            "ref_topic_id": "6760d9ce-0ec3-452d-a3d6-fbe2d5e95ed6"
+          }
+        ]
+      },
+      "started_at": "2026-10-21T17:44:22.527888+00:00",
+      "response": null,
+      "rejected": {
+        "status": 400,
+        "detail": "ref_topic_id not found: 6760d9ce-0ec3-452d-a3d6-fbe2d5e95ed6"
+      },
+      "error": null,
+      "latency_ms": 0.035,
+      "finished_at": "2026-10-21T17:44:22.527930+00:00"
+    },
+    {
+      "seq": 2,
+      "kind": "scored",
+      "op": "ingest",
+      "request": {
+        "placement": "new_topic",
+        "title": "Website Redesign (edge)",
+        "topic_kind": "project",
+        "edges": [
+          {
+            "to_topic_id": "59a12e59-fb2d-4e8b-8810-46d4e291f9f6",
+            "kind": "extension"
+          }
+        ]
+      },
+      "started_at": "2026-10-21T17:44:22.527968+00:00",
+      "response": null,
+      "rejected": {
+        "status": 400,
+        "detail": "edge target topic not found: 59a12e59-fb2d-4e8b-8810-46d4e291f9f6"
+      },
+      "error": null,
+      "latency_ms": 0.018,
+      "finished_at": "2026-10-21T17:44:22.527989+00:00"
+    }
+  ],
+  "setup_writes": [],
+  "reads": [
+    {
+      "seq": 1,
+      "kind": "read",
+      "op": "read_state",
+      "request": null,
+      "started_at": "2026-10-21T17:44:22.527952+00:00",
+      "response": {
+        "topics": 0,
+        "edges": 0
+      },
+      "rejected": null,
+      "error": null,
+      "latency_ms": 0.003,
+      "finished_at": "2026-10-21T17:44:22.527958+00:00"
+    },
+    {
+      "seq": 3,
+      "kind": "read",
+      "op": "read_state",
+      "request": null,
+      "started_at": "2026-10-21T17:44:22.528012+00:00",
+      "response": {
+        "topics": 0,
+        "edges": 0
+      },
+      "rejected": null,
+      "error": null,
+      "latency_ms": 0.002,
+      "finished_at": "2026-10-21T17:44:22.528017+00:00"
+    }
+  ],
+  "waits": [],
+  "state": {
+    "topics": {},
+    "edges": [],
+    "policies": [
+      {
+        "name": "reject-empty-values",
+        "event": "write",
+        "condition": {
+          "field": "*",
+          "op": "empty"
+        },
+        "action": "reject"
+      },
+      {
+        "name": "propagate-on-change",
+        "event": "field_updated",
+        "condition": {
+          "neighbour": "extension"
+        },
+        "action": "flag"
+      }
+    ],
+    "interactions": 2
+  },
+  "state_error": null,
+  "rows": [
+    "C2(b)"
+  ],
+  "verdicts": [
+    {
+      "row": "C2(b)",
+      "verdict": "pass",
+      "cases": [
+        {
+          "name": "a refused ingest with a valid field and a field referencing a missing topic commits nothing (all or nothing)",
+          "held": true,
+          "observation": "the system refused (rejected 400: ref_topic_id not found: 6760d9ce-0ec3-452d-a3d6-fbe2d5e95ed6) and nothing persisted (topics titled 'Website Redesign': 0; fields stored: none; missing target created as a topic: False)",
+          "control": false,
+          "id": "a refused ingest with a valid field and a field referencing a missing topic commits nothing (all or nothing)"
+        }
+      ],
+      "observations": [],
+      "probe_evidence": null,
+      "measurements": {
+        "evidence": {
+          "request": {
+            "placement": "new_topic",
+            "title": "Website Redesign",
+            "topic_kind": "project",
+            "fields": [
+              {
+                "name": "Deadline",
+                "value": "March 15",
+                "provenance": "kickoff-notes"
+              },
+              {
+                "name": "Owner",
+                "value": "Alice",
+                "provenance": "kickoff-notes",
+                "ref_topic_id": "6760d9ce-0ec3-452d-a3d6-fbe2d5e95ed6"
+              }
+            ]
+          },
+          "response": null,
+          "error": "rejected 400: ref_topic_id not found: 6760d9ce-0ec3-452d-a3d6-fbe2d5e95ed6",
+          "missing_topic_id": "6760d9ce-0ec3-452d-a3d6-fbe2d5e95ed6",
+          "stored": "topics titled 'Website Redesign': 0; fields stored: none; missing target created as a topic: False"
+        }
+      },
+      "control": false,
+      "system": "reference-gem-p1",
+      "snapshots": [],
+      "error": null
+    }
+  ]
+}

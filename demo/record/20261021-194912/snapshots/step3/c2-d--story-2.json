@@ -1,0 +1,415 @@
+{
+  "system": "step3",
+  "label": "bitemporal patch step 3 (9bd471e, LadybugDB)",
+  "check": "C2(d)",
+  "tag": "story-2",
+  "describe": {
+    "system": "bitemporal patch step 3 (9bd471e, LadybugDB)",
+    "url": "http://127.0.0.1:8765",
+    "db_path": "/home/zeyad/personal/agent-systems-demo/.runtime/gem-suite/20261021-194912/step3-c2-d-story-2/memstate.lbug",
+    "commit": "9bd471e0ca3cb6c6ef19bce9bb7d8f6c34043982",
+    "engine": "MemState engine module: ladybug",
+    "keeps_history": true,
+    "accepts_error": null,
+    "declared_bound": {
+      "topics": 500,
+      "name": "topic_count_soft_limit"
+    },
+    "accepts_source": false,
+    "latency_comparable": true,
+    "source_surface": {
+      "request_properties": [],
+      "paths": []
+    },
+    "c6_clause_2_seeds": null,
+    "source_dir": "/home/zeyad/personal/agent-systems-demo/MemState-patched/src",
+    "health_error": null,
+    "accepts": {
+      "valid_from": true,
+      "invalid_at": true,
+      "valid_at": true,
+      "recorded_at": true
+    }
+  },
+  "describe_error": null,
+  "started_at": "2026-10-21T17:31:26.315893+00:00",
+  "finished_at": "2026-10-21T17:31:28.426636+00:00",
+  "scored_transitions": [
+    {
+      "seq": 0,
+      "kind": "scored",
+      "op": "ingest",
+      "request": {
+        "placement": "new_topic",
+        "title": "Time probe: Lapsed scoped override, plain statement during the override",
+        "topic_kind": "time-probe",
+        "fields": [
+          {
+            "name": "Budget",
+            "value": "$50",
+            "provenance": "time-probe:lapsed-override-2",
+            "valid_from": "2026-08-17T00:00:00+00:00"
+          }
+        ]
+      },
+      "started_at": "2026-10-21T17:31:27.935748+00:00",
+      "response": {
+        "topic_id": "6cbb5966-6ff0-4898-8909-e7e24a68b0cb",
+        "applied": [
+          "created_topic:6cbb5966-6ff0-4898-8909-e7e24a68b0cb",
+          "field:Budget"
+        ],
+        "version_ids": {
+          "Budget": "7e94a372-a0a3-44bc-949a-08d1e0daf387"
+        },
+        "similar_topic_ids": []
+      },
+      "rejected": null,
+      "error": null,
+      "latency_ms": 408.166,
+      "finished_at": "2026-10-21T17:31:28.343927+00:00"
+    },
+    {
+      "seq": 1,
+      "kind": "scored",
+      "op": "ingest",
+      "request": {
+        "placement": "version_field",
+        "topic_id": "6cbb5966-6ff0-4898-8909-e7e24a68b0cb",
+        "fields": [
+          {
+            "name": "Budget",
+            "value": "$80",
+            "provenance": "time-probe:lapsed-override-2",
+            "valid_from": "2026-09-16T00:00:00+00:00",
+            "invalid_at": "2026-10-17T00:00:00+00:00"
+          }
+        ]
+      },
+      "started_at": "2026-10-21T17:31:28.343945+00:00",
+      "response": {
+        "topic_id": "6cbb5966-6ff0-4898-8909-e7e24a68b0cb",
+        "applied": [
+          "version:Budget"
+        ],
+        "version_ids": {
+          "Budget": "e954cbfb-b2e1-445d-b469-d5724db54f81"
+        },
+        "similar_topic_ids": []
+      },
+      "rejected": null,
+      "error": null,
+      "latency_ms": 41.594,
+      "finished_at": "2026-10-21T17:31:28.385550+00:00"
+    },
+    {
+      "seq": 2,
+      "kind": "scored",
+      "op": "ingest",
+      "request": {
+        "placement": "version_field",
+        "topic_id": "6cbb5966-6ff0-4898-8909-e7e24a68b0cb",
+        "fields": [
+          {
+            "name": "Budget",
+            "value": "$100",
+            "provenance": "time-probe:lapsed-override-2",
+            "valid_from": "2026-09-25T00:00:00+00:00"
+          }
+        ]
+      },
+      "started_at": "2026-10-21T17:31:28.385575+00:00",
+      "response": {
+        "topic_id": "6cbb5966-6ff0-4898-8909-e7e24a68b0cb",
+        "applied": [
+          "version:Budget"
+        ],
+        "version_ids": {
+          "Budget": "6b094b63-61e6-48b3-89c9-ce0529dbae09"
+        },
+        "similar_topic_ids": []
+      },
+      "rejected": null,
+      "error": null,
+      "latency_ms": 21.42,
+      "finished_at": "2026-10-21T17:31:28.407007+00:00"
+    },
+    {
+      "seq": 3,
+      "kind": "scored",
+      "op": "query",
+      "request": {
+        "q": "read",
+        "stages": [
+          "temporal"
+        ],
+        "topic_ids": [
+          "6cbb5966-6ff0-4898-8909-e7e24a68b0cb"
+        ],
+        "explain": false
+      },
+      "started_at": "2026-10-21T17:31:28.407020+00:00",
+      "response": {
+        "query": "read",
+        "candidates": [
+          {
+            "topic_id": "6cbb5966-6ff0-4898-8909-e7e24a68b0cb",
+            "title": "Time probe: Lapsed scoped override, plain statement during the override",
+            "summary": null,
+            "topic_kind": "time-probe",
+            "salience": 1.0,
+            "failed_salience": 0.0,
+            "neighbors": [],
+            "fields": [
+              {
+                "name": "Budget",
+                "field_type": "string",
+                "ref_topic_id": null,
+                "current": {
+                  "id": "6b094b63-61e6-48b3-89c9-ce0529dbae09",
+                  "value": "$100",
+                  "valid_from": "2026-09-25T00:00:00+00:00",
+                  "invalid_at": null,
+                  "created_at": "2026-10-21T17:31:28.389154+00:00",
+                  "expired_at": null,
+                  "operation": null,
+                  "replaces_entry_id": null,
+                  "corrected_by_entry_id": null,
+                  "provenance": "time-probe:lapsed-override-2",
+                  "why_changed": null,
+                  "impact_expected": null
+                },
+                "history": [
+                  {
+                    "id": "6b094b63-61e6-48b3-89c9-ce0529dbae09",
+                    "value": "$100",
+                    "valid_from": "2026-09-25T00:00:00+00:00",
+                    "invalid_at": null,
+                    "created_at": "2026-10-21T17:31:28.389154+00:00",
+                    "expired_at": null,
+                    "operation": null,
+                    "replaces_entry_id": null,
+                    "corrected_by_entry_id": null,
+                    "provenance": "time-probe:lapsed-override-2",
+                    "why_changed": null,
+                    "impact_expected": null
+                  }
+                ]
+              }
+            ],
+            "similarity": null
+          }
+        ],
+        "summary_text": "Top topics for 'read':\n- 6cbb5966-6ff0-4898-8909-e7e24a68b0cb 'Time probe: Lapsed scoped override, plain statement during the override' sim=None"
+      },
+      "rejected": null,
+      "error": null,
+      "latency_ms": 19.587,
+      "finished_at": "2026-10-21T17:31:28.426616+00:00"
+    }
+  ],
+  "setup_writes": [],
+  "reads": [
+    {
+      "seq": 4,
+      "kind": "read",
+      "op": "read_state",
+      "request": null,
+      "started_at": "2026-10-21T17:31:28.429883+00:00",
+      "response": {
+        "topics": 1,
+        "edges": 0
+      },
+      "rejected": null,
+      "error": null,
+      "latency_ms": 15.04,
+      "finished_at": "2026-10-21T17:31:28.444940+00:00"
+    }
+  ],
+  "waits": [],
+  "state": {
+    "topics": {
+      "6cbb5966-6ff0-4898-8909-e7e24a68b0cb": {
+        "id": "6cbb5966-6ff0-4898-8909-e7e24a68b0cb",
+        "title": "Time probe: Lapsed scoped override, plain statement during the override",
+        "summary": "",
+        "topic_kind": "time-probe",
+        "salience": 1.1,
+        "failed_salience": 0.0,
+        "archived": false,
+        "fields": {
+          "Budget": {
+            "field_type": "string",
+            "ref_topic_id": null,
+            "current": {
+              "id": "6b094b63-61e6-48b3-89c9-ce0529dbae09",
+              "valid_from": "2026-09-25T00:00:00+00:00",
+              "value": "$100",
+              "why_changed": null,
+              "impact_expected": null,
+              "provenance": "time-probe:lapsed-override-2",
+              "operation": null,
+              "invalid_at": null,
+              "created_at": "2026-10-21T17:31:28.389154+00:00",
+              "expired_at": null,
+              "replaces_entry_id": null,
+              "corrected_by_entry_id": null
+            },
+            "history": [
+              {
+                "id": "6b094b63-61e6-48b3-89c9-ce0529dbae09",
+                "valid_from": "2026-09-25T00:00:00+00:00",
+                "value": "$100",
+                "why_changed": null,
+                "impact_expected": null,
+                "provenance": "time-probe:lapsed-override-2",
+                "operation": null,
+                "invalid_at": null,
+                "created_at": "2026-10-21T17:31:28.389154+00:00",
+                "expired_at": null,
+                "replaces_entry_id": null,
+                "corrected_by_entry_id": null
+              },
+              {
+                "id": "27f00db9-68e0-4d80-80ac-7e2691ba37e6",
+                "valid_from": "2026-09-16T00:00:00+00:00",
+                "value": "$80",
+                "why_changed": null,
+                "impact_expected": null,
+                "provenance": "time-probe:lapsed-override-2",
+                "operation": "interval_corrected",
+                "invalid_at": "2026-09-25T00:00:00+00:00",
+                "created_at": "2026-10-21T17:31:28.389626+00:00",
+                "expired_at": null,
+                "replaces_entry_id": "e954cbfb-b2e1-445d-b469-d5724db54f81",
+                "corrected_by_entry_id": null
+              },
+              {
+                "id": "e954cbfb-b2e1-445d-b469-d5724db54f81",
+                "valid_from": "2026-09-16T00:00:00+00:00",
+                "value": "$80",
+                "why_changed": null,
+                "impact_expected": null,
+                "provenance": "time-probe:lapsed-override-2",
+                "operation": null,
+                "invalid_at": "2026-10-17T00:00:00+00:00",
+                "created_at": "2026-10-21T17:31:28.349003+00:00",
+                "expired_at": "2026-10-21T17:31:28.389626+00:00",
+                "replaces_entry_id": null,
+                "corrected_by_entry_id": "27f00db9-68e0-4d80-80ac-7e2691ba37e6"
+              },
+              {
+                "id": "7e94a372-a0a3-44bc-949a-08d1e0daf387",
+                "valid_from": "2026-08-17T00:00:00+00:00",
+                "value": "$50",
+                "why_changed": null,
+                "impact_expected": null,
+                "provenance": "time-probe:lapsed-override-2",
+                "operation": null,
+                "invalid_at": null,
+                "created_at": "2026-10-21T17:31:28.328188+00:00",
+                "expired_at": null,
+                "replaces_entry_id": null,
+                "corrected_by_entry_id": null
+              }
+            ]
+          }
+        },
+        "topic_history": [
+          {
+            "ts": "2026-10-21T17:31:28.319232+00:00",
+            "kind": "created",
+            "detail": {
+              "title": "Time probe: Lapsed scoped override, plain statement during the override"
+            }
+          },
+          {
+            "ts": "2026-10-21T17:31:28.419549+00:00",
+            "kind": "salience",
+            "detail": {
+              "from": 1.0,
+              "to": 1.1,
+              "reason": "query_bump"
+            }
+          }
+        ],
+        "created_at": "2026-10-21T17:31:28.319232+00:00",
+        "updated_at": "2026-10-21T17:31:28.421486+00:00",
+        "revision_flag": null
+      }
+    },
+    "edges": []
+  },
+  "state_error": null,
+  "rows": [
+    "C2(d)"
+  ],
+  "verdicts": [
+    {
+      "row": "C2(d)",
+      "verdict": "pass",
+      "cases": [
+        {
+          "name": "story 1: the value current today is one of ['$50', '$80']",
+          "held": true,
+          "observation": "current today='$50'; writes sent with ['invalid_at', 'valid_from']",
+          "control": false,
+          "id": "story 1: the value current today is one of ['$50', '$80']"
+        },
+        {
+          "name": "story 2: the value current today is one of ['$100']",
+          "held": true,
+          "observation": "current today='$100'; writes sent with ['invalid_at', 'valid_from']",
+          "control": false,
+          "id": "story 2: the value current today is one of ['$100']"
+        }
+      ],
+      "observations": [],
+      "probe_evidence": null,
+      "measurements": {
+        "stories": [
+          {
+            "story": "lapsed-override-1",
+            "write_dates": [
+              "invalid_at",
+              "valid_from"
+            ],
+            "request": {
+              "q": "read",
+              "stages": [
+                "temporal"
+              ],
+              "topic_ids": [
+                "e54b4161-fa35-4935-8956-28e6ed96eaf3"
+              ],
+              "explain": false
+            },
+            "current": "$50"
+          },
+          {
+            "story": "lapsed-override-2",
+            "write_dates": [
+              "invalid_at",
+              "valid_from"
+            ],
+            "request": {
+              "q": "read",
+              "stages": [
+                "temporal"
+              ],
+              "topic_ids": [
+                "6cbb5966-6ff0-4898-8909-e7e24a68b0cb"
+              ],
+              "explain": false
+            },
+            "current": "$100"
+          }
+        ]
+      },
+      "control": false,
+      "system": "step3",
+      "snapshots": [],
+      "error": null
+    }
+  ]
+}

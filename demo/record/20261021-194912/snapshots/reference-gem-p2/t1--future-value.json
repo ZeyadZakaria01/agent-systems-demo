@@ -1,0 +1,619 @@
+{
+  "system": "reference-gem-p2",
+  "label": "reference GEM (phase 2)",
+  "check": "T1",
+  "tag": "future-value",
+  "describe": {
+    "system": "reference GEM (phase 2)",
+    "url": null,
+    "db_path": null,
+    "commit": null,
+    "engine": "in-process reference GEM, phase 2",
+    "keeps_history": true,
+    "accepts_error": null,
+    "declared_bound": {
+      "topics": 500,
+      "name": "\u03b2"
+    },
+    "accepts_source": true,
+    "latency_comparable": false,
+    "source_surface": {
+      "request_properties": [
+        "source_message"
+      ],
+      "paths": []
+    },
+    "c6_clause_2_seeds": {
+      "target": 0.06,
+      "control": 0.06
+    },
+    "embedder": "sentence-transformers/all-MiniLM-L6-v2",
+    "top_k": 8,
+    "parameters": {
+      "theta_archive": 0.05,
+      "lambda": 0.9925386444712004,
+      "decay_horizon": 400,
+      "beta": 500,
+      "bump": 0.1,
+      "history_cap": 500,
+      "top_k": 8,
+      "salience_on_archive": 0.5,
+      "propagation": "one hop, extension edges, either direction",
+      "revision": "after every ingest",
+      "phase": 2
+    },
+    "accepts": {
+      "valid_from": true,
+      "invalid_at": true,
+      "valid_at": true,
+      "recorded_at": true
+    }
+  },
+  "describe_error": null,
+  "started_at": "2026-10-21T17:44:45.456014+00:00",
+  "finished_at": "2026-10-21T17:44:45.456153+00:00",
+  "scored_transitions": [
+    {
+      "seq": 0,
+      "kind": "scored",
+      "op": "ingest",
+      "request": {
+        "placement": "new_topic",
+        "title": "Time probe: Future value, nothing before",
+        "topic_kind": "time-probe",
+        "fields": [
+          {
+            "name": "Tier",
+            "value": "premium",
+            "provenance": "time-probe:future-value",
+            "valid_from": "2026-11-01T00:00:00+00:00"
+          }
+        ]
+      },
+      "started_at": "2026-10-21T17:44:45.456044+00:00",
+      "response": {
+        "topic_id": "379ced2e-fad3-4457-acf4-8a6d932f9616",
+        "applied": [
+          "created_topic:379ced2e-fad3-4457-acf4-8a6d932f9616",
+          "field:Tier"
+        ],
+        "version_ids": {
+          "Tier": "806d26bc-febf-4f9c-8e1b-760eeab36488"
+        },
+        "similar_topic_ids": []
+      },
+      "rejected": null,
+      "error": null,
+      "latency_ms": 0.031,
+      "finished_at": "2026-10-21T17:44:45.456078+00:00"
+    },
+    {
+      "seq": 1,
+      "kind": "scored",
+      "op": "query",
+      "request": {
+        "q": "read",
+        "stages": [
+          "temporal"
+        ],
+        "topic_ids": [
+          "379ced2e-fad3-4457-acf4-8a6d932f9616"
+        ],
+        "explain": false
+      },
+      "started_at": "2026-10-21T17:44:45.456083+00:00",
+      "response": {
+        "query": "read",
+        "candidates": [
+          {
+            "topic_id": "379ced2e-fad3-4457-acf4-8a6d932f9616",
+            "title": "Time probe: Future value, nothing before",
+            "summary": null,
+            "topic_kind": "time-probe",
+            "salience": 1.0,
+            "failed_salience": null,
+            "neighbors": [],
+            "fields": [
+              {
+                "name": "Tier",
+                "field_type": "string",
+                "ref_topic_id": null,
+                "current": null,
+                "history": null
+              }
+            ],
+            "revision_flag": {
+              "flagged": false
+            },
+            "similarity": null
+          }
+        ],
+        "summary_text": ""
+      },
+      "rejected": null,
+      "error": null,
+      "latency_ms": 0.01,
+      "finished_at": "2026-10-21T17:44:45.456096+00:00"
+    },
+    {
+      "seq": 2,
+      "kind": "scored",
+      "op": "query",
+      "request": {
+        "q": "read",
+        "stages": [
+          "temporal"
+        ],
+        "topic_ids": [
+          "379ced2e-fad3-4457-acf4-8a6d932f9616"
+        ],
+        "explain": false,
+        "valid_at": "2026-11-05T00:00:00+00:00"
+      },
+      "started_at": "2026-10-21T17:44:45.456103+00:00",
+      "response": {
+        "query": "read",
+        "candidates": [
+          {
+            "topic_id": "379ced2e-fad3-4457-acf4-8a6d932f9616",
+            "title": "Time probe: Future value, nothing before",
+            "summary": null,
+            "topic_kind": "time-probe",
+            "salience": 1.1,
+            "failed_salience": null,
+            "neighbors": [],
+            "fields": [
+              {
+                "name": "Tier",
+                "field_type": "string",
+                "ref_topic_id": null,
+                "current": {
+                  "id": "806d26bc-febf-4f9c-8e1b-760eeab36488",
+                  "value": "premium",
+                  "provenance": "time-probe:future-value",
+                  "why_changed": null,
+                  "impact_expected": null,
+                  "valid_from": "2026-11-01T00:00:00+00:00",
+                  "expired_at": null,
+                  "source_id": null,
+                  "invalid_at": null,
+                  "created_at": "2026-10-21T17:44:45.456047+00:00",
+                  "replaces_entry_id": null,
+                  "corrected_by_entry_id": null
+                },
+                "history": [
+                  {
+                    "id": "806d26bc-febf-4f9c-8e1b-760eeab36488",
+                    "value": "premium",
+                    "provenance": "time-probe:future-value",
+                    "why_changed": null,
+                    "impact_expected": null,
+                    "valid_from": "2026-11-01T00:00:00+00:00",
+                    "expired_at": null,
+                    "source_id": null,
+                    "invalid_at": null,
+                    "created_at": "2026-10-21T17:44:45.456047+00:00",
+                    "replaces_entry_id": null,
+                    "corrected_by_entry_id": null
+                  }
+                ],
+                "archived_history": []
+              }
+            ],
+            "revision_flag": {
+              "flagged": false
+            },
+            "similarity": null
+          }
+        ],
+        "summary_text": ""
+      },
+      "rejected": null,
+      "error": null,
+      "latency_ms": 0.018,
+      "finished_at": "2026-10-21T17:44:45.456123+00:00"
+    }
+  ],
+  "setup_writes": [],
+  "reads": [
+    {
+      "seq": 3,
+      "kind": "read",
+      "op": "read_topic",
+      "request": {
+        "topic_id": "379ced2e-fad3-4457-acf4-8a6d932f9616"
+      },
+      "started_at": "2026-10-21T17:44:45.456134+00:00",
+      "response": {
+        "id": "379ced2e-fad3-4457-acf4-8a6d932f9616",
+        "title": "Time probe: Future value, nothing before",
+        "summary": null,
+        "topic_kind": "time-probe",
+        "salience": 1.2000000000000002,
+        "failed_salience": null,
+        "archived": false,
+        "revision_flag": {
+          "flagged": false
+        },
+        "fields": {
+          "Tier": {
+            "field_type": "string",
+            "ref_topic_id": null,
+            "current": null,
+            "history": [
+              {
+                "id": "806d26bc-febf-4f9c-8e1b-760eeab36488",
+                "value": "premium",
+                "provenance": "time-probe:future-value",
+                "why_changed": null,
+                "impact_expected": null,
+                "valid_from": "2026-11-01T00:00:00+00:00",
+                "expired_at": null,
+                "source_id": null,
+                "invalid_at": null,
+                "created_at": "2026-10-21T17:44:45.456047+00:00",
+                "replaces_entry_id": null,
+                "corrected_by_entry_id": null
+              }
+            ],
+            "archived_history": []
+          }
+        },
+        "topic_history": [],
+        "created_at": "2026-10-21T17:44:45.456047+00:00",
+        "updated_at": "2026-10-21T17:44:45.456068+00:00"
+      },
+      "rejected": null,
+      "error": null,
+      "latency_ms": 0.01,
+      "finished_at": "2026-10-21T17:44:45.456147+00:00"
+    },
+    {
+      "seq": 4,
+      "kind": "read",
+      "op": "read_state",
+      "request": null,
+      "started_at": "2026-10-21T17:44:45.456163+00:00",
+      "response": {
+        "topics": 1,
+        "edges": 0
+      },
+      "rejected": null,
+      "error": null,
+      "latency_ms": 0.012,
+      "finished_at": "2026-10-21T17:44:45.456178+00:00"
+    }
+  ],
+  "waits": [],
+  "state": {
+    "topics": {
+      "379ced2e-fad3-4457-acf4-8a6d932f9616": {
+        "id": "379ced2e-fad3-4457-acf4-8a6d932f9616",
+        "title": "Time probe: Future value, nothing before",
+        "summary": null,
+        "topic_kind": "time-probe",
+        "salience": 1.2000000000000002,
+        "failed_salience": null,
+        "archived": false,
+        "revision_flag": {
+          "flagged": false
+        },
+        "fields": {
+          "Tier": {
+            "field_type": "string",
+            "ref_topic_id": null,
+            "current": null,
+            "history": [
+              {
+                "id": "806d26bc-febf-4f9c-8e1b-760eeab36488",
+                "value": "premium",
+                "provenance": "time-probe:future-value",
+                "why_changed": null,
+                "impact_expected": null,
+                "valid_from": "2026-11-01T00:00:00+00:00",
+                "expired_at": null,
+                "source_id": null,
+                "invalid_at": null,
+                "created_at": "2026-10-21T17:44:45.456047+00:00",
+                "replaces_entry_id": null,
+                "corrected_by_entry_id": null
+              }
+            ],
+            "archived_history": []
+          }
+        },
+        "topic_history": [],
+        "created_at": "2026-10-21T17:44:45.456047+00:00",
+        "updated_at": "2026-10-21T17:44:45.456068+00:00"
+      }
+    },
+    "edges": [],
+    "policies": [
+      {
+        "name": "reject-empty-values",
+        "event": "write",
+        "condition": {
+          "field": "*",
+          "op": "empty"
+        },
+        "action": "reject"
+      },
+      {
+        "name": "propagate-on-change",
+        "event": "field_updated",
+        "condition": {
+          "neighbour": "extension"
+        },
+        "action": "flag"
+      }
+    ],
+    "interactions": 3
+  },
+  "state_error": null,
+  "rows": [
+    "T1",
+    "T2",
+    "T3",
+    "T4",
+    "T5",
+    "T6"
+  ],
+  "verdicts": [
+    {
+      "row": "T1",
+      "verdict": "pass",
+      "cases": [
+        {
+          "name": "today: 2026-10-21 -> 'April 20'",
+          "held": true,
+          "observation": "[dated path] asked today (plain read): got 'April 20', correct 'April 20'",
+          "control": false,
+          "id": "today: 2026-10-21 -> 'April 20'"
+        },
+        {
+          "name": "Dec 20: 2026-08-25 -> 'March 1'",
+          "held": true,
+          "observation": "[dated path] asked Dec 20 (valid_at): got 'March 1', correct 'March 1'",
+          "control": true,
+          "id": "Dec 20: 2026-08-25 -> 'March 1'"
+        },
+        {
+          "name": "history intact: no value lost, expired entries copied and linked",
+          "held": true,
+          "observation": "2 entries; every written value kept; 0 expired, each copied",
+          "control": false,
+          "id": "history intact: no value lost, expired entries copied and linked"
+        }
+      ],
+      "observations": [],
+      "probe_evidence": null,
+      "measurements": {
+        "accepts_dates": "yes",
+        "dates_needed": "valid_from",
+        "dates_missing": "none"
+      },
+      "control": false,
+      "system": "reference-gem-p2",
+      "snapshots": [],
+      "error": null
+    },
+    {
+      "row": "T2",
+      "verdict": "pass",
+      "cases": [
+        {
+          "name": "today: 2026-10-21 -> 'pro'",
+          "held": true,
+          "observation": "[dated path] asked today (plain read): got 'pro', correct 'pro'",
+          "control": false,
+          "id": "today: 2026-10-21 -> 'pro'"
+        },
+        {
+          "name": "Sep 1: 2026-09-02 -> 'basic'",
+          "held": true,
+          "observation": "[dated path] asked Sep 1 (valid_at): got 'basic', correct 'basic'",
+          "control": true,
+          "id": "Sep 1: 2026-09-02 -> 'basic'"
+        },
+        {
+          "name": "history intact: no value lost, expired entries copied and linked",
+          "held": true,
+          "observation": "2 entries; every written value kept; 0 expired, each copied",
+          "control": false,
+          "id": "history intact: no value lost, expired entries copied and linked"
+        }
+      ],
+      "observations": [],
+      "probe_evidence": null,
+      "measurements": {
+        "accepts_dates": "yes",
+        "dates_needed": "valid_from",
+        "dates_missing": "none"
+      },
+      "control": false,
+      "system": "reference-gem-p2",
+      "snapshots": [],
+      "error": null
+    },
+    {
+      "row": "T3",
+      "verdict": "pass",
+      "cases": [
+        {
+          "name": "today: 2026-10-21 -> 'basic'",
+          "held": true,
+          "observation": "[dated path] asked today (plain read): got 'basic', correct 'basic'",
+          "control": false,
+          "id": "today: 2026-10-21 -> 'basic'"
+        },
+        {
+          "name": "Dec 5: 2026-11-05 -> 'premium'",
+          "held": true,
+          "observation": "[dated path] asked Dec 5 (valid_at): got 'premium', correct 'premium'",
+          "control": true,
+          "id": "Dec 5: 2026-11-05 -> 'premium'"
+        },
+        {
+          "name": "history intact: no value lost, expired entries copied and linked",
+          "held": true,
+          "observation": "2 entries; every written value kept; 0 expired, each copied",
+          "control": false,
+          "id": "history intact: no value lost, expired entries copied and linked"
+        }
+      ],
+      "observations": [],
+      "probe_evidence": null,
+      "measurements": {
+        "accepts_dates": "yes",
+        "dates_needed": "valid_from",
+        "dates_missing": "none"
+      },
+      "control": false,
+      "system": "reference-gem-p2",
+      "snapshots": [],
+      "error": null
+    },
+    {
+      "row": "T4",
+      "verdict": "pass",
+      "cases": [
+        {
+          "name": "story 1: Oct 15: 2026-09-30 -> '$80'",
+          "held": true,
+          "observation": "[dated path] asked Oct 15 (valid_at): got '$80', correct '$80'",
+          "control": true,
+          "id": "story 1: Oct 15: 2026-09-30 -> '$80'"
+        },
+        {
+          "name": "story 1: today: 2026-10-21 -> '$50'",
+          "held": true,
+          "observation": "[dated path] asked today (plain read): got '$50', correct '$50'",
+          "control": false,
+          "id": "story 1: today: 2026-10-21 -> '$50'"
+        },
+        {
+          "name": "story 1: history intact: no value lost, expired entries copied and linked",
+          "held": true,
+          "observation": "2 entries; every written value kept; 0 expired, each copied",
+          "control": false,
+          "id": "story 1: history intact: no value lost, expired entries copied and linked"
+        },
+        {
+          "name": "story 2: today: 2026-10-21 -> '$100'",
+          "held": true,
+          "observation": "[dated path] asked today (plain read): got '$100', correct '$100'",
+          "control": true,
+          "id": "story 2: today: 2026-10-21 -> '$100'"
+        },
+        {
+          "name": "story 2: Oct 15: 2026-09-30 -> '$100'",
+          "held": true,
+          "observation": "[dated path] asked Oct 15 (valid_at): got '$100', correct '$100'",
+          "control": false,
+          "id": "story 2: Oct 15: 2026-09-30 -> '$100'"
+        },
+        {
+          "name": "story 2: Oct 5: 2026-09-20 -> '$80'",
+          "held": true,
+          "observation": "[dated path] asked Oct 5 (valid_at): got '$80', correct '$80'",
+          "control": false,
+          "id": "story 2: Oct 5: 2026-09-20 -> '$80'"
+        },
+        {
+          "name": "story 2: history intact: no value lost, expired entries copied and linked",
+          "held": true,
+          "observation": "4 entries; every written value kept; 1 expired, each copied",
+          "control": false,
+          "id": "story 2: history intact: no value lost, expired entries copied and linked"
+        }
+      ],
+      "observations": [],
+      "probe_evidence": null,
+      "measurements": {
+        "accepts_dates": "yes",
+        "dates_needed": "valid_from, invalid_at",
+        "dates_missing": "none"
+      },
+      "control": false,
+      "system": "reference-gem-p2",
+      "snapshots": [],
+      "error": null
+    },
+    {
+      "row": "T5",
+      "verdict": "pass",
+      "cases": [
+        {
+          "name": "true on Feb 10: 2026-10-16 -> 'May 1'",
+          "held": true,
+          "observation": "[dated path] asked true on Feb 10 (valid_at): got 'May 1', correct 'May 1'",
+          "control": true,
+          "id": "true on Feb 10: 2026-10-16 -> 'May 1'"
+        },
+        {
+          "name": "believed on Feb 10: -> 'April 20'",
+          "held": true,
+          "observation": "[dated path] asked believed on Feb 10 (recorded_at): got 'April 20', correct 'April 20'",
+          "control": false,
+          "id": "believed on Feb 10: -> 'April 20'"
+        },
+        {
+          "name": "history intact: no value lost, expired entries copied and linked",
+          "held": true,
+          "observation": "2 entries; every written value kept; 0 expired, each copied",
+          "control": false,
+          "id": "history intact: no value lost, expired entries copied and linked"
+        }
+      ],
+      "observations": [],
+      "probe_evidence": null,
+      "measurements": {
+        "accepts_dates": "yes",
+        "dates_needed": "valid_from, valid_at, recorded_at",
+        "dates_missing": "none"
+      },
+      "control": false,
+      "system": "reference-gem-p2",
+      "snapshots": [],
+      "error": null
+    },
+    {
+      "row": "T6",
+      "verdict": "pass",
+      "cases": [
+        {
+          "name": "today: 2026-10-21 -> NO_VALUE",
+          "held": true,
+          "observation": "[dated path] asked today (plain read): got NO_VALUE, correct NO_VALUE",
+          "control": false,
+          "id": "today: 2026-10-21 -> NO_VALUE"
+        },
+        {
+          "name": "Dec 5: 2026-11-05 -> 'premium'",
+          "held": true,
+          "observation": "[dated path] asked Dec 5 (valid_at): got 'premium', correct 'premium'",
+          "control": true,
+          "id": "Dec 5: 2026-11-05 -> 'premium'"
+        },
+        {
+          "name": "history intact: no value lost, expired entries copied and linked",
+          "held": true,
+          "observation": "1 entries; every written value kept; 0 expired, each copied",
+          "control": false,
+          "id": "history intact: no value lost, expired entries copied and linked"
+        }
+      ],
+      "observations": [],
+      "probe_evidence": null,
+      "measurements": {
+        "accepts_dates": "yes",
+        "dates_needed": "valid_from",
+        "dates_missing": "none"
+      },
+      "control": false,
+      "system": "reference-gem-p2",
+      "snapshots": [],
+      "error": null
+    }
+  ]
+}

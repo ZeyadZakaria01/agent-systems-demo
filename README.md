@@ -4,7 +4,7 @@ Review demo for *Is Agent Memory a Database? Rethinking Data Foundations for Lon
 
 ## Status
 
-Environment ready and live-verified (MemState, Groq, Ollama on CUDA; LadybugDB beside Kuzu). The demo design is decided: [report §9](docs/report/gem-limitations-and-directions.md#9-demo-time-correct-governed-memory), with the decisions behind it on the wayfinder map (`.scratch/interview-package/map.md`). The conformance suite (`.scratch/gem-conformance-suite/spec.md`) is built; its run of record is `demo/record/20261021-085949/` (seven systems, 3 ramp repeats, both chat cases; findings F32–F35); see "Run the conformance suite". `scripts/probe_memstate.py` holds the probes behind findings F7–F12.
+Environment ready and live-verified (MemState, Groq, Ollama on CUDA; LadybugDB beside Kuzu). The demo design is decided: [report §9](docs/report/gem-limitations-and-directions.md#9-demo-time-correct-governed-memory), with the decisions behind it on the wayfinder map (`.scratch/interview-package/map.md`). The conformance suite (`.scratch/gem-conformance-suite/spec.md`) is built; its run of record is `demo/record/20261021-194912/` (seven systems, 3 ramp repeats, both chat cases, on the final patch commits; finding F41; `demo/record/20261021-085949/`, on the superseded commits, stays as findings F32–F35's evidence); see "Run the conformance suite". `scripts/probe_memstate.py` holds the probes behind findings F7–F12.
 
 ## Layout
 

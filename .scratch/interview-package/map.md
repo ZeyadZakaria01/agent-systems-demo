@@ -12,7 +12,7 @@ The way to all three deliverables Prof. Mansour asked for is clear: a buildable 
 - The plan is built in full whatever the interview date: never ask for the date, and never trim scope to fit it (user, 2026-10-20).
 - Environment is ready and live-verified (ticket "Environment setup"); start servers via the README.
 - Build state (2026-10-21): the build is merged on `main`; all 32 build tickets in `.scratch/gem-conformance-suite/issues/` are resolved. No `gem-suite` branch or per-ticket worktree remains; `../agent-systems-demo-wt/` holds only `server.lock` and notes. Details: `docs/journal.md`, `docs/findings.md`.
-- Run of record `demo/record/20261021-085949/` measured patch commits 2 `2cfabee` and 3 `cb5d48c`, since superseded; it is being re-run on the final commits (step 1 `089b823`, step 2 `4272a07`, step 3 `9bd471e`; F38, F40). Report §9.7 and §9.8 are filled from it; F38–F40 are being added to the report.
+- Run of record `demo/record/20261021-194912/` (57 min, exit 0) measured the final patch commits (step 1 `089b823`, step 2 `4272a07`, step 3 `9bd471e`); it is done, F41. Every verdict equals the earlier run `20261021-085949` (patch commits `2cfabee`, `cb5d48c`, since superseded; F32–F35 stay as its evidence). Report §9.7 and §9.8 cite the new run; F38–F40 are in the report.
 - Chat series F37–F40 are recorded in `docs/findings.md` and `demo/chat-series/`. Hand grades (`demo/grading/hand-grading-sheet.csv`) are 0 of 140: the user does them later.
 - Earlier suite audits ([vs. spec](assets/suite-audit-vs-spec.md), [vs. report](assets/suite-audit-vs-report.md), 2026-10-20) fed "Ratify verdict rules set during the build" and "Close the suite audit's design gaps before the patch tickets"; their fixes are built.
 

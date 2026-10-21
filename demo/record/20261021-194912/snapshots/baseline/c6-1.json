@@ -1,0 +1,343 @@
+{
+  "system": "baseline",
+  "label": "baseline",
+  "check": "C6-1",
+  "tag": null,
+  "describe": {
+    "system": "baseline",
+    "url": null,
+    "db_path": null,
+    "commit": null,
+    "engine": "in-process versioned row",
+    "keeps_history": true,
+    "accepts_error": null,
+    "declared_bound": null,
+    "accepts_source": false,
+    "latency_comparable": true,
+    "source_surface": null,
+    "c6_clause_2_seeds": null,
+    "embedder": "sentence-transformers/all-MiniLM-L6-v2",
+    "top_k": 8,
+    "accepts": {
+      "valid_from": false,
+      "invalid_at": false,
+      "valid_at": false,
+      "recorded_at": true
+    }
+  },
+  "describe_error": null,
+  "started_at": "2026-10-21T17:45:40.289898+00:00",
+  "finished_at": "2026-10-21T17:45:40.290004+00:00",
+  "scored_transitions": [
+    {
+      "seq": 0,
+      "kind": "scored",
+      "op": "ingest",
+      "request": {
+        "placement": "new_topic",
+        "title": "Marathon Training",
+        "summary": "Weekly long run schedule and mileage plan for the spring marathon",
+        "topic_kind": "project"
+      },
+      "started_at": "2026-10-21T17:45:40.289918+00:00",
+      "response": {
+        "topic_id": "Marathon Training",
+        "applied": [
+          "created_topic:Marathon Training"
+        ],
+        "version_ids": {},
+        "similar_topic_ids": []
+      },
+      "rejected": null,
+      "error": null,
+      "latency_ms": 0.003,
+      "finished_at": "2026-10-21T17:45:40.289947+00:00"
+    },
+    {
+      "seq": 1,
+      "kind": "scored",
+      "op": "ingest",
+      "request": {
+        "placement": "new_topic",
+        "title": "Sourdough Starter",
+        "summary": "Feeding schedule and hydration ratios for the kitchen sourdough starter",
+        "topic_kind": "project"
+      },
+      "started_at": "2026-10-21T17:45:40.289950+00:00",
+      "response": {
+        "topic_id": "Sourdough Starter",
+        "applied": [
+          "created_topic:Sourdough Starter"
+        ],
+        "version_ids": {},
+        "similar_topic_ids": []
+      },
+      "rejected": null,
+      "error": null,
+      "latency_ms": 0.001,
+      "finished_at": "2026-10-21T17:45:40.289954+00:00"
+    },
+    {
+      "seq": 2,
+      "kind": "scored",
+      "op": "ingest",
+      "request": {
+        "placement": "new_topic",
+        "title": "Tax Return",
+        "summary": "Documents and deadlines for filing the annual income tax return",
+        "topic_kind": "project"
+      },
+      "started_at": "2026-10-21T17:45:40.289957+00:00",
+      "response": {
+        "topic_id": "Tax Return",
+        "applied": [
+          "created_topic:Tax Return"
+        ],
+        "version_ids": {},
+        "similar_topic_ids": []
+      },
+      "rejected": null,
+      "error": null,
+      "latency_ms": 0.001,
+      "finished_at": "2026-10-21T17:45:40.289960+00:00"
+    },
+    {
+      "seq": 3,
+      "kind": "scored",
+      "op": "ingest",
+      "request": {
+        "placement": "new_topic",
+        "title": "Kubernetes Upgrade",
+        "summary": "Cluster node pool upgrade plan and rollback notes",
+        "topic_kind": "project"
+      },
+      "started_at": "2026-10-21T17:45:40.289962+00:00",
+      "response": {
+        "topic_id": "Kubernetes Upgrade",
+        "applied": [
+          "created_topic:Kubernetes Upgrade"
+        ],
+        "version_ids": {},
+        "similar_topic_ids": []
+      },
+      "rejected": null,
+      "error": null,
+      "latency_ms": 0.001,
+      "finished_at": "2026-10-21T17:45:40.289966+00:00"
+    }
+  ],
+  "setup_writes": [],
+  "reads": [
+    {
+      "seq": 4,
+      "kind": "read",
+      "op": "read_topic",
+      "request": {
+        "topic_id": "Marathon Training"
+      },
+      "started_at": "2026-10-21T17:45:40.289971+00:00",
+      "response": {
+        "id": "Marathon Training",
+        "title": "Marathon Training",
+        "summary": "Weekly long run schedule and mileage plan for the spring marathon",
+        "topic_kind": "project",
+        "salience": null,
+        "failed_salience": null,
+        "archived": null,
+        "topic_history": null,
+        "created_at": null,
+        "updated_at": null,
+        "fields": {},
+        "revision_flag": null
+      },
+      "rejected": null,
+      "error": null,
+      "latency_ms": 0.002,
+      "finished_at": "2026-10-21T17:45:40.289976+00:00"
+    },
+    {
+      "seq": 5,
+      "kind": "read",
+      "op": "read_topic",
+      "request": {
+        "topic_id": "Sourdough Starter"
+      },
+      "started_at": "2026-10-21T17:45:40.289978+00:00",
+      "response": {
+        "id": "Sourdough Starter",
+        "title": "Sourdough Starter",
+        "summary": "Feeding schedule and hydration ratios for the kitchen sourdough starter",
+        "topic_kind": "project",
+        "salience": null,
+        "failed_salience": null,
+        "archived": null,
+        "topic_history": null,
+        "created_at": null,
+        "updated_at": null,
+        "fields": {},
+        "revision_flag": null
+      },
+      "rejected": null,
+      "error": null,
+      "latency_ms": 0.001,
+      "finished_at": "2026-10-21T17:45:40.289982+00:00"
+    },
+    {
+      "seq": 6,
+      "kind": "read",
+      "op": "read_topic",
+      "request": {
+        "topic_id": "Tax Return"
+      },
+      "started_at": "2026-10-21T17:45:40.289984+00:00",
+      "response": {
+        "id": "Tax Return",
+        "title": "Tax Return",
+        "summary": "Documents and deadlines for filing the annual income tax return",
+        "topic_kind": "project",
+        "salience": null,
+        "failed_salience": null,
+        "archived": null,
+        "topic_history": null,
+        "created_at": null,
+        "updated_at": null,
+        "fields": {},
+        "revision_flag": null
+      },
+      "rejected": null,
+      "error": null,
+      "latency_ms": 0.001,
+      "finished_at": "2026-10-21T17:45:40.289987+00:00"
+    },
+    {
+      "seq": 7,
+      "kind": "read",
+      "op": "read_topic",
+      "request": {
+        "topic_id": "Kubernetes Upgrade"
+      },
+      "started_at": "2026-10-21T17:45:40.289989+00:00",
+      "response": {
+        "id": "Kubernetes Upgrade",
+        "title": "Kubernetes Upgrade",
+        "summary": "Cluster node pool upgrade plan and rollback notes",
+        "topic_kind": "project",
+        "salience": null,
+        "failed_salience": null,
+        "archived": null,
+        "topic_history": null,
+        "created_at": null,
+        "updated_at": null,
+        "fields": {},
+        "revision_flag": null
+      },
+      "rejected": null,
+      "error": null,
+      "latency_ms": 0.001,
+      "finished_at": "2026-10-21T17:45:40.289991+00:00"
+    },
+    {
+      "seq": 8,
+      "kind": "read",
+      "op": "read_state",
+      "request": null,
+      "started_at": "2026-10-21T17:45:40.290011+00:00",
+      "response": {
+        "topics": 4,
+        "edges": null
+      },
+      "rejected": null,
+      "error": null,
+      "latency_ms": 0.004,
+      "finished_at": "2026-10-21T17:45:40.290017+00:00"
+    }
+  ],
+  "waits": [],
+  "state": {
+    "topics": {
+      "Marathon Training": {
+        "id": "Marathon Training",
+        "title": "Marathon Training",
+        "summary": "Weekly long run schedule and mileage plan for the spring marathon",
+        "topic_kind": "project",
+        "salience": null,
+        "failed_salience": null,
+        "archived": null,
+        "topic_history": null,
+        "created_at": null,
+        "updated_at": null,
+        "fields": {},
+        "revision_flag": null
+      },
+      "Sourdough Starter": {
+        "id": "Sourdough Starter",
+        "title": "Sourdough Starter",
+        "summary": "Feeding schedule and hydration ratios for the kitchen sourdough starter",
+        "topic_kind": "project",
+        "salience": null,
+        "failed_salience": null,
+        "archived": null,
+        "topic_history": null,
+        "created_at": null,
+        "updated_at": null,
+        "fields": {},
+        "revision_flag": null
+      },
+      "Tax Return": {
+        "id": "Tax Return",
+        "title": "Tax Return",
+        "summary": "Documents and deadlines for filing the annual income tax return",
+        "topic_kind": "project",
+        "salience": null,
+        "failed_salience": null,
+        "archived": null,
+        "topic_history": null,
+        "created_at": null,
+        "updated_at": null,
+        "fields": {},
+        "revision_flag": null
+      },
+      "Kubernetes Upgrade": {
+        "id": "Kubernetes Upgrade",
+        "title": "Kubernetes Upgrade",
+        "summary": "Cluster node pool upgrade plan and rollback notes",
+        "topic_kind": "project",
+        "salience": null,
+        "failed_salience": null,
+        "archived": null,
+        "topic_history": null,
+        "created_at": null,
+        "updated_at": null,
+        "fields": {},
+        "revision_flag": null
+      }
+    },
+    "edges": null
+  },
+  "state_error": null,
+  "rows": [
+    "C6-1"
+  ],
+  "verdicts": [
+    {
+      "row": "C6-1",
+      "verdict": "absent",
+      "cases": [],
+      "observations": [],
+      "probe_evidence": {
+        "probe": "salience is a nothing-value on every topic the check wrote (the system does not track it)",
+        "salience_read": {
+          "Marathon Training": null,
+          "Sourdough Starter": null,
+          "Tax Return": null,
+          "Kubernetes Upgrade": null
+        }
+      },
+      "measurements": {},
+      "control": false,
+      "system": "baseline",
+      "snapshots": [],
+      "error": null
+    }
+  ]
+}

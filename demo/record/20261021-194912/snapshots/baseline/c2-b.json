@@ -1,0 +1,198 @@
+{
+  "system": "baseline",
+  "label": "baseline",
+  "check": "C2(b)",
+  "tag": null,
+  "describe": {
+    "system": "baseline",
+    "url": null,
+    "db_path": null,
+    "commit": null,
+    "engine": "in-process versioned row",
+    "keeps_history": true,
+    "accepts_error": null,
+    "declared_bound": null,
+    "accepts_source": false,
+    "latency_comparable": true,
+    "source_surface": null,
+    "c6_clause_2_seeds": null,
+    "embedder": "sentence-transformers/all-MiniLM-L6-v2",
+    "top_k": 8,
+    "accepts": {
+      "valid_from": false,
+      "invalid_at": false,
+      "valid_at": false,
+      "recorded_at": true
+    }
+  },
+  "describe_error": null,
+  "started_at": "2026-10-21T17:44:45.524665+00:00",
+  "finished_at": "2026-10-21T17:44:45.524748+00:00",
+  "scored_transitions": [
+    {
+      "seq": 0,
+      "kind": "scored",
+      "op": "ingest",
+      "request": {
+        "placement": "new_topic",
+        "title": "Website Redesign",
+        "topic_kind": "project",
+        "fields": [
+          {
+            "name": "Deadline",
+            "value": "March 15",
+            "provenance": "kickoff-notes"
+          },
+          {
+            "name": "Owner",
+            "value": "Alice",
+            "provenance": "kickoff-notes",
+            "ref_topic_id": "0ba2a1a3-1856-40b2-bfcb-8e7d38dfd9c2"
+          }
+        ]
+      },
+      "started_at": "2026-10-21T17:44:45.524690+00:00",
+      "response": null,
+      "rejected": {
+        "status": 400,
+        "detail": "ref_topic_id not found: 0ba2a1a3-1856-40b2-bfcb-8e7d38dfd9c2"
+      },
+      "error": null,
+      "latency_ms": 0.008,
+      "finished_at": "2026-10-21T17:44:45.524704+00:00"
+    },
+    {
+      "seq": 2,
+      "kind": "scored",
+      "op": "ingest",
+      "request": {
+        "placement": "new_topic",
+        "title": "Website Redesign (edge)",
+        "topic_kind": "project",
+        "edges": [
+          {
+            "to_topic_id": "1a1f2c94-3058-46a1-8172-41985f45b947",
+            "kind": "extension"
+          }
+        ]
+      },
+      "started_at": "2026-10-21T17:44:45.524729+00:00",
+      "response": {
+        "topic_id": "Website Redesign (edge)",
+        "applied": [
+          "created_topic:Website Redesign (edge)"
+        ],
+        "version_ids": {},
+        "similar_topic_ids": []
+      },
+      "rejected": null,
+      "error": null,
+      "latency_ms": 0.002,
+      "finished_at": "2026-10-21T17:44:45.524733+00:00"
+    }
+  ],
+  "setup_writes": [],
+  "reads": [
+    {
+      "seq": 1,
+      "kind": "read",
+      "op": "read_state",
+      "request": null,
+      "started_at": "2026-10-21T17:44:45.524714+00:00",
+      "response": {
+        "topics": 0,
+        "edges": null
+      },
+      "rejected": null,
+      "error": null,
+      "latency_ms": 0.002,
+      "finished_at": "2026-10-21T17:44:45.524719+00:00"
+    },
+    {
+      "seq": 3,
+      "kind": "read",
+      "op": "read_state",
+      "request": null,
+      "started_at": "2026-10-21T17:44:45.524753+00:00",
+      "response": {
+        "topics": 1,
+        "edges": null
+      },
+      "rejected": null,
+      "error": null,
+      "latency_ms": 0.002,
+      "finished_at": "2026-10-21T17:44:45.524757+00:00"
+    }
+  ],
+  "waits": [],
+  "state": {
+    "topics": {
+      "Website Redesign (edge)": {
+        "id": "Website Redesign (edge)",
+        "title": "Website Redesign (edge)",
+        "summary": null,
+        "topic_kind": "project",
+        "salience": null,
+        "failed_salience": null,
+        "archived": null,
+        "topic_history": null,
+        "created_at": null,
+        "updated_at": null,
+        "fields": {},
+        "revision_flag": null
+      }
+    },
+    "edges": null
+  },
+  "state_error": null,
+  "rows": [
+    "C2(b)"
+  ],
+  "verdicts": [
+    {
+      "row": "C2(b)",
+      "verdict": "pass",
+      "cases": [
+        {
+          "name": "a refused ingest with a valid field and a field referencing a missing topic commits nothing (all or nothing)",
+          "held": true,
+          "observation": "the system refused (rejected 400: ref_topic_id not found: 0ba2a1a3-1856-40b2-bfcb-8e7d38dfd9c2) and nothing persisted (topics titled 'Website Redesign': 0; fields stored: none; missing target created as a topic: False)",
+          "control": false,
+          "id": "a refused ingest with a valid field and a field referencing a missing topic commits nothing (all or nothing)"
+        }
+      ],
+      "observations": [],
+      "probe_evidence": null,
+      "measurements": {
+        "evidence": {
+          "request": {
+            "placement": "new_topic",
+            "title": "Website Redesign",
+            "topic_kind": "project",
+            "fields": [
+              {
+                "name": "Deadline",
+                "value": "March 15",
+                "provenance": "kickoff-notes"
+              },
+              {
+                "name": "Owner",
+                "value": "Alice",
+                "provenance": "kickoff-notes",
+                "ref_topic_id": "0ba2a1a3-1856-40b2-bfcb-8e7d38dfd9c2"
+              }
+            ]
+          },
+          "response": null,
+          "error": "rejected 400: ref_topic_id not found: 0ba2a1a3-1856-40b2-bfcb-8e7d38dfd9c2",
+          "missing_topic_id": "0ba2a1a3-1856-40b2-bfcb-8e7d38dfd9c2",
+          "stored": "topics titled 'Website Redesign': 0; fields stored: none; missing target created as a topic: False"
+        }
+      },
+      "control": false,
+      "system": "baseline",
+      "snapshots": [],
+      "error": null
+    }
+  ]
+}

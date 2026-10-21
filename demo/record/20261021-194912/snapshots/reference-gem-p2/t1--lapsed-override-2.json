@@ -1,0 +1,979 @@
+{
+  "system": "reference-gem-p2",
+  "label": "reference GEM (phase 2)",
+  "check": "T1",
+  "tag": "lapsed-override-2",
+  "describe": {
+    "system": "reference GEM (phase 2)",
+    "url": null,
+    "db_path": null,
+    "commit": null,
+    "engine": "in-process reference GEM, phase 2",
+    "keeps_history": true,
+    "accepts_error": null,
+    "declared_bound": {
+      "topics": 500,
+      "name": "\u03b2"
+    },
+    "accepts_source": true,
+    "latency_comparable": false,
+    "source_surface": {
+      "request_properties": [
+        "source_message"
+      ],
+      "paths": []
+    },
+    "c6_clause_2_seeds": {
+      "target": 0.06,
+      "control": 0.06
+    },
+    "embedder": "sentence-transformers/all-MiniLM-L6-v2",
+    "top_k": 8,
+    "parameters": {
+      "theta_archive": 0.05,
+      "lambda": 0.9925386444712004,
+      "decay_horizon": 400,
+      "beta": 500,
+      "bump": 0.1,
+      "history_cap": 500,
+      "top_k": 8,
+      "salience_on_archive": 0.5,
+      "propagation": "one hop, extension edges, either direction",
+      "revision": "after every ingest",
+      "phase": 2
+    },
+    "accepts": {
+      "valid_from": true,
+      "invalid_at": true,
+      "valid_at": true,
+      "recorded_at": true
+    }
+  },
+  "describe_error": null,
+  "started_at": "2026-10-21T17:44:44.455220+00:00",
+  "finished_at": "2026-10-21T17:44:44.455481+00:00",
+  "scored_transitions": [
+    {
+      "seq": 0,
+      "kind": "scored",
+      "op": "ingest",
+      "request": {
+        "placement": "new_topic",
+        "title": "Time probe: Lapsed scoped override, plain statement during the override",
+        "topic_kind": "time-probe",
+        "fields": [
+          {
+            "name": "Budget",
+            "value": "$50",
+            "provenance": "time-probe:lapsed-override-2",
+            "valid_from": "2026-08-17T00:00:00+00:00"
+          }
+        ]
+      },
+      "started_at": "2026-10-21T17:44:44.455239+00:00",
+      "response": {
+        "topic_id": "ceb74d0a-37f2-4268-919b-f5f06347e6b4",
+        "applied": [
+          "created_topic:ceb74d0a-37f2-4268-919b-f5f06347e6b4",
+          "field:Budget"
+        ],
+        "version_ids": {
+          "Budget": "96451deb-b30e-471d-a4c0-63beec10ecaf"
+        },
+        "similar_topic_ids": []
+      },
+      "rejected": null,
+      "error": null,
+      "latency_ms": 0.022,
+      "finished_at": "2026-10-21T17:44:44.455263+00:00"
+    },
+    {
+      "seq": 1,
+      "kind": "scored",
+      "op": "ingest",
+      "request": {
+        "placement": "version_field",
+        "topic_id": "ceb74d0a-37f2-4268-919b-f5f06347e6b4",
+        "fields": [
+          {
+            "name": "Budget",
+            "value": "$80",
+            "provenance": "time-probe:lapsed-override-2",
+            "valid_from": "2026-09-16T00:00:00+00:00",
+            "invalid_at": "2026-10-17T00:00:00+00:00"
+          }
+        ]
+      },
+      "started_at": "2026-10-21T17:44:44.455270+00:00",
+      "response": {
+        "topic_id": "ceb74d0a-37f2-4268-919b-f5f06347e6b4",
+        "applied": [
+          "version:Budget"
+        ],
+        "version_ids": {
+          "Budget": "542d744c-6725-4038-9510-c3721b34a5ef"
+        },
+        "similar_topic_ids": []
+      },
+      "rejected": null,
+      "error": null,
+      "latency_ms": 0.021,
+      "finished_at": "2026-10-21T17:44:44.455293+00:00"
+    },
+    {
+      "seq": 2,
+      "kind": "scored",
+      "op": "ingest",
+      "request": {
+        "placement": "version_field",
+        "topic_id": "ceb74d0a-37f2-4268-919b-f5f06347e6b4",
+        "fields": [
+          {
+            "name": "Budget",
+            "value": "$100",
+            "provenance": "time-probe:lapsed-override-2",
+            "valid_from": "2026-09-25T00:00:00+00:00"
+          }
+        ]
+      },
+      "started_at": "2026-10-21T17:44:44.455297+00:00",
+      "response": {
+        "topic_id": "ceb74d0a-37f2-4268-919b-f5f06347e6b4",
+        "applied": [
+          "version:Budget"
+        ],
+        "version_ids": {
+          "Budget": "f27e5e5c-1152-451a-add0-c0a531df2848"
+        },
+        "similar_topic_ids": []
+      },
+      "rejected": null,
+      "error": null,
+      "latency_ms": 0.037,
+      "finished_at": "2026-10-21T17:44:44.455337+00:00"
+    },
+    {
+      "seq": 3,
+      "kind": "scored",
+      "op": "query",
+      "request": {
+        "q": "read",
+        "stages": [
+          "temporal"
+        ],
+        "topic_ids": [
+          "ceb74d0a-37f2-4268-919b-f5f06347e6b4"
+        ],
+        "explain": false
+      },
+      "started_at": "2026-10-21T17:44:44.455340+00:00",
+      "response": {
+        "query": "read",
+        "candidates": [
+          {
+            "topic_id": "ceb74d0a-37f2-4268-919b-f5f06347e6b4",
+            "title": "Time probe: Lapsed scoped override, plain statement during the override",
+            "summary": null,
+            "topic_kind": "time-probe",
+            "salience": 1.0,
+            "failed_salience": null,
+            "neighbors": [],
+            "fields": [
+              {
+                "name": "Budget",
+                "field_type": "string",
+                "ref_topic_id": null,
+                "current": {
+                  "id": "f27e5e5c-1152-451a-add0-c0a531df2848",
+                  "value": "$100",
+                  "provenance": "time-probe:lapsed-override-2",
+                  "why_changed": null,
+                  "impact_expected": null,
+                  "valid_from": "2026-09-25T00:00:00+00:00",
+                  "expired_at": null,
+                  "source_id": null,
+                  "invalid_at": null,
+                  "created_at": "2026-10-21T17:44:44.455299+00:00",
+                  "replaces_entry_id": null,
+                  "corrected_by_entry_id": null
+                },
+                "history": null
+              }
+            ],
+            "revision_flag": {
+              "flagged": false
+            },
+            "similarity": null
+          }
+        ],
+        "summary_text": ""
+      },
+      "rejected": null,
+      "error": null,
+      "latency_ms": 0.014,
+      "finished_at": "2026-10-21T17:44:44.455357+00:00"
+    },
+    {
+      "seq": 4,
+      "kind": "scored",
+      "op": "query",
+      "request": {
+        "q": "read",
+        "stages": [
+          "temporal"
+        ],
+        "topic_ids": [
+          "ceb74d0a-37f2-4268-919b-f5f06347e6b4"
+        ],
+        "explain": false,
+        "valid_at": "2026-09-30T00:00:00+00:00"
+      },
+      "started_at": "2026-10-21T17:44:44.455363+00:00",
+      "response": {
+        "query": "read",
+        "candidates": [
+          {
+            "topic_id": "ceb74d0a-37f2-4268-919b-f5f06347e6b4",
+            "title": "Time probe: Lapsed scoped override, plain statement during the override",
+            "summary": null,
+            "topic_kind": "time-probe",
+            "salience": 1.1,
+            "failed_salience": null,
+            "neighbors": [],
+            "fields": [
+              {
+                "name": "Budget",
+                "field_type": "string",
+                "ref_topic_id": null,
+                "current": {
+                  "id": "f27e5e5c-1152-451a-add0-c0a531df2848",
+                  "value": "$100",
+                  "provenance": "time-probe:lapsed-override-2",
+                  "why_changed": null,
+                  "impact_expected": null,
+                  "valid_from": "2026-09-25T00:00:00+00:00",
+                  "expired_at": null,
+                  "source_id": null,
+                  "invalid_at": null,
+                  "created_at": "2026-10-21T17:44:44.455299+00:00",
+                  "replaces_entry_id": null,
+                  "corrected_by_entry_id": null
+                },
+                "history": [
+                  {
+                    "id": "f27e5e5c-1152-451a-add0-c0a531df2848",
+                    "value": "$100",
+                    "provenance": "time-probe:lapsed-override-2",
+                    "why_changed": null,
+                    "impact_expected": null,
+                    "valid_from": "2026-09-25T00:00:00+00:00",
+                    "expired_at": null,
+                    "source_id": null,
+                    "invalid_at": null,
+                    "created_at": "2026-10-21T17:44:44.455299+00:00",
+                    "replaces_entry_id": null,
+                    "corrected_by_entry_id": null
+                  },
+                  {
+                    "id": "5b1ac00d-95b3-462c-aab3-4c9b1951486d",
+                    "value": "$80",
+                    "provenance": "time-probe:lapsed-override-2",
+                    "why_changed": null,
+                    "impact_expected": null,
+                    "valid_from": "2026-09-16T00:00:00+00:00",
+                    "expired_at": null,
+                    "source_id": null,
+                    "invalid_at": "2026-09-25T00:00:00+00:00",
+                    "created_at": "2026-10-21T17:44:44.455299+00:00",
+                    "replaces_entry_id": "542d744c-6725-4038-9510-c3721b34a5ef",
+                    "corrected_by_entry_id": null,
+                    "operation": "interval_corrected",
+                    "merged_from_topic_id": null
+                  },
+                  {
+                    "id": "542d744c-6725-4038-9510-c3721b34a5ef",
+                    "value": "$80",
+                    "provenance": "time-probe:lapsed-override-2",
+                    "why_changed": null,
+                    "impact_expected": null,
+                    "valid_from": "2026-09-16T00:00:00+00:00",
+                    "expired_at": "2026-10-21T17:44:44.455299+00:00",
+                    "source_id": null,
+                    "invalid_at": "2026-10-17T00:00:00+00:00",
+                    "created_at": "2026-10-21T17:44:44.455272+00:00",
+                    "replaces_entry_id": null,
+                    "corrected_by_entry_id": "5b1ac00d-95b3-462c-aab3-4c9b1951486d"
+                  },
+                  {
+                    "id": "96451deb-b30e-471d-a4c0-63beec10ecaf",
+                    "value": "$50",
+                    "provenance": "time-probe:lapsed-override-2",
+                    "why_changed": null,
+                    "impact_expected": null,
+                    "valid_from": "2026-08-17T00:00:00+00:00",
+                    "expired_at": null,
+                    "source_id": null,
+                    "invalid_at": null,
+                    "created_at": "2026-10-21T17:44:44.455241+00:00",
+                    "replaces_entry_id": null,
+                    "corrected_by_entry_id": null
+                  }
+                ],
+                "archived_history": []
+              }
+            ],
+            "revision_flag": {
+              "flagged": false
+            },
+            "similarity": null
+          }
+        ],
+        "summary_text": ""
+      },
+      "rejected": null,
+      "error": null,
+      "latency_ms": 0.031,
+      "finished_at": "2026-10-21T17:44:44.455396+00:00"
+    },
+    {
+      "seq": 5,
+      "kind": "scored",
+      "op": "query",
+      "request": {
+        "q": "read",
+        "stages": [
+          "temporal"
+        ],
+        "topic_ids": [
+          "ceb74d0a-37f2-4268-919b-f5f06347e6b4"
+        ],
+        "explain": false,
+        "valid_at": "2026-09-20T00:00:00+00:00"
+      },
+      "started_at": "2026-10-21T17:44:44.455402+00:00",
+      "response": {
+        "query": "read",
+        "candidates": [
+          {
+            "topic_id": "ceb74d0a-37f2-4268-919b-f5f06347e6b4",
+            "title": "Time probe: Lapsed scoped override, plain statement during the override",
+            "summary": null,
+            "topic_kind": "time-probe",
+            "salience": 1.2000000000000002,
+            "failed_salience": null,
+            "neighbors": [],
+            "fields": [
+              {
+                "name": "Budget",
+                "field_type": "string",
+                "ref_topic_id": null,
+                "current": {
+                  "id": "5b1ac00d-95b3-462c-aab3-4c9b1951486d",
+                  "value": "$80",
+                  "provenance": "time-probe:lapsed-override-2",
+                  "why_changed": null,
+                  "impact_expected": null,
+                  "valid_from": "2026-09-16T00:00:00+00:00",
+                  "expired_at": null,
+                  "source_id": null,
+                  "invalid_at": "2026-09-25T00:00:00+00:00",
+                  "created_at": "2026-10-21T17:44:44.455299+00:00",
+                  "replaces_entry_id": "542d744c-6725-4038-9510-c3721b34a5ef",
+                  "corrected_by_entry_id": null,
+                  "operation": "interval_corrected",
+                  "merged_from_topic_id": null
+                },
+                "history": [
+                  {
+                    "id": "f27e5e5c-1152-451a-add0-c0a531df2848",
+                    "value": "$100",
+                    "provenance": "time-probe:lapsed-override-2",
+                    "why_changed": null,
+                    "impact_expected": null,
+                    "valid_from": "2026-09-25T00:00:00+00:00",
+                    "expired_at": null,
+                    "source_id": null,
+                    "invalid_at": null,
+                    "created_at": "2026-10-21T17:44:44.455299+00:00",
+                    "replaces_entry_id": null,
+                    "corrected_by_entry_id": null
+                  },
+                  {
+                    "id": "5b1ac00d-95b3-462c-aab3-4c9b1951486d",
+                    "value": "$80",
+                    "provenance": "time-probe:lapsed-override-2",
+                    "why_changed": null,
+                    "impact_expected": null,
+                    "valid_from": "2026-09-16T00:00:00+00:00",
+                    "expired_at": null,
+                    "source_id": null,
+                    "invalid_at": "2026-09-25T00:00:00+00:00",
+                    "created_at": "2026-10-21T17:44:44.455299+00:00",
+                    "replaces_entry_id": "542d744c-6725-4038-9510-c3721b34a5ef",
+                    "corrected_by_entry_id": null,
+                    "operation": "interval_corrected",
+                    "merged_from_topic_id": null
+                  },
+                  {
+                    "id": "542d744c-6725-4038-9510-c3721b34a5ef",
+                    "value": "$80",
+                    "provenance": "time-probe:lapsed-override-2",
+                    "why_changed": null,
+                    "impact_expected": null,
+                    "valid_from": "2026-09-16T00:00:00+00:00",
+                    "expired_at": "2026-10-21T17:44:44.455299+00:00",
+                    "source_id": null,
+                    "invalid_at": "2026-10-17T00:00:00+00:00",
+                    "created_at": "2026-10-21T17:44:44.455272+00:00",
+                    "replaces_entry_id": null,
+                    "corrected_by_entry_id": "5b1ac00d-95b3-462c-aab3-4c9b1951486d"
+                  },
+                  {
+                    "id": "96451deb-b30e-471d-a4c0-63beec10ecaf",
+                    "value": "$50",
+                    "provenance": "time-probe:lapsed-override-2",
+                    "why_changed": null,
+                    "impact_expected": null,
+                    "valid_from": "2026-08-17T00:00:00+00:00",
+                    "expired_at": null,
+                    "source_id": null,
+                    "invalid_at": null,
+                    "created_at": "2026-10-21T17:44:44.455241+00:00",
+                    "replaces_entry_id": null,
+                    "corrected_by_entry_id": null
+                  }
+                ],
+                "archived_history": []
+              }
+            ],
+            "revision_flag": {
+              "flagged": false
+            },
+            "similarity": null
+          }
+        ],
+        "summary_text": ""
+      },
+      "rejected": null,
+      "error": null,
+      "latency_ms": 0.031,
+      "finished_at": "2026-10-21T17:44:44.455435+00:00"
+    }
+  ],
+  "setup_writes": [],
+  "reads": [
+    {
+      "seq": 6,
+      "kind": "read",
+      "op": "read_topic",
+      "request": {
+        "topic_id": "ceb74d0a-37f2-4268-919b-f5f06347e6b4"
+      },
+      "started_at": "2026-10-21T17:44:44.455445+00:00",
+      "response": {
+        "id": "ceb74d0a-37f2-4268-919b-f5f06347e6b4",
+        "title": "Time probe: Lapsed scoped override, plain statement during the override",
+        "summary": null,
+        "topic_kind": "time-probe",
+        "salience": 1.3000000000000003,
+        "failed_salience": null,
+        "archived": false,
+        "revision_flag": {
+          "flagged": false
+        },
+        "fields": {
+          "Budget": {
+            "field_type": "string",
+            "ref_topic_id": null,
+            "current": {
+              "id": "f27e5e5c-1152-451a-add0-c0a531df2848",
+              "value": "$100",
+              "provenance": "time-probe:lapsed-override-2",
+              "why_changed": null,
+              "impact_expected": null,
+              "valid_from": "2026-09-25T00:00:00+00:00",
+              "expired_at": null,
+              "source_id": null,
+              "invalid_at": null,
+              "created_at": "2026-10-21T17:44:44.455299+00:00",
+              "replaces_entry_id": null,
+              "corrected_by_entry_id": null
+            },
+            "history": [
+              {
+                "id": "f27e5e5c-1152-451a-add0-c0a531df2848",
+                "value": "$100",
+                "provenance": "time-probe:lapsed-override-2",
+                "why_changed": null,
+                "impact_expected": null,
+                "valid_from": "2026-09-25T00:00:00+00:00",
+                "expired_at": null,
+                "source_id": null,
+                "invalid_at": null,
+                "created_at": "2026-10-21T17:44:44.455299+00:00",
+                "replaces_entry_id": null,
+                "corrected_by_entry_id": null
+              },
+              {
+                "id": "5b1ac00d-95b3-462c-aab3-4c9b1951486d",
+                "value": "$80",
+                "provenance": "time-probe:lapsed-override-2",
+                "why_changed": null,
+                "impact_expected": null,
+                "valid_from": "2026-09-16T00:00:00+00:00",
+                "expired_at": null,
+                "source_id": null,
+                "invalid_at": "2026-09-25T00:00:00+00:00",
+                "created_at": "2026-10-21T17:44:44.455299+00:00",
+                "replaces_entry_id": "542d744c-6725-4038-9510-c3721b34a5ef",
+                "corrected_by_entry_id": null,
+                "operation": "interval_corrected",
+                "merged_from_topic_id": null
+              },
+              {
+                "id": "542d744c-6725-4038-9510-c3721b34a5ef",
+                "value": "$80",
+                "provenance": "time-probe:lapsed-override-2",
+                "why_changed": null,
+                "impact_expected": null,
+                "valid_from": "2026-09-16T00:00:00+00:00",
+                "expired_at": "2026-10-21T17:44:44.455299+00:00",
+                "source_id": null,
+                "invalid_at": "2026-10-17T00:00:00+00:00",
+                "created_at": "2026-10-21T17:44:44.455272+00:00",
+                "replaces_entry_id": null,
+                "corrected_by_entry_id": "5b1ac00d-95b3-462c-aab3-4c9b1951486d"
+              },
+              {
+                "id": "96451deb-b30e-471d-a4c0-63beec10ecaf",
+                "value": "$50",
+                "provenance": "time-probe:lapsed-override-2",
+                "why_changed": null,
+                "impact_expected": null,
+                "valid_from": "2026-08-17T00:00:00+00:00",
+                "expired_at": null,
+                "source_id": null,
+                "invalid_at": null,
+                "created_at": "2026-10-21T17:44:44.455241+00:00",
+                "replaces_entry_id": null,
+                "corrected_by_entry_id": null
+              }
+            ],
+            "archived_history": []
+          }
+        },
+        "topic_history": [],
+        "created_at": "2026-10-21T17:44:44.455241+00:00",
+        "updated_at": "2026-10-21T17:44:44.455328+00:00"
+      },
+      "rejected": null,
+      "error": null,
+      "latency_ms": 0.026,
+      "finished_at": "2026-10-21T17:44:44.455473+00:00"
+    },
+    {
+      "seq": 7,
+      "kind": "read",
+      "op": "read_state",
+      "request": null,
+      "started_at": "2026-10-21T17:44:44.455486+00:00",
+      "response": {
+        "topics": 1,
+        "edges": 0
+      },
+      "rejected": null,
+      "error": null,
+      "latency_ms": 0.027,
+      "finished_at": "2026-10-21T17:44:44.455516+00:00"
+    }
+  ],
+  "waits": [],
+  "state": {
+    "topics": {
+      "ceb74d0a-37f2-4268-919b-f5f06347e6b4": {
+        "id": "ceb74d0a-37f2-4268-919b-f5f06347e6b4",
+        "title": "Time probe: Lapsed scoped override, plain statement during the override",
+        "summary": null,
+        "topic_kind": "time-probe",
+        "salience": 1.3000000000000003,
+        "failed_salience": null,
+        "archived": false,
+        "revision_flag": {
+          "flagged": false
+        },
+        "fields": {
+          "Budget": {
+            "field_type": "string",
+            "ref_topic_id": null,
+            "current": {
+              "id": "f27e5e5c-1152-451a-add0-c0a531df2848",
+              "value": "$100",
+              "provenance": "time-probe:lapsed-override-2",
+              "why_changed": null,
+              "impact_expected": null,
+              "valid_from": "2026-09-25T00:00:00+00:00",
+              "expired_at": null,
+              "source_id": null,
+              "invalid_at": null,
+              "created_at": "2026-10-21T17:44:44.455299+00:00",
+              "replaces_entry_id": null,
+              "corrected_by_entry_id": null
+            },
+            "history": [
+              {
+                "id": "f27e5e5c-1152-451a-add0-c0a531df2848",
+                "value": "$100",
+                "provenance": "time-probe:lapsed-override-2",
+                "why_changed": null,
+                "impact_expected": null,
+                "valid_from": "2026-09-25T00:00:00+00:00",
+                "expired_at": null,
+                "source_id": null,
+                "invalid_at": null,
+                "created_at": "2026-10-21T17:44:44.455299+00:00",
+                "replaces_entry_id": null,
+                "corrected_by_entry_id": null
+              },
+              {
+                "id": "5b1ac00d-95b3-462c-aab3-4c9b1951486d",
+                "value": "$80",
+                "provenance": "time-probe:lapsed-override-2",
+                "why_changed": null,
+                "impact_expected": null,
+                "valid_from": "2026-09-16T00:00:00+00:00",
+                "expired_at": null,
+                "source_id": null,
+                "invalid_at": "2026-09-25T00:00:00+00:00",
+                "created_at": "2026-10-21T17:44:44.455299+00:00",
+                "replaces_entry_id": "542d744c-6725-4038-9510-c3721b34a5ef",
+                "corrected_by_entry_id": null,
+                "operation": "interval_corrected",
+                "merged_from_topic_id": null
+              },
+              {
+                "id": "542d744c-6725-4038-9510-c3721b34a5ef",
+                "value": "$80",
+                "provenance": "time-probe:lapsed-override-2",
+                "why_changed": null,
+                "impact_expected": null,
+                "valid_from": "2026-09-16T00:00:00+00:00",
+                "expired_at": "2026-10-21T17:44:44.455299+00:00",
+                "source_id": null,
+                "invalid_at": "2026-10-17T00:00:00+00:00",
+                "created_at": "2026-10-21T17:44:44.455272+00:00",
+                "replaces_entry_id": null,
+                "corrected_by_entry_id": "5b1ac00d-95b3-462c-aab3-4c9b1951486d"
+              },
+              {
+                "id": "96451deb-b30e-471d-a4c0-63beec10ecaf",
+                "value": "$50",
+                "provenance": "time-probe:lapsed-override-2",
+                "why_changed": null,
+                "impact_expected": null,
+                "valid_from": "2026-08-17T00:00:00+00:00",
+                "expired_at": null,
+                "source_id": null,
+                "invalid_at": null,
+                "created_at": "2026-10-21T17:44:44.455241+00:00",
+                "replaces_entry_id": null,
+                "corrected_by_entry_id": null
+              }
+            ],
+            "archived_history": []
+          }
+        },
+        "topic_history": [],
+        "created_at": "2026-10-21T17:44:44.455241+00:00",
+        "updated_at": "2026-10-21T17:44:44.455328+00:00"
+      }
+    },
+    "edges": [],
+    "policies": [
+      {
+        "name": "reject-empty-values",
+        "event": "write",
+        "condition": {
+          "field": "*",
+          "op": "empty"
+        },
+        "action": "reject"
+      },
+      {
+        "name": "propagate-on-change",
+        "event": "field_updated",
+        "condition": {
+          "neighbour": "extension"
+        },
+        "action": "flag"
+      }
+    ],
+    "interactions": 6
+  },
+  "state_error": null,
+  "rows": [
+    "T1",
+    "T2",
+    "T3",
+    "T4",
+    "T5",
+    "T6"
+  ],
+  "verdicts": [
+    {
+      "row": "T1",
+      "verdict": "pass",
+      "cases": [
+        {
+          "name": "today: 2026-10-21 -> 'April 20'",
+          "held": true,
+          "observation": "[dated path] asked today (plain read): got 'April 20', correct 'April 20'",
+          "control": false,
+          "id": "today: 2026-10-21 -> 'April 20'"
+        },
+        {
+          "name": "Dec 20: 2026-08-25 -> 'March 1'",
+          "held": true,
+          "observation": "[dated path] asked Dec 20 (valid_at): got 'March 1', correct 'March 1'",
+          "control": true,
+          "id": "Dec 20: 2026-08-25 -> 'March 1'"
+        },
+        {
+          "name": "history intact: no value lost, expired entries copied and linked",
+          "held": true,
+          "observation": "2 entries; every written value kept; 0 expired, each copied",
+          "control": false,
+          "id": "history intact: no value lost, expired entries copied and linked"
+        }
+      ],
+      "observations": [],
+      "probe_evidence": null,
+      "measurements": {
+        "accepts_dates": "yes",
+        "dates_needed": "valid_from",
+        "dates_missing": "none"
+      },
+      "control": false,
+      "system": "reference-gem-p2",
+      "snapshots": [],
+      "error": null
+    },
+    {
+      "row": "T2",
+      "verdict": "pass",
+      "cases": [
+        {
+          "name": "today: 2026-10-21 -> 'pro'",
+          "held": true,
+          "observation": "[dated path] asked today (plain read): got 'pro', correct 'pro'",
+          "control": false,
+          "id": "today: 2026-10-21 -> 'pro'"
+        },
+        {
+          "name": "Sep 1: 2026-09-02 -> 'basic'",
+          "held": true,
+          "observation": "[dated path] asked Sep 1 (valid_at): got 'basic', correct 'basic'",
+          "control": true,
+          "id": "Sep 1: 2026-09-02 -> 'basic'"
+        },
+        {
+          "name": "history intact: no value lost, expired entries copied and linked",
+          "held": true,
+          "observation": "2 entries; every written value kept; 0 expired, each copied",
+          "control": false,
+          "id": "history intact: no value lost, expired entries copied and linked"
+        }
+      ],
+      "observations": [],
+      "probe_evidence": null,
+      "measurements": {
+        "accepts_dates": "yes",
+        "dates_needed": "valid_from",
+        "dates_missing": "none"
+      },
+      "control": false,
+      "system": "reference-gem-p2",
+      "snapshots": [],
+      "error": null
+    },
+    {
+      "row": "T3",
+      "verdict": "pass",
+      "cases": [
+        {
+          "name": "today: 2026-10-21 -> 'basic'",
+          "held": true,
+          "observation": "[dated path] asked today (plain read): got 'basic', correct 'basic'",
+          "control": false,
+          "id": "today: 2026-10-21 -> 'basic'"
+        },
+        {
+          "name": "Dec 5: 2026-11-05 -> 'premium'",
+          "held": true,
+          "observation": "[dated path] asked Dec 5 (valid_at): got 'premium', correct 'premium'",
+          "control": true,
+          "id": "Dec 5: 2026-11-05 -> 'premium'"
+        },
+        {
+          "name": "history intact: no value lost, expired entries copied and linked",
+          "held": true,
+          "observation": "2 entries; every written value kept; 0 expired, each copied",
+          "control": false,
+          "id": "history intact: no value lost, expired entries copied and linked"
+        }
+      ],
+      "observations": [],
+      "probe_evidence": null,
+      "measurements": {
+        "accepts_dates": "yes",
+        "dates_needed": "valid_from",
+        "dates_missing": "none"
+      },
+      "control": false,
+      "system": "reference-gem-p2",
+      "snapshots": [],
+      "error": null
+    },
+    {
+      "row": "T4",
+      "verdict": "pass",
+      "cases": [
+        {
+          "name": "story 1: Oct 15: 2026-09-30 -> '$80'",
+          "held": true,
+          "observation": "[dated path] asked Oct 15 (valid_at): got '$80', correct '$80'",
+          "control": true,
+          "id": "story 1: Oct 15: 2026-09-30 -> '$80'"
+        },
+        {
+          "name": "story 1: today: 2026-10-21 -> '$50'",
+          "held": true,
+          "observation": "[dated path] asked today (plain read): got '$50', correct '$50'",
+          "control": false,
+          "id": "story 1: today: 2026-10-21 -> '$50'"
+        },
+        {
+          "name": "story 1: history intact: no value lost, expired entries copied and linked",
+          "held": true,
+          "observation": "2 entries; every written value kept; 0 expired, each copied",
+          "control": false,
+          "id": "story 1: history intact: no value lost, expired entries copied and linked"
+        },
+        {
+          "name": "story 2: today: 2026-10-21 -> '$100'",
+          "held": true,
+          "observation": "[dated path] asked today (plain read): got '$100', correct '$100'",
+          "control": true,
+          "id": "story 2: today: 2026-10-21 -> '$100'"
+        },
+        {
+          "name": "story 2: Oct 15: 2026-09-30 -> '$100'",
+          "held": true,
+          "observation": "[dated path] asked Oct 15 (valid_at): got '$100', correct '$100'",
+          "control": false,
+          "id": "story 2: Oct 15: 2026-09-30 -> '$100'"
+        },
+        {
+          "name": "story 2: Oct 5: 2026-09-20 -> '$80'",
+          "held": true,
+          "observation": "[dated path] asked Oct 5 (valid_at): got '$80', correct '$80'",
+          "control": false,
+          "id": "story 2: Oct 5: 2026-09-20 -> '$80'"
+        },
+        {
+          "name": "story 2: history intact: no value lost, expired entries copied and linked",
+          "held": true,
+          "observation": "4 entries; every written value kept; 1 expired, each copied",
+          "control": false,
+          "id": "story 2: history intact: no value lost, expired entries copied and linked"
+        }
+      ],
+      "observations": [],
+      "probe_evidence": null,
+      "measurements": {
+        "accepts_dates": "yes",
+        "dates_needed": "valid_from, invalid_at",
+        "dates_missing": "none"
+      },
+      "control": false,
+      "system": "reference-gem-p2",
+      "snapshots": [],
+      "error": null
+    },
+    {
+      "row": "T5",
+      "verdict": "pass",
+      "cases": [
+        {
+          "name": "true on Feb 10: 2026-10-16 -> 'May 1'",
+          "held": true,
+          "observation": "[dated path] asked true on Feb 10 (valid_at): got 'May 1', correct 'May 1'",
+          "control": true,
+          "id": "true on Feb 10: 2026-10-16 -> 'May 1'"
+        },
+        {
+          "name": "believed on Feb 10: -> 'April 20'",
+          "held": true,
+          "observation": "[dated path] asked believed on Feb 10 (recorded_at): got 'April 20', correct 'April 20'",
+          "control": false,
+          "id": "believed on Feb 10: -> 'April 20'"
+        },
+        {
+          "name": "history intact: no value lost, expired entries copied and linked",
+          "held": true,
+          "observation": "2 entries; every written value kept; 0 expired, each copied",
+          "control": false,
+          "id": "history intact: no value lost, expired entries copied and linked"
+        }
+      ],
+      "observations": [],
+      "probe_evidence": null,
+      "measurements": {
+        "accepts_dates": "yes",
+        "dates_needed": "valid_from, valid_at, recorded_at",
+        "dates_missing": "none"
+      },
+      "control": false,
+      "system": "reference-gem-p2",
+      "snapshots": [],
+      "error": null
+    },
+    {
+      "row": "T6",
+      "verdict": "pass",
+      "cases": [
+        {
+          "name": "today: 2026-10-21 -> NO_VALUE",
+          "held": true,
+          "observation": "[dated path] asked today (plain read): got NO_VALUE, correct NO_VALUE",
+          "control": false,
+          "id": "today: 2026-10-21 -> NO_VALUE"
+        },
+        {
+          "name": "Dec 5: 2026-11-05 -> 'premium'",
+          "held": true,
+          "observation": "[dated path] asked Dec 5 (valid_at): got 'premium', correct 'premium'",
+          "control": true,
+          "id": "Dec 5: 2026-11-05 -> 'premium'"
+        },
+        {
+          "name": "history intact: no value lost, expired entries copied and linked",
+          "held": true,
+          "observation": "1 entries; every written value kept; 0 expired, each copied",
+          "control": false,
+          "id": "history intact: no value lost, expired entries copied and linked"
+        }
+      ],
+      "observations": [],
+      "probe_evidence": null,
+      "measurements": {
+        "accepts_dates": "yes",
+        "dates_needed": "valid_from",
+        "dates_missing": "none"
+      },
+      "control": false,
+      "system": "reference-gem-p2",
+      "snapshots": [],
+      "error": null
+    }
+  ]
+}

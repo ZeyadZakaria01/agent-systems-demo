@@ -1,0 +1,954 @@
+{
+  "system": "reference-gem-p2",
+  "label": "reference GEM (phase 2)",
+  "check": "C6-1",
+  "tag": null,
+  "describe": {
+    "system": "reference GEM (phase 2)",
+    "url": null,
+    "db_path": null,
+    "commit": null,
+    "engine": "in-process reference GEM, phase 2",
+    "keeps_history": true,
+    "accepts_error": null,
+    "declared_bound": {
+      "topics": 500,
+      "name": "\u03b2"
+    },
+    "accepts_source": true,
+    "latency_comparable": false,
+    "source_surface": {
+      "request_properties": [
+        "source_message"
+      ],
+      "paths": []
+    },
+    "c6_clause_2_seeds": {
+      "target": 0.06,
+      "control": 0.06
+    },
+    "embedder": "sentence-transformers/all-MiniLM-L6-v2",
+    "top_k": 8,
+    "parameters": {
+      "theta_archive": 0.05,
+      "lambda": 0.9925386444712004,
+      "decay_horizon": 400,
+      "beta": 500,
+      "bump": 0.1,
+      "history_cap": 500,
+      "top_k": 8,
+      "salience_on_archive": 0.5,
+      "propagation": "one hop, extension edges, either direction",
+      "revision": "after every ingest",
+      "phase": 2
+    },
+    "accepts": {
+      "valid_from": true,
+      "invalid_at": true,
+      "valid_at": true,
+      "recorded_at": true
+    }
+  },
+  "describe_error": null,
+  "started_at": "2026-10-21T17:44:44.341193+00:00",
+  "finished_at": "2026-10-21T17:44:44.341602+00:00",
+  "scored_transitions": [
+    {
+      "seq": 0,
+      "kind": "scored",
+      "op": "ingest",
+      "request": {
+        "placement": "new_topic",
+        "title": "Marathon Training",
+        "summary": "Weekly long run schedule and mileage plan for the spring marathon",
+        "topic_kind": "project"
+      },
+      "started_at": "2026-10-21T17:44:44.341215+00:00",
+      "response": {
+        "topic_id": "9585f488-81fd-4e17-9431-a49e9c908923",
+        "applied": [
+          "created_topic:9585f488-81fd-4e17-9431-a49e9c908923"
+        ],
+        "version_ids": {},
+        "similar_topic_ids": []
+      },
+      "rejected": null,
+      "error": null,
+      "latency_ms": 0.041,
+      "finished_at": "2026-10-21T17:44:44.341263+00:00"
+    },
+    {
+      "seq": 1,
+      "kind": "scored",
+      "op": "ingest",
+      "request": {
+        "placement": "new_topic",
+        "title": "Sourdough Starter",
+        "summary": "Feeding schedule and hydration ratios for the kitchen sourdough starter",
+        "topic_kind": "project"
+      },
+      "started_at": "2026-10-21T17:44:44.341266+00:00",
+      "response": {
+        "topic_id": "287746db-40f4-4dc8-bbb3-9f74da7af331",
+        "applied": [
+          "created_topic:287746db-40f4-4dc8-bbb3-9f74da7af331"
+        ],
+        "version_ids": {},
+        "similar_topic_ids": []
+      },
+      "rejected": null,
+      "error": null,
+      "latency_ms": 0.017,
+      "finished_at": "2026-10-21T17:44:44.341285+00:00"
+    },
+    {
+      "seq": 2,
+      "kind": "scored",
+      "op": "ingest",
+      "request": {
+        "placement": "new_topic",
+        "title": "Tax Return",
+        "summary": "Documents and deadlines for filing the annual income tax return",
+        "topic_kind": "project"
+      },
+      "started_at": "2026-10-21T17:44:44.341288+00:00",
+      "response": {
+        "topic_id": "a1953699-d0fc-4237-be9f-69ebae4035e3",
+        "applied": [
+          "created_topic:a1953699-d0fc-4237-be9f-69ebae4035e3"
+        ],
+        "version_ids": {},
+        "similar_topic_ids": []
+      },
+      "rejected": null,
+      "error": null,
+      "latency_ms": 0.013,
+      "finished_at": "2026-10-21T17:44:44.341303+00:00"
+    },
+    {
+      "seq": 3,
+      "kind": "scored",
+      "op": "ingest",
+      "request": {
+        "placement": "new_topic",
+        "title": "Kubernetes Upgrade",
+        "summary": "Cluster node pool upgrade plan and rollback notes",
+        "topic_kind": "project"
+      },
+      "started_at": "2026-10-21T17:44:44.341306+00:00",
+      "response": {
+        "topic_id": "f64ccbbb-ae97-4562-8147-feb876ff6d90",
+        "applied": [
+          "created_topic:f64ccbbb-ae97-4562-8147-feb876ff6d90"
+        ],
+        "version_ids": {},
+        "similar_topic_ids": []
+      },
+      "rejected": null,
+      "error": null,
+      "latency_ms": 0.013,
+      "finished_at": "2026-10-21T17:44:44.341321+00:00"
+    },
+    {
+      "seq": 8,
+      "kind": "scored",
+      "op": "query",
+      "request": {
+        "q": "how far is my weekend long running session",
+        "stages": [
+          "semantic"
+        ],
+        "top_k": 8
+      },
+      "started_at": "2026-10-21T17:44:44.341353+00:00",
+      "response": {
+        "query": "how far is my weekend long running session",
+        "candidates": [
+          {
+            "topic_id": "9585f488-81fd-4e17-9431-a49e9c908923",
+            "title": "Marathon Training",
+            "summary": "Weekly long run schedule and mileage plan for the spring marathon",
+            "topic_kind": "project",
+            "salience": 0.9777825335052935,
+            "failed_salience": null,
+            "neighbors": [],
+            "fields": [],
+            "revision_flag": {
+              "flagged": false
+            },
+            "similarity": 0.4312520090553209
+          },
+          {
+            "topic_id": "287746db-40f4-4dc8-bbb3-9f74da7af331",
+            "title": "Sourdough Starter",
+            "summary": "Feeding schedule and hydration ratios for the kitchen sourdough starter",
+            "topic_kind": "project",
+            "salience": 0.985132960768728,
+            "failed_salience": null,
+            "neighbors": [],
+            "fields": [],
+            "revision_flag": {
+              "flagged": false
+            },
+            "similarity": 0.18160636046035147
+          },
+          {
+            "topic_id": "a1953699-d0fc-4237-be9f-69ebae4035e3",
+            "title": "Tax Return",
+            "summary": "Documents and deadlines for filing the annual income tax return",
+            "topic_kind": "project",
+            "salience": 0.9925386444712004,
+            "failed_salience": null,
+            "neighbors": [],
+            "fields": [],
+            "revision_flag": {
+              "flagged": false
+            },
+            "similarity": 0.0910633977679502
+          },
+          {
+            "topic_id": "f64ccbbb-ae97-4562-8147-feb876ff6d90",
+            "title": "Kubernetes Upgrade",
+            "summary": "Cluster node pool upgrade plan and rollback notes",
+            "topic_kind": "project",
+            "salience": 1.0,
+            "failed_salience": null,
+            "neighbors": [],
+            "fields": [],
+            "revision_flag": {
+              "flagged": false
+            },
+            "similarity": 0.033562128091405345
+          }
+        ],
+        "summary_text": ""
+      },
+      "rejected": null,
+      "error": null,
+      "latency_ms": 0.074,
+      "finished_at": "2026-10-21T17:44:44.341430+00:00"
+    },
+    {
+      "seq": 9,
+      "kind": "scored",
+      "op": "query",
+      "request": {
+        "q": "how far is my weekend long running session",
+        "stages": [
+          "semantic"
+        ],
+        "top_k": 8
+      },
+      "started_at": "2026-10-21T17:44:44.341434+00:00",
+      "response": {
+        "query": "how far is my weekend long running session",
+        "candidates": [
+          {
+            "topic_id": "9585f488-81fd-4e17-9431-a49e9c908923",
+            "title": "Marathon Training",
+            "summary": "Weekly long run schedule and mileage plan for the spring marathon",
+            "topic_kind": "project",
+            "salience": 1.0777825335052935,
+            "failed_salience": null,
+            "neighbors": [],
+            "fields": [],
+            "revision_flag": {
+              "flagged": false
+            },
+            "similarity": 0.4312520090553209
+          },
+          {
+            "topic_id": "287746db-40f4-4dc8-bbb3-9f74da7af331",
+            "title": "Sourdough Starter",
+            "summary": "Feeding schedule and hydration ratios for the kitchen sourdough starter",
+            "topic_kind": "project",
+            "salience": 1.0851329607687281,
+            "failed_salience": null,
+            "neighbors": [],
+            "fields": [],
+            "revision_flag": {
+              "flagged": false
+            },
+            "similarity": 0.18160636046035147
+          },
+          {
+            "topic_id": "a1953699-d0fc-4237-be9f-69ebae4035e3",
+            "title": "Tax Return",
+            "summary": "Documents and deadlines for filing the annual income tax return",
+            "topic_kind": "project",
+            "salience": 1.0925386444712004,
+            "failed_salience": null,
+            "neighbors": [],
+            "fields": [],
+            "revision_flag": {
+              "flagged": false
+            },
+            "similarity": 0.0910633977679502
+          },
+          {
+            "topic_id": "f64ccbbb-ae97-4562-8147-feb876ff6d90",
+            "title": "Kubernetes Upgrade",
+            "summary": "Cluster node pool upgrade plan and rollback notes",
+            "topic_kind": "project",
+            "salience": 1.1,
+            "failed_salience": null,
+            "neighbors": [],
+            "fields": [],
+            "revision_flag": {
+              "flagged": false
+            },
+            "similarity": 0.033562128091405345
+          }
+        ],
+        "summary_text": ""
+      },
+      "rejected": null,
+      "error": null,
+      "latency_ms": 0.022,
+      "finished_at": "2026-10-21T17:44:44.341458+00:00"
+    },
+    {
+      "seq": 10,
+      "kind": "scored",
+      "op": "query",
+      "request": {
+        "q": "how far is my weekend long running session",
+        "stages": [
+          "semantic"
+        ],
+        "top_k": 8
+      },
+      "started_at": "2026-10-21T17:44:44.341462+00:00",
+      "response": {
+        "query": "how far is my weekend long running session",
+        "candidates": [
+          {
+            "topic_id": "9585f488-81fd-4e17-9431-a49e9c908923",
+            "title": "Marathon Training",
+            "summary": "Weekly long run schedule and mileage plan for the spring marathon",
+            "topic_kind": "project",
+            "salience": 1.1777825335052936,
+            "failed_salience": null,
+            "neighbors": [],
+            "fields": [],
+            "revision_flag": {
+              "flagged": false
+            },
+            "similarity": 0.4312520090553209
+          },
+          {
+            "topic_id": "287746db-40f4-4dc8-bbb3-9f74da7af331",
+            "title": "Sourdough Starter",
+            "summary": "Feeding schedule and hydration ratios for the kitchen sourdough starter",
+            "topic_kind": "project",
+            "salience": 1.1851329607687282,
+            "failed_salience": null,
+            "neighbors": [],
+            "fields": [],
+            "revision_flag": {
+              "flagged": false
+            },
+            "similarity": 0.18160636046035147
+          },
+          {
+            "topic_id": "a1953699-d0fc-4237-be9f-69ebae4035e3",
+            "title": "Tax Return",
+            "summary": "Documents and deadlines for filing the annual income tax return",
+            "topic_kind": "project",
+            "salience": 1.1925386444712005,
+            "failed_salience": null,
+            "neighbors": [],
+            "fields": [],
+            "revision_flag": {
+              "flagged": false
+            },
+            "similarity": 0.0910633977679502
+          },
+          {
+            "topic_id": "f64ccbbb-ae97-4562-8147-feb876ff6d90",
+            "title": "Kubernetes Upgrade",
+            "summary": "Cluster node pool upgrade plan and rollback notes",
+            "topic_kind": "project",
+            "salience": 1.2000000000000002,
+            "failed_salience": null,
+            "neighbors": [],
+            "fields": [],
+            "revision_flag": {
+              "flagged": false
+            },
+            "similarity": 0.033562128091405345
+          }
+        ],
+        "summary_text": ""
+      },
+      "rejected": null,
+      "error": null,
+      "latency_ms": 0.019,
+      "finished_at": "2026-10-21T17:44:44.341483+00:00"
+    },
+    {
+      "seq": 15,
+      "kind": "scored",
+      "op": "ingest",
+      "request": {
+        "placement": "new_topic",
+        "title": "As-of Salience Probe",
+        "summary": "Field-less topic read once with an as-of date",
+        "salience": 0.5
+      },
+      "started_at": "2026-10-21T17:44:44.341536+00:00",
+      "response": {
+        "topic_id": "3b0f90f6-cf56-4eee-a2a9-faa734e95f1f",
+        "applied": [
+          "created_topic:3b0f90f6-cf56-4eee-a2a9-faa734e95f1f"
+        ],
+        "version_ids": {},
+        "similar_topic_ids": []
+      },
+      "rejected": null,
+      "error": null,
+      "latency_ms": 0.021,
+      "finished_at": "2026-10-21T17:44:44.341560+00:00"
+    },
+    {
+      "seq": 17,
+      "kind": "scored",
+      "op": "query",
+      "request": {
+        "q": "As-of Salience Probe",
+        "stages": [
+          "temporal"
+        ],
+        "topic_ids": [
+          "3b0f90f6-cf56-4eee-a2a9-faa734e95f1f"
+        ],
+        "explain": false,
+        "valid_at": "2026-10-21T17:44:44.341569+00:00"
+      },
+      "started_at": "2026-10-21T17:44:44.341571+00:00",
+      "response": {
+        "query": "As-of Salience Probe",
+        "candidates": [
+          {
+            "topic_id": "3b0f90f6-cf56-4eee-a2a9-faa734e95f1f",
+            "title": "As-of Salience Probe",
+            "summary": "Field-less topic read once with an as-of date",
+            "topic_kind": null,
+            "salience": 0.5,
+            "failed_salience": null,
+            "neighbors": [],
+            "fields": [],
+            "revision_flag": {
+              "flagged": false
+            },
+            "similarity": null
+          }
+        ],
+        "summary_text": ""
+      },
+      "rejected": null,
+      "error": null,
+      "latency_ms": 0.008,
+      "finished_at": "2026-10-21T17:44:44.341581+00:00"
+    }
+  ],
+  "setup_writes": [],
+  "reads": [
+    {
+      "seq": 4,
+      "kind": "read",
+      "op": "read_topic",
+      "request": {
+        "topic_id": "9585f488-81fd-4e17-9431-a49e9c908923"
+      },
+      "started_at": "2026-10-21T17:44:44.341326+00:00",
+      "response": {
+        "id": "9585f488-81fd-4e17-9431-a49e9c908923",
+        "title": "Marathon Training",
+        "summary": "Weekly long run schedule and mileage plan for the spring marathon",
+        "topic_kind": "project",
+        "salience": 0.9777825335052935,
+        "failed_salience": null,
+        "archived": false,
+        "revision_flag": {
+          "flagged": false
+        },
+        "fields": {},
+        "topic_history": [],
+        "created_at": "2026-10-21T17:44:44.341221+00:00",
+        "updated_at": "2026-10-21T17:44:44.341246+00:00"
+      },
+      "rejected": null,
+      "error": null,
+      "latency_ms": 0.004,
+      "finished_at": "2026-10-21T17:44:44.341332+00:00"
+    },
+    {
+      "seq": 5,
+      "kind": "read",
+      "op": "read_topic",
+      "request": {
+        "topic_id": "287746db-40f4-4dc8-bbb3-9f74da7af331"
+      },
+      "started_at": "2026-10-21T17:44:44.341334+00:00",
+      "response": {
+        "id": "287746db-40f4-4dc8-bbb3-9f74da7af331",
+        "title": "Sourdough Starter",
+        "summary": "Feeding schedule and hydration ratios for the kitchen sourdough starter",
+        "topic_kind": "project",
+        "salience": 0.985132960768728,
+        "failed_salience": null,
+        "archived": false,
+        "revision_flag": {
+          "flagged": false
+        },
+        "fields": {},
+        "topic_history": [],
+        "created_at": "2026-10-21T17:44:44.341269+00:00",
+        "updated_at": "2026-10-21T17:44:44.341276+00:00"
+      },
+      "rejected": null,
+      "error": null,
+      "latency_ms": 0.002,
+      "finished_at": "2026-10-21T17:44:44.341338+00:00"
+    },
+    {
+      "seq": 6,
+      "kind": "read",
+      "op": "read_topic",
+      "request": {
+        "topic_id": "a1953699-d0fc-4237-be9f-69ebae4035e3"
+      },
+      "started_at": "2026-10-21T17:44:44.341340+00:00",
+      "response": {
+        "id": "a1953699-d0fc-4237-be9f-69ebae4035e3",
+        "title": "Tax Return",
+        "summary": "Documents and deadlines for filing the annual income tax return",
+        "topic_kind": "project",
+        "salience": 0.9925386444712004,
+        "failed_salience": null,
+        "archived": false,
+        "revision_flag": {
+          "flagged": false
+        },
+        "fields": {},
+        "topic_history": [],
+        "created_at": "2026-10-21T17:44:44.341290+00:00",
+        "updated_at": "2026-10-21T17:44:44.341296+00:00"
+      },
+      "rejected": null,
+      "error": null,
+      "latency_ms": 0.001,
+      "finished_at": "2026-10-21T17:44:44.341344+00:00"
+    },
+    {
+      "seq": 7,
+      "kind": "read",
+      "op": "read_topic",
+      "request": {
+        "topic_id": "f64ccbbb-ae97-4562-8147-feb876ff6d90"
+      },
+      "started_at": "2026-10-21T17:44:44.341346+00:00",
+      "response": {
+        "id": "f64ccbbb-ae97-4562-8147-feb876ff6d90",
+        "title": "Kubernetes Upgrade",
+        "summary": "Cluster node pool upgrade plan and rollback notes",
+        "topic_kind": "project",
+        "salience": 1.0,
+        "failed_salience": null,
+        "archived": false,
+        "revision_flag": {
+          "flagged": false
+        },
+        "fields": {},
+        "topic_history": [],
+        "created_at": "2026-10-21T17:44:44.341308+00:00",
+        "updated_at": "2026-10-21T17:44:44.341314+00:00"
+      },
+      "rejected": null,
+      "error": null,
+      "latency_ms": 0.001,
+      "finished_at": "2026-10-21T17:44:44.341349+00:00"
+    },
+    {
+      "seq": 11,
+      "kind": "read",
+      "op": "read_topic",
+      "request": {
+        "topic_id": "9585f488-81fd-4e17-9431-a49e9c908923"
+      },
+      "started_at": "2026-10-21T17:44:44.341487+00:00",
+      "response": {
+        "id": "9585f488-81fd-4e17-9431-a49e9c908923",
+        "title": "Marathon Training",
+        "summary": "Weekly long run schedule and mileage plan for the spring marathon",
+        "topic_kind": "project",
+        "salience": 1.2777825335052937,
+        "failed_salience": null,
+        "archived": false,
+        "revision_flag": {
+          "flagged": false
+        },
+        "fields": {},
+        "topic_history": [],
+        "created_at": "2026-10-21T17:44:44.341221+00:00",
+        "updated_at": "2026-10-21T17:44:44.341246+00:00"
+      },
+      "rejected": null,
+      "error": null,
+      "latency_ms": 0.002,
+      "finished_at": "2026-10-21T17:44:44.341492+00:00"
+    },
+    {
+      "seq": 12,
+      "kind": "read",
+      "op": "read_topic",
+      "request": {
+        "topic_id": "287746db-40f4-4dc8-bbb3-9f74da7af331"
+      },
+      "started_at": "2026-10-21T17:44:44.341494+00:00",
+      "response": {
+        "id": "287746db-40f4-4dc8-bbb3-9f74da7af331",
+        "title": "Sourdough Starter",
+        "summary": "Feeding schedule and hydration ratios for the kitchen sourdough starter",
+        "topic_kind": "project",
+        "salience": 1.2851329607687283,
+        "failed_salience": null,
+        "archived": false,
+        "revision_flag": {
+          "flagged": false
+        },
+        "fields": {},
+        "topic_history": [],
+        "created_at": "2026-10-21T17:44:44.341269+00:00",
+        "updated_at": "2026-10-21T17:44:44.341276+00:00"
+      },
+      "rejected": null,
+      "error": null,
+      "latency_ms": 0.001,
+      "finished_at": "2026-10-21T17:44:44.341498+00:00"
+    },
+    {
+      "seq": 13,
+      "kind": "read",
+      "op": "read_topic",
+      "request": {
+        "topic_id": "a1953699-d0fc-4237-be9f-69ebae4035e3"
+      },
+      "started_at": "2026-10-21T17:44:44.341500+00:00",
+      "response": {
+        "id": "a1953699-d0fc-4237-be9f-69ebae4035e3",
+        "title": "Tax Return",
+        "summary": "Documents and deadlines for filing the annual income tax return",
+        "topic_kind": "project",
+        "salience": 1.2925386444712006,
+        "failed_salience": null,
+        "archived": false,
+        "revision_flag": {
+          "flagged": false
+        },
+        "fields": {},
+        "topic_history": [],
+        "created_at": "2026-10-21T17:44:44.341290+00:00",
+        "updated_at": "2026-10-21T17:44:44.341296+00:00"
+      },
+      "rejected": null,
+      "error": null,
+      "latency_ms": 0.001,
+      "finished_at": "2026-10-21T17:44:44.341503+00:00"
+    },
+    {
+      "seq": 14,
+      "kind": "read",
+      "op": "read_topic",
+      "request": {
+        "topic_id": "f64ccbbb-ae97-4562-8147-feb876ff6d90"
+      },
+      "started_at": "2026-10-21T17:44:44.341505+00:00",
+      "response": {
+        "id": "f64ccbbb-ae97-4562-8147-feb876ff6d90",
+        "title": "Kubernetes Upgrade",
+        "summary": "Cluster node pool upgrade plan and rollback notes",
+        "topic_kind": "project",
+        "salience": 1.3000000000000003,
+        "failed_salience": null,
+        "archived": false,
+        "revision_flag": {
+          "flagged": false
+        },
+        "fields": {},
+        "topic_history": [],
+        "created_at": "2026-10-21T17:44:44.341308+00:00",
+        "updated_at": "2026-10-21T17:44:44.341314+00:00"
+      },
+      "rejected": null,
+      "error": null,
+      "latency_ms": 0.001,
+      "finished_at": "2026-10-21T17:44:44.341508+00:00"
+    },
+    {
+      "seq": 16,
+      "kind": "read",
+      "op": "read_topic",
+      "request": {
+        "topic_id": "3b0f90f6-cf56-4eee-a2a9-faa734e95f1f"
+      },
+      "started_at": "2026-10-21T17:44:44.341562+00:00",
+      "response": {
+        "id": "3b0f90f6-cf56-4eee-a2a9-faa734e95f1f",
+        "title": "As-of Salience Probe",
+        "summary": "Field-less topic read once with an as-of date",
+        "topic_kind": null,
+        "salience": 0.5,
+        "failed_salience": null,
+        "archived": false,
+        "revision_flag": {
+          "flagged": false
+        },
+        "fields": {},
+        "topic_history": [],
+        "created_at": "2026-10-21T17:44:44.341539+00:00",
+        "updated_at": "2026-10-21T17:44:44.341548+00:00"
+      },
+      "rejected": null,
+      "error": null,
+      "latency_ms": 0.002,
+      "finished_at": "2026-10-21T17:44:44.341567+00:00"
+    },
+    {
+      "seq": 18,
+      "kind": "read",
+      "op": "read_topic",
+      "request": {
+        "topic_id": "3b0f90f6-cf56-4eee-a2a9-faa734e95f1f"
+      },
+      "started_at": "2026-10-21T17:44:44.341584+00:00",
+      "response": {
+        "id": "3b0f90f6-cf56-4eee-a2a9-faa734e95f1f",
+        "title": "As-of Salience Probe",
+        "summary": "Field-less topic read once with an as-of date",
+        "topic_kind": null,
+        "salience": 0.6,
+        "failed_salience": null,
+        "archived": false,
+        "revision_flag": {
+          "flagged": false
+        },
+        "fields": {},
+        "topic_history": [],
+        "created_at": "2026-10-21T17:44:44.341539+00:00",
+        "updated_at": "2026-10-21T17:44:44.341548+00:00"
+      },
+      "rejected": null,
+      "error": null,
+      "latency_ms": 0.002,
+      "finished_at": "2026-10-21T17:44:44.341588+00:00"
+    },
+    {
+      "seq": 19,
+      "kind": "read",
+      "op": "read_state",
+      "request": null,
+      "started_at": "2026-10-21T17:44:44.341609+00:00",
+      "response": {
+        "topics": 5,
+        "edges": 0
+      },
+      "rejected": null,
+      "error": null,
+      "latency_ms": 0.009,
+      "finished_at": "2026-10-21T17:44:44.341621+00:00"
+    }
+  ],
+  "waits": [],
+  "state": {
+    "topics": {
+      "9585f488-81fd-4e17-9431-a49e9c908923": {
+        "id": "9585f488-81fd-4e17-9431-a49e9c908923",
+        "title": "Marathon Training",
+        "summary": "Weekly long run schedule and mileage plan for the spring marathon",
+        "topic_kind": "project",
+        "salience": 1.2587856904506365,
+        "failed_salience": null,
+        "archived": false,
+        "revision_flag": {
+          "flagged": false
+        },
+        "fields": {},
+        "topic_history": [],
+        "created_at": "2026-10-21T17:44:44.341221+00:00",
+        "updated_at": "2026-10-21T17:44:44.341246+00:00"
+      },
+      "287746db-40f4-4dc8-bbb3-9f74da7af331": {
+        "id": "287746db-40f4-4dc8-bbb3-9f74da7af331",
+        "title": "Sourdough Starter",
+        "summary": "Feeding schedule and hydration ratios for the kitchen sourdough starter",
+        "topic_kind": "project",
+        "salience": 1.266026838623579,
+        "failed_salience": null,
+        "archived": false,
+        "revision_flag": {
+          "flagged": false
+        },
+        "fields": {},
+        "topic_history": [],
+        "created_at": "2026-10-21T17:44:44.341269+00:00",
+        "updated_at": "2026-10-21T17:44:44.341276+00:00"
+      },
+      "a1953699-d0fc-4237-be9f-69ebae4035e3": {
+        "id": "a1953699-d0fc-4237-be9f-69ebae4035e3",
+        "title": "Tax Return",
+        "summary": "Documents and deadlines for filing the annual income tax return",
+        "topic_kind": "project",
+        "salience": 1.2733224217359123,
+        "failed_salience": null,
+        "archived": false,
+        "revision_flag": {
+          "flagged": false
+        },
+        "fields": {},
+        "topic_history": [],
+        "created_at": "2026-10-21T17:44:44.341290+00:00",
+        "updated_at": "2026-10-21T17:44:44.341296+00:00"
+      },
+      "f64ccbbb-ae97-4562-8147-feb876ff6d90": {
+        "id": "f64ccbbb-ae97-4562-8147-feb876ff6d90",
+        "title": "Kubernetes Upgrade",
+        "summary": "Cluster node pool upgrade plan and rollback notes",
+        "topic_kind": "project",
+        "salience": 1.2806728489993466,
+        "failed_salience": null,
+        "archived": false,
+        "revision_flag": {
+          "flagged": false
+        },
+        "fields": {},
+        "topic_history": [],
+        "created_at": "2026-10-21T17:44:44.341308+00:00",
+        "updated_at": "2026-10-21T17:44:44.341314+00:00"
+      },
+      "3b0f90f6-cf56-4eee-a2a9-faa734e95f1f": {
+        "id": "3b0f90f6-cf56-4eee-a2a9-faa734e95f1f",
+        "title": "As-of Salience Probe",
+        "summary": "Field-less topic read once with an as-of date",
+        "topic_kind": null,
+        "salience": 0.6,
+        "failed_salience": null,
+        "archived": false,
+        "revision_flag": {
+          "flagged": false
+        },
+        "fields": {},
+        "topic_history": [],
+        "created_at": "2026-10-21T17:44:44.341539+00:00",
+        "updated_at": "2026-10-21T17:44:44.341548+00:00"
+      }
+    },
+    "edges": [],
+    "policies": [
+      {
+        "name": "reject-empty-values",
+        "event": "write",
+        "condition": {
+          "field": "*",
+          "op": "empty"
+        },
+        "action": "reject"
+      },
+      {
+        "name": "propagate-on-change",
+        "event": "field_updated",
+        "condition": {
+          "neighbour": "extension"
+        },
+        "action": "flag"
+      }
+    ],
+    "interactions": 9
+  },
+  "state_error": null,
+  "rows": [
+    "C6-1"
+  ],
+  "verdicts": [
+    {
+      "row": "C6-1",
+      "verdict": "pass",
+      "cases": [
+        {
+          "name": "each retrieval raises the salience of the topics it returns",
+          "held": true,
+          "observation": "4 of 4 returned topics rose by at least 0.1 per retrieval that returned them (3 retrievals; target 0.978 -> 1.278, returned 3x)",
+          "control": false,
+          "id": "each retrieval raises the salience of the topics it returns"
+        },
+        {
+          "name": "an as-of read raises the salience of the topic it returns",
+          "held": true,
+          "observation": "valid_at read: salience 0.500 -> 0.600, expected at least 0.600",
+          "control": false,
+          "id": "an as-of read raises the salience of the topic it returns"
+        }
+      ],
+      "observations": [
+        {
+          "name": "over-reinforcement",
+          "question": "how far is my weekend long running session",
+          "target_topic_id": "9585f488-81fd-4e17-9431-a49e9c908923",
+          "unrelated_topics": 3,
+          "unrelated_topics_returned": 3,
+          "unrelated_topics_that_rose": 3,
+          "per_topic": {
+            "9585f488-81fd-4e17-9431-a49e9c908923": {
+              "label": "target",
+              "start": 0.9777825335052935,
+              "end": 1.2777825335052937,
+              "returned_in_retrievals": 3,
+              "expected_min_rise": 0.30000000000000004,
+              "rise": 0.30000000000000016
+            },
+            "287746db-40f4-4dc8-bbb3-9f74da7af331": {
+              "label": "unrelated",
+              "start": 0.985132960768728,
+              "end": 1.2851329607687283,
+              "returned_in_retrievals": 3,
+              "expected_min_rise": 0.30000000000000004,
+              "rise": 0.30000000000000027
+            },
+            "a1953699-d0fc-4237-be9f-69ebae4035e3": {
+              "label": "unrelated",
+              "start": 0.9925386444712004,
+              "end": 1.2925386444712006,
+              "returned_in_retrievals": 3,
+              "expected_min_rise": 0.30000000000000004,
+              "rise": 0.30000000000000016
+            },
+            "f64ccbbb-ae97-4562-8147-feb876ff6d90": {
+              "label": "unrelated",
+              "start": 1.0,
+              "end": 1.3000000000000003,
+              "returned_in_retrievals": 3,
+              "expected_min_rise": 0.30000000000000004,
+              "rise": 0.30000000000000027
+            }
+          },
+          "note": "salience read with read_topic, which adds nothing; the only retrievals are the 3 counted ones"
+        }
+      ],
+      "probe_evidence": null,
+      "measurements": {
+        "as_of": {
+          "axis": "valid_at",
+          "topic_id": "3b0f90f6-cf56-4eee-a2a9-faa734e95f1f",
+          "before": 0.5,
+          "after": 0.6,
+          "returned": true
+        }
+      },
+      "control": false,
+      "system": "reference-gem-p2",
+      "snapshots": [],
+      "error": null
+    }
+  ]
+}

@@ -12,7 +12,7 @@ The time split (slot length, talk, demo, Q&A) is not decided here: the user prep
 ## Comments
 
 - 2026-10-21, Prep (agent; a draft to react to, not a decision; blocked by the research-direction decision, so drafted under its recommended option B with D's framing, "C1′ as built, C3′ next, MAFBench as the opening problem"; no time split):
-  - **Fixed inputs.** "Interview-day delivery": the conformance suite and the Graph Explorer run live (offline, seconds; `python -m demo.run --mode live … --delay N`, Explorer at `http://127.0.0.1:8765/ui/`); the Ollama chat run is replayed from a recording; a full screen recording is the fallback. Static sources: `demo/record/20261021-085949/scorecard.md` (and the final-commit re-run, once it replaces it), recordings in `demo/recordings/` and `demo/chat-series/`.
+  - **Fixed inputs.** "Interview-day delivery": the conformance suite and the Graph Explorer run live (offline, seconds; `python -m demo.run --mode live … --delay N`, Explorer at `http://127.0.0.1:8765/ui/`); the Ollama chat run is replayed from a recording; a full screen recording is the fallback. Static sources: `demo/record/20261021-194912/scorecard.md` (the run of record on the final commits; `demo/record/20261021-085949/` is the earlier run on the superseded commits), recordings in `demo/recordings/` and `demo/chat-series/`.
   - **Outline (slide: one line; S = screenshot).**
     1. Title and the question: "Is agent memory a database?" Who, what, why this pair of papers.
     2. MAFBench's problem: multi-hop selective forgetting < 5.0 in every framework; memory is append-only (report §8). S: MAFBench Table 10 crop.

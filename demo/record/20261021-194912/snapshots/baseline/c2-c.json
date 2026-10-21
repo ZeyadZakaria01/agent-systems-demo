@@ -1,0 +1,477 @@
+{
+  "system": "baseline",
+  "label": "baseline",
+  "check": "C2(c)",
+  "tag": null,
+  "describe": {
+    "system": "baseline",
+    "url": null,
+    "db_path": null,
+    "commit": null,
+    "engine": "in-process versioned row",
+    "keeps_history": true,
+    "accepts_error": null,
+    "declared_bound": null,
+    "accepts_source": false,
+    "latency_comparable": true,
+    "source_surface": null,
+    "c6_clause_2_seeds": null,
+    "embedder": "sentence-transformers/all-MiniLM-L6-v2",
+    "top_k": 8,
+    "accepts": {
+      "valid_from": false,
+      "invalid_at": false,
+      "valid_at": false,
+      "recorded_at": true
+    }
+  },
+  "describe_error": null,
+  "started_at": "2026-10-21T17:44:45.544425+00:00",
+  "finished_at": "2026-10-21T17:44:45.544561+00:00",
+  "scored_transitions": [],
+  "setup_writes": [
+    {
+      "seq": 0,
+      "kind": "setup",
+      "op": "add_policy",
+      "request": {
+        "label": "add_policy",
+        "rule": {
+          "name": "deadline-not-before-start",
+          "event": "write",
+          "condition": {
+            "field": "Deadline",
+            "op": "<",
+            "other_field": "Start"
+          },
+          "action": "reject"
+        }
+      },
+      "started_at": "2026-10-21T17:44:45.544439+00:00",
+      "response": null,
+      "rejected": null,
+      "error": null,
+      "latency_ms": 0.001,
+      "finished_at": "2026-10-21T17:44:45.544448+00:00"
+    }
+  ],
+  "reads": [
+    {
+      "seq": 1,
+      "kind": "read",
+      "op": "probe",
+      "request": {
+        "method": "GET",
+        "path": "/openapi.json"
+      },
+      "started_at": "2026-10-21T17:44:45.544451+00:00",
+      "response": null,
+      "rejected": null,
+      "error": null,
+      "latency_ms": 0.001,
+      "finished_at": "2026-10-21T17:44:45.544454+00:00"
+    },
+    {
+      "seq": 2,
+      "kind": "read",
+      "op": "probe",
+      "request": {
+        "method": "GET",
+        "path": "/docs"
+      },
+      "started_at": "2026-10-21T17:44:45.544458+00:00",
+      "response": null,
+      "rejected": null,
+      "error": null,
+      "latency_ms": 0.0,
+      "finished_at": "2026-10-21T17:44:45.544462+00:00"
+    },
+    {
+      "seq": 3,
+      "kind": "read",
+      "op": "probe",
+      "request": {
+        "method": "GET",
+        "path": "/redoc"
+      },
+      "started_at": "2026-10-21T17:44:45.544465+00:00",
+      "response": null,
+      "rejected": null,
+      "error": null,
+      "latency_ms": 0.0,
+      "finished_at": "2026-10-21T17:44:45.544468+00:00"
+    },
+    {
+      "seq": 4,
+      "kind": "read",
+      "op": "probe",
+      "request": {
+        "method": "GET",
+        "path": "/policies"
+      },
+      "started_at": "2026-10-21T17:44:45.544471+00:00",
+      "response": null,
+      "rejected": null,
+      "error": null,
+      "latency_ms": 0.0,
+      "finished_at": "2026-10-21T17:44:45.544474+00:00"
+    },
+    {
+      "seq": 5,
+      "kind": "read",
+      "op": "probe",
+      "request": {
+        "method": "GET",
+        "path": "/rules"
+      },
+      "started_at": "2026-10-21T17:44:45.544477+00:00",
+      "response": null,
+      "rejected": null,
+      "error": null,
+      "latency_ms": 0.0,
+      "finished_at": "2026-10-21T17:44:45.544480+00:00"
+    },
+    {
+      "seq": 6,
+      "kind": "read",
+      "op": "probe",
+      "request": {
+        "method": "GET",
+        "path": "/config"
+      },
+      "started_at": "2026-10-21T17:44:45.544486+00:00",
+      "response": null,
+      "rejected": null,
+      "error": null,
+      "latency_ms": 0.0,
+      "finished_at": "2026-10-21T17:44:45.544489+00:00"
+    },
+    {
+      "seq": 7,
+      "kind": "read",
+      "op": "probe",
+      "request": {
+        "method": "GET",
+        "path": "/settings"
+      },
+      "started_at": "2026-10-21T17:44:45.544490+00:00",
+      "response": null,
+      "rejected": null,
+      "error": null,
+      "latency_ms": 0.0,
+      "finished_at": "2026-10-21T17:44:45.544492+00:00"
+    },
+    {
+      "seq": 8,
+      "kind": "read",
+      "op": "probe",
+      "request": {
+        "method": "GET",
+        "path": "/v1/policies"
+      },
+      "started_at": "2026-10-21T17:44:45.544494+00:00",
+      "response": null,
+      "rejected": null,
+      "error": null,
+      "latency_ms": 0.0,
+      "finished_at": "2026-10-21T17:44:45.544496+00:00"
+    },
+    {
+      "seq": 9,
+      "kind": "read",
+      "op": "probe",
+      "request": {
+        "method": "GET",
+        "path": "/v1/rules"
+      },
+      "started_at": "2026-10-21T17:44:45.544498+00:00",
+      "response": null,
+      "rejected": null,
+      "error": null,
+      "latency_ms": 0.0,
+      "finished_at": "2026-10-21T17:44:45.544500+00:00"
+    },
+    {
+      "seq": 10,
+      "kind": "read",
+      "op": "probe",
+      "request": {
+        "method": "GET",
+        "path": "/v1/config"
+      },
+      "started_at": "2026-10-21T17:44:45.544502+00:00",
+      "response": null,
+      "rejected": null,
+      "error": null,
+      "latency_ms": 0.0,
+      "finished_at": "2026-10-21T17:44:45.544504+00:00"
+    },
+    {
+      "seq": 11,
+      "kind": "read",
+      "op": "probe",
+      "request": {
+        "method": "GET",
+        "path": "/api/policies"
+      },
+      "started_at": "2026-10-21T17:44:45.544506+00:00",
+      "response": null,
+      "rejected": null,
+      "error": null,
+      "latency_ms": 0.0,
+      "finished_at": "2026-10-21T17:44:45.544507+00:00"
+    },
+    {
+      "seq": 12,
+      "kind": "read",
+      "op": "probe",
+      "request": {
+        "method": "GET",
+        "path": "/api/config"
+      },
+      "started_at": "2026-10-21T17:44:45.544509+00:00",
+      "response": null,
+      "rejected": null,
+      "error": null,
+      "latency_ms": 0.0,
+      "finished_at": "2026-10-21T17:44:45.544511+00:00"
+    },
+    {
+      "seq": 13,
+      "kind": "read",
+      "op": "probe",
+      "request": {
+        "method": "GET",
+        "path": "/api/ui/policies"
+      },
+      "started_at": "2026-10-21T17:44:45.544513+00:00",
+      "response": null,
+      "rejected": null,
+      "error": null,
+      "latency_ms": 0.0,
+      "finished_at": "2026-10-21T17:44:45.544515+00:00"
+    },
+    {
+      "seq": 14,
+      "kind": "read",
+      "op": "probe",
+      "request": {
+        "method": "GET",
+        "path": "/api/ui/rules"
+      },
+      "started_at": "2026-10-21T17:44:45.544517+00:00",
+      "response": null,
+      "rejected": null,
+      "error": null,
+      "latency_ms": 0.0,
+      "finished_at": "2026-10-21T17:44:45.544519+00:00"
+    },
+    {
+      "seq": 15,
+      "kind": "read",
+      "op": "probe",
+      "request": {
+        "method": "GET",
+        "path": "/api/ui/config"
+      },
+      "started_at": "2026-10-21T17:44:45.544521+00:00",
+      "response": null,
+      "rejected": null,
+      "error": null,
+      "latency_ms": 0.0,
+      "finished_at": "2026-10-21T17:44:45.544523+00:00"
+    },
+    {
+      "seq": 16,
+      "kind": "read",
+      "op": "probe",
+      "request": {
+        "method": "GET",
+        "path": "/api/ui/settings"
+      },
+      "started_at": "2026-10-21T17:44:45.544524+00:00",
+      "response": null,
+      "rejected": null,
+      "error": null,
+      "latency_ms": 0.0,
+      "finished_at": "2026-10-21T17:44:45.544526+00:00"
+    },
+    {
+      "seq": 17,
+      "kind": "read",
+      "op": "probe",
+      "request": {
+        "method": "GET",
+        "path": "/api/llm/policies"
+      },
+      "started_at": "2026-10-21T17:44:45.544528+00:00",
+      "response": null,
+      "rejected": null,
+      "error": null,
+      "latency_ms": 0.0,
+      "finished_at": "2026-10-21T17:44:45.544530+00:00"
+    },
+    {
+      "seq": 18,
+      "kind": "read",
+      "op": "probe",
+      "request": {
+        "method": "GET",
+        "path": "/api/llm/config"
+      },
+      "started_at": "2026-10-21T17:44:45.544532+00:00",
+      "response": null,
+      "rejected": null,
+      "error": null,
+      "latency_ms": 0.0,
+      "finished_at": "2026-10-21T17:44:45.544534+00:00"
+    },
+    {
+      "seq": 19,
+      "kind": "read",
+      "op": "probe",
+      "request": {
+        "method": "GET",
+        "path": "/api/ui/system-context"
+      },
+      "started_at": "2026-10-21T17:44:45.544536+00:00",
+      "response": null,
+      "rejected": null,
+      "error": null,
+      "latency_ms": 0.0,
+      "finished_at": "2026-10-21T17:44:45.544538+00:00"
+    },
+    {
+      "seq": 20,
+      "kind": "read",
+      "op": "probe",
+      "request": {
+        "method": "GET",
+        "path": "/api/ui/datamodel"
+      },
+      "started_at": "2026-10-21T17:44:45.544540+00:00",
+      "response": null,
+      "rejected": null,
+      "error": null,
+      "latency_ms": 0.0,
+      "finished_at": "2026-10-21T17:44:45.544542+00:00"
+    },
+    {
+      "seq": 21,
+      "kind": "read",
+      "op": "read_state",
+      "request": null,
+      "started_at": "2026-10-21T17:44:45.544565+00:00",
+      "response": {
+        "topics": 0,
+        "edges": null
+      },
+      "rejected": null,
+      "error": null,
+      "latency_ms": 0.002,
+      "finished_at": "2026-10-21T17:44:45.544569+00:00"
+    }
+  ],
+  "waits": [],
+  "state": {
+    "topics": {},
+    "edges": null
+  },
+  "state_error": null,
+  "rows": [
+    "C2(c)"
+  ],
+  "verdicts": [
+    {
+      "row": "C2(c)",
+      "verdict": "absent",
+      "cases": [],
+      "observations": [],
+      "probe_evidence": {
+        "api_schema": null,
+        "add_policy": null,
+        "policy_tried": {
+          "name": "deadline-not-before-start",
+          "event": "write",
+          "condition": {
+            "field": "Deadline",
+            "op": "<",
+            "other_field": "Start"
+          },
+          "action": "reject"
+        },
+        "docs_status": {
+          "/docs": null,
+          "/redoc": null
+        },
+        "guessed_route_status": {
+          "/policies": null,
+          "/rules": null,
+          "/config": null,
+          "/settings": null,
+          "/v1/policies": null,
+          "/v1/rules": null,
+          "/v1/config": null,
+          "/api/policies": null,
+          "/api/config": null,
+          "/api/ui/policies": null,
+          "/api/ui/rules": null,
+          "/api/ui/config": null,
+          "/api/ui/settings": null,
+          "/api/llm/policies": null,
+          "/api/llm/config": null
+        },
+        "config_like_routes": {
+          "/api/ui/system-context": null,
+          "/api/ui/datamodel": null
+        },
+        "policy_knob_names_in_schema": [],
+        "describe": {
+          "system": "baseline",
+          "url": null,
+          "db_path": null,
+          "commit": null,
+          "engine": "in-process versioned row",
+          "keeps_history": true,
+          "accepts_error": null,
+          "declared_bound": null,
+          "accepts_source": false,
+          "latency_comparable": true,
+          "source_surface": null,
+          "c6_clause_2_seeds": null,
+          "embedder": "sentence-transformers/all-MiniLM-L6-v2",
+          "top_k": 8,
+          "accepts": {
+            "valid_from": false,
+            "invalid_at": false,
+            "valid_at": false,
+            "recorded_at": true
+          }
+        },
+        "searched_words": [
+          "constraint",
+          "constraints",
+          "invariant",
+          "invariants",
+          "policies",
+          "policy",
+          "rule",
+          "rules",
+          "trigger",
+          "triggers"
+        ],
+        "searched_triple": [
+          "event",
+          "condition",
+          "action"
+        ],
+        "finding": "no readable API schema (openapi probe: nothing); guessed policy/config routes answering: none"
+      },
+      "measurements": {},
+      "control": false,
+      "system": "baseline",
+      "snapshots": [],
+      "error": null
+    }
+  ]
+}

@@ -1,0 +1,2428 @@
+{
+  "system": "reference-gem-p1",
+  "label": "reference GEM (phase 1)",
+  "check": "C3",
+  "tag": null,
+  "describe": {
+    "system": "reference GEM (phase 1)",
+    "url": null,
+    "db_path": null,
+    "commit": null,
+    "engine": "in-process reference GEM, phase 1",
+    "keeps_history": true,
+    "accepts_error": null,
+    "declared_bound": {
+      "topics": 500,
+      "name": "\u03b2"
+    },
+    "accepts_source": true,
+    "latency_comparable": false,
+    "source_surface": {
+      "request_properties": [
+        "source_message"
+      ],
+      "paths": []
+    },
+    "c6_clause_2_seeds": {
+      "target": 0.06,
+      "control": 0.06
+    },
+    "embedder": "sentence-transformers/all-MiniLM-L6-v2",
+    "top_k": 8,
+    "parameters": {
+      "theta_archive": 0.05,
+      "lambda": 0.9925386444712004,
+      "decay_horizon": 400,
+      "beta": 500,
+      "bump": 0.1,
+      "history_cap": 500,
+      "top_k": 8,
+      "salience_on_archive": 0.5,
+      "propagation": "one hop, extension edges, either direction",
+      "revision": "after every ingest",
+      "phase": 1
+    },
+    "accepts": {
+      "valid_from": true,
+      "invalid_at": false,
+      "valid_at": true,
+      "recorded_at": false
+    }
+  },
+  "describe_error": null,
+  "started_at": "2026-10-21T17:44:22.576272+00:00",
+  "finished_at": "2026-10-21T17:44:22.577420+00:00",
+  "scored_transitions": [
+    {
+      "seq": 0,
+      "kind": "scored",
+      "op": "ingest",
+      "request": {
+        "placement": "new_topic",
+        "title": "Website Redesign 1",
+        "topic_kind": "project",
+        "fields": [
+          {
+            "name": "Deadline",
+            "value": "March 15",
+            "provenance": "kickoff-notes"
+          }
+        ]
+      },
+      "started_at": "2026-10-21T17:44:22.576312+00:00",
+      "response": {
+        "topic_id": "60a0ed96-7cf7-41fc-ba73-a5b8cac6a20b",
+        "applied": [
+          "created_topic:60a0ed96-7cf7-41fc-ba73-a5b8cac6a20b",
+          "field:Deadline"
+        ],
+        "version_ids": {
+          "Deadline": "736b0313-01cc-4277-b2ae-b69a49b711dc"
+        },
+        "similar_topic_ids": []
+      },
+      "rejected": null,
+      "error": null,
+      "latency_ms": 0.047,
+      "finished_at": "2026-10-21T17:44:22.576366+00:00"
+    },
+    {
+      "seq": 1,
+      "kind": "scored",
+      "op": "ingest",
+      "request": {
+        "placement": "new_topic",
+        "title": "Launch Milestone 1",
+        "topic_kind": "milestone",
+        "fields": [
+          {
+            "name": "Date",
+            "value": "March 20",
+            "provenance": "kickoff-notes"
+          }
+        ],
+        "edges": [
+          {
+            "to_topic_id": "60a0ed96-7cf7-41fc-ba73-a5b8cac6a20b",
+            "kind": "extension"
+          }
+        ]
+      },
+      "started_at": "2026-10-21T17:44:22.576369+00:00",
+      "response": {
+        "topic_id": "6e3d9085-99fd-43a9-9e2e-fc8c4a88857a",
+        "applied": [
+          "created_topic:6e3d9085-99fd-43a9-9e2e-fc8c4a88857a",
+          "field:Date",
+          "edge:60a0ed96-7cf7-41fc-ba73-a5b8cac6a20b"
+        ],
+        "version_ids": {
+          "Date": "956d16f4-7f89-43d1-a498-91937008d522"
+        },
+        "similar_topic_ids": []
+      },
+      "rejected": null,
+      "error": null,
+      "latency_ms": 0.031,
+      "finished_at": "2026-10-21T17:44:22.576403+00:00"
+    },
+    {
+      "seq": 2,
+      "kind": "scored",
+      "op": "ingest",
+      "request": {
+        "placement": "new_topic",
+        "title": "Style Guide 1",
+        "topic_kind": "document",
+        "fields": [
+          {
+            "name": "Version",
+            "value": "1",
+            "provenance": "kickoff-notes"
+          }
+        ],
+        "edges": [
+          {
+            "to_topic_id": "60a0ed96-7cf7-41fc-ba73-a5b8cac6a20b",
+            "kind": "association"
+          }
+        ]
+      },
+      "started_at": "2026-10-21T17:44:22.576407+00:00",
+      "response": {
+        "topic_id": "d4d92d19-9a7f-4aea-bfaa-609c3d006ba1",
+        "applied": [
+          "created_topic:d4d92d19-9a7f-4aea-bfaa-609c3d006ba1",
+          "field:Version",
+          "edge:60a0ed96-7cf7-41fc-ba73-a5b8cac6a20b"
+        ],
+        "version_ids": {
+          "Version": "c7eaa139-61ff-41e4-bfa3-3cda95b6c265"
+        },
+        "similar_topic_ids": []
+      },
+      "rejected": null,
+      "error": null,
+      "latency_ms": 0.022,
+      "finished_at": "2026-10-21T17:44:22.576431+00:00"
+    },
+    {
+      "seq": 5,
+      "kind": "scored",
+      "op": "ingest",
+      "request": {
+        "placement": "version_field",
+        "topic_id": "60a0ed96-7cf7-41fc-ba73-a5b8cac6a20b",
+        "fields": [
+          {
+            "name": "Deadline",
+            "value": "April 20",
+            "provenance": "pm-email",
+            "why_changed": "vendor delay"
+          }
+        ]
+      },
+      "started_at": "2026-10-21T17:44:22.576504+00:00",
+      "response": {
+        "topic_id": "60a0ed96-7cf7-41fc-ba73-a5b8cac6a20b",
+        "applied": [
+          "version:Deadline"
+        ],
+        "version_ids": {
+          "Deadline": "15dab0cb-a157-42a0-865d-6e89fc5abfae"
+        },
+        "similar_topic_ids": []
+      },
+      "rejected": null,
+      "error": null,
+      "latency_ms": 0.042,
+      "finished_at": "2026-10-21T17:44:22.576549+00:00"
+    },
+    {
+      "seq": 7,
+      "kind": "scored",
+      "op": "query",
+      "request": {
+        "q": "launch milestone date",
+        "stages": [
+          "temporal"
+        ],
+        "topic_ids": [
+          "6e3d9085-99fd-43a9-9e2e-fc8c4a88857a"
+        ],
+        "explain": true
+      },
+      "started_at": "2026-10-21T17:44:22.576589+00:00",
+      "response": {
+        "query": "launch milestone date",
+        "candidates": [
+          {
+            "topic_id": "6e3d9085-99fd-43a9-9e2e-fc8c4a88857a",
+            "title": "Launch Milestone 1",
+            "summary": null,
+            "topic_kind": "milestone",
+            "salience": 0.985132960768728,
+            "failed_salience": null,
+            "neighbors": [],
+            "fields": [
+              {
+                "name": "Date",
+                "field_type": "string",
+                "ref_topic_id": null,
+                "current": {
+                  "id": "956d16f4-7f89-43d1-a498-91937008d522",
+                  "value": "March 20",
+                  "provenance": "kickoff-notes",
+                  "why_changed": null,
+                  "impact_expected": null,
+                  "valid_from": "2026-10-21T17:44:22.576372+00:00",
+                  "expired_at": null,
+                  "source_id": null
+                },
+                "history": [
+                  {
+                    "id": "956d16f4-7f89-43d1-a498-91937008d522",
+                    "value": "March 20",
+                    "provenance": "kickoff-notes",
+                    "why_changed": null,
+                    "impact_expected": null,
+                    "valid_from": "2026-10-21T17:44:22.576372+00:00",
+                    "expired_at": null,
+                    "source_id": null
+                  }
+                ],
+                "archived_history": []
+              }
+            ],
+            "revision_flag": {
+              "flagged": true,
+              "evidence": {
+                "source_topic_id": "60a0ed96-7cf7-41fc-ba73-a5b8cac6a20b",
+                "updated_field": "Deadline",
+                "updated_fields": [
+                  "Deadline"
+                ],
+                "timestamp": "2026-10-21T17:44:22.576527+00:00",
+                "policy": "propagate-on-change"
+              }
+            },
+            "similarity": null
+          }
+        ],
+        "summary_text": ""
+      },
+      "rejected": null,
+      "error": null,
+      "latency_ms": 0.015,
+      "finished_at": "2026-10-21T17:44:22.576606+00:00"
+    },
+    {
+      "seq": 13,
+      "kind": "scored",
+      "op": "ingest",
+      "request": {
+        "placement": "version_field",
+        "topic_id": "6e3d9085-99fd-43a9-9e2e-fc8c4a88857a",
+        "fields": [
+          {
+            "name": "Date",
+            "value": "April 25",
+            "provenance": "pm-email",
+            "why_changed": "re-checked after A moved"
+          }
+        ]
+      },
+      "started_at": "2026-10-21T17:44:22.576689+00:00",
+      "response": {
+        "topic_id": "6e3d9085-99fd-43a9-9e2e-fc8c4a88857a",
+        "applied": [
+          "version:Date"
+        ],
+        "version_ids": {
+          "Date": "310dc0c7-9f8f-46fc-83c3-3b7aa2a8f881"
+        },
+        "similar_topic_ids": []
+      },
+      "rejected": null,
+      "error": null,
+      "latency_ms": 0.035,
+      "finished_at": "2026-10-21T17:44:22.576727+00:00"
+    },
+    {
+      "seq": 16,
+      "kind": "scored",
+      "op": "query",
+      "request": {
+        "q": "launch milestone date",
+        "stages": [
+          "temporal"
+        ],
+        "topic_ids": [
+          "6e3d9085-99fd-43a9-9e2e-fc8c4a88857a"
+        ],
+        "explain": true
+      },
+      "started_at": "2026-10-21T17:44:22.576762+00:00",
+      "response": {
+        "query": "launch milestone date",
+        "candidates": [
+          {
+            "topic_id": "6e3d9085-99fd-43a9-9e2e-fc8c4a88857a",
+            "title": "Launch Milestone 1",
+            "summary": null,
+            "topic_kind": "milestone",
+            "salience": 1.0851329607687281,
+            "failed_salience": null,
+            "neighbors": [],
+            "fields": [
+              {
+                "name": "Date",
+                "field_type": "string",
+                "ref_topic_id": null,
+                "current": {
+                  "id": "310dc0c7-9f8f-46fc-83c3-3b7aa2a8f881",
+                  "value": "April 25",
+                  "provenance": "pm-email",
+                  "why_changed": "re-checked after A moved",
+                  "impact_expected": null,
+                  "valid_from": "2026-10-21T17:44:22.576691+00:00",
+                  "expired_at": null,
+                  "source_id": null
+                },
+                "history": [
+                  {
+                    "id": "310dc0c7-9f8f-46fc-83c3-3b7aa2a8f881",
+                    "value": "April 25",
+                    "provenance": "pm-email",
+                    "why_changed": "re-checked after A moved",
+                    "impact_expected": null,
+                    "valid_from": "2026-10-21T17:44:22.576691+00:00",
+                    "expired_at": null,
+                    "source_id": null
+                  },
+                  {
+                    "id": "956d16f4-7f89-43d1-a498-91937008d522",
+                    "value": "March 20",
+                    "provenance": "kickoff-notes",
+                    "why_changed": null,
+                    "impact_expected": null,
+                    "valid_from": "2026-10-21T17:44:22.576372+00:00",
+                    "expired_at": null,
+                    "source_id": null
+                  }
+                ],
+                "archived_history": []
+              }
+            ],
+            "revision_flag": {
+              "flagged": false
+            },
+            "similarity": null
+          }
+        ],
+        "summary_text": ""
+      },
+      "rejected": null,
+      "error": null,
+      "latency_ms": 0.015,
+      "finished_at": "2026-10-21T17:44:22.576779+00:00"
+    },
+    {
+      "seq": 17,
+      "kind": "scored",
+      "op": "ingest",
+      "request": {
+        "placement": "new_topic",
+        "title": "Website Redesign 2",
+        "topic_kind": "project",
+        "fields": [
+          {
+            "name": "Deadline",
+            "value": "March 15",
+            "provenance": "kickoff-notes"
+          }
+        ]
+      },
+      "started_at": "2026-10-21T17:44:22.576793+00:00",
+      "response": {
+        "topic_id": "5a5e1381-b5b3-451a-a205-b83e41e7a7e7",
+        "applied": [
+          "created_topic:5a5e1381-b5b3-451a-a205-b83e41e7a7e7",
+          "field:Deadline"
+        ],
+        "version_ids": {
+          "Deadline": "db31a73c-1c75-4a81-bb20-2dc8aa16c17c"
+        },
+        "similar_topic_ids": []
+      },
+      "rejected": null,
+      "error": null,
+      "latency_ms": 0.025,
+      "finished_at": "2026-10-21T17:44:22.576821+00:00"
+    },
+    {
+      "seq": 18,
+      "kind": "scored",
+      "op": "ingest",
+      "request": {
+        "placement": "new_topic",
+        "title": "Launch Milestone 2",
+        "topic_kind": "milestone",
+        "fields": [
+          {
+            "name": "Date",
+            "value": "March 20",
+            "provenance": "kickoff-notes"
+          }
+        ],
+        "edges": []
+      },
+      "started_at": "2026-10-21T17:44:22.576824+00:00",
+      "response": {
+        "topic_id": "217aef52-c7cd-488d-8e84-faa28e1c3eef",
+        "applied": [
+          "created_topic:217aef52-c7cd-488d-8e84-faa28e1c3eef",
+          "field:Date"
+        ],
+        "version_ids": {
+          "Date": "61172c45-bbb0-4da7-9129-df6bd5905872"
+        },
+        "similar_topic_ids": []
+      },
+      "rejected": null,
+      "error": null,
+      "latency_ms": 0.022,
+      "finished_at": "2026-10-21T17:44:22.576848+00:00"
+    },
+    {
+      "seq": 19,
+      "kind": "scored",
+      "op": "ingest",
+      "request": {
+        "placement": "extend_topic",
+        "topic_id": "5a5e1381-b5b3-451a-a205-b83e41e7a7e7",
+        "fields": [],
+        "edges": [
+          {
+            "to_topic_id": "217aef52-c7cd-488d-8e84-faa28e1c3eef",
+            "kind": "extension"
+          }
+        ]
+      },
+      "started_at": "2026-10-21T17:44:22.576851+00:00",
+      "response": {
+        "topic_id": "5a5e1381-b5b3-451a-a205-b83e41e7a7e7",
+        "applied": [
+          "edge:217aef52-c7cd-488d-8e84-faa28e1c3eef"
+        ],
+        "version_ids": {},
+        "similar_topic_ids": []
+      },
+      "rejected": null,
+      "error": null,
+      "latency_ms": 0.019,
+      "finished_at": "2026-10-21T17:44:22.576872+00:00"
+    },
+    {
+      "seq": 20,
+      "kind": "scored",
+      "op": "ingest",
+      "request": {
+        "placement": "new_topic",
+        "title": "Style Guide 2",
+        "topic_kind": "document",
+        "fields": [
+          {
+            "name": "Version",
+            "value": "1",
+            "provenance": "kickoff-notes"
+          }
+        ],
+        "edges": []
+      },
+      "started_at": "2026-10-21T17:44:22.576875+00:00",
+      "response": {
+        "topic_id": "1c888fdc-87cf-4c34-a6c0-93a64d6dfa68",
+        "applied": [
+          "created_topic:1c888fdc-87cf-4c34-a6c0-93a64d6dfa68",
+          "field:Version"
+        ],
+        "version_ids": {
+          "Version": "d159d6db-b78e-40c5-8284-c749678a1e55"
+        },
+        "similar_topic_ids": []
+      },
+      "rejected": null,
+      "error": null,
+      "latency_ms": 0.022,
+      "finished_at": "2026-10-21T17:44:22.576900+00:00"
+    },
+    {
+      "seq": 21,
+      "kind": "scored",
+      "op": "ingest",
+      "request": {
+        "placement": "extend_topic",
+        "topic_id": "5a5e1381-b5b3-451a-a205-b83e41e7a7e7",
+        "fields": [],
+        "edges": [
+          {
+            "to_topic_id": "1c888fdc-87cf-4c34-a6c0-93a64d6dfa68",
+            "kind": "association"
+          }
+        ]
+      },
+      "started_at": "2026-10-21T17:44:22.576903+00:00",
+      "response": {
+        "topic_id": "5a5e1381-b5b3-451a-a205-b83e41e7a7e7",
+        "applied": [
+          "edge:1c888fdc-87cf-4c34-a6c0-93a64d6dfa68"
+        ],
+        "version_ids": {},
+        "similar_topic_ids": []
+      },
+      "rejected": null,
+      "error": null,
+      "latency_ms": 0.017,
+      "finished_at": "2026-10-21T17:44:22.576922+00:00"
+    },
+    {
+      "seq": 24,
+      "kind": "scored",
+      "op": "ingest",
+      "request": {
+        "placement": "version_field",
+        "topic_id": "5a5e1381-b5b3-451a-a205-b83e41e7a7e7",
+        "fields": [
+          {
+            "name": "Deadline",
+            "value": "April 20",
+            "provenance": "pm-email",
+            "why_changed": "vendor delay"
+          }
+        ]
+      },
+      "started_at": "2026-10-21T17:44:22.577008+00:00",
+      "response": {
+        "topic_id": "5a5e1381-b5b3-451a-a205-b83e41e7a7e7",
+        "applied": [
+          "version:Deadline"
+        ],
+        "version_ids": {
+          "Deadline": "7c26f330-878a-4b00-bd62-db016280f625"
+        },
+        "similar_topic_ids": []
+      },
+      "rejected": null,
+      "error": null,
+      "latency_ms": 0.033,
+      "finished_at": "2026-10-21T17:44:22.577044+00:00"
+    },
+    {
+      "seq": 26,
+      "kind": "scored",
+      "op": "query",
+      "request": {
+        "q": "launch milestone date",
+        "stages": [
+          "temporal"
+        ],
+        "topic_ids": [
+          "217aef52-c7cd-488d-8e84-faa28e1c3eef"
+        ],
+        "explain": true
+      },
+      "started_at": "2026-10-21T17:44:22.577105+00:00",
+      "response": {
+        "query": "launch milestone date",
+        "candidates": [
+          {
+            "topic_id": "217aef52-c7cd-488d-8e84-faa28e1c3eef",
+            "title": "Launch Milestone 2",
+            "summary": null,
+            "topic_kind": "milestone",
+            "salience": 0.9704869503929602,
+            "failed_salience": null,
+            "neighbors": [],
+            "fields": [
+              {
+                "name": "Date",
+                "field_type": "string",
+                "ref_topic_id": null,
+                "current": {
+                  "id": "61172c45-bbb0-4da7-9129-df6bd5905872",
+                  "value": "March 20",
+                  "provenance": "kickoff-notes",
+                  "why_changed": null,
+                  "impact_expected": null,
+                  "valid_from": "2026-10-21T17:44:22.576826+00:00",
+                  "expired_at": null,
+                  "source_id": null
+                },
+                "history": [
+                  {
+                    "id": "61172c45-bbb0-4da7-9129-df6bd5905872",
+                    "value": "March 20",
+                    "provenance": "kickoff-notes",
+                    "why_changed": null,
+                    "impact_expected": null,
+                    "valid_from": "2026-10-21T17:44:22.576826+00:00",
+                    "expired_at": null,
+                    "source_id": null
+                  }
+                ],
+                "archived_history": []
+              }
+            ],
+            "revision_flag": {
+              "flagged": true,
+              "evidence": {
+                "source_topic_id": "5a5e1381-b5b3-451a-a205-b83e41e7a7e7",
+                "updated_field": "Deadline",
+                "updated_fields": [
+                  "Deadline"
+                ],
+                "timestamp": "2026-10-21T17:44:22.577026+00:00",
+                "policy": "propagate-on-change"
+              }
+            },
+            "similarity": null
+          }
+        ],
+        "summary_text": ""
+      },
+      "rejected": null,
+      "error": null,
+      "latency_ms": 0.014,
+      "finished_at": "2026-10-21T17:44:22.577122+00:00"
+    },
+    {
+      "seq": 32,
+      "kind": "scored",
+      "op": "ingest",
+      "request": {
+        "placement": "version_field",
+        "topic_id": "217aef52-c7cd-488d-8e84-faa28e1c3eef",
+        "fields": [
+          {
+            "name": "Date",
+            "value": "April 25",
+            "provenance": "pm-email",
+            "why_changed": "re-checked after A moved"
+          }
+        ]
+      },
+      "started_at": "2026-10-21T17:44:22.577245+00:00",
+      "response": {
+        "topic_id": "217aef52-c7cd-488d-8e84-faa28e1c3eef",
+        "applied": [
+          "version:Date"
+        ],
+        "version_ids": {
+          "Date": "cbd5bbfc-6472-4480-88dc-ff8ba6498a24"
+        },
+        "similar_topic_ids": []
+      },
+      "rejected": null,
+      "error": null,
+      "latency_ms": 0.033,
+      "finished_at": "2026-10-21T17:44:22.577280+00:00"
+    },
+    {
+      "seq": 35,
+      "kind": "scored",
+      "op": "query",
+      "request": {
+        "q": "launch milestone date",
+        "stages": [
+          "temporal"
+        ],
+        "topic_ids": [
+          "217aef52-c7cd-488d-8e84-faa28e1c3eef"
+        ],
+        "explain": true
+      },
+      "started_at": "2026-10-21T17:44:22.577320+00:00",
+      "response": {
+        "query": "launch milestone date",
+        "candidates": [
+          {
+            "topic_id": "217aef52-c7cd-488d-8e84-faa28e1c3eef",
+            "title": "Launch Milestone 2",
+            "summary": null,
+            "topic_kind": "milestone",
+            "salience": 1.0704869503929602,
+            "failed_salience": null,
+            "neighbors": [],
+            "fields": [
+              {
+                "name": "Date",
+                "field_type": "string",
+                "ref_topic_id": null,
+                "current": {
+                  "id": "cbd5bbfc-6472-4480-88dc-ff8ba6498a24",
+                  "value": "April 25",
+                  "provenance": "pm-email",
+                  "why_changed": "re-checked after A moved",
+                  "impact_expected": null,
+                  "valid_from": "2026-10-21T17:44:22.577247+00:00",
+                  "expired_at": null,
+                  "source_id": null
+                },
+                "history": [
+                  {
+                    "id": "cbd5bbfc-6472-4480-88dc-ff8ba6498a24",
+                    "value": "April 25",
+                    "provenance": "pm-email",
+                    "why_changed": "re-checked after A moved",
+                    "impact_expected": null,
+                    "valid_from": "2026-10-21T17:44:22.577247+00:00",
+                    "expired_at": null,
+                    "source_id": null
+                  },
+                  {
+                    "id": "61172c45-bbb0-4da7-9129-df6bd5905872",
+                    "value": "March 20",
+                    "provenance": "kickoff-notes",
+                    "why_changed": null,
+                    "impact_expected": null,
+                    "valid_from": "2026-10-21T17:44:22.576826+00:00",
+                    "expired_at": null,
+                    "source_id": null
+                  }
+                ],
+                "archived_history": []
+              }
+            ],
+            "revision_flag": {
+              "flagged": false
+            },
+            "similarity": null
+          }
+        ],
+        "summary_text": ""
+      },
+      "rejected": null,
+      "error": null,
+      "latency_ms": 0.014,
+      "finished_at": "2026-10-21T17:44:22.577337+00:00"
+    }
+  ],
+  "setup_writes": [],
+  "reads": [
+    {
+      "seq": 3,
+      "kind": "read",
+      "op": "read_state",
+      "request": null,
+      "started_at": "2026-10-21T17:44:22.576434+00:00",
+      "response": {
+        "topics": 3,
+        "edges": 2
+      },
+      "rejected": null,
+      "error": null,
+      "latency_ms": 0.032,
+      "finished_at": "2026-10-21T17:44:22.576468+00:00"
+    },
+    {
+      "seq": 4,
+      "kind": "read",
+      "op": "read_topic",
+      "request": {
+        "topic_id": "6e3d9085-99fd-43a9-9e2e-fc8c4a88857a"
+      },
+      "started_at": "2026-10-21T17:44:22.576474+00:00",
+      "response": {
+        "id": "6e3d9085-99fd-43a9-9e2e-fc8c4a88857a",
+        "title": "Launch Milestone 1",
+        "summary": null,
+        "topic_kind": "milestone",
+        "salience": 0.9925386444712004,
+        "failed_salience": null,
+        "archived": false,
+        "revision_flag": {
+          "flagged": false
+        },
+        "fields": {
+          "Date": {
+            "field_type": "string",
+            "ref_topic_id": null,
+            "current": {
+              "id": "956d16f4-7f89-43d1-a498-91937008d522",
+              "value": "March 20",
+              "provenance": "kickoff-notes",
+              "why_changed": null,
+              "impact_expected": null,
+              "valid_from": "2026-10-21T17:44:22.576372+00:00",
+              "expired_at": null,
+              "source_id": null
+            },
+            "history": [
+              {
+                "id": "956d16f4-7f89-43d1-a498-91937008d522",
+                "value": "March 20",
+                "provenance": "kickoff-notes",
+                "why_changed": null,
+                "impact_expected": null,
+                "valid_from": "2026-10-21T17:44:22.576372+00:00",
+                "expired_at": null,
+                "source_id": null
+              }
+            ],
+            "archived_history": []
+          }
+        },
+        "topic_history": [],
+        "created_at": "2026-10-21T17:44:22.576372+00:00",
+        "updated_at": "2026-10-21T17:44:22.576387+00:00"
+      },
+      "rejected": null,
+      "error": null,
+      "latency_ms": 0.007,
+      "finished_at": "2026-10-21T17:44:22.576484+00:00"
+    },
+    {
+      "seq": 6,
+      "kind": "read",
+      "op": "read_state",
+      "request": null,
+      "started_at": "2026-10-21T17:44:22.576551+00:00",
+      "response": {
+        "topics": 3,
+        "edges": 2
+      },
+      "rejected": null,
+      "error": null,
+      "latency_ms": 0.028,
+      "finished_at": "2026-10-21T17:44:22.576582+00:00"
+    },
+    {
+      "seq": 9,
+      "kind": "read",
+      "op": "read_topic",
+      "request": {
+        "topic_id": "6e3d9085-99fd-43a9-9e2e-fc8c4a88857a"
+      },
+      "started_at": "2026-10-21T17:44:22.576615+00:00",
+      "response": {
+        "id": "6e3d9085-99fd-43a9-9e2e-fc8c4a88857a",
+        "title": "Launch Milestone 1",
+        "summary": null,
+        "topic_kind": "milestone",
+        "salience": 1.0851329607687281,
+        "failed_salience": null,
+        "archived": false,
+        "revision_flag": {
+          "flagged": true,
+          "evidence": {
+            "source_topic_id": "60a0ed96-7cf7-41fc-ba73-a5b8cac6a20b",
+            "updated_field": "Deadline",
+            "updated_fields": [
+              "Deadline"
+            ],
+            "timestamp": "2026-10-21T17:44:22.576527+00:00",
+            "policy": "propagate-on-change"
+          }
+        },
+        "fields": {
+          "Date": {
+            "field_type": "string",
+            "ref_topic_id": null,
+            "current": {
+              "id": "956d16f4-7f89-43d1-a498-91937008d522",
+              "value": "March 20",
+              "provenance": "kickoff-notes",
+              "why_changed": null,
+              "impact_expected": null,
+              "valid_from": "2026-10-21T17:44:22.576372+00:00",
+              "expired_at": null,
+              "source_id": null
+            },
+            "history": [
+              {
+                "id": "956d16f4-7f89-43d1-a498-91937008d522",
+                "value": "March 20",
+                "provenance": "kickoff-notes",
+                "why_changed": null,
+                "impact_expected": null,
+                "valid_from": "2026-10-21T17:44:22.576372+00:00",
+                "expired_at": null,
+                "source_id": null
+              }
+            ],
+            "archived_history": []
+          }
+        },
+        "topic_history": [
+          {
+            "ts": "2026-10-21T17:44:22.576527+00:00",
+            "kind": "flagged",
+            "detail": {
+              "source_topic_id": "60a0ed96-7cf7-41fc-ba73-a5b8cac6a20b",
+              "updated_field": "Deadline",
+              "updated_fields": [
+                "Deadline"
+              ],
+              "timestamp": "2026-10-21T17:44:22.576527+00:00",
+              "policy": "propagate-on-change"
+            }
+          }
+        ],
+        "created_at": "2026-10-21T17:44:22.576372+00:00",
+        "updated_at": "2026-10-21T17:44:22.576387+00:00"
+      },
+      "rejected": null,
+      "error": null,
+      "latency_ms": 0.008,
+      "finished_at": "2026-10-21T17:44:22.576625+00:00"
+    },
+    {
+      "seq": 10,
+      "kind": "read",
+      "op": "read_state",
+      "request": null,
+      "started_at": "2026-10-21T17:44:22.576634+00:00",
+      "response": {
+        "topics": 3,
+        "edges": 2
+      },
+      "rejected": null,
+      "error": null,
+      "latency_ms": 0.025,
+      "finished_at": "2026-10-21T17:44:22.576662+00:00"
+    },
+    {
+      "seq": 11,
+      "kind": "read",
+      "op": "read_topic",
+      "request": {
+        "topic_id": "6e3d9085-99fd-43a9-9e2e-fc8c4a88857a"
+      },
+      "started_at": "2026-10-21T17:44:22.576666+00:00",
+      "response": {
+        "id": "6e3d9085-99fd-43a9-9e2e-fc8c4a88857a",
+        "title": "Launch Milestone 1",
+        "summary": null,
+        "topic_kind": "milestone",
+        "salience": 1.0851329607687281,
+        "failed_salience": null,
+        "archived": false,
+        "revision_flag": {
+          "flagged": true,
+          "evidence": {
+            "source_topic_id": "60a0ed96-7cf7-41fc-ba73-a5b8cac6a20b",
+            "updated_field": "Deadline",
+            "updated_fields": [
+              "Deadline"
+            ],
+            "timestamp": "2026-10-21T17:44:22.576527+00:00",
+            "policy": "propagate-on-change"
+          }
+        },
+        "fields": {
+          "Date": {
+            "field_type": "string",
+            "ref_topic_id": null,
+            "current": {
+              "id": "956d16f4-7f89-43d1-a498-91937008d522",
+              "value": "March 20",
+              "provenance": "kickoff-notes",
+              "why_changed": null,
+              "impact_expected": null,
+              "valid_from": "2026-10-21T17:44:22.576372+00:00",
+              "expired_at": null,
+              "source_id": null
+            },
+            "history": [
+              {
+                "id": "956d16f4-7f89-43d1-a498-91937008d522",
+                "value": "March 20",
+                "provenance": "kickoff-notes",
+                "why_changed": null,
+                "impact_expected": null,
+                "valid_from": "2026-10-21T17:44:22.576372+00:00",
+                "expired_at": null,
+                "source_id": null
+              }
+            ],
+            "archived_history": []
+          }
+        },
+        "topic_history": [
+          {
+            "ts": "2026-10-21T17:44:22.576527+00:00",
+            "kind": "flagged",
+            "detail": {
+              "source_topic_id": "60a0ed96-7cf7-41fc-ba73-a5b8cac6a20b",
+              "updated_field": "Deadline",
+              "updated_fields": [
+                "Deadline"
+              ],
+              "timestamp": "2026-10-21T17:44:22.576527+00:00",
+              "policy": "propagate-on-change"
+            }
+          }
+        ],
+        "created_at": "2026-10-21T17:44:22.576372+00:00",
+        "updated_at": "2026-10-21T17:44:22.576387+00:00"
+      },
+      "rejected": null,
+      "error": null,
+      "latency_ms": 0.007,
+      "finished_at": "2026-10-21T17:44:22.576676+00:00"
+    },
+    {
+      "seq": 12,
+      "kind": "read",
+      "op": "read_topic",
+      "request": {
+        "topic_id": "d4d92d19-9a7f-4aea-bfaa-609c3d006ba1"
+      },
+      "started_at": "2026-10-21T17:44:22.576678+00:00",
+      "response": {
+        "id": "d4d92d19-9a7f-4aea-bfaa-609c3d006ba1",
+        "title": "Style Guide 1",
+        "summary": null,
+        "topic_kind": "document",
+        "salience": 0.985132960768728,
+        "failed_salience": null,
+        "archived": false,
+        "revision_flag": {
+          "flagged": false
+        },
+        "fields": {
+          "Version": {
+            "field_type": "string",
+            "ref_topic_id": null,
+            "current": {
+              "id": "c7eaa139-61ff-41e4-bfa3-3cda95b6c265",
+              "value": "1",
+              "provenance": "kickoff-notes",
+              "why_changed": null,
+              "impact_expected": null,
+              "valid_from": "2026-10-21T17:44:22.576409+00:00",
+              "expired_at": null,
+              "source_id": null
+            },
+            "history": [
+              {
+                "id": "c7eaa139-61ff-41e4-bfa3-3cda95b6c265",
+                "value": "1",
+                "provenance": "kickoff-notes",
+                "why_changed": null,
+                "impact_expected": null,
+                "valid_from": "2026-10-21T17:44:22.576409+00:00",
+                "expired_at": null,
+                "source_id": null
+              }
+            ],
+            "archived_history": []
+          }
+        },
+        "topic_history": [],
+        "created_at": "2026-10-21T17:44:22.576409+00:00",
+        "updated_at": "2026-10-21T17:44:22.576422+00:00"
+      },
+      "rejected": null,
+      "error": null,
+      "latency_ms": 0.006,
+      "finished_at": "2026-10-21T17:44:22.576686+00:00"
+    },
+    {
+      "seq": 14,
+      "kind": "read",
+      "op": "read_topic",
+      "request": {
+        "topic_id": "6e3d9085-99fd-43a9-9e2e-fc8c4a88857a"
+      },
+      "started_at": "2026-10-21T17:44:22.576729+00:00",
+      "response": {
+        "id": "6e3d9085-99fd-43a9-9e2e-fc8c4a88857a",
+        "title": "Launch Milestone 1",
+        "summary": null,
+        "topic_kind": "milestone",
+        "salience": 1.0851329607687281,
+        "failed_salience": null,
+        "archived": false,
+        "revision_flag": {
+          "flagged": false
+        },
+        "fields": {
+          "Date": {
+            "field_type": "string",
+            "ref_topic_id": null,
+            "current": {
+              "id": "310dc0c7-9f8f-46fc-83c3-3b7aa2a8f881",
+              "value": "April 25",
+              "provenance": "pm-email",
+              "why_changed": "re-checked after A moved",
+              "impact_expected": null,
+              "valid_from": "2026-10-21T17:44:22.576691+00:00",
+              "expired_at": null,
+              "source_id": null
+            },
+            "history": [
+              {
+                "id": "310dc0c7-9f8f-46fc-83c3-3b7aa2a8f881",
+                "value": "April 25",
+                "provenance": "pm-email",
+                "why_changed": "re-checked after A moved",
+                "impact_expected": null,
+                "valid_from": "2026-10-21T17:44:22.576691+00:00",
+                "expired_at": null,
+                "source_id": null
+              },
+              {
+                "id": "956d16f4-7f89-43d1-a498-91937008d522",
+                "value": "March 20",
+                "provenance": "kickoff-notes",
+                "why_changed": null,
+                "impact_expected": null,
+                "valid_from": "2026-10-21T17:44:22.576372+00:00",
+                "expired_at": null,
+                "source_id": null
+              }
+            ],
+            "archived_history": []
+          }
+        },
+        "topic_history": [
+          {
+            "ts": "2026-10-21T17:44:22.576527+00:00",
+            "kind": "flagged",
+            "detail": {
+              "source_topic_id": "60a0ed96-7cf7-41fc-ba73-a5b8cac6a20b",
+              "updated_field": "Deadline",
+              "updated_fields": [
+                "Deadline"
+              ],
+              "timestamp": "2026-10-21T17:44:22.576527+00:00",
+              "policy": "propagate-on-change"
+            }
+          }
+        ],
+        "created_at": "2026-10-21T17:44:22.576372+00:00",
+        "updated_at": "2026-10-21T17:44:22.576709+00:00"
+      },
+      "rejected": null,
+      "error": null,
+      "latency_ms": 0.011,
+      "finished_at": "2026-10-21T17:44:22.576742+00:00"
+    },
+    {
+      "seq": 15,
+      "kind": "read",
+      "op": "read_topic",
+      "request": {
+        "topic_id": "60a0ed96-7cf7-41fc-ba73-a5b8cac6a20b"
+      },
+      "started_at": "2026-10-21T17:44:22.576746+00:00",
+      "response": {
+        "id": "60a0ed96-7cf7-41fc-ba73-a5b8cac6a20b",
+        "title": "Website Redesign 1",
+        "summary": null,
+        "topic_kind": "project",
+        "salience": 0.9704869503929603,
+        "failed_salience": null,
+        "archived": false,
+        "revision_flag": {
+          "flagged": true,
+          "evidence": {
+            "source_topic_id": "6e3d9085-99fd-43a9-9e2e-fc8c4a88857a",
+            "updated_field": "Date",
+            "updated_fields": [
+              "Date"
+            ],
+            "timestamp": "2026-10-21T17:44:22.576709+00:00",
+            "policy": "propagate-on-change"
+          }
+        },
+        "fields": {
+          "Deadline": {
+            "field_type": "string",
+            "ref_topic_id": null,
+            "current": {
+              "id": "15dab0cb-a157-42a0-865d-6e89fc5abfae",
+              "value": "April 20",
+              "provenance": "pm-email",
+              "why_changed": "vendor delay",
+              "impact_expected": null,
+              "valid_from": "2026-10-21T17:44:22.576507+00:00",
+              "expired_at": null,
+              "source_id": null
+            },
+            "history": [
+              {
+                "id": "15dab0cb-a157-42a0-865d-6e89fc5abfae",
+                "value": "April 20",
+                "provenance": "pm-email",
+                "why_changed": "vendor delay",
+                "impact_expected": null,
+                "valid_from": "2026-10-21T17:44:22.576507+00:00",
+                "expired_at": null,
+                "source_id": null
+              },
+              {
+                "id": "736b0313-01cc-4277-b2ae-b69a49b711dc",
+                "value": "March 15",
+                "provenance": "kickoff-notes",
+                "why_changed": null,
+                "impact_expected": null,
+                "valid_from": "2026-10-21T17:44:22.576318+00:00",
+                "expired_at": null,
+                "source_id": null
+              }
+            ],
+            "archived_history": []
+          }
+        },
+        "topic_history": [
+          {
+            "ts": "2026-10-21T17:44:22.576709+00:00",
+            "kind": "flagged",
+            "detail": {
+              "source_topic_id": "6e3d9085-99fd-43a9-9e2e-fc8c4a88857a",
+              "updated_field": "Date",
+              "updated_fields": [
+                "Date"
+              ],
+              "timestamp": "2026-10-21T17:44:22.576709+00:00",
+              "policy": "propagate-on-change"
+            }
+          }
+        ],
+        "created_at": "2026-10-21T17:44:22.576318+00:00",
+        "updated_at": "2026-10-21T17:44:22.576527+00:00"
+      },
+      "rejected": null,
+      "error": null,
+      "latency_ms": 0.01,
+      "finished_at": "2026-10-21T17:44:22.576759+00:00"
+    },
+    {
+      "seq": 22,
+      "kind": "read",
+      "op": "read_state",
+      "request": null,
+      "started_at": "2026-10-21T17:44:22.576924+00:00",
+      "response": {
+        "topics": 6,
+        "edges": 4
+      },
+      "rejected": null,
+      "error": null,
+      "latency_ms": 0.051,
+      "finished_at": "2026-10-21T17:44:22.576978+00:00"
+    },
+    {
+      "seq": 23,
+      "kind": "read",
+      "op": "read_topic",
+      "request": {
+        "topic_id": "217aef52-c7cd-488d-8e84-faa28e1c3eef"
+      },
+      "started_at": "2026-10-21T17:44:22.576983+00:00",
+      "response": {
+        "id": "217aef52-c7cd-488d-8e84-faa28e1c3eef",
+        "title": "Launch Milestone 2",
+        "summary": null,
+        "topic_kind": "milestone",
+        "salience": 0.9777825335052935,
+        "failed_salience": null,
+        "archived": false,
+        "revision_flag": {
+          "flagged": false
+        },
+        "fields": {
+          "Date": {
+            "field_type": "string",
+            "ref_topic_id": null,
+            "current": {
+              "id": "61172c45-bbb0-4da7-9129-df6bd5905872",
+              "value": "March 20",
+              "provenance": "kickoff-notes",
+              "why_changed": null,
+              "impact_expected": null,
+              "valid_from": "2026-10-21T17:44:22.576826+00:00",
+              "expired_at": null,
+              "source_id": null
+            },
+            "history": [
+              {
+                "id": "61172c45-bbb0-4da7-9129-df6bd5905872",
+                "value": "March 20",
+                "provenance": "kickoff-notes",
+                "why_changed": null,
+                "impact_expected": null,
+                "valid_from": "2026-10-21T17:44:22.576826+00:00",
+                "expired_at": null,
+                "source_id": null
+              }
+            ],
+            "archived_history": []
+          }
+        },
+        "topic_history": [],
+        "created_at": "2026-10-21T17:44:22.576826+00:00",
+        "updated_at": "2026-10-21T17:44:22.576838+00:00"
+      },
+      "rejected": null,
+      "error": null,
+      "latency_ms": 0.008,
+      "finished_at": "2026-10-21T17:44:22.576993+00:00"
+    },
+    {
+      "seq": 25,
+      "kind": "read",
+      "op": "read_state",
+      "request": null,
+      "started_at": "2026-10-21T17:44:22.577047+00:00",
+      "response": {
+        "topics": 6,
+        "edges": 4
+      },
+      "rejected": null,
+      "error": null,
+      "latency_ms": 0.051,
+      "finished_at": "2026-10-21T17:44:22.577100+00:00"
+    },
+    {
+      "seq": 28,
+      "kind": "read",
+      "op": "read_topic",
+      "request": {
+        "topic_id": "217aef52-c7cd-488d-8e84-faa28e1c3eef"
+      },
+      "started_at": "2026-10-21T17:44:22.577129+00:00",
+      "response": {
+        "id": "217aef52-c7cd-488d-8e84-faa28e1c3eef",
+        "title": "Launch Milestone 2",
+        "summary": null,
+        "topic_kind": "milestone",
+        "salience": 1.0704869503929602,
+        "failed_salience": null,
+        "archived": false,
+        "revision_flag": {
+          "flagged": true,
+          "evidence": {
+            "source_topic_id": "5a5e1381-b5b3-451a-a205-b83e41e7a7e7",
+            "updated_field": "Deadline",
+            "updated_fields": [
+              "Deadline"
+            ],
+            "timestamp": "2026-10-21T17:44:22.577026+00:00",
+            "policy": "propagate-on-change"
+          }
+        },
+        "fields": {
+          "Date": {
+            "field_type": "string",
+            "ref_topic_id": null,
+            "current": {
+              "id": "61172c45-bbb0-4da7-9129-df6bd5905872",
+              "value": "March 20",
+              "provenance": "kickoff-notes",
+              "why_changed": null,
+              "impact_expected": null,
+              "valid_from": "2026-10-21T17:44:22.576826+00:00",
+              "expired_at": null,
+              "source_id": null
+            },
+            "history": [
+              {
+                "id": "61172c45-bbb0-4da7-9129-df6bd5905872",
+                "value": "March 20",
+                "provenance": "kickoff-notes",
+                "why_changed": null,
+                "impact_expected": null,
+                "valid_from": "2026-10-21T17:44:22.576826+00:00",
+                "expired_at": null,
+                "source_id": null
+              }
+            ],
+            "archived_history": []
+          }
+        },
+        "topic_history": [
+          {
+            "ts": "2026-10-21T17:44:22.577026+00:00",
+            "kind": "flagged",
+            "detail": {
+              "source_topic_id": "5a5e1381-b5b3-451a-a205-b83e41e7a7e7",
+              "updated_field": "Deadline",
+              "updated_fields": [
+                "Deadline"
+              ],
+              "timestamp": "2026-10-21T17:44:22.577026+00:00",
+              "policy": "propagate-on-change"
+            }
+          }
+        ],
+        "created_at": "2026-10-21T17:44:22.576826+00:00",
+        "updated_at": "2026-10-21T17:44:22.576838+00:00"
+      },
+      "rejected": null,
+      "error": null,
+      "latency_ms": 0.008,
+      "finished_at": "2026-10-21T17:44:22.577138+00:00"
+    },
+    {
+      "seq": 29,
+      "kind": "read",
+      "op": "read_state",
+      "request": null,
+      "started_at": "2026-10-21T17:44:22.577145+00:00",
+      "response": {
+        "topics": 6,
+        "edges": 4
+      },
+      "rejected": null,
+      "error": null,
+      "latency_ms": 0.063,
+      "finished_at": "2026-10-21T17:44:22.577210+00:00"
+    },
+    {
+      "seq": 30,
+      "kind": "read",
+      "op": "read_topic",
+      "request": {
+        "topic_id": "217aef52-c7cd-488d-8e84-faa28e1c3eef"
+      },
+      "started_at": "2026-10-21T17:44:22.577221+00:00",
+      "response": {
+        "id": "217aef52-c7cd-488d-8e84-faa28e1c3eef",
+        "title": "Launch Milestone 2",
+        "summary": null,
+        "topic_kind": "milestone",
+        "salience": 1.0704869503929602,
+        "failed_salience": null,
+        "archived": false,
+        "revision_flag": {
+          "flagged": true,
+          "evidence": {
+            "source_topic_id": "5a5e1381-b5b3-451a-a205-b83e41e7a7e7",
+            "updated_field": "Deadline",
+            "updated_fields": [
+              "Deadline"
+            ],
+            "timestamp": "2026-10-21T17:44:22.577026+00:00",
+            "policy": "propagate-on-change"
+          }
+        },
+        "fields": {
+          "Date": {
+            "field_type": "string",
+            "ref_topic_id": null,
+            "current": {
+              "id": "61172c45-bbb0-4da7-9129-df6bd5905872",
+              "value": "March 20",
+              "provenance": "kickoff-notes",
+              "why_changed": null,
+              "impact_expected": null,
+              "valid_from": "2026-10-21T17:44:22.576826+00:00",
+              "expired_at": null,
+              "source_id": null
+            },
+            "history": [
+              {
+                "id": "61172c45-bbb0-4da7-9129-df6bd5905872",
+                "value": "March 20",
+                "provenance": "kickoff-notes",
+                "why_changed": null,
+                "impact_expected": null,
+                "valid_from": "2026-10-21T17:44:22.576826+00:00",
+                "expired_at": null,
+                "source_id": null
+              }
+            ],
+            "archived_history": []
+          }
+        },
+        "topic_history": [
+          {
+            "ts": "2026-10-21T17:44:22.577026+00:00",
+            "kind": "flagged",
+            "detail": {
+              "source_topic_id": "5a5e1381-b5b3-451a-a205-b83e41e7a7e7",
+              "updated_field": "Deadline",
+              "updated_fields": [
+                "Deadline"
+              ],
+              "timestamp": "2026-10-21T17:44:22.577026+00:00",
+              "policy": "propagate-on-change"
+            }
+          }
+        ],
+        "created_at": "2026-10-21T17:44:22.576826+00:00",
+        "updated_at": "2026-10-21T17:44:22.576838+00:00"
+      },
+      "rejected": null,
+      "error": null,
+      "latency_ms": 0.008,
+      "finished_at": "2026-10-21T17:44:22.577231+00:00"
+    },
+    {
+      "seq": 31,
+      "kind": "read",
+      "op": "read_topic",
+      "request": {
+        "topic_id": "1c888fdc-87cf-4c34-a6c0-93a64d6dfa68"
+      },
+      "started_at": "2026-10-21T17:44:22.577233+00:00",
+      "response": {
+        "id": "1c888fdc-87cf-4c34-a6c0-93a64d6dfa68",
+        "title": "Style Guide 2",
+        "summary": null,
+        "topic_kind": "document",
+        "salience": 0.9777825335052935,
+        "failed_salience": null,
+        "archived": false,
+        "revision_flag": {
+          "flagged": false
+        },
+        "fields": {
+          "Version": {
+            "field_type": "string",
+            "ref_topic_id": null,
+            "current": {
+              "id": "d159d6db-b78e-40c5-8284-c749678a1e55",
+              "value": "1",
+              "provenance": "kickoff-notes",
+              "why_changed": null,
+              "impact_expected": null,
+              "valid_from": "2026-10-21T17:44:22.576878+00:00",
+              "expired_at": null,
+              "source_id": null
+            },
+            "history": [
+              {
+                "id": "d159d6db-b78e-40c5-8284-c749678a1e55",
+                "value": "1",
+                "provenance": "kickoff-notes",
+                "why_changed": null,
+                "impact_expected": null,
+                "valid_from": "2026-10-21T17:44:22.576878+00:00",
+                "expired_at": null,
+                "source_id": null
+              }
+            ],
+            "archived_history": []
+          }
+        },
+        "topic_history": [],
+        "created_at": "2026-10-21T17:44:22.576878+00:00",
+        "updated_at": "2026-10-21T17:44:22.576890+00:00"
+      },
+      "rejected": null,
+      "error": null,
+      "latency_ms": 0.007,
+      "finished_at": "2026-10-21T17:44:22.577242+00:00"
+    },
+    {
+      "seq": 33,
+      "kind": "read",
+      "op": "read_topic",
+      "request": {
+        "topic_id": "217aef52-c7cd-488d-8e84-faa28e1c3eef"
+      },
+      "started_at": "2026-10-21T17:44:22.577283+00:00",
+      "response": {
+        "id": "217aef52-c7cd-488d-8e84-faa28e1c3eef",
+        "title": "Launch Milestone 2",
+        "summary": null,
+        "topic_kind": "milestone",
+        "salience": 1.0704869503929602,
+        "failed_salience": null,
+        "archived": false,
+        "revision_flag": {
+          "flagged": false
+        },
+        "fields": {
+          "Date": {
+            "field_type": "string",
+            "ref_topic_id": null,
+            "current": {
+              "id": "cbd5bbfc-6472-4480-88dc-ff8ba6498a24",
+              "value": "April 25",
+              "provenance": "pm-email",
+              "why_changed": "re-checked after A moved",
+              "impact_expected": null,
+              "valid_from": "2026-10-21T17:44:22.577247+00:00",
+              "expired_at": null,
+              "source_id": null
+            },
+            "history": [
+              {
+                "id": "cbd5bbfc-6472-4480-88dc-ff8ba6498a24",
+                "value": "April 25",
+                "provenance": "pm-email",
+                "why_changed": "re-checked after A moved",
+                "impact_expected": null,
+                "valid_from": "2026-10-21T17:44:22.577247+00:00",
+                "expired_at": null,
+                "source_id": null
+              },
+              {
+                "id": "61172c45-bbb0-4da7-9129-df6bd5905872",
+                "value": "March 20",
+                "provenance": "kickoff-notes",
+                "why_changed": null,
+                "impact_expected": null,
+                "valid_from": "2026-10-21T17:44:22.576826+00:00",
+                "expired_at": null,
+                "source_id": null
+              }
+            ],
+            "archived_history": []
+          }
+        },
+        "topic_history": [
+          {
+            "ts": "2026-10-21T17:44:22.577026+00:00",
+            "kind": "flagged",
+            "detail": {
+              "source_topic_id": "5a5e1381-b5b3-451a-a205-b83e41e7a7e7",
+              "updated_field": "Deadline",
+              "updated_fields": [
+                "Deadline"
+              ],
+              "timestamp": "2026-10-21T17:44:22.577026+00:00",
+              "policy": "propagate-on-change"
+            }
+          }
+        ],
+        "created_at": "2026-10-21T17:44:22.576826+00:00",
+        "updated_at": "2026-10-21T17:44:22.577262+00:00"
+      },
+      "rejected": null,
+      "error": null,
+      "latency_ms": 0.011,
+      "finished_at": "2026-10-21T17:44:22.577296+00:00"
+    },
+    {
+      "seq": 34,
+      "kind": "read",
+      "op": "read_topic",
+      "request": {
+        "topic_id": "5a5e1381-b5b3-451a-a205-b83e41e7a7e7"
+      },
+      "started_at": "2026-10-21T17:44:22.577299+00:00",
+      "response": {
+        "id": "5a5e1381-b5b3-451a-a205-b83e41e7a7e7",
+        "title": "Website Redesign 2",
+        "summary": null,
+        "topic_kind": "project",
+        "salience": 0.9704869503929603,
+        "failed_salience": null,
+        "archived": false,
+        "revision_flag": {
+          "flagged": true,
+          "evidence": {
+            "source_topic_id": "217aef52-c7cd-488d-8e84-faa28e1c3eef",
+            "updated_field": "Date",
+            "updated_fields": [
+              "Date"
+            ],
+            "timestamp": "2026-10-21T17:44:22.577262+00:00",
+            "policy": "propagate-on-change"
+          }
+        },
+        "fields": {
+          "Deadline": {
+            "field_type": "string",
+            "ref_topic_id": null,
+            "current": {
+              "id": "7c26f330-878a-4b00-bd62-db016280f625",
+              "value": "April 20",
+              "provenance": "pm-email",
+              "why_changed": "vendor delay",
+              "impact_expected": null,
+              "valid_from": "2026-10-21T17:44:22.577011+00:00",
+              "expired_at": null,
+              "source_id": null
+            },
+            "history": [
+              {
+                "id": "7c26f330-878a-4b00-bd62-db016280f625",
+                "value": "April 20",
+                "provenance": "pm-email",
+                "why_changed": "vendor delay",
+                "impact_expected": null,
+                "valid_from": "2026-10-21T17:44:22.577011+00:00",
+                "expired_at": null,
+                "source_id": null
+              },
+              {
+                "id": "db31a73c-1c75-4a81-bb20-2dc8aa16c17c",
+                "value": "March 15",
+                "provenance": "kickoff-notes",
+                "why_changed": null,
+                "impact_expected": null,
+                "valid_from": "2026-10-21T17:44:22.576795+00:00",
+                "expired_at": null,
+                "source_id": null
+              }
+            ],
+            "archived_history": []
+          }
+        },
+        "topic_history": [
+          {
+            "ts": "2026-10-21T17:44:22.577262+00:00",
+            "kind": "flagged",
+            "detail": {
+              "source_topic_id": "217aef52-c7cd-488d-8e84-faa28e1c3eef",
+              "updated_field": "Date",
+              "updated_fields": [
+                "Date"
+              ],
+              "timestamp": "2026-10-21T17:44:22.577262+00:00",
+              "policy": "propagate-on-change"
+            }
+          }
+        ],
+        "created_at": "2026-10-21T17:44:22.576795+00:00",
+        "updated_at": "2026-10-21T17:44:22.577026+00:00"
+      },
+      "rejected": null,
+      "error": null,
+      "latency_ms": 0.009,
+      "finished_at": "2026-10-21T17:44:22.577311+00:00"
+    },
+    {
+      "seq": 36,
+      "kind": "read",
+      "op": "read_state",
+      "request": null,
+      "started_at": "2026-10-21T17:44:22.577429+00:00",
+      "response": {
+        "topics": 6,
+        "edges": 4
+      },
+      "rejected": null,
+      "error": null,
+      "latency_ms": 0.053,
+      "finished_at": "2026-10-21T17:44:22.577485+00:00"
+    }
+  ],
+  "waits": [
+    {
+      "seq": 8,
+      "kind": "wait",
+      "op": "wait_until",
+      "request": {
+        "timeout_s": 14.99994024100306,
+        "interval_s": 0.1
+      },
+      "started_at": "2026-10-21T17:44:22.576612+00:00",
+      "response": {
+        "elapsed_s": 0.0,
+        "timed_out": false
+      },
+      "rejected": null,
+      "error": null,
+      "latency_ms": 0.015,
+      "finished_at": "2026-10-21T17:44:22.576629+00:00"
+    },
+    {
+      "seq": 27,
+      "kind": "wait",
+      "op": "wait_until",
+      "request": {
+        "timeout_s": 14.999921302005532,
+        "interval_s": 0.1
+      },
+      "started_at": "2026-10-21T17:44:22.577126+00:00",
+      "response": {
+        "elapsed_s": 0.0,
+        "timed_out": false
+      },
+      "rejected": null,
+      "error": null,
+      "latency_ms": 0.013,
+      "finished_at": "2026-10-21T17:44:22.577142+00:00"
+    }
+  ],
+  "state": {
+    "topics": {
+      "60a0ed96-7cf7-41fc-ba73-a5b8cac6a20b": {
+        "id": "60a0ed96-7cf7-41fc-ba73-a5b8cac6a20b",
+        "title": "Website Redesign 1",
+        "summary": null,
+        "topic_kind": "project",
+        "salience": 0.9004590144876985,
+        "failed_salience": null,
+        "archived": false,
+        "revision_flag": {
+          "flagged": true,
+          "evidence": {
+            "source_topic_id": "6e3d9085-99fd-43a9-9e2e-fc8c4a88857a",
+            "updated_field": "Date",
+            "updated_fields": [
+              "Date"
+            ],
+            "timestamp": "2026-10-21T17:44:22.576709+00:00",
+            "policy": "propagate-on-change"
+          }
+        },
+        "fields": {
+          "Deadline": {
+            "field_type": "string",
+            "ref_topic_id": null,
+            "current": {
+              "id": "15dab0cb-a157-42a0-865d-6e89fc5abfae",
+              "value": "April 20",
+              "provenance": "pm-email",
+              "why_changed": "vendor delay",
+              "impact_expected": null,
+              "valid_from": "2026-10-21T17:44:22.576507+00:00",
+              "expired_at": null,
+              "source_id": null
+            },
+            "history": [
+              {
+                "id": "15dab0cb-a157-42a0-865d-6e89fc5abfae",
+                "value": "April 20",
+                "provenance": "pm-email",
+                "why_changed": "vendor delay",
+                "impact_expected": null,
+                "valid_from": "2026-10-21T17:44:22.576507+00:00",
+                "expired_at": null,
+                "source_id": null
+              },
+              {
+                "id": "736b0313-01cc-4277-b2ae-b69a49b711dc",
+                "value": "March 15",
+                "provenance": "kickoff-notes",
+                "why_changed": null,
+                "impact_expected": null,
+                "valid_from": "2026-10-21T17:44:22.576318+00:00",
+                "expired_at": null,
+                "source_id": null
+              }
+            ],
+            "archived_history": []
+          }
+        },
+        "topic_history": [
+          {
+            "ts": "2026-10-21T17:44:22.576709+00:00",
+            "kind": "flagged",
+            "detail": {
+              "source_topic_id": "6e3d9085-99fd-43a9-9e2e-fc8c4a88857a",
+              "updated_field": "Date",
+              "updated_fields": [
+                "Date"
+              ],
+              "timestamp": "2026-10-21T17:44:22.576709+00:00",
+              "policy": "propagate-on-change"
+            }
+          }
+        ],
+        "created_at": "2026-10-21T17:44:22.576318+00:00",
+        "updated_at": "2026-10-21T17:44:22.576527+00:00"
+      },
+      "6e3d9085-99fd-43a9-9e2e-fc8c4a88857a": {
+        "id": "6e3d9085-99fd-43a9-9e2e-fc8c4a88857a",
+        "title": "Launch Milestone 1",
+        "summary": null,
+        "topic_kind": "milestone",
+        "salience": 1.1078830091251652,
+        "failed_salience": null,
+        "archived": false,
+        "revision_flag": {
+          "flagged": false
+        },
+        "fields": {
+          "Date": {
+            "field_type": "string",
+            "ref_topic_id": null,
+            "current": {
+              "id": "310dc0c7-9f8f-46fc-83c3-3b7aa2a8f881",
+              "value": "April 25",
+              "provenance": "pm-email",
+              "why_changed": "re-checked after A moved",
+              "impact_expected": null,
+              "valid_from": "2026-10-21T17:44:22.576691+00:00",
+              "expired_at": null,
+              "source_id": null
+            },
+            "history": [
+              {
+                "id": "310dc0c7-9f8f-46fc-83c3-3b7aa2a8f881",
+                "value": "April 25",
+                "provenance": "pm-email",
+                "why_changed": "re-checked after A moved",
+                "impact_expected": null,
+                "valid_from": "2026-10-21T17:44:22.576691+00:00",
+                "expired_at": null,
+                "source_id": null
+              },
+              {
+                "id": "956d16f4-7f89-43d1-a498-91937008d522",
+                "value": "March 20",
+                "provenance": "kickoff-notes",
+                "why_changed": null,
+                "impact_expected": null,
+                "valid_from": "2026-10-21T17:44:22.576372+00:00",
+                "expired_at": null,
+                "source_id": null
+              }
+            ],
+            "archived_history": []
+          }
+        },
+        "topic_history": [
+          {
+            "ts": "2026-10-21T17:44:22.576527+00:00",
+            "kind": "flagged",
+            "detail": {
+              "source_topic_id": "60a0ed96-7cf7-41fc-ba73-a5b8cac6a20b",
+              "updated_field": "Deadline",
+              "updated_fields": [
+                "Deadline"
+              ],
+              "timestamp": "2026-10-21T17:44:22.576527+00:00",
+              "policy": "propagate-on-change"
+            }
+          }
+        ],
+        "created_at": "2026-10-21T17:44:22.576372+00:00",
+        "updated_at": "2026-10-21T17:44:22.576709+00:00"
+      },
+      "d4d92d19-9a7f-4aea-bfaa-609c3d006ba1": {
+        "id": "d4d92d19-9a7f-4aea-bfaa-609c3d006ba1",
+        "title": "Style Guide 1",
+        "summary": null,
+        "topic_kind": "document",
+        "salience": 0.9072281663828217,
+        "failed_salience": null,
+        "archived": false,
+        "revision_flag": {
+          "flagged": false
+        },
+        "fields": {
+          "Version": {
+            "field_type": "string",
+            "ref_topic_id": null,
+            "current": {
+              "id": "c7eaa139-61ff-41e4-bfa3-3cda95b6c265",
+              "value": "1",
+              "provenance": "kickoff-notes",
+              "why_changed": null,
+              "impact_expected": null,
+              "valid_from": "2026-10-21T17:44:22.576409+00:00",
+              "expired_at": null,
+              "source_id": null
+            },
+            "history": [
+              {
+                "id": "c7eaa139-61ff-41e4-bfa3-3cda95b6c265",
+                "value": "1",
+                "provenance": "kickoff-notes",
+                "why_changed": null,
+                "impact_expected": null,
+                "valid_from": "2026-10-21T17:44:22.576409+00:00",
+                "expired_at": null,
+                "source_id": null
+              }
+            ],
+            "archived_history": []
+          }
+        },
+        "topic_history": [],
+        "created_at": "2026-10-21T17:44:22.576409+00:00",
+        "updated_at": "2026-10-21T17:44:22.576422+00:00"
+      },
+      "5a5e1381-b5b3-451a-a205-b83e41e7a7e7": {
+        "id": "5a5e1381-b5b3-451a-a205-b83e41e7a7e7",
+        "title": "Website Redesign 2",
+        "summary": null,
+        "topic_kind": "project",
+        "salience": 0.9632458022200179,
+        "failed_salience": null,
+        "archived": false,
+        "revision_flag": {
+          "flagged": true,
+          "evidence": {
+            "source_topic_id": "217aef52-c7cd-488d-8e84-faa28e1c3eef",
+            "updated_field": "Date",
+            "updated_fields": [
+              "Date"
+            ],
+            "timestamp": "2026-10-21T17:44:22.577262+00:00",
+            "policy": "propagate-on-change"
+          }
+        },
+        "fields": {
+          "Deadline": {
+            "field_type": "string",
+            "ref_topic_id": null,
+            "current": {
+              "id": "7c26f330-878a-4b00-bd62-db016280f625",
+              "value": "April 20",
+              "provenance": "pm-email",
+              "why_changed": "vendor delay",
+              "impact_expected": null,
+              "valid_from": "2026-10-21T17:44:22.577011+00:00",
+              "expired_at": null,
+              "source_id": null
+            },
+            "history": [
+              {
+                "id": "7c26f330-878a-4b00-bd62-db016280f625",
+                "value": "April 20",
+                "provenance": "pm-email",
+                "why_changed": "vendor delay",
+                "impact_expected": null,
+                "valid_from": "2026-10-21T17:44:22.577011+00:00",
+                "expired_at": null,
+                "source_id": null
+              },
+              {
+                "id": "db31a73c-1c75-4a81-bb20-2dc8aa16c17c",
+                "value": "March 15",
+                "provenance": "kickoff-notes",
+                "why_changed": null,
+                "impact_expected": null,
+                "valid_from": "2026-10-21T17:44:22.576795+00:00",
+                "expired_at": null,
+                "source_id": null
+              }
+            ],
+            "archived_history": []
+          }
+        },
+        "topic_history": [
+          {
+            "ts": "2026-10-21T17:44:22.577262+00:00",
+            "kind": "flagged",
+            "detail": {
+              "source_topic_id": "217aef52-c7cd-488d-8e84-faa28e1c3eef",
+              "updated_field": "Date",
+              "updated_fields": [
+                "Date"
+              ],
+              "timestamp": "2026-10-21T17:44:22.577262+00:00",
+              "policy": "propagate-on-change"
+            }
+          }
+        ],
+        "created_at": "2026-10-21T17:44:22.576795+00:00",
+        "updated_at": "2026-10-21T17:44:22.577026+00:00"
+      },
+      "217aef52-c7cd-488d-8e84-faa28e1c3eef": {
+        "id": "217aef52-c7cd-488d-8e84-faa28e1c3eef",
+        "title": "Launch Milestone 2",
+        "summary": null,
+        "topic_kind": "milestone",
+        "salience": 1.1704869503929602,
+        "failed_salience": null,
+        "archived": false,
+        "revision_flag": {
+          "flagged": false
+        },
+        "fields": {
+          "Date": {
+            "field_type": "string",
+            "ref_topic_id": null,
+            "current": {
+              "id": "cbd5bbfc-6472-4480-88dc-ff8ba6498a24",
+              "value": "April 25",
+              "provenance": "pm-email",
+              "why_changed": "re-checked after A moved",
+              "impact_expected": null,
+              "valid_from": "2026-10-21T17:44:22.577247+00:00",
+              "expired_at": null,
+              "source_id": null
+            },
+            "history": [
+              {
+                "id": "cbd5bbfc-6472-4480-88dc-ff8ba6498a24",
+                "value": "April 25",
+                "provenance": "pm-email",
+                "why_changed": "re-checked after A moved",
+                "impact_expected": null,
+                "valid_from": "2026-10-21T17:44:22.577247+00:00",
+                "expired_at": null,
+                "source_id": null
+              },
+              {
+                "id": "61172c45-bbb0-4da7-9129-df6bd5905872",
+                "value": "March 20",
+                "provenance": "kickoff-notes",
+                "why_changed": null,
+                "impact_expected": null,
+                "valid_from": "2026-10-21T17:44:22.576826+00:00",
+                "expired_at": null,
+                "source_id": null
+              }
+            ],
+            "archived_history": []
+          }
+        },
+        "topic_history": [
+          {
+            "ts": "2026-10-21T17:44:22.577026+00:00",
+            "kind": "flagged",
+            "detail": {
+              "source_topic_id": "5a5e1381-b5b3-451a-a205-b83e41e7a7e7",
+              "updated_field": "Deadline",
+              "updated_fields": [
+                "Deadline"
+              ],
+              "timestamp": "2026-10-21T17:44:22.577026+00:00",
+              "policy": "propagate-on-change"
+            }
+          }
+        ],
+        "created_at": "2026-10-21T17:44:22.576826+00:00",
+        "updated_at": "2026-10-21T17:44:22.577262+00:00"
+      },
+      "1c888fdc-87cf-4c34-a6c0-93a64d6dfa68": {
+        "id": "1c888fdc-87cf-4c34-a6c0-93a64d6dfa68",
+        "title": "Style Guide 2",
+        "summary": null,
+        "topic_kind": "document",
+        "salience": 0.9632458022200179,
+        "failed_salience": null,
+        "archived": false,
+        "revision_flag": {
+          "flagged": false
+        },
+        "fields": {
+          "Version": {
+            "field_type": "string",
+            "ref_topic_id": null,
+            "current": {
+              "id": "d159d6db-b78e-40c5-8284-c749678a1e55",
+              "value": "1",
+              "provenance": "kickoff-notes",
+              "why_changed": null,
+              "impact_expected": null,
+              "valid_from": "2026-10-21T17:44:22.576878+00:00",
+              "expired_at": null,
+              "source_id": null
+            },
+            "history": [
+              {
+                "id": "d159d6db-b78e-40c5-8284-c749678a1e55",
+                "value": "1",
+                "provenance": "kickoff-notes",
+                "why_changed": null,
+                "impact_expected": null,
+                "valid_from": "2026-10-21T17:44:22.576878+00:00",
+                "expired_at": null,
+                "source_id": null
+              }
+            ],
+            "archived_history": []
+          }
+        },
+        "topic_history": [],
+        "created_at": "2026-10-21T17:44:22.576878+00:00",
+        "updated_at": "2026-10-21T17:44:22.576890+00:00"
+      }
+    },
+    "edges": [
+      {
+        "from": "6e3d9085-99fd-43a9-9e2e-fc8c4a88857a",
+        "to": "60a0ed96-7cf7-41fc-ba73-a5b8cac6a20b",
+        "kind": "extension"
+      },
+      {
+        "from": "d4d92d19-9a7f-4aea-bfaa-609c3d006ba1",
+        "to": "60a0ed96-7cf7-41fc-ba73-a5b8cac6a20b",
+        "kind": "association"
+      },
+      {
+        "from": "5a5e1381-b5b3-451a-a205-b83e41e7a7e7",
+        "to": "217aef52-c7cd-488d-8e84-faa28e1c3eef",
+        "kind": "extension"
+      },
+      {
+        "from": "5a5e1381-b5b3-451a-a205-b83e41e7a7e7",
+        "to": "1c888fdc-87cf-4c34-a6c0-93a64d6dfa68",
+        "kind": "association"
+      }
+    ],
+    "policies": [
+      {
+        "name": "reject-empty-values",
+        "event": "write",
+        "condition": {
+          "field": "*",
+          "op": "empty"
+        },
+        "action": "reject"
+      },
+      {
+        "name": "propagate-on-change",
+        "event": "field_updated",
+        "condition": {
+          "neighbour": "extension"
+        },
+        "action": "flag"
+      }
+    ],
+    "interactions": 16
+  },
+  "state_error": null,
+  "rows": [
+    "C3"
+  ],
+  "verdicts": [
+    {
+      "row": "C3",
+      "verdict": "pass",
+      "cases": [
+        {
+          "name": "B is flagged by A's update, the flag naming the updated field and timestamp, via the extension edge (B->A)",
+          "held": true,
+          "observation": "B Date 'March 20' before; 'March 20' after 0.0 s; A is 'April 20'; B's flag: {'flagged': True, 'evidence': {'source_topic_id': '60a0ed96-7cf7-41fc-ba73-a5b8cac6a20b', 'updated_field': 'Deadline', 'updated_fields': ['Deadline'], 'timestamp': '2026-10-21T17:44:22.576527+00:00', 'policy': 'propagate-on-change'}}; edge stored: True",
+          "control": false,
+          "id": "B is flagged by A's update, the flag naming the updated field and timestamp, via the extension edge (B->A)"
+        },
+        {
+          "name": "control: a topic linked to A only by an association edge is not flagged (B->A)",
+          "held": true,
+          "observation": "control flag: {'flagged': False}; association edge stored: True",
+          "control": true,
+          "id": "control: a topic linked to A only by an association edge is not flagged (B->A)"
+        },
+        {
+          "name": "the flag clears when B is next written (B->A)",
+          "held": true,
+          "observation": "B's flag after its next write: {'flagged': False}",
+          "control": false,
+          "id": "the flag clears when B is next written (B->A)"
+        },
+        {
+          "name": "B is flagged by A's update, the flag naming the updated field and timestamp, via the extension edge (A->B)",
+          "held": true,
+          "observation": "B Date 'March 20' before; 'March 20' after 0.0 s; A is 'April 20'; B's flag: {'flagged': True, 'evidence': {'source_topic_id': '5a5e1381-b5b3-451a-a205-b83e41e7a7e7', 'updated_field': 'Deadline', 'updated_fields': ['Deadline'], 'timestamp': '2026-10-21T17:44:22.577026+00:00', 'policy': 'propagate-on-change'}}; edge stored: True",
+          "control": false,
+          "id": "B is flagged by A's update, the flag naming the updated field and timestamp, via the extension edge (A->B)"
+        },
+        {
+          "name": "control: a topic linked to A only by an association edge is not flagged (A->B)",
+          "held": true,
+          "observation": "control flag: {'flagged': False}; association edge stored: True",
+          "control": true,
+          "id": "control: a topic linked to A only by an association edge is not flagged (A->B)"
+        },
+        {
+          "name": "the flag clears when B is next written (A->B)",
+          "held": true,
+          "observation": "B's flag after its next write: {'flagged': False}",
+          "control": false,
+          "id": "the flag clears when B is next written (A->B)"
+        }
+      ],
+      "observations": [
+        {
+          "name": "pairs",
+          "pairs": [
+            {
+              "direction": "B->A",
+              "a_id": "60a0ed96-7cf7-41fc-ba73-a5b8cac6a20b",
+              "b_id": "6e3d9085-99fd-43a9-9e2e-fc8c4a88857a",
+              "edge_linked": true,
+              "control_id": "d4d92d19-9a7f-4aea-bfaa-609c3d006ba1",
+              "control_edge_linked": true,
+              "update_applied": [
+                "version:Deadline"
+              ],
+              "a_deadline_now": "April 20",
+              "b_date_before": "March 20",
+              "b_date_read_right_after_update": "March 20",
+              "b_date_after_wait": "March 20",
+              "b_date_read_after_wait": "April 25",
+              "b_history_after": [
+                "March 20"
+              ],
+              "b_topic_events_after": [
+                "flagged"
+              ],
+              "b_topic_keys_after": [
+                "archived",
+                "created_at",
+                "failed_salience",
+                "fields",
+                "id",
+                "revision_flag",
+                "salience",
+                "summary",
+                "title",
+                "topic_history",
+                "topic_kind",
+                "updated_at"
+              ],
+              "wait_s": 8.309799886774272e-05,
+              "reflected": true,
+              "flag_surface": true,
+              "b_flag_after": {
+                "flagged": true,
+                "evidence": {
+                  "source_topic_id": "60a0ed96-7cf7-41fc-ba73-a5b8cac6a20b",
+                  "updated_field": "Deadline",
+                  "updated_fields": [
+                    "Deadline"
+                  ],
+                  "timestamp": "2026-10-21T17:44:22.576527+00:00",
+                  "policy": "propagate-on-change"
+                }
+              },
+              "flag_names_update": true,
+              "control_flag_after": {
+                "flagged": false
+              },
+              "control_flagged": false,
+              "b_flag_after_write": {
+                "flagged": false
+              },
+              "flag_cleared": true,
+              "window_interactions": 0
+            },
+            {
+              "direction": "A->B",
+              "a_id": "5a5e1381-b5b3-451a-a205-b83e41e7a7e7",
+              "b_id": "217aef52-c7cd-488d-8e84-faa28e1c3eef",
+              "edge_linked": true,
+              "control_id": "1c888fdc-87cf-4c34-a6c0-93a64d6dfa68",
+              "control_edge_linked": true,
+              "update_applied": [
+                "version:Deadline"
+              ],
+              "a_deadline_now": "April 20",
+              "b_date_before": "March 20",
+              "b_date_read_right_after_update": "March 20",
+              "b_date_after_wait": "March 20",
+              "b_date_read_after_wait": "April 25",
+              "b_history_after": [
+                "March 20"
+              ],
+              "b_topic_events_after": [
+                "flagged"
+              ],
+              "b_topic_keys_after": [
+                "archived",
+                "created_at",
+                "failed_salience",
+                "fields",
+                "id",
+                "revision_flag",
+                "salience",
+                "summary",
+                "title",
+                "topic_history",
+                "topic_kind",
+                "updated_at"
+              ],
+              "wait_s": 9.836799290496856e-05,
+              "reflected": true,
+              "flag_surface": true,
+              "b_flag_after": {
+                "flagged": true,
+                "evidence": {
+                  "source_topic_id": "5a5e1381-b5b3-451a-a205-b83e41e7a7e7",
+                  "updated_field": "Deadline",
+                  "updated_fields": [
+                    "Deadline"
+                  ],
+                  "timestamp": "2026-10-21T17:44:22.577026+00:00",
+                  "policy": "propagate-on-change"
+                }
+              },
+              "flag_names_update": true,
+              "control_flag_after": {
+                "flagged": false
+              },
+              "control_flagged": false,
+              "b_flag_after_write": {
+                "flagged": false
+              },
+              "flag_cleared": true,
+              "window_interactions": 0
+            }
+          ]
+        }
+      ],
+      "probe_evidence": null,
+      "measurements": {
+        "windows": [
+          {
+            "name": "Dependent-topic staleness window",
+            "value": "median 0 interactions (B->A 0, A->B 0)"
+          }
+        ],
+        "revision_wait_s": 15.0
+      },
+      "control": false,
+      "system": "reference-gem-p1",
+      "snapshots": [],
+      "error": null
+    }
+  ]
+}

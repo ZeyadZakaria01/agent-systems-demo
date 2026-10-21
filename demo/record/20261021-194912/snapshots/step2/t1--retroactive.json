@@ -1,0 +1,748 @@
+{
+  "system": "step2",
+  "label": "bitemporal patch step 2 (4272a07, LadybugDB)",
+  "check": "T1",
+  "tag": "retroactive",
+  "describe": {
+    "system": "bitemporal patch step 2 (4272a07, LadybugDB)",
+    "url": "http://127.0.0.1:8765",
+    "db_path": "/home/zeyad/personal/agent-systems-demo/.runtime/gem-suite/20261021-194912/step2-t1-retroactive/memstate.lbug",
+    "commit": "4272a07392c9483d823dc2f2dc8a5f9464096841",
+    "engine": "MemState engine module: ladybug",
+    "keeps_history": true,
+    "accepts_error": null,
+    "declared_bound": {
+      "topics": 500,
+      "name": "topic_count_soft_limit"
+    },
+    "accepts_source": false,
+    "latency_comparable": true,
+    "source_surface": {
+      "request_properties": [],
+      "paths": []
+    },
+    "c6_clause_2_seeds": null,
+    "source_dir": "/home/zeyad/personal/agent-systems-demo/MemState-patched/src",
+    "health_error": null,
+    "accepts": {
+      "valid_from": true,
+      "invalid_at": true,
+      "valid_at": true,
+      "recorded_at": true
+    }
+  },
+  "describe_error": null,
+  "started_at": "2026-10-21T17:30:29.497031+00:00",
+  "finished_at": "2026-10-21T17:30:31.758444+00:00",
+  "scored_transitions": [
+    {
+      "seq": 0,
+      "kind": "scored",
+      "op": "ingest",
+      "request": {
+        "placement": "new_topic",
+        "title": "Time probe: Retroactive fact",
+        "topic_kind": "time-probe",
+        "fields": [
+          {
+            "name": "Deadline",
+            "value": "April 20",
+            "provenance": "time-probe:retroactive",
+            "valid_from": "2026-09-10T00:00:00+00:00"
+          }
+        ]
+      },
+      "started_at": "2026-10-21T17:30:31.283808+00:00",
+      "response": {
+        "topic_id": "15c9e141-75c6-44dd-b092-dbd97f24c2c2",
+        "applied": [
+          "created_topic:15c9e141-75c6-44dd-b092-dbd97f24c2c2",
+          "field:Deadline"
+        ],
+        "version_ids": {
+          "Deadline": "04b1da1a-9e8c-4687-aec2-6b4ea52e4edf"
+        },
+        "similar_topic_ids": []
+      },
+      "rejected": null,
+      "error": null,
+      "latency_ms": 402.976,
+      "finished_at": "2026-10-21T17:30:31.686795+00:00"
+    },
+    {
+      "seq": 1,
+      "kind": "scored",
+      "op": "ingest",
+      "request": {
+        "placement": "version_field",
+        "topic_id": "15c9e141-75c6-44dd-b092-dbd97f24c2c2",
+        "fields": [
+          {
+            "name": "Deadline",
+            "value": "March 1",
+            "provenance": "time-probe:retroactive",
+            "valid_from": "2026-08-06T00:00:00+00:00"
+          }
+        ]
+      },
+      "started_at": "2026-10-21T17:30:31.686812+00:00",
+      "response": {
+        "topic_id": "15c9e141-75c6-44dd-b092-dbd97f24c2c2",
+        "applied": [
+          "version:Deadline"
+        ],
+        "version_ids": {
+          "Deadline": "c6588a7b-8445-44f3-8fd0-9f45c2998534"
+        },
+        "similar_topic_ids": []
+      },
+      "rejected": null,
+      "error": null,
+      "latency_ms": 30.532,
+      "finished_at": "2026-10-21T17:30:31.717354+00:00"
+    },
+    {
+      "seq": 2,
+      "kind": "scored",
+      "op": "query",
+      "request": {
+        "q": "read",
+        "stages": [
+          "temporal"
+        ],
+        "topic_ids": [
+          "15c9e141-75c6-44dd-b092-dbd97f24c2c2"
+        ],
+        "explain": false
+      },
+      "started_at": "2026-10-21T17:30:31.717369+00:00",
+      "response": {
+        "query": "read",
+        "candidates": [
+          {
+            "topic_id": "15c9e141-75c6-44dd-b092-dbd97f24c2c2",
+            "title": "Time probe: Retroactive fact",
+            "summary": null,
+            "topic_kind": "time-probe",
+            "salience": 1.0,
+            "failed_salience": 0.0,
+            "neighbors": [],
+            "fields": [
+              {
+                "name": "Deadline",
+                "field_type": "string",
+                "ref_topic_id": null,
+                "current": {
+                  "id": "04b1da1a-9e8c-4687-aec2-6b4ea52e4edf",
+                  "value": "April 20",
+                  "valid_from": "2026-09-10T00:00:00+00:00",
+                  "invalid_at": null,
+                  "created_at": "2026-10-21T17:30:31.672132+00:00",
+                  "expired_at": null,
+                  "operation": null,
+                  "replaces_entry_id": null,
+                  "corrected_by_entry_id": null,
+                  "provenance": "time-probe:retroactive",
+                  "why_changed": null,
+                  "impact_expected": null
+                },
+                "history": [
+                  {
+                    "id": "04b1da1a-9e8c-4687-aec2-6b4ea52e4edf",
+                    "value": "April 20",
+                    "valid_from": "2026-09-10T00:00:00+00:00",
+                    "invalid_at": null,
+                    "created_at": "2026-10-21T17:30:31.672132+00:00",
+                    "expired_at": null,
+                    "operation": null,
+                    "replaces_entry_id": null,
+                    "corrected_by_entry_id": null,
+                    "provenance": "time-probe:retroactive",
+                    "why_changed": null,
+                    "impact_expected": null
+                  }
+                ]
+              }
+            ],
+            "similarity": null
+          }
+        ],
+        "summary_text": "Top topics for 'read':\n- 15c9e141-75c6-44dd-b092-dbd97f24c2c2 'Time probe: Retroactive fact' sim=None"
+      },
+      "rejected": null,
+      "error": null,
+      "latency_ms": 20.606,
+      "finished_at": "2026-10-21T17:30:31.737985+00:00"
+    },
+    {
+      "seq": 3,
+      "kind": "scored",
+      "op": "query",
+      "request": {
+        "q": "read",
+        "stages": [
+          "temporal"
+        ],
+        "topic_ids": [
+          "15c9e141-75c6-44dd-b092-dbd97f24c2c2"
+        ],
+        "explain": false,
+        "valid_at": "2026-08-25T00:00:00+00:00"
+      },
+      "started_at": "2026-10-21T17:30:31.738011+00:00",
+      "response": {
+        "query": "read",
+        "candidates": [
+          {
+            "topic_id": "15c9e141-75c6-44dd-b092-dbd97f24c2c2",
+            "title": "Time probe: Retroactive fact",
+            "summary": null,
+            "topic_kind": "time-probe",
+            "salience": 1.1,
+            "failed_salience": 0.0,
+            "neighbors": [],
+            "fields": [
+              {
+                "name": "Deadline",
+                "field_type": "string",
+                "ref_topic_id": null,
+                "current": {
+                  "id": "c6588a7b-8445-44f3-8fd0-9f45c2998534",
+                  "value": "March 1",
+                  "valid_from": "2026-08-06T00:00:00+00:00",
+                  "invalid_at": null,
+                  "created_at": "2026-10-21T17:30:31.692181+00:00",
+                  "expired_at": null,
+                  "operation": null,
+                  "replaces_entry_id": null,
+                  "corrected_by_entry_id": null,
+                  "provenance": "time-probe:retroactive",
+                  "why_changed": null,
+                  "impact_expected": null
+                },
+                "history": [
+                  {
+                    "id": "04b1da1a-9e8c-4687-aec2-6b4ea52e4edf",
+                    "value": "April 20",
+                    "valid_from": "2026-09-10T00:00:00+00:00",
+                    "invalid_at": null,
+                    "created_at": "2026-10-21T17:30:31.672132+00:00",
+                    "expired_at": null,
+                    "operation": null,
+                    "replaces_entry_id": null,
+                    "corrected_by_entry_id": null,
+                    "provenance": "time-probe:retroactive",
+                    "why_changed": null,
+                    "impact_expected": null
+                  },
+                  {
+                    "id": "c6588a7b-8445-44f3-8fd0-9f45c2998534",
+                    "value": "March 1",
+                    "valid_from": "2026-08-06T00:00:00+00:00",
+                    "invalid_at": null,
+                    "created_at": "2026-10-21T17:30:31.692181+00:00",
+                    "expired_at": null,
+                    "operation": null,
+                    "replaces_entry_id": null,
+                    "corrected_by_entry_id": null,
+                    "provenance": "time-probe:retroactive",
+                    "why_changed": null,
+                    "impact_expected": null
+                  }
+                ]
+              }
+            ],
+            "similarity": null
+          }
+        ],
+        "summary_text": "Top topics for 'read':\n- 15c9e141-75c6-44dd-b092-dbd97f24c2c2 'Time probe: Retroactive fact' sim=None"
+      },
+      "rejected": null,
+      "error": null,
+      "latency_ms": 16.888,
+      "finished_at": "2026-10-21T17:30:31.754907+00:00"
+    }
+  ],
+  "setup_writes": [],
+  "reads": [
+    {
+      "seq": 4,
+      "kind": "read",
+      "op": "read_topic",
+      "request": {
+        "topic_id": "15c9e141-75c6-44dd-b092-dbd97f24c2c2"
+      },
+      "started_at": "2026-10-21T17:30:31.754942+00:00",
+      "response": {
+        "id": "15c9e141-75c6-44dd-b092-dbd97f24c2c2",
+        "title": "Time probe: Retroactive fact",
+        "summary": "",
+        "topic_kind": "time-probe",
+        "salience": 1.2000000000000002,
+        "failed_salience": 0.0,
+        "archived": false,
+        "fields": {
+          "Deadline": {
+            "field_type": "string",
+            "ref_topic_id": null,
+            "current": {
+              "id": "04b1da1a-9e8c-4687-aec2-6b4ea52e4edf",
+              "valid_from": "2026-09-10T00:00:00+00:00",
+              "value": "April 20",
+              "why_changed": null,
+              "impact_expected": null,
+              "provenance": "time-probe:retroactive",
+              "operation": null,
+              "invalid_at": null,
+              "created_at": "2026-10-21T17:30:31.672132+00:00",
+              "expired_at": null,
+              "replaces_entry_id": null,
+              "corrected_by_entry_id": null
+            },
+            "history": [
+              {
+                "id": "04b1da1a-9e8c-4687-aec2-6b4ea52e4edf",
+                "valid_from": "2026-09-10T00:00:00+00:00",
+                "value": "April 20",
+                "why_changed": null,
+                "impact_expected": null,
+                "provenance": "time-probe:retroactive",
+                "operation": null,
+                "invalid_at": null,
+                "created_at": "2026-10-21T17:30:31.672132+00:00",
+                "expired_at": null,
+                "replaces_entry_id": null,
+                "corrected_by_entry_id": null
+              },
+              {
+                "id": "c6588a7b-8445-44f3-8fd0-9f45c2998534",
+                "valid_from": "2026-08-06T00:00:00+00:00",
+                "value": "March 1",
+                "why_changed": null,
+                "impact_expected": null,
+                "provenance": "time-probe:retroactive",
+                "operation": null,
+                "invalid_at": null,
+                "created_at": "2026-10-21T17:30:31.692181+00:00",
+                "expired_at": null,
+                "replaces_entry_id": null,
+                "corrected_by_entry_id": null
+              }
+            ]
+          }
+        },
+        "topic_history": [
+          {
+            "ts": "2026-10-21T17:30:31.663137+00:00",
+            "kind": "created",
+            "detail": {
+              "title": "Time probe: Retroactive fact"
+            }
+          },
+          {
+            "ts": "2026-10-21T17:30:31.729539+00:00",
+            "kind": "salience",
+            "detail": {
+              "from": 1.0,
+              "to": 1.1,
+              "reason": "query_bump"
+            }
+          },
+          {
+            "ts": "2026-10-21T17:30:31.749810+00:00",
+            "kind": "salience",
+            "detail": {
+              "from": 1.1,
+              "to": 1.2000000000000002,
+              "reason": "query_bump"
+            }
+          }
+        ],
+        "created_at": "2026-10-21T17:30:31.663137+00:00",
+        "updated_at": "2026-10-21T17:30:31.749957+00:00",
+        "revision_flag": null
+      },
+      "rejected": null,
+      "error": null,
+      "latency_ms": 3.472,
+      "finished_at": "2026-10-21T17:30:31.758423+00:00"
+    },
+    {
+      "seq": 5,
+      "kind": "read",
+      "op": "read_state",
+      "request": null,
+      "started_at": "2026-10-21T17:30:31.760513+00:00",
+      "response": {
+        "topics": 1,
+        "edges": 0
+      },
+      "rejected": null,
+      "error": null,
+      "latency_ms": 11.325,
+      "finished_at": "2026-10-21T17:30:31.771862+00:00"
+    }
+  ],
+  "waits": [],
+  "state": {
+    "topics": {
+      "15c9e141-75c6-44dd-b092-dbd97f24c2c2": {
+        "id": "15c9e141-75c6-44dd-b092-dbd97f24c2c2",
+        "title": "Time probe: Retroactive fact",
+        "summary": "",
+        "topic_kind": "time-probe",
+        "salience": 1.2000000000000002,
+        "failed_salience": 0.0,
+        "archived": false,
+        "fields": {
+          "Deadline": {
+            "field_type": "string",
+            "ref_topic_id": null,
+            "current": {
+              "id": "04b1da1a-9e8c-4687-aec2-6b4ea52e4edf",
+              "valid_from": "2026-09-10T00:00:00+00:00",
+              "value": "April 20",
+              "why_changed": null,
+              "impact_expected": null,
+              "provenance": "time-probe:retroactive",
+              "operation": null,
+              "invalid_at": null,
+              "created_at": "2026-10-21T17:30:31.672132+00:00",
+              "expired_at": null,
+              "replaces_entry_id": null,
+              "corrected_by_entry_id": null
+            },
+            "history": [
+              {
+                "id": "04b1da1a-9e8c-4687-aec2-6b4ea52e4edf",
+                "valid_from": "2026-09-10T00:00:00+00:00",
+                "value": "April 20",
+                "why_changed": null,
+                "impact_expected": null,
+                "provenance": "time-probe:retroactive",
+                "operation": null,
+                "invalid_at": null,
+                "created_at": "2026-10-21T17:30:31.672132+00:00",
+                "expired_at": null,
+                "replaces_entry_id": null,
+                "corrected_by_entry_id": null
+              },
+              {
+                "id": "c6588a7b-8445-44f3-8fd0-9f45c2998534",
+                "valid_from": "2026-08-06T00:00:00+00:00",
+                "value": "March 1",
+                "why_changed": null,
+                "impact_expected": null,
+                "provenance": "time-probe:retroactive",
+                "operation": null,
+                "invalid_at": null,
+                "created_at": "2026-10-21T17:30:31.692181+00:00",
+                "expired_at": null,
+                "replaces_entry_id": null,
+                "corrected_by_entry_id": null
+              }
+            ]
+          }
+        },
+        "topic_history": [
+          {
+            "ts": "2026-10-21T17:30:31.663137+00:00",
+            "kind": "created",
+            "detail": {
+              "title": "Time probe: Retroactive fact"
+            }
+          },
+          {
+            "ts": "2026-10-21T17:30:31.729539+00:00",
+            "kind": "salience",
+            "detail": {
+              "from": 1.0,
+              "to": 1.1,
+              "reason": "query_bump"
+            }
+          },
+          {
+            "ts": "2026-10-21T17:30:31.749810+00:00",
+            "kind": "salience",
+            "detail": {
+              "from": 1.1,
+              "to": 1.2000000000000002,
+              "reason": "query_bump"
+            }
+          }
+        ],
+        "created_at": "2026-10-21T17:30:31.663137+00:00",
+        "updated_at": "2026-10-21T17:30:31.749957+00:00",
+        "revision_flag": null
+      }
+    },
+    "edges": []
+  },
+  "state_error": null,
+  "rows": [
+    "T1",
+    "T2",
+    "T3",
+    "T4",
+    "T5",
+    "T6"
+  ],
+  "verdicts": [
+    {
+      "row": "T1",
+      "verdict": "pass",
+      "cases": [
+        {
+          "name": "today: 2026-10-21 -> 'April 20'",
+          "held": true,
+          "observation": "[dated path] asked today (plain read): got 'April 20', correct 'April 20'",
+          "control": false,
+          "id": "today: 2026-10-21 -> 'April 20'"
+        },
+        {
+          "name": "Dec 20: 2026-08-25 -> 'March 1'",
+          "held": true,
+          "observation": "[dated path] asked Dec 20 (valid_at): got 'March 1', correct 'March 1'",
+          "control": true,
+          "id": "Dec 20: 2026-08-25 -> 'March 1'"
+        },
+        {
+          "name": "history intact: no value lost, expired entries copied and linked",
+          "held": true,
+          "observation": "2 entries; every written value kept; 0 expired, each copied",
+          "control": false,
+          "id": "history intact: no value lost, expired entries copied and linked"
+        }
+      ],
+      "observations": [],
+      "probe_evidence": null,
+      "measurements": {
+        "accepts_dates": "yes",
+        "dates_needed": "valid_from",
+        "dates_missing": "none"
+      },
+      "control": false,
+      "system": "step2",
+      "snapshots": [],
+      "error": null
+    },
+    {
+      "row": "T2",
+      "verdict": "pass",
+      "cases": [
+        {
+          "name": "today: 2026-10-21 -> 'pro'",
+          "held": true,
+          "observation": "[dated path] asked today (plain read): got 'pro', correct 'pro'",
+          "control": false,
+          "id": "today: 2026-10-21 -> 'pro'"
+        },
+        {
+          "name": "Sep 1: 2026-09-02 -> 'basic'",
+          "held": true,
+          "observation": "[dated path] asked Sep 1 (valid_at): got 'basic', correct 'basic'",
+          "control": true,
+          "id": "Sep 1: 2026-09-02 -> 'basic'"
+        },
+        {
+          "name": "history intact: no value lost, expired entries copied and linked",
+          "held": true,
+          "observation": "2 entries; every written value kept; 0 expired, each copied",
+          "control": false,
+          "id": "history intact: no value lost, expired entries copied and linked"
+        }
+      ],
+      "observations": [],
+      "probe_evidence": null,
+      "measurements": {
+        "accepts_dates": "yes",
+        "dates_needed": "valid_from",
+        "dates_missing": "none"
+      },
+      "control": false,
+      "system": "step2",
+      "snapshots": [],
+      "error": null
+    },
+    {
+      "row": "T3",
+      "verdict": "pass",
+      "cases": [
+        {
+          "name": "today: 2026-10-21 -> 'basic'",
+          "held": true,
+          "observation": "[dated path] asked today (plain read): got 'basic', correct 'basic'",
+          "control": false,
+          "id": "today: 2026-10-21 -> 'basic'"
+        },
+        {
+          "name": "Dec 5: 2026-11-05 -> 'premium'",
+          "held": true,
+          "observation": "[dated path] asked Dec 5 (valid_at): got 'premium', correct 'premium'",
+          "control": true,
+          "id": "Dec 5: 2026-11-05 -> 'premium'"
+        },
+        {
+          "name": "history intact: no value lost, expired entries copied and linked",
+          "held": true,
+          "observation": "2 entries; every written value kept; 0 expired, each copied",
+          "control": false,
+          "id": "history intact: no value lost, expired entries copied and linked"
+        }
+      ],
+      "observations": [],
+      "probe_evidence": null,
+      "measurements": {
+        "accepts_dates": "yes",
+        "dates_needed": "valid_from",
+        "dates_missing": "none"
+      },
+      "control": false,
+      "system": "step2",
+      "snapshots": [],
+      "error": null
+    },
+    {
+      "row": "T4",
+      "verdict": "pass",
+      "cases": [
+        {
+          "name": "story 1: Oct 15: 2026-09-30 -> '$80'",
+          "held": true,
+          "observation": "[dated path] asked Oct 15 (valid_at): got '$80', correct '$80'",
+          "control": true,
+          "id": "story 1: Oct 15: 2026-09-30 -> '$80'"
+        },
+        {
+          "name": "story 1: today: 2026-10-21 -> '$50'",
+          "held": true,
+          "observation": "[dated path] asked today (plain read): got '$50', correct '$50'",
+          "control": false,
+          "id": "story 1: today: 2026-10-21 -> '$50'"
+        },
+        {
+          "name": "story 1: history intact: no value lost, expired entries copied and linked",
+          "held": true,
+          "observation": "2 entries; every written value kept; 0 expired, each copied",
+          "control": false,
+          "id": "story 1: history intact: no value lost, expired entries copied and linked"
+        },
+        {
+          "name": "story 2: today: 2026-10-21 -> '$100'",
+          "held": true,
+          "observation": "[dated path] asked today (plain read): got '$100', correct '$100'",
+          "control": true,
+          "id": "story 2: today: 2026-10-21 -> '$100'"
+        },
+        {
+          "name": "story 2: Oct 15: 2026-09-30 -> '$100'",
+          "held": true,
+          "observation": "[dated path] asked Oct 15 (valid_at): got '$100', correct '$100'",
+          "control": false,
+          "id": "story 2: Oct 15: 2026-09-30 -> '$100'"
+        },
+        {
+          "name": "story 2: Oct 5: 2026-09-20 -> '$80'",
+          "held": true,
+          "observation": "[dated path] asked Oct 5 (valid_at): got '$80', correct '$80'",
+          "control": false,
+          "id": "story 2: Oct 5: 2026-09-20 -> '$80'"
+        },
+        {
+          "name": "story 2: history intact: no value lost, expired entries copied and linked",
+          "held": true,
+          "observation": "4 entries; every written value kept; 1 expired, each copied",
+          "control": false,
+          "id": "story 2: history intact: no value lost, expired entries copied and linked"
+        }
+      ],
+      "observations": [],
+      "probe_evidence": null,
+      "measurements": {
+        "accepts_dates": "yes",
+        "dates_needed": "valid_from, invalid_at",
+        "dates_missing": "none"
+      },
+      "control": false,
+      "system": "step2",
+      "snapshots": [],
+      "error": null
+    },
+    {
+      "row": "T5",
+      "verdict": "pass",
+      "cases": [
+        {
+          "name": "true on Feb 10: 2026-10-16 -> 'May 1'",
+          "held": true,
+          "observation": "[dated path] asked true on Feb 10 (valid_at): got 'May 1', correct 'May 1'",
+          "control": true,
+          "id": "true on Feb 10: 2026-10-16 -> 'May 1'"
+        },
+        {
+          "name": "believed on Feb 10: -> 'April 20'",
+          "held": true,
+          "observation": "[dated path] asked believed on Feb 10 (recorded_at): got 'April 20', correct 'April 20'",
+          "control": false,
+          "id": "believed on Feb 10: -> 'April 20'"
+        },
+        {
+          "name": "history intact: no value lost, expired entries copied and linked",
+          "held": true,
+          "observation": "2 entries; every written value kept; 0 expired, each copied",
+          "control": false,
+          "id": "history intact: no value lost, expired entries copied and linked"
+        }
+      ],
+      "observations": [],
+      "probe_evidence": null,
+      "measurements": {
+        "accepts_dates": "yes",
+        "dates_needed": "valid_from, valid_at, recorded_at",
+        "dates_missing": "none"
+      },
+      "control": false,
+      "system": "step2",
+      "snapshots": [],
+      "error": null
+    },
+    {
+      "row": "T6",
+      "verdict": "pass",
+      "cases": [
+        {
+          "name": "today: 2026-10-21 -> NO_VALUE",
+          "held": true,
+          "observation": "[dated path] asked today (plain read): got NO_VALUE, correct NO_VALUE",
+          "control": false,
+          "id": "today: 2026-10-21 -> NO_VALUE"
+        },
+        {
+          "name": "Dec 5: 2026-11-05 -> 'premium'",
+          "held": true,
+          "observation": "[dated path] asked Dec 5 (valid_at): got 'premium', correct 'premium'",
+          "control": true,
+          "id": "Dec 5: 2026-11-05 -> 'premium'"
+        },
+        {
+          "name": "history intact: no value lost, expired entries copied and linked",
+          "held": true,
+          "observation": "1 entries; every written value kept; 0 expired, each copied",
+          "control": false,
+          "id": "history intact: no value lost, expired entries copied and linked"
+        }
+      ],
+      "observations": [],
+      "probe_evidence": null,
+      "measurements": {
+        "accepts_dates": "yes",
+        "dates_needed": "valid_from",
+        "dates_missing": "none"
+      },
+      "control": false,
+      "system": "step2",
+      "snapshots": [],
+      "error": null
+    }
+  ]
+}

@@ -1,0 +1,211 @@
+{
+  "system": "baseline",
+  "label": "baseline",
+  "check": "C6-2",
+  "tag": null,
+  "describe": {
+    "system": "baseline",
+    "url": null,
+    "db_path": null,
+    "commit": null,
+    "engine": "in-process versioned row",
+    "keeps_history": true,
+    "accepts_error": null,
+    "declared_bound": null,
+    "accepts_source": false,
+    "latency_comparable": true,
+    "source_surface": null,
+    "c6_clause_2_seeds": null,
+    "embedder": "sentence-transformers/all-MiniLM-L6-v2",
+    "top_k": 8,
+    "accepts": {
+      "valid_from": false,
+      "invalid_at": false,
+      "valid_at": false,
+      "recorded_at": true
+    }
+  },
+  "describe_error": null,
+  "started_at": "2026-10-21T17:45:40.312858+00:00",
+  "finished_at": "2026-10-21T17:45:40.312946+00:00",
+  "scored_transitions": [
+    {
+      "seq": 0,
+      "kind": "scored",
+      "op": "ingest",
+      "request": {
+        "placement": "new_topic",
+        "title": "Parking Permit Renewal",
+        "summary": "Renewal paperwork for the street parking permit",
+        "salience": 0.03
+      },
+      "started_at": "2026-10-21T17:45:40.312899+00:00",
+      "response": {
+        "topic_id": "Parking Permit Renewal",
+        "applied": [
+          "created_topic:Parking Permit Renewal"
+        ],
+        "version_ids": {},
+        "similar_topic_ids": []
+      },
+      "rejected": null,
+      "error": null,
+      "latency_ms": 0.004,
+      "finished_at": "2026-10-21T17:45:40.312911+00:00"
+    },
+    {
+      "seq": 1,
+      "kind": "scored",
+      "op": "ingest",
+      "request": {
+        "placement": "new_topic",
+        "title": "Library Card Renewal",
+        "summary": "Never read; the control for the forgetting pass",
+        "salience": 0.01
+      },
+      "started_at": "2026-10-21T17:45:40.312914+00:00",
+      "response": {
+        "topic_id": "Library Card Renewal",
+        "applied": [
+          "created_topic:Library Card Renewal"
+        ],
+        "version_ids": {},
+        "similar_topic_ids": []
+      },
+      "rejected": null,
+      "error": null,
+      "latency_ms": 0.001,
+      "finished_at": "2026-10-21T17:45:40.312918+00:00"
+    }
+  ],
+  "setup_writes": [],
+  "reads": [
+    {
+      "seq": 2,
+      "kind": "read",
+      "op": "read_topic",
+      "request": {
+        "topic_id": "Parking Permit Renewal"
+      },
+      "started_at": "2026-10-21T17:45:40.312922+00:00",
+      "response": {
+        "id": "Parking Permit Renewal",
+        "title": "Parking Permit Renewal",
+        "summary": "Renewal paperwork for the street parking permit",
+        "topic_kind": null,
+        "salience": null,
+        "failed_salience": null,
+        "archived": null,
+        "topic_history": null,
+        "created_at": null,
+        "updated_at": null,
+        "fields": {},
+        "revision_flag": null
+      },
+      "rejected": null,
+      "error": null,
+      "latency_ms": 0.003,
+      "finished_at": "2026-10-21T17:45:40.312927+00:00"
+    },
+    {
+      "seq": 3,
+      "kind": "read",
+      "op": "read_topic",
+      "request": {
+        "topic_id": "Library Card Renewal"
+      },
+      "started_at": "2026-10-21T17:45:40.312930+00:00",
+      "response": {
+        "id": "Library Card Renewal",
+        "title": "Library Card Renewal",
+        "summary": "Never read; the control for the forgetting pass",
+        "topic_kind": null,
+        "salience": null,
+        "failed_salience": null,
+        "archived": null,
+        "topic_history": null,
+        "created_at": null,
+        "updated_at": null,
+        "fields": {},
+        "revision_flag": null
+      },
+      "rejected": null,
+      "error": null,
+      "latency_ms": 0.001,
+      "finished_at": "2026-10-21T17:45:40.312933+00:00"
+    },
+    {
+      "seq": 4,
+      "kind": "read",
+      "op": "read_state",
+      "request": null,
+      "started_at": "2026-10-21T17:45:40.312951+00:00",
+      "response": {
+        "topics": 2,
+        "edges": null
+      },
+      "rejected": null,
+      "error": null,
+      "latency_ms": 0.003,
+      "finished_at": "2026-10-21T17:45:40.312957+00:00"
+    }
+  ],
+  "waits": [],
+  "state": {
+    "topics": {
+      "Parking Permit Renewal": {
+        "id": "Parking Permit Renewal",
+        "title": "Parking Permit Renewal",
+        "summary": "Renewal paperwork for the street parking permit",
+        "topic_kind": null,
+        "salience": null,
+        "failed_salience": null,
+        "archived": null,
+        "topic_history": null,
+        "created_at": null,
+        "updated_at": null,
+        "fields": {},
+        "revision_flag": null
+      },
+      "Library Card Renewal": {
+        "id": "Library Card Renewal",
+        "title": "Library Card Renewal",
+        "summary": "Never read; the control for the forgetting pass",
+        "topic_kind": null,
+        "salience": null,
+        "failed_salience": null,
+        "archived": null,
+        "topic_history": null,
+        "created_at": null,
+        "updated_at": null,
+        "fields": {},
+        "revision_flag": null
+      }
+    },
+    "edges": null
+  },
+  "state_error": null,
+  "rows": [
+    "C6-2"
+  ],
+  "verdicts": [
+    {
+      "row": "C6-2",
+      "verdict": "absent",
+      "cases": [],
+      "observations": [],
+      "probe_evidence": {
+        "probe": "salience is a nothing-value on every topic the check wrote (the system does not track it)",
+        "salience_read": {
+          "Parking Permit Renewal": null,
+          "Library Card Renewal": null
+        }
+      },
+      "measurements": {},
+      "control": false,
+      "system": "baseline",
+      "snapshots": [],
+      "error": null
+    }
+  ]
+}

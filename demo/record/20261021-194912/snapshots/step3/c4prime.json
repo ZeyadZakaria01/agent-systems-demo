@@ -1,0 +1,88 @@
+{
+  "system": "step3",
+  "label": "bitemporal patch step 3 (9bd471e, LadybugDB)",
+  "check": "C4\u2032",
+  "tag": null,
+  "describe": {
+    "system": "bitemporal patch step 3 (9bd471e, LadybugDB)",
+    "url": "http://127.0.0.1:8765",
+    "db_path": "/home/zeyad/personal/agent-systems-demo/.runtime/gem-suite/20261021-194912/step3-c4prime/memstate.lbug",
+    "commit": "9bd471e0ca3cb6c6ef19bce9bb7d8f6c34043982",
+    "engine": "MemState engine module: ladybug",
+    "keeps_history": true,
+    "accepts_error": null,
+    "declared_bound": {
+      "topics": 500,
+      "name": "topic_count_soft_limit"
+    },
+    "accepts_source": false,
+    "latency_comparable": true,
+    "source_surface": {
+      "request_properties": [],
+      "paths": []
+    },
+    "c6_clause_2_seeds": null,
+    "source_dir": "/home/zeyad/personal/agent-systems-demo/MemState-patched/src",
+    "health_error": null,
+    "accepts": {
+      "valid_from": true,
+      "invalid_at": true,
+      "valid_at": true,
+      "recorded_at": true
+    }
+  },
+  "describe_error": null,
+  "started_at": "2026-10-21T17:32:38.394558+00:00",
+  "finished_at": "2026-10-21T17:32:40.220199+00:00",
+  "scored_transitions": [],
+  "setup_writes": [],
+  "reads": [
+    {
+      "seq": 0,
+      "kind": "read",
+      "op": "read_state",
+      "request": null,
+      "started_at": "2026-10-21T17:32:40.222321+00:00",
+      "response": {
+        "topics": 0,
+        "edges": 0
+      },
+      "rejected": null,
+      "error": null,
+      "latency_ms": 227.378,
+      "finished_at": "2026-10-21T17:32:40.449714+00:00"
+    }
+  ],
+  "waits": [],
+  "state": {
+    "topics": {},
+    "edges": []
+  },
+  "state_error": null,
+  "rows": [
+    "C4\u2032"
+  ],
+  "verdicts": [
+    {
+      "row": "C4\u2032",
+      "verdict": "absent",
+      "cases": [],
+      "observations": [],
+      "probe_evidence": {
+        "probe": "the schema: a source message among the properties of a write request, or a source endpoint (describe()['accepts_source'], ['source_surface'])",
+        "accepts_source": false,
+        "source_surface": {
+          "request_properties": [],
+          "paths": []
+        },
+        "accepts_error": null,
+        "writes_sent_with_source": false
+      },
+      "measurements": {},
+      "control": false,
+      "system": "step3",
+      "snapshots": [],
+      "error": null
+    }
+  ]
+}
