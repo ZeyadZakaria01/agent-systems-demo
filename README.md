@@ -74,6 +74,7 @@ Each paper is converted to `docs/papers/<arxiv-id>.md` beside its PDF (git-ignor
 | `2512.12818.md` | *Hindsight is 20/20* (Latimer et al.) | compared against GEM's operators |
 | `2607.23929v2.md` | *MemTX: Transactional Belief Commit for Stateful Agent Memory* (Li et al.) | a published conformance-suite precedent |
 | `2608.19652v1.md` | *Can Agent Memory Systems Track Evolving State?* (Fan et al.) | StateMemBench vs GEM's planned workload |
+| `2606.06240v1.md` | *TOKI: A Bitemporal Operator Algebra for Contradiction Resolution in LLM-Agent Persistent Memory* (Wang) | report §5.11 and §6.2 |
 
 ## Source
 
