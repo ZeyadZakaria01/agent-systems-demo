@@ -1,0 +1,793 @@
+{
+  "system": "reference-gem-p1",
+  "label": "reference GEM (phase 1)",
+  "check": "Over-flagging",
+  "tag": null,
+  "describe": {
+    "system": "reference GEM (phase 1)",
+    "url": null,
+    "db_path": null,
+    "commit": null,
+    "engine": "in-process reference GEM, phase 1",
+    "keeps_history": true,
+    "accepts_error": null,
+    "declared_bound": {
+      "topics": 500,
+      "name": "\u03b2"
+    },
+    "accepts_source": true,
+    "latency_comparable": false,
+    "source_surface": {
+      "request_properties": [
+        "source_message"
+      ],
+      "paths": []
+    },
+    "c6_clause_2_seeds": {
+      "target": 0.06,
+      "control": 0.06
+    },
+    "embedder": "sentence-transformers/all-MiniLM-L6-v2",
+    "top_k": 8,
+    "parameters": {
+      "theta_archive": 0.05,
+      "lambda": 0.9925386444712004,
+      "decay_horizon": 400,
+      "beta": 500,
+      "bump": 0.1,
+      "history_cap": 500,
+      "top_k": 8,
+      "salience_on_archive": 0.5,
+      "propagation": "one hop, extension edges, either direction",
+      "revision": "after every ingest",
+      "phase": 1
+    },
+    "accepts": {
+      "valid_from": true,
+      "invalid_at": false,
+      "valid_at": true,
+      "recorded_at": false
+    }
+  },
+  "describe_error": null,
+  "started_at": "2026-10-21T06:47:26.471791+00:00",
+  "finished_at": "2026-10-21T06:47:26.472584+00:00",
+  "scored_transitions": [
+    {
+      "seq": 0,
+      "kind": "scored",
+      "op": "ingest",
+      "request": {
+        "placement": "new_topic",
+        "title": "Website Redesign",
+        "topic_kind": "project",
+        "fields": [
+          {
+            "name": "Deadline",
+            "value": "March 15",
+            "provenance": "scenario"
+          }
+        ],
+        "edges": []
+      },
+      "started_at": "2026-10-21T06:47:26.471822+00:00",
+      "response": {
+        "topic_id": "52510113-d7e4-4c6b-8c53-cc49462c4a1a",
+        "applied": [
+          "created_topic:52510113-d7e4-4c6b-8c53-cc49462c4a1a",
+          "field:Deadline"
+        ],
+        "version_ids": {
+          "Deadline": "9e507a54-a6c2-4886-99ea-dd865de31d6f"
+        },
+        "similar_topic_ids": []
+      },
+      "rejected": null,
+      "error": null,
+      "latency_ms": 0.066,
+      "finished_at": "2026-10-21T06:47:26.471897+00:00"
+    },
+    {
+      "seq": 1,
+      "kind": "scored",
+      "op": "ingest",
+      "request": {
+        "placement": "new_topic",
+        "title": "Launch Milestone",
+        "topic_kind": "milestone",
+        "fields": [
+          {
+            "name": "Date",
+            "value": "March 20",
+            "provenance": "scenario"
+          }
+        ],
+        "edges": [
+          {
+            "to_topic_id": "52510113-d7e4-4c6b-8c53-cc49462c4a1a",
+            "kind": "extension"
+          }
+        ]
+      },
+      "started_at": "2026-10-21T06:47:26.471904+00:00",
+      "response": {
+        "topic_id": "e651f4b9-e732-4c12-b770-824431b65810",
+        "applied": [
+          "created_topic:e651f4b9-e732-4c12-b770-824431b65810",
+          "field:Date",
+          "edge:52510113-d7e4-4c6b-8c53-cc49462c4a1a"
+        ],
+        "version_ids": {
+          "Date": "5bcc0c0a-a0af-4300-a2d7-b3881dcfde59"
+        },
+        "similar_topic_ids": []
+      },
+      "rejected": null,
+      "error": null,
+      "latency_ms": 0.031,
+      "finished_at": "2026-10-21T06:47:26.471938+00:00"
+    },
+    {
+      "seq": 2,
+      "kind": "scored",
+      "op": "ingest",
+      "request": {
+        "placement": "new_topic",
+        "title": "Press Briefing",
+        "topic_kind": "event",
+        "fields": [
+          {
+            "name": "Date",
+            "value": "March 22",
+            "provenance": "scenario"
+          }
+        ],
+        "edges": [
+          {
+            "to_topic_id": "e651f4b9-e732-4c12-b770-824431b65810",
+            "kind": "extension"
+          }
+        ]
+      },
+      "started_at": "2026-10-21T06:47:26.471943+00:00",
+      "response": {
+        "topic_id": "c0c4992d-a87d-4d7f-b266-7f862b900386",
+        "applied": [
+          "created_topic:c0c4992d-a87d-4d7f-b266-7f862b900386",
+          "field:Date",
+          "edge:e651f4b9-e732-4c12-b770-824431b65810"
+        ],
+        "version_ids": {
+          "Date": "69de7943-08e8-4102-82f7-55e85e64ed12"
+        },
+        "similar_topic_ids": []
+      },
+      "rejected": null,
+      "error": null,
+      "latency_ms": 0.027,
+      "finished_at": "2026-10-21T06:47:26.471973+00:00"
+    },
+    {
+      "seq": 3,
+      "kind": "scored",
+      "op": "ingest",
+      "request": {
+        "placement": "new_topic",
+        "title": "Catering Order",
+        "topic_kind": "order",
+        "fields": [
+          {
+            "name": "Head count",
+            "value": "12",
+            "provenance": "scenario"
+          }
+        ],
+        "edges": [
+          {
+            "to_topic_id": "c0c4992d-a87d-4d7f-b266-7f862b900386",
+            "kind": "extension"
+          }
+        ]
+      },
+      "started_at": "2026-10-21T06:47:26.471977+00:00",
+      "response": {
+        "topic_id": "66cade5e-f424-4af9-8822-9d0aec4f60e8",
+        "applied": [
+          "created_topic:66cade5e-f424-4af9-8822-9d0aec4f60e8",
+          "field:Head count",
+          "edge:c0c4992d-a87d-4d7f-b266-7f862b900386"
+        ],
+        "version_ids": {
+          "Head count": "eff61557-a4d6-4774-9ffd-fef0b559eaec"
+        },
+        "similar_topic_ids": []
+      },
+      "rejected": null,
+      "error": null,
+      "latency_ms": 0.026,
+      "finished_at": "2026-10-21T06:47:26.472007+00:00"
+    },
+    {
+      "seq": 5,
+      "kind": "scored",
+      "op": "ingest",
+      "request": {
+        "placement": "version_field",
+        "topic_id": "52510113-d7e4-4c6b-8c53-cc49462c4a1a",
+        "fields": [
+          {
+            "name": "Deadline",
+            "value": "April 20",
+            "provenance": "scenario"
+          }
+        ]
+      },
+      "started_at": "2026-10-21T06:47:26.472077+00:00",
+      "response": {
+        "topic_id": "52510113-d7e4-4c6b-8c53-cc49462c4a1a",
+        "applied": [
+          "version:Deadline"
+        ],
+        "version_ids": {
+          "Deadline": "38ae8419-3b0f-42c2-9f02-2cbcb9e53169"
+        },
+        "similar_topic_ids": []
+      },
+      "rejected": null,
+      "error": null,
+      "latency_ms": 0.049,
+      "finished_at": "2026-10-21T06:47:26.472130+00:00"
+    }
+  ],
+  "setup_writes": [],
+  "reads": [
+    {
+      "seq": 4,
+      "kind": "read",
+      "op": "read_state",
+      "request": null,
+      "started_at": "2026-10-21T06:47:26.472011+00:00",
+      "response": {
+        "topics": 4,
+        "edges": 3
+      },
+      "rejected": null,
+      "error": null,
+      "latency_ms": 0.053,
+      "finished_at": "2026-10-21T06:47:26.472068+00:00"
+    },
+    {
+      "seq": 6,
+      "kind": "read",
+      "op": "read_topic",
+      "request": {
+        "topic_id": "e651f4b9-e732-4c12-b770-824431b65810"
+      },
+      "started_at": "2026-10-21T06:47:26.472136+00:00",
+      "response": {
+        "id": "e651f4b9-e732-4c12-b770-824431b65810",
+        "title": "Launch Milestone",
+        "summary": null,
+        "topic_kind": "milestone",
+        "salience": 0.9777825335052935,
+        "failed_salience": null,
+        "archived": false,
+        "revision_flag": {
+          "flagged": true,
+          "evidence": {
+            "source_topic_id": "52510113-d7e4-4c6b-8c53-cc49462c4a1a",
+            "updated_field": "Deadline",
+            "updated_fields": [
+              "Deadline"
+            ],
+            "timestamp": "2026-10-21T06:47:26.472106+00:00",
+            "policy": "propagate-on-change"
+          }
+        },
+        "fields": {
+          "Date": {
+            "field_type": "string",
+            "ref_topic_id": null,
+            "current": {
+              "id": "5bcc0c0a-a0af-4300-a2d7-b3881dcfde59",
+              "value": "March 20",
+              "provenance": "scenario",
+              "why_changed": null,
+              "impact_expected": null,
+              "valid_from": "2026-10-21T06:47:26.471907+00:00",
+              "expired_at": null,
+              "source_id": null
+            },
+            "history": [
+              {
+                "id": "5bcc0c0a-a0af-4300-a2d7-b3881dcfde59",
+                "value": "March 20",
+                "provenance": "scenario",
+                "why_changed": null,
+                "impact_expected": null,
+                "valid_from": "2026-10-21T06:47:26.471907+00:00",
+                "expired_at": null,
+                "source_id": null
+              }
+            ],
+            "archived_history": []
+          }
+        },
+        "topic_history": [
+          {
+            "ts": "2026-10-21T06:47:26.472106+00:00",
+            "kind": "flagged",
+            "detail": {
+              "source_topic_id": "52510113-d7e4-4c6b-8c53-cc49462c4a1a",
+              "updated_field": "Deadline",
+              "updated_fields": [
+                "Deadline"
+              ],
+              "timestamp": "2026-10-21T06:47:26.472106+00:00",
+              "policy": "propagate-on-change"
+            }
+          }
+        ],
+        "created_at": "2026-10-21T06:47:26.471907+00:00",
+        "updated_at": "2026-10-21T06:47:26.471926+00:00"
+      },
+      "rejected": null,
+      "error": null,
+      "latency_ms": 0.013,
+      "finished_at": "2026-10-21T06:47:26.472152+00:00"
+    },
+    {
+      "seq": 7,
+      "kind": "read",
+      "op": "read_topic",
+      "request": {
+        "topic_id": "c0c4992d-a87d-4d7f-b266-7f862b900386"
+      },
+      "started_at": "2026-10-21T06:47:26.472156+00:00",
+      "response": {
+        "id": "c0c4992d-a87d-4d7f-b266-7f862b900386",
+        "title": "Press Briefing",
+        "summary": null,
+        "topic_kind": "event",
+        "salience": 0.985132960768728,
+        "failed_salience": null,
+        "archived": false,
+        "revision_flag": {
+          "flagged": false
+        },
+        "fields": {
+          "Date": {
+            "field_type": "string",
+            "ref_topic_id": null,
+            "current": {
+              "id": "69de7943-08e8-4102-82f7-55e85e64ed12",
+              "value": "March 22",
+              "provenance": "scenario",
+              "why_changed": null,
+              "impact_expected": null,
+              "valid_from": "2026-10-21T06:47:26.471946+00:00",
+              "expired_at": null,
+              "source_id": null
+            },
+            "history": [
+              {
+                "id": "69de7943-08e8-4102-82f7-55e85e64ed12",
+                "value": "March 22",
+                "provenance": "scenario",
+                "why_changed": null,
+                "impact_expected": null,
+                "valid_from": "2026-10-21T06:47:26.471946+00:00",
+                "expired_at": null,
+                "source_id": null
+              }
+            ],
+            "archived_history": []
+          }
+        },
+        "topic_history": [],
+        "created_at": "2026-10-21T06:47:26.471946+00:00",
+        "updated_at": "2026-10-21T06:47:26.471962+00:00"
+      },
+      "rejected": null,
+      "error": null,
+      "latency_ms": 0.01,
+      "finished_at": "2026-10-21T06:47:26.472170+00:00"
+    },
+    {
+      "seq": 8,
+      "kind": "read",
+      "op": "read_topic",
+      "request": {
+        "topic_id": "66cade5e-f424-4af9-8822-9d0aec4f60e8"
+      },
+      "started_at": "2026-10-21T06:47:26.472173+00:00",
+      "response": {
+        "id": "66cade5e-f424-4af9-8822-9d0aec4f60e8",
+        "title": "Catering Order",
+        "summary": null,
+        "topic_kind": "order",
+        "salience": 0.9925386444712004,
+        "failed_salience": null,
+        "archived": false,
+        "revision_flag": {
+          "flagged": false
+        },
+        "fields": {
+          "Head count": {
+            "field_type": "string",
+            "ref_topic_id": null,
+            "current": {
+              "id": "eff61557-a4d6-4774-9ffd-fef0b559eaec",
+              "value": "12",
+              "provenance": "scenario",
+              "why_changed": null,
+              "impact_expected": null,
+              "valid_from": "2026-10-21T06:47:26.471980+00:00",
+              "expired_at": null,
+              "source_id": null
+            },
+            "history": [
+              {
+                "id": "eff61557-a4d6-4774-9ffd-fef0b559eaec",
+                "value": "12",
+                "provenance": "scenario",
+                "why_changed": null,
+                "impact_expected": null,
+                "valid_from": "2026-10-21T06:47:26.471980+00:00",
+                "expired_at": null,
+                "source_id": null
+              }
+            ],
+            "archived_history": []
+          }
+        },
+        "topic_history": [],
+        "created_at": "2026-10-21T06:47:26.471980+00:00",
+        "updated_at": "2026-10-21T06:47:26.471996+00:00"
+      },
+      "rejected": null,
+      "error": null,
+      "latency_ms": 0.011,
+      "finished_at": "2026-10-21T06:47:26.472187+00:00"
+    },
+    {
+      "seq": 9,
+      "kind": "read",
+      "op": "read_state",
+      "request": null,
+      "started_at": "2026-10-21T06:47:26.472596+00:00",
+      "response": {
+        "topics": 4,
+        "edges": 3
+      },
+      "rejected": null,
+      "error": null,
+      "latency_ms": 0.047,
+      "finished_at": "2026-10-21T06:47:26.472647+00:00"
+    }
+  ],
+  "waits": [],
+  "state": {
+    "topics": {
+      "52510113-d7e4-4c6b-8c53-cc49462c4a1a": {
+        "id": "52510113-d7e4-4c6b-8c53-cc49462c4a1a",
+        "title": "Website Redesign",
+        "summary": null,
+        "topic_kind": "project",
+        "salience": 0.9777825335052935,
+        "failed_salience": null,
+        "archived": false,
+        "revision_flag": {
+          "flagged": false
+        },
+        "fields": {
+          "Deadline": {
+            "field_type": "string",
+            "ref_topic_id": null,
+            "current": {
+              "id": "38ae8419-3b0f-42c2-9f02-2cbcb9e53169",
+              "value": "April 20",
+              "provenance": "scenario",
+              "why_changed": null,
+              "impact_expected": null,
+              "valid_from": "2026-10-21T06:47:26.472081+00:00",
+              "expired_at": null,
+              "source_id": null
+            },
+            "history": [
+              {
+                "id": "38ae8419-3b0f-42c2-9f02-2cbcb9e53169",
+                "value": "April 20",
+                "provenance": "scenario",
+                "why_changed": null,
+                "impact_expected": null,
+                "valid_from": "2026-10-21T06:47:26.472081+00:00",
+                "expired_at": null,
+                "source_id": null
+              },
+              {
+                "id": "9e507a54-a6c2-4886-99ea-dd865de31d6f",
+                "value": "March 15",
+                "provenance": "scenario",
+                "why_changed": null,
+                "impact_expected": null,
+                "valid_from": "2026-10-21T06:47:26.471830+00:00",
+                "expired_at": null,
+                "source_id": null
+              }
+            ],
+            "archived_history": []
+          }
+        },
+        "topic_history": [],
+        "created_at": "2026-10-21T06:47:26.471830+00:00",
+        "updated_at": "2026-10-21T06:47:26.472106+00:00"
+      },
+      "e651f4b9-e732-4c12-b770-824431b65810": {
+        "id": "e651f4b9-e732-4c12-b770-824431b65810",
+        "title": "Launch Milestone",
+        "summary": null,
+        "topic_kind": "milestone",
+        "salience": 0.9777825335052935,
+        "failed_salience": null,
+        "archived": false,
+        "revision_flag": {
+          "flagged": true,
+          "evidence": {
+            "source_topic_id": "52510113-d7e4-4c6b-8c53-cc49462c4a1a",
+            "updated_field": "Deadline",
+            "updated_fields": [
+              "Deadline"
+            ],
+            "timestamp": "2026-10-21T06:47:26.472106+00:00",
+            "policy": "propagate-on-change"
+          }
+        },
+        "fields": {
+          "Date": {
+            "field_type": "string",
+            "ref_topic_id": null,
+            "current": {
+              "id": "5bcc0c0a-a0af-4300-a2d7-b3881dcfde59",
+              "value": "March 20",
+              "provenance": "scenario",
+              "why_changed": null,
+              "impact_expected": null,
+              "valid_from": "2026-10-21T06:47:26.471907+00:00",
+              "expired_at": null,
+              "source_id": null
+            },
+            "history": [
+              {
+                "id": "5bcc0c0a-a0af-4300-a2d7-b3881dcfde59",
+                "value": "March 20",
+                "provenance": "scenario",
+                "why_changed": null,
+                "impact_expected": null,
+                "valid_from": "2026-10-21T06:47:26.471907+00:00",
+                "expired_at": null,
+                "source_id": null
+              }
+            ],
+            "archived_history": []
+          }
+        },
+        "topic_history": [
+          {
+            "ts": "2026-10-21T06:47:26.472106+00:00",
+            "kind": "flagged",
+            "detail": {
+              "source_topic_id": "52510113-d7e4-4c6b-8c53-cc49462c4a1a",
+              "updated_field": "Deadline",
+              "updated_fields": [
+                "Deadline"
+              ],
+              "timestamp": "2026-10-21T06:47:26.472106+00:00",
+              "policy": "propagate-on-change"
+            }
+          }
+        ],
+        "created_at": "2026-10-21T06:47:26.471907+00:00",
+        "updated_at": "2026-10-21T06:47:26.471926+00:00"
+      },
+      "c0c4992d-a87d-4d7f-b266-7f862b900386": {
+        "id": "c0c4992d-a87d-4d7f-b266-7f862b900386",
+        "title": "Press Briefing",
+        "summary": null,
+        "topic_kind": "event",
+        "salience": 0.985132960768728,
+        "failed_salience": null,
+        "archived": false,
+        "revision_flag": {
+          "flagged": false
+        },
+        "fields": {
+          "Date": {
+            "field_type": "string",
+            "ref_topic_id": null,
+            "current": {
+              "id": "69de7943-08e8-4102-82f7-55e85e64ed12",
+              "value": "March 22",
+              "provenance": "scenario",
+              "why_changed": null,
+              "impact_expected": null,
+              "valid_from": "2026-10-21T06:47:26.471946+00:00",
+              "expired_at": null,
+              "source_id": null
+            },
+            "history": [
+              {
+                "id": "69de7943-08e8-4102-82f7-55e85e64ed12",
+                "value": "March 22",
+                "provenance": "scenario",
+                "why_changed": null,
+                "impact_expected": null,
+                "valid_from": "2026-10-21T06:47:26.471946+00:00",
+                "expired_at": null,
+                "source_id": null
+              }
+            ],
+            "archived_history": []
+          }
+        },
+        "topic_history": [],
+        "created_at": "2026-10-21T06:47:26.471946+00:00",
+        "updated_at": "2026-10-21T06:47:26.471962+00:00"
+      },
+      "66cade5e-f424-4af9-8822-9d0aec4f60e8": {
+        "id": "66cade5e-f424-4af9-8822-9d0aec4f60e8",
+        "title": "Catering Order",
+        "summary": null,
+        "topic_kind": "order",
+        "salience": 0.9925386444712004,
+        "failed_salience": null,
+        "archived": false,
+        "revision_flag": {
+          "flagged": false
+        },
+        "fields": {
+          "Head count": {
+            "field_type": "string",
+            "ref_topic_id": null,
+            "current": {
+              "id": "eff61557-a4d6-4774-9ffd-fef0b559eaec",
+              "value": "12",
+              "provenance": "scenario",
+              "why_changed": null,
+              "impact_expected": null,
+              "valid_from": "2026-10-21T06:47:26.471980+00:00",
+              "expired_at": null,
+              "source_id": null
+            },
+            "history": [
+              {
+                "id": "eff61557-a4d6-4774-9ffd-fef0b559eaec",
+                "value": "12",
+                "provenance": "scenario",
+                "why_changed": null,
+                "impact_expected": null,
+                "valid_from": "2026-10-21T06:47:26.471980+00:00",
+                "expired_at": null,
+                "source_id": null
+              }
+            ],
+            "archived_history": []
+          }
+        },
+        "topic_history": [],
+        "created_at": "2026-10-21T06:47:26.471980+00:00",
+        "updated_at": "2026-10-21T06:47:26.471996+00:00"
+      }
+    },
+    "edges": [
+      {
+        "from": "e651f4b9-e732-4c12-b770-824431b65810",
+        "to": "52510113-d7e4-4c6b-8c53-cc49462c4a1a",
+        "kind": "extension"
+      },
+      {
+        "from": "c0c4992d-a87d-4d7f-b266-7f862b900386",
+        "to": "e651f4b9-e732-4c12-b770-824431b65810",
+        "kind": "extension"
+      },
+      {
+        "from": "66cade5e-f424-4af9-8822-9d0aec4f60e8",
+        "to": "c0c4992d-a87d-4d7f-b266-7f862b900386",
+        "kind": "extension"
+      }
+    ],
+    "policies": [
+      {
+        "name": "reject-empty-values",
+        "event": "write",
+        "condition": {
+          "field": "*",
+          "op": "empty"
+        },
+        "action": "reject"
+      },
+      {
+        "name": "propagate-on-change",
+        "event": "field_updated",
+        "condition": {
+          "neighbour": "extension"
+        },
+        "action": "flag"
+      }
+    ],
+    "interactions": 5
+  },
+  "state_error": null,
+  "rows": [
+    "Over-flagging"
+  ],
+  "verdicts": [
+    {
+      "row": "Over-flagging",
+      "verdict": "not-scored",
+      "cases": [],
+      "observations": [],
+      "probe_evidence": null,
+      "measurements": {
+        "over_flagging": {
+          "scenario": "Over-flagging chain A <- B <- C <- D",
+          "chain": [
+            "A",
+            "B",
+            "C",
+            "D"
+          ],
+          "needs_revision": {
+            "B": true,
+            "C": true,
+            "D": false
+          },
+          "runs": [
+            {
+              "mode": "one hop",
+              "raised": [
+                "B"
+              ],
+              "needed": [
+                "B",
+                "C"
+              ],
+              "missed": [
+                "C"
+              ],
+              "not_needed": [],
+              "flags_raised": 1,
+              "flags_needed": 2,
+              "flags_missed": 1,
+              "flags_not_needed": 0
+            },
+            {
+              "mode": "transitive walk",
+              "raised": [
+                "B",
+                "C",
+                "D"
+              ],
+              "needed": [
+                "B",
+                "C"
+              ],
+              "missed": [],
+              "not_needed": [
+                "D"
+              ],
+              "flags_raised": 3,
+              "flags_needed": 2,
+              "flags_missed": 0,
+              "flags_not_needed": 1
+            }
+          ]
+        }
+      },
+      "control": false,
+      "system": "reference-gem-p1",
+      "snapshots": [],
+      "error": null
+    }
+  ]
+}

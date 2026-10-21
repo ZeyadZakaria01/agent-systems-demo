@@ -1,0 +1,122 @@
+{
+  "system": "step3",
+  "label": "bitemporal patch step 3 (cb5d48c, LadybugDB)",
+  "check": "chat-two-weeks",
+  "tag": null,
+  "describe": {
+    "system": "bitemporal patch step 3 (cb5d48c, LadybugDB)",
+    "url": "http://127.0.0.1:8765",
+    "db_path": "/home/zeyad/work/agent-systems-demo/.runtime/gem-suite/20261021-085949/step3-chat-two-weeks/memstate.lbug",
+    "commit": "cb5d48ce496580d5fb6de0467a9dc26ed48f64ab",
+    "engine": "MemState engine module: ladybug",
+    "keeps_history": true,
+    "accepts_error": null,
+    "declared_bound": {
+      "topics": 500,
+      "name": "topic_count_soft_limit"
+    },
+    "accepts_source": false,
+    "latency_comparable": true,
+    "source_surface": {
+      "request_properties": [],
+      "paths": []
+    },
+    "c6_clause_2_seeds": null,
+    "source_dir": "/home/zeyad/work/agent-systems-demo/MemState-patched/src",
+    "health_error": null,
+    "accepts": {
+      "valid_from": true,
+      "invalid_at": true,
+      "valid_at": true,
+      "recorded_at": true
+    }
+  },
+  "describe_error": null,
+  "started_at": "2026-10-21T06:49:19.327497+00:00",
+  "finished_at": "2026-10-21T06:49:27.057460+00:00",
+  "scored_transitions": [],
+  "setup_writes": [],
+  "reads": [
+    {
+      "seq": 0,
+      "kind": "read",
+      "op": "read_state",
+      "request": null,
+      "started_at": "2026-10-21T06:49:21.051746+00:00",
+      "response": {
+        "topics": 0,
+        "edges": 0
+      },
+      "rejected": null,
+      "error": null,
+      "latency_ms": 261.581,
+      "finished_at": "2026-10-21T06:49:21.313341+00:00"
+    },
+    {
+      "seq": 2,
+      "kind": "read",
+      "op": "read_state",
+      "request": null,
+      "started_at": "2026-10-21T06:49:24.929621+00:00",
+      "response": {
+        "topics": 0,
+        "edges": 0
+      },
+      "rejected": null,
+      "error": null,
+      "latency_ms": 6.164,
+      "finished_at": "2026-10-21T06:49:24.935797+00:00"
+    },
+    {
+      "seq": 3,
+      "kind": "read",
+      "op": "read_state",
+      "request": null,
+      "started_at": "2026-10-21T06:49:24.935843+00:00",
+      "response": {
+        "topics": 0,
+        "edges": 0
+      },
+      "rejected": null,
+      "error": null,
+      "latency_ms": 4.48,
+      "finished_at": "2026-10-21T06:49:24.940332+00:00"
+    },
+    {
+      "seq": 5,
+      "kind": "read",
+      "op": "read_state",
+      "request": null,
+      "started_at": "2026-10-21T06:49:26.986927+00:00",
+      "response": {
+        "topics": 0,
+        "edges": 0
+      },
+      "rejected": null,
+      "error": null,
+      "latency_ms": 6.039,
+      "finished_at": "2026-10-21T06:49:26.992978+00:00"
+    },
+    {
+      "seq": 6,
+      "kind": "read",
+      "op": "read_state",
+      "request": null,
+      "started_at": "2026-10-21T06:49:27.060609+00:00",
+      "response": {
+        "topics": 0,
+        "edges": 0
+      },
+      "rejected": null,
+      "error": null,
+      "latency_ms": 4.381,
+      "finished_at": "2026-10-21T06:49:27.065002+00:00"
+    }
+  ],
+  "waits": [],
+  "state": {
+    "topics": {},
+    "edges": []
+  },
+  "state_error": null
+}

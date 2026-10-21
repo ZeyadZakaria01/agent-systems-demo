@@ -1,0 +1,3113 @@
+{
+  "system": "reference-gem-p2",
+  "label": "reference GEM (phase 2)",
+  "check": "C6-2",
+  "tag": null,
+  "describe": {
+    "system": "reference GEM (phase 2)",
+    "url": null,
+    "db_path": null,
+    "commit": null,
+    "engine": "in-process reference GEM, phase 2",
+    "keeps_history": true,
+    "accepts_error": null,
+    "declared_bound": {
+      "topics": 500,
+      "name": "\u03b2"
+    },
+    "accepts_source": true,
+    "latency_comparable": false,
+    "source_surface": {
+      "request_properties": [
+        "source_message"
+      ],
+      "paths": []
+    },
+    "c6_clause_2_seeds": {
+      "target": 0.06,
+      "control": 0.06
+    },
+    "embedder": "sentence-transformers/all-MiniLM-L6-v2",
+    "top_k": 8,
+    "parameters": {
+      "theta_archive": 0.05,
+      "lambda": 0.9925386444712004,
+      "decay_horizon": 400,
+      "beta": 500,
+      "bump": 0.1,
+      "history_cap": 500,
+      "top_k": 8,
+      "salience_on_archive": 0.5,
+      "propagation": "one hop, extension edges, either direction",
+      "revision": "after every ingest",
+      "phase": 2
+    },
+    "accepts": {
+      "valid_from": true,
+      "invalid_at": true,
+      "valid_at": true,
+      "recorded_at": true
+    }
+  },
+  "describe_error": null,
+  "started_at": "2026-10-21T06:47:44.203145+00:00",
+  "finished_at": "2026-10-21T06:47:44.203998+00:00",
+  "scored_transitions": [
+    {
+      "seq": 0,
+      "kind": "scored",
+      "op": "ingest",
+      "request": {
+        "placement": "new_topic",
+        "title": "Parking Permit Renewal",
+        "summary": "Renewal paperwork for the street parking permit",
+        "salience": 0.06
+      },
+      "started_at": "2026-10-21T06:47:44.203175+00:00",
+      "response": {
+        "topic_id": "8f7ecfae-a61e-4fa5-92aa-67d16ac77571",
+        "applied": [
+          "created_topic:8f7ecfae-a61e-4fa5-92aa-67d16ac77571"
+        ],
+        "version_ids": {},
+        "similar_topic_ids": []
+      },
+      "rejected": null,
+      "error": null,
+      "latency_ms": 0.042,
+      "finished_at": "2026-10-21T06:47:44.203223+00:00"
+    },
+    {
+      "seq": 1,
+      "kind": "scored",
+      "op": "ingest",
+      "request": {
+        "placement": "new_topic",
+        "title": "Library Card Renewal",
+        "summary": "Never read; the control for the forgetting pass",
+        "salience": 0.06
+      },
+      "started_at": "2026-10-21T06:47:44.203227+00:00",
+      "response": {
+        "topic_id": "8cc0865c-e8fc-4cdd-b362-3c2845052d44",
+        "applied": [
+          "created_topic:8cc0865c-e8fc-4cdd-b362-3c2845052d44"
+        ],
+        "version_ids": {},
+        "similar_topic_ids": []
+      },
+      "rejected": null,
+      "error": null,
+      "latency_ms": 0.02,
+      "finished_at": "2026-10-21T06:47:44.203250+00:00"
+    },
+    {
+      "seq": 3,
+      "kind": "scored",
+      "op": "query",
+      "request": {
+        "q": "Parking Permit Renewal",
+        "stages": [
+          "temporal"
+        ],
+        "topic_ids": [
+          "8f7ecfae-a61e-4fa5-92aa-67d16ac77571"
+        ],
+        "explain": false
+      },
+      "started_at": "2026-10-21T06:47:44.203265+00:00",
+      "response": {
+        "query": "Parking Permit Renewal",
+        "candidates": [
+          {
+            "topic_id": "8f7ecfae-a61e-4fa5-92aa-67d16ac77571",
+            "title": "Parking Permit Renewal",
+            "summary": "Renewal paperwork for the street parking permit",
+            "topic_kind": null,
+            "salience": 0.05955231866827202,
+            "failed_salience": null,
+            "neighbors": [],
+            "fields": [],
+            "revision_flag": {
+              "flagged": false
+            },
+            "similarity": null
+          }
+        ],
+        "summary_text": ""
+      },
+      "rejected": null,
+      "error": null,
+      "latency_ms": 0.008,
+      "finished_at": "2026-10-21T06:47:44.203275+00:00"
+    },
+    {
+      "seq": 7,
+      "kind": "scored",
+      "op": "query",
+      "request": {
+        "q": "Parking Permit Renewal",
+        "stages": [
+          "temporal"
+        ],
+        "topic_ids": [
+          "8f7ecfae-a61e-4fa5-92aa-67d16ac77571"
+        ],
+        "explain": false
+      },
+      "started_at": "2026-10-21T06:47:44.203299+00:00",
+      "response": {
+        "query": "Parking Permit Renewal",
+        "candidates": [
+          {
+            "topic_id": "8f7ecfae-a61e-4fa5-92aa-67d16ac77571",
+            "title": "Parking Permit Renewal",
+            "summary": "Renewal paperwork for the street parking permit",
+            "topic_kind": null,
+            "salience": 0.15955231866827202,
+            "failed_salience": null,
+            "neighbors": [],
+            "fields": [],
+            "revision_flag": {
+              "flagged": false
+            },
+            "similarity": null
+          }
+        ],
+        "summary_text": ""
+      },
+      "rejected": null,
+      "error": null,
+      "latency_ms": 0.005,
+      "finished_at": "2026-10-21T06:47:44.203306+00:00"
+    },
+    {
+      "seq": 11,
+      "kind": "scored",
+      "op": "query",
+      "request": {
+        "q": "Parking Permit Renewal",
+        "stages": [
+          "temporal"
+        ],
+        "topic_ids": [
+          "8f7ecfae-a61e-4fa5-92aa-67d16ac77571"
+        ],
+        "explain": false
+      },
+      "started_at": "2026-10-21T06:47:44.203330+00:00",
+      "response": {
+        "query": "Parking Permit Renewal",
+        "candidates": [
+          {
+            "topic_id": "8f7ecfae-a61e-4fa5-92aa-67d16ac77571",
+            "title": "Parking Permit Renewal",
+            "summary": "Renewal paperwork for the street parking permit",
+            "topic_kind": null,
+            "salience": 0.259552318668272,
+            "failed_salience": null,
+            "neighbors": [],
+            "fields": [],
+            "revision_flag": {
+              "flagged": false
+            },
+            "similarity": null
+          }
+        ],
+        "summary_text": ""
+      },
+      "rejected": null,
+      "error": null,
+      "latency_ms": 0.006,
+      "finished_at": "2026-10-21T06:47:44.203339+00:00"
+    },
+    {
+      "seq": 15,
+      "kind": "scored",
+      "op": "query",
+      "request": {
+        "q": "Parking Permit Renewal",
+        "stages": [
+          "temporal"
+        ],
+        "topic_ids": [
+          "8f7ecfae-a61e-4fa5-92aa-67d16ac77571"
+        ],
+        "explain": false
+      },
+      "started_at": "2026-10-21T06:47:44.203360+00:00",
+      "response": {
+        "query": "Parking Permit Renewal",
+        "candidates": [
+          {
+            "topic_id": "8f7ecfae-a61e-4fa5-92aa-67d16ac77571",
+            "title": "Parking Permit Renewal",
+            "summary": "Renewal paperwork for the street parking permit",
+            "topic_kind": null,
+            "salience": 0.359552318668272,
+            "failed_salience": null,
+            "neighbors": [],
+            "fields": [],
+            "revision_flag": {
+              "flagged": false
+            },
+            "similarity": null
+          }
+        ],
+        "summary_text": ""
+      },
+      "rejected": null,
+      "error": null,
+      "latency_ms": 0.004,
+      "finished_at": "2026-10-21T06:47:44.203366+00:00"
+    },
+    {
+      "seq": 19,
+      "kind": "scored",
+      "op": "query",
+      "request": {
+        "q": "Parking Permit Renewal",
+        "stages": [
+          "temporal"
+        ],
+        "topic_ids": [
+          "8f7ecfae-a61e-4fa5-92aa-67d16ac77571"
+        ],
+        "explain": false
+      },
+      "started_at": "2026-10-21T06:47:44.203384+00:00",
+      "response": {
+        "query": "Parking Permit Renewal",
+        "candidates": [
+          {
+            "topic_id": "8f7ecfae-a61e-4fa5-92aa-67d16ac77571",
+            "title": "Parking Permit Renewal",
+            "summary": "Renewal paperwork for the street parking permit",
+            "topic_kind": null,
+            "salience": 0.45955231866827195,
+            "failed_salience": null,
+            "neighbors": [],
+            "fields": [],
+            "revision_flag": {
+              "flagged": false
+            },
+            "similarity": null
+          }
+        ],
+        "summary_text": ""
+      },
+      "rejected": null,
+      "error": null,
+      "latency_ms": 0.003,
+      "finished_at": "2026-10-21T06:47:44.203389+00:00"
+    },
+    {
+      "seq": 23,
+      "kind": "scored",
+      "op": "query",
+      "request": {
+        "q": "Parking Permit Renewal",
+        "stages": [
+          "temporal"
+        ],
+        "topic_ids": [
+          "8f7ecfae-a61e-4fa5-92aa-67d16ac77571"
+        ],
+        "explain": false
+      },
+      "started_at": "2026-10-21T06:47:44.203406+00:00",
+      "response": {
+        "query": "Parking Permit Renewal",
+        "candidates": [
+          {
+            "topic_id": "8f7ecfae-a61e-4fa5-92aa-67d16ac77571",
+            "title": "Parking Permit Renewal",
+            "summary": "Renewal paperwork for the street parking permit",
+            "topic_kind": null,
+            "salience": 0.5595523186682719,
+            "failed_salience": null,
+            "neighbors": [],
+            "fields": [],
+            "revision_flag": {
+              "flagged": false
+            },
+            "similarity": null
+          }
+        ],
+        "summary_text": ""
+      },
+      "rejected": null,
+      "error": null,
+      "latency_ms": 0.004,
+      "finished_at": "2026-10-21T06:47:44.203412+00:00"
+    },
+    {
+      "seq": 27,
+      "kind": "scored",
+      "op": "query",
+      "request": {
+        "q": "Parking Permit Renewal",
+        "stages": [
+          "temporal"
+        ],
+        "topic_ids": [
+          "8f7ecfae-a61e-4fa5-92aa-67d16ac77571"
+        ],
+        "explain": false
+      },
+      "started_at": "2026-10-21T06:47:44.203429+00:00",
+      "response": {
+        "query": "Parking Permit Renewal",
+        "candidates": [
+          {
+            "topic_id": "8f7ecfae-a61e-4fa5-92aa-67d16ac77571",
+            "title": "Parking Permit Renewal",
+            "summary": "Renewal paperwork for the street parking permit",
+            "topic_kind": null,
+            "salience": 0.6595523186682719,
+            "failed_salience": null,
+            "neighbors": [],
+            "fields": [],
+            "revision_flag": {
+              "flagged": false
+            },
+            "similarity": null
+          }
+        ],
+        "summary_text": ""
+      },
+      "rejected": null,
+      "error": null,
+      "latency_ms": 0.003,
+      "finished_at": "2026-10-21T06:47:44.203434+00:00"
+    },
+    {
+      "seq": 31,
+      "kind": "scored",
+      "op": "query",
+      "request": {
+        "q": "Parking Permit Renewal",
+        "stages": [
+          "temporal"
+        ],
+        "topic_ids": [
+          "8f7ecfae-a61e-4fa5-92aa-67d16ac77571"
+        ],
+        "explain": false
+      },
+      "started_at": "2026-10-21T06:47:44.203452+00:00",
+      "response": {
+        "query": "Parking Permit Renewal",
+        "candidates": [
+          {
+            "topic_id": "8f7ecfae-a61e-4fa5-92aa-67d16ac77571",
+            "title": "Parking Permit Renewal",
+            "summary": "Renewal paperwork for the street parking permit",
+            "topic_kind": null,
+            "salience": 0.7595523186682719,
+            "failed_salience": null,
+            "neighbors": [],
+            "fields": [],
+            "revision_flag": {
+              "flagged": false
+            },
+            "similarity": null
+          }
+        ],
+        "summary_text": ""
+      },
+      "rejected": null,
+      "error": null,
+      "latency_ms": 0.003,
+      "finished_at": "2026-10-21T06:47:44.203457+00:00"
+    },
+    {
+      "seq": 35,
+      "kind": "scored",
+      "op": "query",
+      "request": {
+        "q": "Parking Permit Renewal",
+        "stages": [
+          "temporal"
+        ],
+        "topic_ids": [
+          "8f7ecfae-a61e-4fa5-92aa-67d16ac77571"
+        ],
+        "explain": false
+      },
+      "started_at": "2026-10-21T06:47:44.203474+00:00",
+      "response": {
+        "query": "Parking Permit Renewal",
+        "candidates": [
+          {
+            "topic_id": "8f7ecfae-a61e-4fa5-92aa-67d16ac77571",
+            "title": "Parking Permit Renewal",
+            "summary": "Renewal paperwork for the street parking permit",
+            "topic_kind": null,
+            "salience": 0.8595523186682719,
+            "failed_salience": null,
+            "neighbors": [],
+            "fields": [],
+            "revision_flag": {
+              "flagged": false
+            },
+            "similarity": null
+          }
+        ],
+        "summary_text": ""
+      },
+      "rejected": null,
+      "error": null,
+      "latency_ms": 0.004,
+      "finished_at": "2026-10-21T06:47:44.203482+00:00"
+    },
+    {
+      "seq": 39,
+      "kind": "scored",
+      "op": "query",
+      "request": {
+        "q": "Parking Permit Renewal",
+        "stages": [
+          "temporal"
+        ],
+        "topic_ids": [
+          "8f7ecfae-a61e-4fa5-92aa-67d16ac77571"
+        ],
+        "explain": false
+      },
+      "started_at": "2026-10-21T06:47:44.203500+00:00",
+      "response": {
+        "query": "Parking Permit Renewal",
+        "candidates": [
+          {
+            "topic_id": "8f7ecfae-a61e-4fa5-92aa-67d16ac77571",
+            "title": "Parking Permit Renewal",
+            "summary": "Renewal paperwork for the street parking permit",
+            "topic_kind": null,
+            "salience": 0.9595523186682718,
+            "failed_salience": null,
+            "neighbors": [],
+            "fields": [],
+            "revision_flag": {
+              "flagged": false
+            },
+            "similarity": null
+          }
+        ],
+        "summary_text": ""
+      },
+      "rejected": null,
+      "error": null,
+      "latency_ms": 0.003,
+      "finished_at": "2026-10-21T06:47:44.203505+00:00"
+    },
+    {
+      "seq": 43,
+      "kind": "scored",
+      "op": "query",
+      "request": {
+        "q": "Parking Permit Renewal",
+        "stages": [
+          "temporal"
+        ],
+        "topic_ids": [
+          "8f7ecfae-a61e-4fa5-92aa-67d16ac77571"
+        ],
+        "explain": false
+      },
+      "started_at": "2026-10-21T06:47:44.203523+00:00",
+      "response": {
+        "query": "Parking Permit Renewal",
+        "candidates": [
+          {
+            "topic_id": "8f7ecfae-a61e-4fa5-92aa-67d16ac77571",
+            "title": "Parking Permit Renewal",
+            "summary": "Renewal paperwork for the street parking permit",
+            "topic_kind": null,
+            "salience": 1.0595523186682718,
+            "failed_salience": null,
+            "neighbors": [],
+            "fields": [],
+            "revision_flag": {
+              "flagged": false
+            },
+            "similarity": null
+          }
+        ],
+        "summary_text": ""
+      },
+      "rejected": null,
+      "error": null,
+      "latency_ms": 0.003,
+      "finished_at": "2026-10-21T06:47:44.203528+00:00"
+    },
+    {
+      "seq": 47,
+      "kind": "scored",
+      "op": "query",
+      "request": {
+        "q": "Parking Permit Renewal",
+        "stages": [
+          "temporal"
+        ],
+        "topic_ids": [
+          "8f7ecfae-a61e-4fa5-92aa-67d16ac77571"
+        ],
+        "explain": false
+      },
+      "started_at": "2026-10-21T06:47:44.203546+00:00",
+      "response": {
+        "query": "Parking Permit Renewal",
+        "candidates": [
+          {
+            "topic_id": "8f7ecfae-a61e-4fa5-92aa-67d16ac77571",
+            "title": "Parking Permit Renewal",
+            "summary": "Renewal paperwork for the street parking permit",
+            "topic_kind": null,
+            "salience": 1.159552318668272,
+            "failed_salience": null,
+            "neighbors": [],
+            "fields": [],
+            "revision_flag": {
+              "flagged": false
+            },
+            "similarity": null
+          }
+        ],
+        "summary_text": ""
+      },
+      "rejected": null,
+      "error": null,
+      "latency_ms": 0.004,
+      "finished_at": "2026-10-21T06:47:44.203552+00:00"
+    },
+    {
+      "seq": 51,
+      "kind": "scored",
+      "op": "query",
+      "request": {
+        "q": "Parking Permit Renewal",
+        "stages": [
+          "temporal"
+        ],
+        "topic_ids": [
+          "8f7ecfae-a61e-4fa5-92aa-67d16ac77571"
+        ],
+        "explain": false
+      },
+      "started_at": "2026-10-21T06:47:44.203570+00:00",
+      "response": {
+        "query": "Parking Permit Renewal",
+        "candidates": [
+          {
+            "topic_id": "8f7ecfae-a61e-4fa5-92aa-67d16ac77571",
+            "title": "Parking Permit Renewal",
+            "summary": "Renewal paperwork for the street parking permit",
+            "topic_kind": null,
+            "salience": 1.259552318668272,
+            "failed_salience": null,
+            "neighbors": [],
+            "fields": [],
+            "revision_flag": {
+              "flagged": false
+            },
+            "similarity": null
+          }
+        ],
+        "summary_text": ""
+      },
+      "rejected": null,
+      "error": null,
+      "latency_ms": 0.003,
+      "finished_at": "2026-10-21T06:47:44.203575+00:00"
+    },
+    {
+      "seq": 55,
+      "kind": "scored",
+      "op": "query",
+      "request": {
+        "q": "Parking Permit Renewal",
+        "stages": [
+          "temporal"
+        ],
+        "topic_ids": [
+          "8f7ecfae-a61e-4fa5-92aa-67d16ac77571"
+        ],
+        "explain": false
+      },
+      "started_at": "2026-10-21T06:47:44.203595+00:00",
+      "response": {
+        "query": "Parking Permit Renewal",
+        "candidates": [
+          {
+            "topic_id": "8f7ecfae-a61e-4fa5-92aa-67d16ac77571",
+            "title": "Parking Permit Renewal",
+            "summary": "Renewal paperwork for the street parking permit",
+            "topic_kind": null,
+            "salience": 1.359552318668272,
+            "failed_salience": null,
+            "neighbors": [],
+            "fields": [],
+            "revision_flag": {
+              "flagged": false
+            },
+            "similarity": null
+          }
+        ],
+        "summary_text": ""
+      },
+      "rejected": null,
+      "error": null,
+      "latency_ms": 0.004,
+      "finished_at": "2026-10-21T06:47:44.203601+00:00"
+    },
+    {
+      "seq": 59,
+      "kind": "scored",
+      "op": "query",
+      "request": {
+        "q": "Parking Permit Renewal",
+        "stages": [
+          "temporal"
+        ],
+        "topic_ids": [
+          "8f7ecfae-a61e-4fa5-92aa-67d16ac77571"
+        ],
+        "explain": false
+      },
+      "started_at": "2026-10-21T06:47:44.203618+00:00",
+      "response": {
+        "query": "Parking Permit Renewal",
+        "candidates": [
+          {
+            "topic_id": "8f7ecfae-a61e-4fa5-92aa-67d16ac77571",
+            "title": "Parking Permit Renewal",
+            "summary": "Renewal paperwork for the street parking permit",
+            "topic_kind": null,
+            "salience": 1.4595523186682722,
+            "failed_salience": null,
+            "neighbors": [],
+            "fields": [],
+            "revision_flag": {
+              "flagged": false
+            },
+            "similarity": null
+          }
+        ],
+        "summary_text": ""
+      },
+      "rejected": null,
+      "error": null,
+      "latency_ms": 0.003,
+      "finished_at": "2026-10-21T06:47:44.203623+00:00"
+    },
+    {
+      "seq": 63,
+      "kind": "scored",
+      "op": "query",
+      "request": {
+        "q": "Parking Permit Renewal",
+        "stages": [
+          "temporal"
+        ],
+        "topic_ids": [
+          "8f7ecfae-a61e-4fa5-92aa-67d16ac77571"
+        ],
+        "explain": false
+      },
+      "started_at": "2026-10-21T06:47:44.203641+00:00",
+      "response": {
+        "query": "Parking Permit Renewal",
+        "candidates": [
+          {
+            "topic_id": "8f7ecfae-a61e-4fa5-92aa-67d16ac77571",
+            "title": "Parking Permit Renewal",
+            "summary": "Renewal paperwork for the street parking permit",
+            "topic_kind": null,
+            "salience": 1.5595523186682723,
+            "failed_salience": null,
+            "neighbors": [],
+            "fields": [],
+            "revision_flag": {
+              "flagged": false
+            },
+            "similarity": null
+          }
+        ],
+        "summary_text": ""
+      },
+      "rejected": null,
+      "error": null,
+      "latency_ms": 0.003,
+      "finished_at": "2026-10-21T06:47:44.203646+00:00"
+    },
+    {
+      "seq": 67,
+      "kind": "scored",
+      "op": "query",
+      "request": {
+        "q": "Parking Permit Renewal",
+        "stages": [
+          "temporal"
+        ],
+        "topic_ids": [
+          "8f7ecfae-a61e-4fa5-92aa-67d16ac77571"
+        ],
+        "explain": false
+      },
+      "started_at": "2026-10-21T06:47:44.203667+00:00",
+      "response": {
+        "query": "Parking Permit Renewal",
+        "candidates": [
+          {
+            "topic_id": "8f7ecfae-a61e-4fa5-92aa-67d16ac77571",
+            "title": "Parking Permit Renewal",
+            "summary": "Renewal paperwork for the street parking permit",
+            "topic_kind": null,
+            "salience": 1.6595523186682724,
+            "failed_salience": null,
+            "neighbors": [],
+            "fields": [],
+            "revision_flag": {
+              "flagged": false
+            },
+            "similarity": null
+          }
+        ],
+        "summary_text": ""
+      },
+      "rejected": null,
+      "error": null,
+      "latency_ms": 0.004,
+      "finished_at": "2026-10-21T06:47:44.203673+00:00"
+    },
+    {
+      "seq": 71,
+      "kind": "scored",
+      "op": "query",
+      "request": {
+        "q": "Parking Permit Renewal",
+        "stages": [
+          "temporal"
+        ],
+        "topic_ids": [
+          "8f7ecfae-a61e-4fa5-92aa-67d16ac77571"
+        ],
+        "explain": false
+      },
+      "started_at": "2026-10-21T06:47:44.203689+00:00",
+      "response": {
+        "query": "Parking Permit Renewal",
+        "candidates": [
+          {
+            "topic_id": "8f7ecfae-a61e-4fa5-92aa-67d16ac77571",
+            "title": "Parking Permit Renewal",
+            "summary": "Renewal paperwork for the street parking permit",
+            "topic_kind": null,
+            "salience": 1.7595523186682724,
+            "failed_salience": null,
+            "neighbors": [],
+            "fields": [],
+            "revision_flag": {
+              "flagged": false
+            },
+            "similarity": null
+          }
+        ],
+        "summary_text": ""
+      },
+      "rejected": null,
+      "error": null,
+      "latency_ms": 0.003,
+      "finished_at": "2026-10-21T06:47:44.203695+00:00"
+    },
+    {
+      "seq": 75,
+      "kind": "scored",
+      "op": "query",
+      "request": {
+        "q": "Parking Permit Renewal",
+        "stages": [
+          "temporal"
+        ],
+        "topic_ids": [
+          "8f7ecfae-a61e-4fa5-92aa-67d16ac77571"
+        ],
+        "explain": false
+      },
+      "started_at": "2026-10-21T06:47:44.203712+00:00",
+      "response": {
+        "query": "Parking Permit Renewal",
+        "candidates": [
+          {
+            "topic_id": "8f7ecfae-a61e-4fa5-92aa-67d16ac77571",
+            "title": "Parking Permit Renewal",
+            "summary": "Renewal paperwork for the street parking permit",
+            "topic_kind": null,
+            "salience": 1.8595523186682725,
+            "failed_salience": null,
+            "neighbors": [],
+            "fields": [],
+            "revision_flag": {
+              "flagged": false
+            },
+            "similarity": null
+          }
+        ],
+        "summary_text": ""
+      },
+      "rejected": null,
+      "error": null,
+      "latency_ms": 0.003,
+      "finished_at": "2026-10-21T06:47:44.203718+00:00"
+    },
+    {
+      "seq": 79,
+      "kind": "scored",
+      "op": "query",
+      "request": {
+        "q": "Parking Permit Renewal",
+        "stages": [
+          "temporal"
+        ],
+        "topic_ids": [
+          "8f7ecfae-a61e-4fa5-92aa-67d16ac77571"
+        ],
+        "explain": false
+      },
+      "started_at": "2026-10-21T06:47:44.203737+00:00",
+      "response": {
+        "query": "Parking Permit Renewal",
+        "candidates": [
+          {
+            "topic_id": "8f7ecfae-a61e-4fa5-92aa-67d16ac77571",
+            "title": "Parking Permit Renewal",
+            "summary": "Renewal paperwork for the street parking permit",
+            "topic_kind": null,
+            "salience": 1.9595523186682726,
+            "failed_salience": null,
+            "neighbors": [],
+            "fields": [],
+            "revision_flag": {
+              "flagged": false
+            },
+            "similarity": null
+          }
+        ],
+        "summary_text": ""
+      },
+      "rejected": null,
+      "error": null,
+      "latency_ms": 0.003,
+      "finished_at": "2026-10-21T06:47:44.203743+00:00"
+    },
+    {
+      "seq": 83,
+      "kind": "scored",
+      "op": "query",
+      "request": {
+        "q": "Parking Permit Renewal",
+        "stages": [
+          "temporal"
+        ],
+        "topic_ids": [
+          "8f7ecfae-a61e-4fa5-92aa-67d16ac77571"
+        ],
+        "explain": false
+      },
+      "started_at": "2026-10-21T06:47:44.203759+00:00",
+      "response": {
+        "query": "Parking Permit Renewal",
+        "candidates": [
+          {
+            "topic_id": "8f7ecfae-a61e-4fa5-92aa-67d16ac77571",
+            "title": "Parking Permit Renewal",
+            "summary": "Renewal paperwork for the street parking permit",
+            "topic_kind": null,
+            "salience": 2.0595523186682727,
+            "failed_salience": null,
+            "neighbors": [],
+            "fields": [],
+            "revision_flag": {
+              "flagged": false
+            },
+            "similarity": null
+          }
+        ],
+        "summary_text": ""
+      },
+      "rejected": null,
+      "error": null,
+      "latency_ms": 0.003,
+      "finished_at": "2026-10-21T06:47:44.203764+00:00"
+    },
+    {
+      "seq": 87,
+      "kind": "scored",
+      "op": "query",
+      "request": {
+        "q": "Parking Permit Renewal",
+        "stages": [
+          "temporal"
+        ],
+        "topic_ids": [
+          "8f7ecfae-a61e-4fa5-92aa-67d16ac77571"
+        ],
+        "explain": false
+      },
+      "started_at": "2026-10-21T06:47:44.203781+00:00",
+      "response": {
+        "query": "Parking Permit Renewal",
+        "candidates": [
+          {
+            "topic_id": "8f7ecfae-a61e-4fa5-92aa-67d16ac77571",
+            "title": "Parking Permit Renewal",
+            "summary": "Renewal paperwork for the street parking permit",
+            "topic_kind": null,
+            "salience": 2.159552318668273,
+            "failed_salience": null,
+            "neighbors": [],
+            "fields": [],
+            "revision_flag": {
+              "flagged": false
+            },
+            "similarity": null
+          }
+        ],
+        "summary_text": ""
+      },
+      "rejected": null,
+      "error": null,
+      "latency_ms": 0.003,
+      "finished_at": "2026-10-21T06:47:44.203786+00:00"
+    },
+    {
+      "seq": 91,
+      "kind": "scored",
+      "op": "query",
+      "request": {
+        "q": "Parking Permit Renewal",
+        "stages": [
+          "temporal"
+        ],
+        "topic_ids": [
+          "8f7ecfae-a61e-4fa5-92aa-67d16ac77571"
+        ],
+        "explain": false
+      },
+      "started_at": "2026-10-21T06:47:44.203803+00:00",
+      "response": {
+        "query": "Parking Permit Renewal",
+        "candidates": [
+          {
+            "topic_id": "8f7ecfae-a61e-4fa5-92aa-67d16ac77571",
+            "title": "Parking Permit Renewal",
+            "summary": "Renewal paperwork for the street parking permit",
+            "topic_kind": null,
+            "salience": 2.259552318668273,
+            "failed_salience": null,
+            "neighbors": [],
+            "fields": [],
+            "revision_flag": {
+              "flagged": false
+            },
+            "similarity": null
+          }
+        ],
+        "summary_text": ""
+      },
+      "rejected": null,
+      "error": null,
+      "latency_ms": 0.003,
+      "finished_at": "2026-10-21T06:47:44.203808+00:00"
+    },
+    {
+      "seq": 95,
+      "kind": "scored",
+      "op": "query",
+      "request": {
+        "q": "Parking Permit Renewal",
+        "stages": [
+          "temporal"
+        ],
+        "topic_ids": [
+          "8f7ecfae-a61e-4fa5-92aa-67d16ac77571"
+        ],
+        "explain": false
+      },
+      "started_at": "2026-10-21T06:47:44.203826+00:00",
+      "response": {
+        "query": "Parking Permit Renewal",
+        "candidates": [
+          {
+            "topic_id": "8f7ecfae-a61e-4fa5-92aa-67d16ac77571",
+            "title": "Parking Permit Renewal",
+            "summary": "Renewal paperwork for the street parking permit",
+            "topic_kind": null,
+            "salience": 2.359552318668273,
+            "failed_salience": null,
+            "neighbors": [],
+            "fields": [],
+            "revision_flag": {
+              "flagged": false
+            },
+            "similarity": null
+          }
+        ],
+        "summary_text": ""
+      },
+      "rejected": null,
+      "error": null,
+      "latency_ms": 0.003,
+      "finished_at": "2026-10-21T06:47:44.203831+00:00"
+    },
+    {
+      "seq": 99,
+      "kind": "scored",
+      "op": "query",
+      "request": {
+        "q": "Parking Permit Renewal",
+        "stages": [
+          "temporal"
+        ],
+        "topic_ids": [
+          "8f7ecfae-a61e-4fa5-92aa-67d16ac77571"
+        ],
+        "explain": false
+      },
+      "started_at": "2026-10-21T06:47:44.203848+00:00",
+      "response": {
+        "query": "Parking Permit Renewal",
+        "candidates": [
+          {
+            "topic_id": "8f7ecfae-a61e-4fa5-92aa-67d16ac77571",
+            "title": "Parking Permit Renewal",
+            "summary": "Renewal paperwork for the street parking permit",
+            "topic_kind": null,
+            "salience": 2.459552318668273,
+            "failed_salience": null,
+            "neighbors": [],
+            "fields": [],
+            "revision_flag": {
+              "flagged": false
+            },
+            "similarity": null
+          }
+        ],
+        "summary_text": ""
+      },
+      "rejected": null,
+      "error": null,
+      "latency_ms": 0.007,
+      "finished_at": "2026-10-21T06:47:44.203858+00:00"
+    },
+    {
+      "seq": 106,
+      "kind": "scored",
+      "op": "ingest",
+      "request": {
+        "placement": "extend_topic",
+        "topic_id": "8f7ecfae-a61e-4fa5-92aa-67d16ac77571",
+        "fields": [
+          {
+            "name": "Status",
+            "value": "renewed",
+            "provenance": "check"
+          }
+        ]
+      },
+      "started_at": "2026-10-21T06:47:44.203914+00:00",
+      "response": {
+        "topic_id": "8f7ecfae-a61e-4fa5-92aa-67d16ac77571",
+        "applied": [
+          "field:Status"
+        ],
+        "version_ids": {
+          "Status": "e5bf3e22-1c4e-4672-a4cd-d9ee2a2c7ac9"
+        },
+        "similar_topic_ids": []
+      },
+      "rejected": null,
+      "error": null,
+      "latency_ms": 0.042,
+      "finished_at": "2026-10-21T06:47:44.203958+00:00"
+    }
+  ],
+  "setup_writes": [],
+  "reads": [
+    {
+      "seq": 2,
+      "kind": "read",
+      "op": "read_topic",
+      "request": {
+        "topic_id": "8f7ecfae-a61e-4fa5-92aa-67d16ac77571"
+      },
+      "started_at": "2026-10-21T06:47:44.203253+00:00",
+      "response": {
+        "id": "8f7ecfae-a61e-4fa5-92aa-67d16ac77571",
+        "title": "Parking Permit Renewal",
+        "summary": "Renewal paperwork for the street parking permit",
+        "topic_kind": null,
+        "salience": 0.05955231866827202,
+        "failed_salience": null,
+        "archived": false,
+        "revision_flag": {
+          "flagged": false
+        },
+        "fields": {},
+        "topic_history": [],
+        "created_at": "2026-10-21T06:47:44.203182+00:00",
+        "updated_at": "2026-10-21T06:47:44.203206+00:00"
+      },
+      "rejected": null,
+      "error": null,
+      "latency_ms": 0.004,
+      "finished_at": "2026-10-21T06:47:44.203259+00:00"
+    },
+    {
+      "seq": 4,
+      "kind": "read",
+      "op": "read_topic",
+      "request": {
+        "topic_id": "8f7ecfae-a61e-4fa5-92aa-67d16ac77571"
+      },
+      "started_at": "2026-10-21T06:47:44.203279+00:00",
+      "response": {
+        "id": "8f7ecfae-a61e-4fa5-92aa-67d16ac77571",
+        "title": "Parking Permit Renewal",
+        "summary": "Renewal paperwork for the street parking permit",
+        "topic_kind": null,
+        "salience": 0.15955231866827202,
+        "failed_salience": null,
+        "archived": false,
+        "revision_flag": {
+          "flagged": false
+        },
+        "fields": {},
+        "topic_history": [],
+        "created_at": "2026-10-21T06:47:44.203182+00:00",
+        "updated_at": "2026-10-21T06:47:44.203206+00:00"
+      },
+      "rejected": null,
+      "error": null,
+      "latency_ms": 0.002,
+      "finished_at": "2026-10-21T06:47:44.203284+00:00"
+    },
+    {
+      "seq": 5,
+      "kind": "read",
+      "op": "list_topic_ids",
+      "request": {
+        "include_archived": true
+      },
+      "started_at": "2026-10-21T06:47:44.203288+00:00",
+      "response": [
+        "8f7ecfae-a61e-4fa5-92aa-67d16ac77571",
+        "8cc0865c-e8fc-4cdd-b362-3c2845052d44"
+      ],
+      "rejected": null,
+      "error": null,
+      "latency_ms": 0.001,
+      "finished_at": "2026-10-21T06:47:44.203292+00:00"
+    },
+    {
+      "seq": 6,
+      "kind": "read",
+      "op": "list_topic_ids",
+      "request": {
+        "include_archived": false
+      },
+      "started_at": "2026-10-21T06:47:44.203294+00:00",
+      "response": [
+        "8f7ecfae-a61e-4fa5-92aa-67d16ac77571",
+        "8cc0865c-e8fc-4cdd-b362-3c2845052d44"
+      ],
+      "rejected": null,
+      "error": null,
+      "latency_ms": 0.001,
+      "finished_at": "2026-10-21T06:47:44.203296+00:00"
+    },
+    {
+      "seq": 8,
+      "kind": "read",
+      "op": "read_topic",
+      "request": {
+        "topic_id": "8f7ecfae-a61e-4fa5-92aa-67d16ac77571"
+      },
+      "started_at": "2026-10-21T06:47:44.203315+00:00",
+      "response": {
+        "id": "8f7ecfae-a61e-4fa5-92aa-67d16ac77571",
+        "title": "Parking Permit Renewal",
+        "summary": "Renewal paperwork for the street parking permit",
+        "topic_kind": null,
+        "salience": 0.259552318668272,
+        "failed_salience": null,
+        "archived": false,
+        "revision_flag": {
+          "flagged": false
+        },
+        "fields": {},
+        "topic_history": [],
+        "created_at": "2026-10-21T06:47:44.203182+00:00",
+        "updated_at": "2026-10-21T06:47:44.203206+00:00"
+      },
+      "rejected": null,
+      "error": null,
+      "latency_ms": 0.002,
+      "finished_at": "2026-10-21T06:47:44.203319+00:00"
+    },
+    {
+      "seq": 9,
+      "kind": "read",
+      "op": "list_topic_ids",
+      "request": {
+        "include_archived": true
+      },
+      "started_at": "2026-10-21T06:47:44.203321+00:00",
+      "response": [
+        "8f7ecfae-a61e-4fa5-92aa-67d16ac77571",
+        "8cc0865c-e8fc-4cdd-b362-3c2845052d44"
+      ],
+      "rejected": null,
+      "error": null,
+      "latency_ms": 0.0,
+      "finished_at": "2026-10-21T06:47:44.203324+00:00"
+    },
+    {
+      "seq": 10,
+      "kind": "read",
+      "op": "list_topic_ids",
+      "request": {
+        "include_archived": false
+      },
+      "started_at": "2026-10-21T06:47:44.203325+00:00",
+      "response": [
+        "8f7ecfae-a61e-4fa5-92aa-67d16ac77571",
+        "8cc0865c-e8fc-4cdd-b362-3c2845052d44"
+      ],
+      "rejected": null,
+      "error": null,
+      "latency_ms": 0.0,
+      "finished_at": "2026-10-21T06:47:44.203328+00:00"
+    },
+    {
+      "seq": 12,
+      "kind": "read",
+      "op": "read_topic",
+      "request": {
+        "topic_id": "8f7ecfae-a61e-4fa5-92aa-67d16ac77571"
+      },
+      "started_at": "2026-10-21T06:47:44.203342+00:00",
+      "response": {
+        "id": "8f7ecfae-a61e-4fa5-92aa-67d16ac77571",
+        "title": "Parking Permit Renewal",
+        "summary": "Renewal paperwork for the street parking permit",
+        "topic_kind": null,
+        "salience": 0.359552318668272,
+        "failed_salience": null,
+        "archived": false,
+        "revision_flag": {
+          "flagged": false
+        },
+        "fields": {},
+        "topic_history": [],
+        "created_at": "2026-10-21T06:47:44.203182+00:00",
+        "updated_at": "2026-10-21T06:47:44.203206+00:00"
+      },
+      "rejected": null,
+      "error": null,
+      "latency_ms": 0.002,
+      "finished_at": "2026-10-21T06:47:44.203348+00:00"
+    },
+    {
+      "seq": 13,
+      "kind": "read",
+      "op": "list_topic_ids",
+      "request": {
+        "include_archived": true
+      },
+      "started_at": "2026-10-21T06:47:44.203350+00:00",
+      "response": [
+        "8f7ecfae-a61e-4fa5-92aa-67d16ac77571",
+        "8cc0865c-e8fc-4cdd-b362-3c2845052d44"
+      ],
+      "rejected": null,
+      "error": null,
+      "latency_ms": 0.0,
+      "finished_at": "2026-10-21T06:47:44.203353+00:00"
+    },
+    {
+      "seq": 14,
+      "kind": "read",
+      "op": "list_topic_ids",
+      "request": {
+        "include_archived": false
+      },
+      "started_at": "2026-10-21T06:47:44.203354+00:00",
+      "response": [
+        "8f7ecfae-a61e-4fa5-92aa-67d16ac77571",
+        "8cc0865c-e8fc-4cdd-b362-3c2845052d44"
+      ],
+      "rejected": null,
+      "error": null,
+      "latency_ms": 0.0,
+      "finished_at": "2026-10-21T06:47:44.203357+00:00"
+    },
+    {
+      "seq": 16,
+      "kind": "read",
+      "op": "read_topic",
+      "request": {
+        "topic_id": "8f7ecfae-a61e-4fa5-92aa-67d16ac77571"
+      },
+      "started_at": "2026-10-21T06:47:44.203368+00:00",
+      "response": {
+        "id": "8f7ecfae-a61e-4fa5-92aa-67d16ac77571",
+        "title": "Parking Permit Renewal",
+        "summary": "Renewal paperwork for the street parking permit",
+        "topic_kind": null,
+        "salience": 0.45955231866827195,
+        "failed_salience": null,
+        "archived": false,
+        "revision_flag": {
+          "flagged": false
+        },
+        "fields": {},
+        "topic_history": [],
+        "created_at": "2026-10-21T06:47:44.203182+00:00",
+        "updated_at": "2026-10-21T06:47:44.203206+00:00"
+      },
+      "rejected": null,
+      "error": null,
+      "latency_ms": 0.001,
+      "finished_at": "2026-10-21T06:47:44.203372+00:00"
+    },
+    {
+      "seq": 17,
+      "kind": "read",
+      "op": "list_topic_ids",
+      "request": {
+        "include_archived": true
+      },
+      "started_at": "2026-10-21T06:47:44.203374+00:00",
+      "response": [
+        "8f7ecfae-a61e-4fa5-92aa-67d16ac77571",
+        "8cc0865c-e8fc-4cdd-b362-3c2845052d44"
+      ],
+      "rejected": null,
+      "error": null,
+      "latency_ms": 0.0,
+      "finished_at": "2026-10-21T06:47:44.203377+00:00"
+    },
+    {
+      "seq": 18,
+      "kind": "read",
+      "op": "list_topic_ids",
+      "request": {
+        "include_archived": false
+      },
+      "started_at": "2026-10-21T06:47:44.203379+00:00",
+      "response": [
+        "8f7ecfae-a61e-4fa5-92aa-67d16ac77571",
+        "8cc0865c-e8fc-4cdd-b362-3c2845052d44"
+      ],
+      "rejected": null,
+      "error": null,
+      "latency_ms": 0.0,
+      "finished_at": "2026-10-21T06:47:44.203381+00:00"
+    },
+    {
+      "seq": 20,
+      "kind": "read",
+      "op": "read_topic",
+      "request": {
+        "topic_id": "8f7ecfae-a61e-4fa5-92aa-67d16ac77571"
+      },
+      "started_at": "2026-10-21T06:47:44.203391+00:00",
+      "response": {
+        "id": "8f7ecfae-a61e-4fa5-92aa-67d16ac77571",
+        "title": "Parking Permit Renewal",
+        "summary": "Renewal paperwork for the street parking permit",
+        "topic_kind": null,
+        "salience": 0.5595523186682719,
+        "failed_salience": null,
+        "archived": false,
+        "revision_flag": {
+          "flagged": false
+        },
+        "fields": {},
+        "topic_history": [],
+        "created_at": "2026-10-21T06:47:44.203182+00:00",
+        "updated_at": "2026-10-21T06:47:44.203206+00:00"
+      },
+      "rejected": null,
+      "error": null,
+      "latency_ms": 0.001,
+      "finished_at": "2026-10-21T06:47:44.203395+00:00"
+    },
+    {
+      "seq": 21,
+      "kind": "read",
+      "op": "list_topic_ids",
+      "request": {
+        "include_archived": true
+      },
+      "started_at": "2026-10-21T06:47:44.203397+00:00",
+      "response": [
+        "8f7ecfae-a61e-4fa5-92aa-67d16ac77571",
+        "8cc0865c-e8fc-4cdd-b362-3c2845052d44"
+      ],
+      "rejected": null,
+      "error": null,
+      "latency_ms": 0.0,
+      "finished_at": "2026-10-21T06:47:44.203399+00:00"
+    },
+    {
+      "seq": 22,
+      "kind": "read",
+      "op": "list_topic_ids",
+      "request": {
+        "include_archived": false
+      },
+      "started_at": "2026-10-21T06:47:44.203401+00:00",
+      "response": [
+        "8f7ecfae-a61e-4fa5-92aa-67d16ac77571",
+        "8cc0865c-e8fc-4cdd-b362-3c2845052d44"
+      ],
+      "rejected": null,
+      "error": null,
+      "latency_ms": 0.0,
+      "finished_at": "2026-10-21T06:47:44.203404+00:00"
+    },
+    {
+      "seq": 24,
+      "kind": "read",
+      "op": "read_topic",
+      "request": {
+        "topic_id": "8f7ecfae-a61e-4fa5-92aa-67d16ac77571"
+      },
+      "started_at": "2026-10-21T06:47:44.203414+00:00",
+      "response": {
+        "id": "8f7ecfae-a61e-4fa5-92aa-67d16ac77571",
+        "title": "Parking Permit Renewal",
+        "summary": "Renewal paperwork for the street parking permit",
+        "topic_kind": null,
+        "salience": 0.6595523186682719,
+        "failed_salience": null,
+        "archived": false,
+        "revision_flag": {
+          "flagged": false
+        },
+        "fields": {},
+        "topic_history": [],
+        "created_at": "2026-10-21T06:47:44.203182+00:00",
+        "updated_at": "2026-10-21T06:47:44.203206+00:00"
+      },
+      "rejected": null,
+      "error": null,
+      "latency_ms": 0.001,
+      "finished_at": "2026-10-21T06:47:44.203418+00:00"
+    },
+    {
+      "seq": 25,
+      "kind": "read",
+      "op": "list_topic_ids",
+      "request": {
+        "include_archived": true
+      },
+      "started_at": "2026-10-21T06:47:44.203420+00:00",
+      "response": [
+        "8f7ecfae-a61e-4fa5-92aa-67d16ac77571",
+        "8cc0865c-e8fc-4cdd-b362-3c2845052d44"
+      ],
+      "rejected": null,
+      "error": null,
+      "latency_ms": 0.0,
+      "finished_at": "2026-10-21T06:47:44.203422+00:00"
+    },
+    {
+      "seq": 26,
+      "kind": "read",
+      "op": "list_topic_ids",
+      "request": {
+        "include_archived": false
+      },
+      "started_at": "2026-10-21T06:47:44.203424+00:00",
+      "response": [
+        "8f7ecfae-a61e-4fa5-92aa-67d16ac77571",
+        "8cc0865c-e8fc-4cdd-b362-3c2845052d44"
+      ],
+      "rejected": null,
+      "error": null,
+      "latency_ms": 0.0,
+      "finished_at": "2026-10-21T06:47:44.203427+00:00"
+    },
+    {
+      "seq": 28,
+      "kind": "read",
+      "op": "read_topic",
+      "request": {
+        "topic_id": "8f7ecfae-a61e-4fa5-92aa-67d16ac77571"
+      },
+      "started_at": "2026-10-21T06:47:44.203437+00:00",
+      "response": {
+        "id": "8f7ecfae-a61e-4fa5-92aa-67d16ac77571",
+        "title": "Parking Permit Renewal",
+        "summary": "Renewal paperwork for the street parking permit",
+        "topic_kind": null,
+        "salience": 0.7595523186682719,
+        "failed_salience": null,
+        "archived": false,
+        "revision_flag": {
+          "flagged": false
+        },
+        "fields": {},
+        "topic_history": [],
+        "created_at": "2026-10-21T06:47:44.203182+00:00",
+        "updated_at": "2026-10-21T06:47:44.203206+00:00"
+      },
+      "rejected": null,
+      "error": null,
+      "latency_ms": 0.001,
+      "finished_at": "2026-10-21T06:47:44.203440+00:00"
+    },
+    {
+      "seq": 29,
+      "kind": "read",
+      "op": "list_topic_ids",
+      "request": {
+        "include_archived": true
+      },
+      "started_at": "2026-10-21T06:47:44.203442+00:00",
+      "response": [
+        "8f7ecfae-a61e-4fa5-92aa-67d16ac77571",
+        "8cc0865c-e8fc-4cdd-b362-3c2845052d44"
+      ],
+      "rejected": null,
+      "error": null,
+      "latency_ms": 0.0,
+      "finished_at": "2026-10-21T06:47:44.203445+00:00"
+    },
+    {
+      "seq": 30,
+      "kind": "read",
+      "op": "list_topic_ids",
+      "request": {
+        "include_archived": false
+      },
+      "started_at": "2026-10-21T06:47:44.203447+00:00",
+      "response": [
+        "8f7ecfae-a61e-4fa5-92aa-67d16ac77571",
+        "8cc0865c-e8fc-4cdd-b362-3c2845052d44"
+      ],
+      "rejected": null,
+      "error": null,
+      "latency_ms": 0.0,
+      "finished_at": "2026-10-21T06:47:44.203449+00:00"
+    },
+    {
+      "seq": 32,
+      "kind": "read",
+      "op": "read_topic",
+      "request": {
+        "topic_id": "8f7ecfae-a61e-4fa5-92aa-67d16ac77571"
+      },
+      "started_at": "2026-10-21T06:47:44.203459+00:00",
+      "response": {
+        "id": "8f7ecfae-a61e-4fa5-92aa-67d16ac77571",
+        "title": "Parking Permit Renewal",
+        "summary": "Renewal paperwork for the street parking permit",
+        "topic_kind": null,
+        "salience": 0.8595523186682719,
+        "failed_salience": null,
+        "archived": false,
+        "revision_flag": {
+          "flagged": false
+        },
+        "fields": {},
+        "topic_history": [],
+        "created_at": "2026-10-21T06:47:44.203182+00:00",
+        "updated_at": "2026-10-21T06:47:44.203206+00:00"
+      },
+      "rejected": null,
+      "error": null,
+      "latency_ms": 0.001,
+      "finished_at": "2026-10-21T06:47:44.203463+00:00"
+    },
+    {
+      "seq": 33,
+      "kind": "read",
+      "op": "list_topic_ids",
+      "request": {
+        "include_archived": true
+      },
+      "started_at": "2026-10-21T06:47:44.203465+00:00",
+      "response": [
+        "8f7ecfae-a61e-4fa5-92aa-67d16ac77571",
+        "8cc0865c-e8fc-4cdd-b362-3c2845052d44"
+      ],
+      "rejected": null,
+      "error": null,
+      "latency_ms": 0.0,
+      "finished_at": "2026-10-21T06:47:44.203467+00:00"
+    },
+    {
+      "seq": 34,
+      "kind": "read",
+      "op": "list_topic_ids",
+      "request": {
+        "include_archived": false
+      },
+      "started_at": "2026-10-21T06:47:44.203469+00:00",
+      "response": [
+        "8f7ecfae-a61e-4fa5-92aa-67d16ac77571",
+        "8cc0865c-e8fc-4cdd-b362-3c2845052d44"
+      ],
+      "rejected": null,
+      "error": null,
+      "latency_ms": 0.0,
+      "finished_at": "2026-10-21T06:47:44.203472+00:00"
+    },
+    {
+      "seq": 36,
+      "kind": "read",
+      "op": "read_topic",
+      "request": {
+        "topic_id": "8f7ecfae-a61e-4fa5-92aa-67d16ac77571"
+      },
+      "started_at": "2026-10-21T06:47:44.203485+00:00",
+      "response": {
+        "id": "8f7ecfae-a61e-4fa5-92aa-67d16ac77571",
+        "title": "Parking Permit Renewal",
+        "summary": "Renewal paperwork for the street parking permit",
+        "topic_kind": null,
+        "salience": 0.9595523186682718,
+        "failed_salience": null,
+        "archived": false,
+        "revision_flag": {
+          "flagged": false
+        },
+        "fields": {},
+        "topic_history": [],
+        "created_at": "2026-10-21T06:47:44.203182+00:00",
+        "updated_at": "2026-10-21T06:47:44.203206+00:00"
+      },
+      "rejected": null,
+      "error": null,
+      "latency_ms": 0.001,
+      "finished_at": "2026-10-21T06:47:44.203488+00:00"
+    },
+    {
+      "seq": 37,
+      "kind": "read",
+      "op": "list_topic_ids",
+      "request": {
+        "include_archived": true
+      },
+      "started_at": "2026-10-21T06:47:44.203491+00:00",
+      "response": [
+        "8f7ecfae-a61e-4fa5-92aa-67d16ac77571",
+        "8cc0865c-e8fc-4cdd-b362-3c2845052d44"
+      ],
+      "rejected": null,
+      "error": null,
+      "latency_ms": 0.0,
+      "finished_at": "2026-10-21T06:47:44.203493+00:00"
+    },
+    {
+      "seq": 38,
+      "kind": "read",
+      "op": "list_topic_ids",
+      "request": {
+        "include_archived": false
+      },
+      "started_at": "2026-10-21T06:47:44.203495+00:00",
+      "response": [
+        "8f7ecfae-a61e-4fa5-92aa-67d16ac77571",
+        "8cc0865c-e8fc-4cdd-b362-3c2845052d44"
+      ],
+      "rejected": null,
+      "error": null,
+      "latency_ms": 0.0,
+      "finished_at": "2026-10-21T06:47:44.203497+00:00"
+    },
+    {
+      "seq": 40,
+      "kind": "read",
+      "op": "read_topic",
+      "request": {
+        "topic_id": "8f7ecfae-a61e-4fa5-92aa-67d16ac77571"
+      },
+      "started_at": "2026-10-21T06:47:44.203507+00:00",
+      "response": {
+        "id": "8f7ecfae-a61e-4fa5-92aa-67d16ac77571",
+        "title": "Parking Permit Renewal",
+        "summary": "Renewal paperwork for the street parking permit",
+        "topic_kind": null,
+        "salience": 1.0595523186682718,
+        "failed_salience": null,
+        "archived": false,
+        "revision_flag": {
+          "flagged": false
+        },
+        "fields": {},
+        "topic_history": [],
+        "created_at": "2026-10-21T06:47:44.203182+00:00",
+        "updated_at": "2026-10-21T06:47:44.203206+00:00"
+      },
+      "rejected": null,
+      "error": null,
+      "latency_ms": 0.001,
+      "finished_at": "2026-10-21T06:47:44.203511+00:00"
+    },
+    {
+      "seq": 41,
+      "kind": "read",
+      "op": "list_topic_ids",
+      "request": {
+        "include_archived": true
+      },
+      "started_at": "2026-10-21T06:47:44.203513+00:00",
+      "response": [
+        "8f7ecfae-a61e-4fa5-92aa-67d16ac77571",
+        "8cc0865c-e8fc-4cdd-b362-3c2845052d44"
+      ],
+      "rejected": null,
+      "error": null,
+      "latency_ms": 0.0,
+      "finished_at": "2026-10-21T06:47:44.203516+00:00"
+    },
+    {
+      "seq": 42,
+      "kind": "read",
+      "op": "list_topic_ids",
+      "request": {
+        "include_archived": false
+      },
+      "started_at": "2026-10-21T06:47:44.203518+00:00",
+      "response": [
+        "8f7ecfae-a61e-4fa5-92aa-67d16ac77571",
+        "8cc0865c-e8fc-4cdd-b362-3c2845052d44"
+      ],
+      "rejected": null,
+      "error": null,
+      "latency_ms": 0.0,
+      "finished_at": "2026-10-21T06:47:44.203520+00:00"
+    },
+    {
+      "seq": 44,
+      "kind": "read",
+      "op": "read_topic",
+      "request": {
+        "topic_id": "8f7ecfae-a61e-4fa5-92aa-67d16ac77571"
+      },
+      "started_at": "2026-10-21T06:47:44.203530+00:00",
+      "response": {
+        "id": "8f7ecfae-a61e-4fa5-92aa-67d16ac77571",
+        "title": "Parking Permit Renewal",
+        "summary": "Renewal paperwork for the street parking permit",
+        "topic_kind": null,
+        "salience": 1.159552318668272,
+        "failed_salience": null,
+        "archived": false,
+        "revision_flag": {
+          "flagged": false
+        },
+        "fields": {},
+        "topic_history": [],
+        "created_at": "2026-10-21T06:47:44.203182+00:00",
+        "updated_at": "2026-10-21T06:47:44.203206+00:00"
+      },
+      "rejected": null,
+      "error": null,
+      "latency_ms": 0.001,
+      "finished_at": "2026-10-21T06:47:44.203534+00:00"
+    },
+    {
+      "seq": 45,
+      "kind": "read",
+      "op": "list_topic_ids",
+      "request": {
+        "include_archived": true
+      },
+      "started_at": "2026-10-21T06:47:44.203537+00:00",
+      "response": [
+        "8f7ecfae-a61e-4fa5-92aa-67d16ac77571",
+        "8cc0865c-e8fc-4cdd-b362-3c2845052d44"
+      ],
+      "rejected": null,
+      "error": null,
+      "latency_ms": 0.0,
+      "finished_at": "2026-10-21T06:47:44.203540+00:00"
+    },
+    {
+      "seq": 46,
+      "kind": "read",
+      "op": "list_topic_ids",
+      "request": {
+        "include_archived": false
+      },
+      "started_at": "2026-10-21T06:47:44.203542+00:00",
+      "response": [
+        "8f7ecfae-a61e-4fa5-92aa-67d16ac77571",
+        "8cc0865c-e8fc-4cdd-b362-3c2845052d44"
+      ],
+      "rejected": null,
+      "error": null,
+      "latency_ms": 0.0,
+      "finished_at": "2026-10-21T06:47:44.203544+00:00"
+    },
+    {
+      "seq": 48,
+      "kind": "read",
+      "op": "read_topic",
+      "request": {
+        "topic_id": "8f7ecfae-a61e-4fa5-92aa-67d16ac77571"
+      },
+      "started_at": "2026-10-21T06:47:44.203555+00:00",
+      "response": {
+        "id": "8f7ecfae-a61e-4fa5-92aa-67d16ac77571",
+        "title": "Parking Permit Renewal",
+        "summary": "Renewal paperwork for the street parking permit",
+        "topic_kind": null,
+        "salience": 1.259552318668272,
+        "failed_salience": null,
+        "archived": false,
+        "revision_flag": {
+          "flagged": false
+        },
+        "fields": {},
+        "topic_history": [],
+        "created_at": "2026-10-21T06:47:44.203182+00:00",
+        "updated_at": "2026-10-21T06:47:44.203206+00:00"
+      },
+      "rejected": null,
+      "error": null,
+      "latency_ms": 0.001,
+      "finished_at": "2026-10-21T06:47:44.203558+00:00"
+    },
+    {
+      "seq": 49,
+      "kind": "read",
+      "op": "list_topic_ids",
+      "request": {
+        "include_archived": true
+      },
+      "started_at": "2026-10-21T06:47:44.203560+00:00",
+      "response": [
+        "8f7ecfae-a61e-4fa5-92aa-67d16ac77571",
+        "8cc0865c-e8fc-4cdd-b362-3c2845052d44"
+      ],
+      "rejected": null,
+      "error": null,
+      "latency_ms": 0.0,
+      "finished_at": "2026-10-21T06:47:44.203563+00:00"
+    },
+    {
+      "seq": 50,
+      "kind": "read",
+      "op": "list_topic_ids",
+      "request": {
+        "include_archived": false
+      },
+      "started_at": "2026-10-21T06:47:44.203565+00:00",
+      "response": [
+        "8f7ecfae-a61e-4fa5-92aa-67d16ac77571",
+        "8cc0865c-e8fc-4cdd-b362-3c2845052d44"
+      ],
+      "rejected": null,
+      "error": null,
+      "latency_ms": 0.0,
+      "finished_at": "2026-10-21T06:47:44.203567+00:00"
+    },
+    {
+      "seq": 52,
+      "kind": "read",
+      "op": "read_topic",
+      "request": {
+        "topic_id": "8f7ecfae-a61e-4fa5-92aa-67d16ac77571"
+      },
+      "started_at": "2026-10-21T06:47:44.203578+00:00",
+      "response": {
+        "id": "8f7ecfae-a61e-4fa5-92aa-67d16ac77571",
+        "title": "Parking Permit Renewal",
+        "summary": "Renewal paperwork for the street parking permit",
+        "topic_kind": null,
+        "salience": 1.359552318668272,
+        "failed_salience": null,
+        "archived": false,
+        "revision_flag": {
+          "flagged": false
+        },
+        "fields": {},
+        "topic_history": [],
+        "created_at": "2026-10-21T06:47:44.203182+00:00",
+        "updated_at": "2026-10-21T06:47:44.203206+00:00"
+      },
+      "rejected": null,
+      "error": null,
+      "latency_ms": 0.001,
+      "finished_at": "2026-10-21T06:47:44.203581+00:00"
+    },
+    {
+      "seq": 53,
+      "kind": "read",
+      "op": "list_topic_ids",
+      "request": {
+        "include_archived": true
+      },
+      "started_at": "2026-10-21T06:47:44.203583+00:00",
+      "response": [
+        "8f7ecfae-a61e-4fa5-92aa-67d16ac77571",
+        "8cc0865c-e8fc-4cdd-b362-3c2845052d44"
+      ],
+      "rejected": null,
+      "error": null,
+      "latency_ms": 0.0,
+      "finished_at": "2026-10-21T06:47:44.203586+00:00"
+    },
+    {
+      "seq": 54,
+      "kind": "read",
+      "op": "list_topic_ids",
+      "request": {
+        "include_archived": false
+      },
+      "started_at": "2026-10-21T06:47:44.203588+00:00",
+      "response": [
+        "8f7ecfae-a61e-4fa5-92aa-67d16ac77571",
+        "8cc0865c-e8fc-4cdd-b362-3c2845052d44"
+      ],
+      "rejected": null,
+      "error": null,
+      "latency_ms": 0.0,
+      "finished_at": "2026-10-21T06:47:44.203591+00:00"
+    },
+    {
+      "seq": 56,
+      "kind": "read",
+      "op": "read_topic",
+      "request": {
+        "topic_id": "8f7ecfae-a61e-4fa5-92aa-67d16ac77571"
+      },
+      "started_at": "2026-10-21T06:47:44.203603+00:00",
+      "response": {
+        "id": "8f7ecfae-a61e-4fa5-92aa-67d16ac77571",
+        "title": "Parking Permit Renewal",
+        "summary": "Renewal paperwork for the street parking permit",
+        "topic_kind": null,
+        "salience": 1.4595523186682722,
+        "failed_salience": null,
+        "archived": false,
+        "revision_flag": {
+          "flagged": false
+        },
+        "fields": {},
+        "topic_history": [],
+        "created_at": "2026-10-21T06:47:44.203182+00:00",
+        "updated_at": "2026-10-21T06:47:44.203206+00:00"
+      },
+      "rejected": null,
+      "error": null,
+      "latency_ms": 0.001,
+      "finished_at": "2026-10-21T06:47:44.203607+00:00"
+    },
+    {
+      "seq": 57,
+      "kind": "read",
+      "op": "list_topic_ids",
+      "request": {
+        "include_archived": true
+      },
+      "started_at": "2026-10-21T06:47:44.203609+00:00",
+      "response": [
+        "8f7ecfae-a61e-4fa5-92aa-67d16ac77571",
+        "8cc0865c-e8fc-4cdd-b362-3c2845052d44"
+      ],
+      "rejected": null,
+      "error": null,
+      "latency_ms": 0.0,
+      "finished_at": "2026-10-21T06:47:44.203611+00:00"
+    },
+    {
+      "seq": 58,
+      "kind": "read",
+      "op": "list_topic_ids",
+      "request": {
+        "include_archived": false
+      },
+      "started_at": "2026-10-21T06:47:44.203613+00:00",
+      "response": [
+        "8f7ecfae-a61e-4fa5-92aa-67d16ac77571",
+        "8cc0865c-e8fc-4cdd-b362-3c2845052d44"
+      ],
+      "rejected": null,
+      "error": null,
+      "latency_ms": 0.0,
+      "finished_at": "2026-10-21T06:47:44.203615+00:00"
+    },
+    {
+      "seq": 60,
+      "kind": "read",
+      "op": "read_topic",
+      "request": {
+        "topic_id": "8f7ecfae-a61e-4fa5-92aa-67d16ac77571"
+      },
+      "started_at": "2026-10-21T06:47:44.203625+00:00",
+      "response": {
+        "id": "8f7ecfae-a61e-4fa5-92aa-67d16ac77571",
+        "title": "Parking Permit Renewal",
+        "summary": "Renewal paperwork for the street parking permit",
+        "topic_kind": null,
+        "salience": 1.5595523186682723,
+        "failed_salience": null,
+        "archived": false,
+        "revision_flag": {
+          "flagged": false
+        },
+        "fields": {},
+        "topic_history": [],
+        "created_at": "2026-10-21T06:47:44.203182+00:00",
+        "updated_at": "2026-10-21T06:47:44.203206+00:00"
+      },
+      "rejected": null,
+      "error": null,
+      "latency_ms": 0.001,
+      "finished_at": "2026-10-21T06:47:44.203629+00:00"
+    },
+    {
+      "seq": 61,
+      "kind": "read",
+      "op": "list_topic_ids",
+      "request": {
+        "include_archived": true
+      },
+      "started_at": "2026-10-21T06:47:44.203631+00:00",
+      "response": [
+        "8f7ecfae-a61e-4fa5-92aa-67d16ac77571",
+        "8cc0865c-e8fc-4cdd-b362-3c2845052d44"
+      ],
+      "rejected": null,
+      "error": null,
+      "latency_ms": 0.0,
+      "finished_at": "2026-10-21T06:47:44.203634+00:00"
+    },
+    {
+      "seq": 62,
+      "kind": "read",
+      "op": "list_topic_ids",
+      "request": {
+        "include_archived": false
+      },
+      "started_at": "2026-10-21T06:47:44.203636+00:00",
+      "response": [
+        "8f7ecfae-a61e-4fa5-92aa-67d16ac77571",
+        "8cc0865c-e8fc-4cdd-b362-3c2845052d44"
+      ],
+      "rejected": null,
+      "error": null,
+      "latency_ms": 0.0,
+      "finished_at": "2026-10-21T06:47:44.203638+00:00"
+    },
+    {
+      "seq": 64,
+      "kind": "read",
+      "op": "read_topic",
+      "request": {
+        "topic_id": "8f7ecfae-a61e-4fa5-92aa-67d16ac77571"
+      },
+      "started_at": "2026-10-21T06:47:44.203649+00:00",
+      "response": {
+        "id": "8f7ecfae-a61e-4fa5-92aa-67d16ac77571",
+        "title": "Parking Permit Renewal",
+        "summary": "Renewal paperwork for the street parking permit",
+        "topic_kind": null,
+        "salience": 1.6595523186682724,
+        "failed_salience": null,
+        "archived": false,
+        "revision_flag": {
+          "flagged": false
+        },
+        "fields": {},
+        "topic_history": [],
+        "created_at": "2026-10-21T06:47:44.203182+00:00",
+        "updated_at": "2026-10-21T06:47:44.203206+00:00"
+      },
+      "rejected": null,
+      "error": null,
+      "latency_ms": 0.001,
+      "finished_at": "2026-10-21T06:47:44.203656+00:00"
+    },
+    {
+      "seq": 65,
+      "kind": "read",
+      "op": "list_topic_ids",
+      "request": {
+        "include_archived": true
+      },
+      "started_at": "2026-10-21T06:47:44.203658+00:00",
+      "response": [
+        "8f7ecfae-a61e-4fa5-92aa-67d16ac77571",
+        "8cc0865c-e8fc-4cdd-b362-3c2845052d44"
+      ],
+      "rejected": null,
+      "error": null,
+      "latency_ms": 0.0,
+      "finished_at": "2026-10-21T06:47:44.203660+00:00"
+    },
+    {
+      "seq": 66,
+      "kind": "read",
+      "op": "list_topic_ids",
+      "request": {
+        "include_archived": false
+      },
+      "started_at": "2026-10-21T06:47:44.203662+00:00",
+      "response": [
+        "8f7ecfae-a61e-4fa5-92aa-67d16ac77571",
+        "8cc0865c-e8fc-4cdd-b362-3c2845052d44"
+      ],
+      "rejected": null,
+      "error": null,
+      "latency_ms": 0.0,
+      "finished_at": "2026-10-21T06:47:44.203665+00:00"
+    },
+    {
+      "seq": 68,
+      "kind": "read",
+      "op": "read_topic",
+      "request": {
+        "topic_id": "8f7ecfae-a61e-4fa5-92aa-67d16ac77571"
+      },
+      "started_at": "2026-10-21T06:47:44.203675+00:00",
+      "response": {
+        "id": "8f7ecfae-a61e-4fa5-92aa-67d16ac77571",
+        "title": "Parking Permit Renewal",
+        "summary": "Renewal paperwork for the street parking permit",
+        "topic_kind": null,
+        "salience": 1.7595523186682724,
+        "failed_salience": null,
+        "archived": false,
+        "revision_flag": {
+          "flagged": false
+        },
+        "fields": {},
+        "topic_history": [],
+        "created_at": "2026-10-21T06:47:44.203182+00:00",
+        "updated_at": "2026-10-21T06:47:44.203206+00:00"
+      },
+      "rejected": null,
+      "error": null,
+      "latency_ms": 0.001,
+      "finished_at": "2026-10-21T06:47:44.203679+00:00"
+    },
+    {
+      "seq": 69,
+      "kind": "read",
+      "op": "list_topic_ids",
+      "request": {
+        "include_archived": true
+      },
+      "started_at": "2026-10-21T06:47:44.203680+00:00",
+      "response": [
+        "8f7ecfae-a61e-4fa5-92aa-67d16ac77571",
+        "8cc0865c-e8fc-4cdd-b362-3c2845052d44"
+      ],
+      "rejected": null,
+      "error": null,
+      "latency_ms": 0.0,
+      "finished_at": "2026-10-21T06:47:44.203683+00:00"
+    },
+    {
+      "seq": 70,
+      "kind": "read",
+      "op": "list_topic_ids",
+      "request": {
+        "include_archived": false
+      },
+      "started_at": "2026-10-21T06:47:44.203685+00:00",
+      "response": [
+        "8f7ecfae-a61e-4fa5-92aa-67d16ac77571",
+        "8cc0865c-e8fc-4cdd-b362-3c2845052d44"
+      ],
+      "rejected": null,
+      "error": null,
+      "latency_ms": 0.0,
+      "finished_at": "2026-10-21T06:47:44.203687+00:00"
+    },
+    {
+      "seq": 72,
+      "kind": "read",
+      "op": "read_topic",
+      "request": {
+        "topic_id": "8f7ecfae-a61e-4fa5-92aa-67d16ac77571"
+      },
+      "started_at": "2026-10-21T06:47:44.203697+00:00",
+      "response": {
+        "id": "8f7ecfae-a61e-4fa5-92aa-67d16ac77571",
+        "title": "Parking Permit Renewal",
+        "summary": "Renewal paperwork for the street parking permit",
+        "topic_kind": null,
+        "salience": 1.8595523186682725,
+        "failed_salience": null,
+        "archived": false,
+        "revision_flag": {
+          "flagged": false
+        },
+        "fields": {},
+        "topic_history": [],
+        "created_at": "2026-10-21T06:47:44.203182+00:00",
+        "updated_at": "2026-10-21T06:47:44.203206+00:00"
+      },
+      "rejected": null,
+      "error": null,
+      "latency_ms": 0.001,
+      "finished_at": "2026-10-21T06:47:44.203701+00:00"
+    },
+    {
+      "seq": 73,
+      "kind": "read",
+      "op": "list_topic_ids",
+      "request": {
+        "include_archived": true
+      },
+      "started_at": "2026-10-21T06:47:44.203703+00:00",
+      "response": [
+        "8f7ecfae-a61e-4fa5-92aa-67d16ac77571",
+        "8cc0865c-e8fc-4cdd-b362-3c2845052d44"
+      ],
+      "rejected": null,
+      "error": null,
+      "latency_ms": 0.0,
+      "finished_at": "2026-10-21T06:47:44.203705+00:00"
+    },
+    {
+      "seq": 74,
+      "kind": "read",
+      "op": "list_topic_ids",
+      "request": {
+        "include_archived": false
+      },
+      "started_at": "2026-10-21T06:47:44.203707+00:00",
+      "response": [
+        "8f7ecfae-a61e-4fa5-92aa-67d16ac77571",
+        "8cc0865c-e8fc-4cdd-b362-3c2845052d44"
+      ],
+      "rejected": null,
+      "error": null,
+      "latency_ms": 0.0,
+      "finished_at": "2026-10-21T06:47:44.203710+00:00"
+    },
+    {
+      "seq": 76,
+      "kind": "read",
+      "op": "read_topic",
+      "request": {
+        "topic_id": "8f7ecfae-a61e-4fa5-92aa-67d16ac77571"
+      },
+      "started_at": "2026-10-21T06:47:44.203720+00:00",
+      "response": {
+        "id": "8f7ecfae-a61e-4fa5-92aa-67d16ac77571",
+        "title": "Parking Permit Renewal",
+        "summary": "Renewal paperwork for the street parking permit",
+        "topic_kind": null,
+        "salience": 1.9595523186682726,
+        "failed_salience": null,
+        "archived": false,
+        "revision_flag": {
+          "flagged": false
+        },
+        "fields": {},
+        "topic_history": [],
+        "created_at": "2026-10-21T06:47:44.203182+00:00",
+        "updated_at": "2026-10-21T06:47:44.203206+00:00"
+      },
+      "rejected": null,
+      "error": null,
+      "latency_ms": 0.001,
+      "finished_at": "2026-10-21T06:47:44.203724+00:00"
+    },
+    {
+      "seq": 77,
+      "kind": "read",
+      "op": "list_topic_ids",
+      "request": {
+        "include_archived": true
+      },
+      "started_at": "2026-10-21T06:47:44.203726+00:00",
+      "response": [
+        "8f7ecfae-a61e-4fa5-92aa-67d16ac77571",
+        "8cc0865c-e8fc-4cdd-b362-3c2845052d44"
+      ],
+      "rejected": null,
+      "error": null,
+      "latency_ms": 0.0,
+      "finished_at": "2026-10-21T06:47:44.203728+00:00"
+    },
+    {
+      "seq": 78,
+      "kind": "read",
+      "op": "list_topic_ids",
+      "request": {
+        "include_archived": false
+      },
+      "started_at": "2026-10-21T06:47:44.203731+00:00",
+      "response": [
+        "8f7ecfae-a61e-4fa5-92aa-67d16ac77571",
+        "8cc0865c-e8fc-4cdd-b362-3c2845052d44"
+      ],
+      "rejected": null,
+      "error": null,
+      "latency_ms": 0.0,
+      "finished_at": "2026-10-21T06:47:44.203735+00:00"
+    },
+    {
+      "seq": 80,
+      "kind": "read",
+      "op": "read_topic",
+      "request": {
+        "topic_id": "8f7ecfae-a61e-4fa5-92aa-67d16ac77571"
+      },
+      "started_at": "2026-10-21T06:47:44.203745+00:00",
+      "response": {
+        "id": "8f7ecfae-a61e-4fa5-92aa-67d16ac77571",
+        "title": "Parking Permit Renewal",
+        "summary": "Renewal paperwork for the street parking permit",
+        "topic_kind": null,
+        "salience": 2.0595523186682727,
+        "failed_salience": null,
+        "archived": false,
+        "revision_flag": {
+          "flagged": false
+        },
+        "fields": {},
+        "topic_history": [],
+        "created_at": "2026-10-21T06:47:44.203182+00:00",
+        "updated_at": "2026-10-21T06:47:44.203206+00:00"
+      },
+      "rejected": null,
+      "error": null,
+      "latency_ms": 0.001,
+      "finished_at": "2026-10-21T06:47:44.203748+00:00"
+    },
+    {
+      "seq": 81,
+      "kind": "read",
+      "op": "list_topic_ids",
+      "request": {
+        "include_archived": true
+      },
+      "started_at": "2026-10-21T06:47:44.203750+00:00",
+      "response": [
+        "8f7ecfae-a61e-4fa5-92aa-67d16ac77571",
+        "8cc0865c-e8fc-4cdd-b362-3c2845052d44"
+      ],
+      "rejected": null,
+      "error": null,
+      "latency_ms": 0.0,
+      "finished_at": "2026-10-21T06:47:44.203752+00:00"
+    },
+    {
+      "seq": 82,
+      "kind": "read",
+      "op": "list_topic_ids",
+      "request": {
+        "include_archived": false
+      },
+      "started_at": "2026-10-21T06:47:44.203754+00:00",
+      "response": [
+        "8f7ecfae-a61e-4fa5-92aa-67d16ac77571",
+        "8cc0865c-e8fc-4cdd-b362-3c2845052d44"
+      ],
+      "rejected": null,
+      "error": null,
+      "latency_ms": 0.0,
+      "finished_at": "2026-10-21T06:47:44.203757+00:00"
+    },
+    {
+      "seq": 84,
+      "kind": "read",
+      "op": "read_topic",
+      "request": {
+        "topic_id": "8f7ecfae-a61e-4fa5-92aa-67d16ac77571"
+      },
+      "started_at": "2026-10-21T06:47:44.203766+00:00",
+      "response": {
+        "id": "8f7ecfae-a61e-4fa5-92aa-67d16ac77571",
+        "title": "Parking Permit Renewal",
+        "summary": "Renewal paperwork for the street parking permit",
+        "topic_kind": null,
+        "salience": 2.159552318668273,
+        "failed_salience": null,
+        "archived": false,
+        "revision_flag": {
+          "flagged": false
+        },
+        "fields": {},
+        "topic_history": [],
+        "created_at": "2026-10-21T06:47:44.203182+00:00",
+        "updated_at": "2026-10-21T06:47:44.203206+00:00"
+      },
+      "rejected": null,
+      "error": null,
+      "latency_ms": 0.001,
+      "finished_at": "2026-10-21T06:47:44.203770+00:00"
+    },
+    {
+      "seq": 85,
+      "kind": "read",
+      "op": "list_topic_ids",
+      "request": {
+        "include_archived": true
+      },
+      "started_at": "2026-10-21T06:47:44.203772+00:00",
+      "response": [
+        "8f7ecfae-a61e-4fa5-92aa-67d16ac77571",
+        "8cc0865c-e8fc-4cdd-b362-3c2845052d44"
+      ],
+      "rejected": null,
+      "error": null,
+      "latency_ms": 0.0,
+      "finished_at": "2026-10-21T06:47:44.203774+00:00"
+    },
+    {
+      "seq": 86,
+      "kind": "read",
+      "op": "list_topic_ids",
+      "request": {
+        "include_archived": false
+      },
+      "started_at": "2026-10-21T06:47:44.203776+00:00",
+      "response": [
+        "8f7ecfae-a61e-4fa5-92aa-67d16ac77571",
+        "8cc0865c-e8fc-4cdd-b362-3c2845052d44"
+      ],
+      "rejected": null,
+      "error": null,
+      "latency_ms": 0.0,
+      "finished_at": "2026-10-21T06:47:44.203779+00:00"
+    },
+    {
+      "seq": 88,
+      "kind": "read",
+      "op": "read_topic",
+      "request": {
+        "topic_id": "8f7ecfae-a61e-4fa5-92aa-67d16ac77571"
+      },
+      "started_at": "2026-10-21T06:47:44.203788+00:00",
+      "response": {
+        "id": "8f7ecfae-a61e-4fa5-92aa-67d16ac77571",
+        "title": "Parking Permit Renewal",
+        "summary": "Renewal paperwork for the street parking permit",
+        "topic_kind": null,
+        "salience": 2.259552318668273,
+        "failed_salience": null,
+        "archived": false,
+        "revision_flag": {
+          "flagged": false
+        },
+        "fields": {},
+        "topic_history": [],
+        "created_at": "2026-10-21T06:47:44.203182+00:00",
+        "updated_at": "2026-10-21T06:47:44.203206+00:00"
+      },
+      "rejected": null,
+      "error": null,
+      "latency_ms": 0.001,
+      "finished_at": "2026-10-21T06:47:44.203792+00:00"
+    },
+    {
+      "seq": 89,
+      "kind": "read",
+      "op": "list_topic_ids",
+      "request": {
+        "include_archived": true
+      },
+      "started_at": "2026-10-21T06:47:44.203794+00:00",
+      "response": [
+        "8f7ecfae-a61e-4fa5-92aa-67d16ac77571",
+        "8cc0865c-e8fc-4cdd-b362-3c2845052d44"
+      ],
+      "rejected": null,
+      "error": null,
+      "latency_ms": 0.0,
+      "finished_at": "2026-10-21T06:47:44.203796+00:00"
+    },
+    {
+      "seq": 90,
+      "kind": "read",
+      "op": "list_topic_ids",
+      "request": {
+        "include_archived": false
+      },
+      "started_at": "2026-10-21T06:47:44.203798+00:00",
+      "response": [
+        "8f7ecfae-a61e-4fa5-92aa-67d16ac77571",
+        "8cc0865c-e8fc-4cdd-b362-3c2845052d44"
+      ],
+      "rejected": null,
+      "error": null,
+      "latency_ms": 0.0,
+      "finished_at": "2026-10-21T06:47:44.203800+00:00"
+    },
+    {
+      "seq": 92,
+      "kind": "read",
+      "op": "read_topic",
+      "request": {
+        "topic_id": "8f7ecfae-a61e-4fa5-92aa-67d16ac77571"
+      },
+      "started_at": "2026-10-21T06:47:44.203810+00:00",
+      "response": {
+        "id": "8f7ecfae-a61e-4fa5-92aa-67d16ac77571",
+        "title": "Parking Permit Renewal",
+        "summary": "Renewal paperwork for the street parking permit",
+        "topic_kind": null,
+        "salience": 2.359552318668273,
+        "failed_salience": null,
+        "archived": false,
+        "revision_flag": {
+          "flagged": false
+        },
+        "fields": {},
+        "topic_history": [],
+        "created_at": "2026-10-21T06:47:44.203182+00:00",
+        "updated_at": "2026-10-21T06:47:44.203206+00:00"
+      },
+      "rejected": null,
+      "error": null,
+      "latency_ms": 0.001,
+      "finished_at": "2026-10-21T06:47:44.203813+00:00"
+    },
+    {
+      "seq": 93,
+      "kind": "read",
+      "op": "list_topic_ids",
+      "request": {
+        "include_archived": true
+      },
+      "started_at": "2026-10-21T06:47:44.203815+00:00",
+      "response": [
+        "8f7ecfae-a61e-4fa5-92aa-67d16ac77571",
+        "8cc0865c-e8fc-4cdd-b362-3c2845052d44"
+      ],
+      "rejected": null,
+      "error": null,
+      "latency_ms": 0.0,
+      "finished_at": "2026-10-21T06:47:44.203818+00:00"
+    },
+    {
+      "seq": 94,
+      "kind": "read",
+      "op": "list_topic_ids",
+      "request": {
+        "include_archived": false
+      },
+      "started_at": "2026-10-21T06:47:44.203820+00:00",
+      "response": [
+        "8f7ecfae-a61e-4fa5-92aa-67d16ac77571",
+        "8cc0865c-e8fc-4cdd-b362-3c2845052d44"
+      ],
+      "rejected": null,
+      "error": null,
+      "latency_ms": 0.001,
+      "finished_at": "2026-10-21T06:47:44.203823+00:00"
+    },
+    {
+      "seq": 96,
+      "kind": "read",
+      "op": "read_topic",
+      "request": {
+        "topic_id": "8f7ecfae-a61e-4fa5-92aa-67d16ac77571"
+      },
+      "started_at": "2026-10-21T06:47:44.203833+00:00",
+      "response": {
+        "id": "8f7ecfae-a61e-4fa5-92aa-67d16ac77571",
+        "title": "Parking Permit Renewal",
+        "summary": "Renewal paperwork for the street parking permit",
+        "topic_kind": null,
+        "salience": 2.459552318668273,
+        "failed_salience": null,
+        "archived": false,
+        "revision_flag": {
+          "flagged": false
+        },
+        "fields": {},
+        "topic_history": [],
+        "created_at": "2026-10-21T06:47:44.203182+00:00",
+        "updated_at": "2026-10-21T06:47:44.203206+00:00"
+      },
+      "rejected": null,
+      "error": null,
+      "latency_ms": 0.001,
+      "finished_at": "2026-10-21T06:47:44.203837+00:00"
+    },
+    {
+      "seq": 97,
+      "kind": "read",
+      "op": "list_topic_ids",
+      "request": {
+        "include_archived": true
+      },
+      "started_at": "2026-10-21T06:47:44.203839+00:00",
+      "response": [
+        "8f7ecfae-a61e-4fa5-92aa-67d16ac77571",
+        "8cc0865c-e8fc-4cdd-b362-3c2845052d44"
+      ],
+      "rejected": null,
+      "error": null,
+      "latency_ms": 0.0,
+      "finished_at": "2026-10-21T06:47:44.203841+00:00"
+    },
+    {
+      "seq": 98,
+      "kind": "read",
+      "op": "list_topic_ids",
+      "request": {
+        "include_archived": false
+      },
+      "started_at": "2026-10-21T06:47:44.203843+00:00",
+      "response": [
+        "8f7ecfae-a61e-4fa5-92aa-67d16ac77571",
+        "8cc0865c-e8fc-4cdd-b362-3c2845052d44"
+      ],
+      "rejected": null,
+      "error": null,
+      "latency_ms": 0.0,
+      "finished_at": "2026-10-21T06:47:44.203846+00:00"
+    },
+    {
+      "seq": 100,
+      "kind": "read",
+      "op": "read_topic",
+      "request": {
+        "topic_id": "8f7ecfae-a61e-4fa5-92aa-67d16ac77571"
+      },
+      "started_at": "2026-10-21T06:47:44.203860+00:00",
+      "response": {
+        "id": "8f7ecfae-a61e-4fa5-92aa-67d16ac77571",
+        "title": "Parking Permit Renewal",
+        "summary": "Renewal paperwork for the street parking permit",
+        "topic_kind": null,
+        "salience": 2.559552318668273,
+        "failed_salience": null,
+        "archived": false,
+        "revision_flag": {
+          "flagged": false
+        },
+        "fields": {},
+        "topic_history": [],
+        "created_at": "2026-10-21T06:47:44.203182+00:00",
+        "updated_at": "2026-10-21T06:47:44.203206+00:00"
+      },
+      "rejected": null,
+      "error": null,
+      "latency_ms": 0.001,
+      "finished_at": "2026-10-21T06:47:44.203864+00:00"
+    },
+    {
+      "seq": 101,
+      "kind": "read",
+      "op": "list_topic_ids",
+      "request": {
+        "include_archived": true
+      },
+      "started_at": "2026-10-21T06:47:44.203866+00:00",
+      "response": [
+        "8f7ecfae-a61e-4fa5-92aa-67d16ac77571",
+        "8cc0865c-e8fc-4cdd-b362-3c2845052d44"
+      ],
+      "rejected": null,
+      "error": null,
+      "latency_ms": 0.0,
+      "finished_at": "2026-10-21T06:47:44.203868+00:00"
+    },
+    {
+      "seq": 102,
+      "kind": "read",
+      "op": "list_topic_ids",
+      "request": {
+        "include_archived": false
+      },
+      "started_at": "2026-10-21T06:47:44.203870+00:00",
+      "response": [
+        "8f7ecfae-a61e-4fa5-92aa-67d16ac77571"
+      ],
+      "rejected": null,
+      "error": null,
+      "latency_ms": 0.0,
+      "finished_at": "2026-10-21T06:47:44.203872+00:00"
+    },
+    {
+      "seq": 103,
+      "kind": "read",
+      "op": "read_topic",
+      "request": {
+        "topic_id": "8cc0865c-e8fc-4cdd-b362-3c2845052d44"
+      },
+      "started_at": "2026-10-21T06:47:44.203890+00:00",
+      "response": {
+        "id": "8cc0865c-e8fc-4cdd-b362-3c2845052d44",
+        "title": "Library Card Renewal",
+        "summary": "Never read; the control for the forgetting pass",
+        "topic_kind": null,
+        "salience": 0.024877508310525598,
+        "failed_salience": null,
+        "archived": true,
+        "revision_flag": {
+          "flagged": false
+        },
+        "fields": {},
+        "topic_history": [
+          {
+            "ts": "2026-10-21T06:47:44.203855+00:00",
+            "kind": "archived",
+            "detail": {
+              "salience_before": 0.049755016621051196,
+              "salience_after": 0.024877508310525598
+            }
+          }
+        ],
+        "created_at": "2026-10-21T06:47:44.203230+00:00",
+        "updated_at": "2026-10-21T06:47:44.203239+00:00"
+      },
+      "rejected": null,
+      "error": null,
+      "latency_ms": 0.002,
+      "finished_at": "2026-10-21T06:47:44.203894+00:00"
+    },
+    {
+      "seq": 104,
+      "kind": "read",
+      "op": "read_topic",
+      "request": {
+        "topic_id": "8f7ecfae-a61e-4fa5-92aa-67d16ac77571"
+      },
+      "started_at": "2026-10-21T06:47:44.203896+00:00",
+      "response": {
+        "id": "8f7ecfae-a61e-4fa5-92aa-67d16ac77571",
+        "title": "Parking Permit Renewal",
+        "summary": "Renewal paperwork for the street parking permit",
+        "topic_kind": null,
+        "salience": 2.559552318668273,
+        "failed_salience": null,
+        "archived": false,
+        "revision_flag": {
+          "flagged": false
+        },
+        "fields": {},
+        "topic_history": [],
+        "created_at": "2026-10-21T06:47:44.203182+00:00",
+        "updated_at": "2026-10-21T06:47:44.203206+00:00"
+      },
+      "rejected": null,
+      "error": null,
+      "latency_ms": 0.001,
+      "finished_at": "2026-10-21T06:47:44.203900+00:00"
+    },
+    {
+      "seq": 105,
+      "kind": "read",
+      "op": "read_topic",
+      "request": {
+        "topic_id": "8f7ecfae-a61e-4fa5-92aa-67d16ac77571"
+      },
+      "started_at": "2026-10-21T06:47:44.203908+00:00",
+      "response": {
+        "id": "8f7ecfae-a61e-4fa5-92aa-67d16ac77571",
+        "title": "Parking Permit Renewal",
+        "summary": "Renewal paperwork for the street parking permit",
+        "topic_kind": null,
+        "salience": 2.559552318668273,
+        "failed_salience": null,
+        "archived": false,
+        "revision_flag": {
+          "flagged": false
+        },
+        "fields": {},
+        "topic_history": [],
+        "created_at": "2026-10-21T06:47:44.203182+00:00",
+        "updated_at": "2026-10-21T06:47:44.203206+00:00"
+      },
+      "rejected": null,
+      "error": null,
+      "latency_ms": 0.002,
+      "finished_at": "2026-10-21T06:47:44.203911+00:00"
+    },
+    {
+      "seq": 107,
+      "kind": "read",
+      "op": "read_topic",
+      "request": {
+        "topic_id": "8f7ecfae-a61e-4fa5-92aa-67d16ac77571"
+      },
+      "started_at": "2026-10-21T06:47:44.203961+00:00",
+      "response": {
+        "id": "8f7ecfae-a61e-4fa5-92aa-67d16ac77571",
+        "title": "Parking Permit Renewal",
+        "summary": "Renewal paperwork for the street parking permit",
+        "topic_kind": null,
+        "salience": 2.559552318668273,
+        "failed_salience": null,
+        "archived": false,
+        "revision_flag": {
+          "flagged": false
+        },
+        "fields": {
+          "Status": {
+            "field_type": "string",
+            "ref_topic_id": null,
+            "current": {
+              "id": "e5bf3e22-1c4e-4672-a4cd-d9ee2a2c7ac9",
+              "value": "renewed",
+              "provenance": "check",
+              "why_changed": null,
+              "impact_expected": null,
+              "valid_from": "2026-10-21T06:47:44.203917+00:00",
+              "expired_at": null,
+              "source_id": null,
+              "invalid_at": null,
+              "created_at": "2026-10-21T06:47:44.203917+00:00",
+              "replaces_entry_id": null,
+              "corrected_by_entry_id": null
+            },
+            "history": [
+              {
+                "id": "e5bf3e22-1c4e-4672-a4cd-d9ee2a2c7ac9",
+                "value": "renewed",
+                "provenance": "check",
+                "why_changed": null,
+                "impact_expected": null,
+                "valid_from": "2026-10-21T06:47:44.203917+00:00",
+                "expired_at": null,
+                "source_id": null,
+                "invalid_at": null,
+                "created_at": "2026-10-21T06:47:44.203917+00:00",
+                "replaces_entry_id": null,
+                "corrected_by_entry_id": null
+              }
+            ],
+            "archived_history": []
+          }
+        },
+        "topic_history": [],
+        "created_at": "2026-10-21T06:47:44.203182+00:00",
+        "updated_at": "2026-10-21T06:47:44.203946+00:00"
+      },
+      "rejected": null,
+      "error": null,
+      "latency_ms": 0.023,
+      "finished_at": "2026-10-21T06:47:44.203986+00:00"
+    },
+    {
+      "seq": 108,
+      "kind": "read",
+      "op": "read_state",
+      "request": null,
+      "started_at": "2026-10-21T06:47:44.204006+00:00",
+      "response": {
+        "topics": 2,
+        "edges": 0
+      },
+      "rejected": null,
+      "error": null,
+      "latency_ms": 0.02,
+      "finished_at": "2026-10-21T06:47:44.204029+00:00"
+    }
+  ],
+  "waits": [],
+  "state": {
+    "topics": {
+      "8f7ecfae-a61e-4fa5-92aa-67d16ac77571": {
+        "id": "8f7ecfae-a61e-4fa5-92aa-67d16ac77571",
+        "title": "Parking Permit Renewal",
+        "summary": "Renewal paperwork for the street parking permit",
+        "topic_kind": null,
+        "salience": 2.559552318668273,
+        "failed_salience": null,
+        "archived": false,
+        "revision_flag": {
+          "flagged": false
+        },
+        "fields": {
+          "Status": {
+            "field_type": "string",
+            "ref_topic_id": null,
+            "current": {
+              "id": "e5bf3e22-1c4e-4672-a4cd-d9ee2a2c7ac9",
+              "value": "renewed",
+              "provenance": "check",
+              "why_changed": null,
+              "impact_expected": null,
+              "valid_from": "2026-10-21T06:47:44.203917+00:00",
+              "expired_at": null,
+              "source_id": null,
+              "invalid_at": null,
+              "created_at": "2026-10-21T06:47:44.203917+00:00",
+              "replaces_entry_id": null,
+              "corrected_by_entry_id": null
+            },
+            "history": [
+              {
+                "id": "e5bf3e22-1c4e-4672-a4cd-d9ee2a2c7ac9",
+                "value": "renewed",
+                "provenance": "check",
+                "why_changed": null,
+                "impact_expected": null,
+                "valid_from": "2026-10-21T06:47:44.203917+00:00",
+                "expired_at": null,
+                "source_id": null,
+                "invalid_at": null,
+                "created_at": "2026-10-21T06:47:44.203917+00:00",
+                "replaces_entry_id": null,
+                "corrected_by_entry_id": null
+              }
+            ],
+            "archived_history": []
+          }
+        },
+        "topic_history": [],
+        "created_at": "2026-10-21T06:47:44.203182+00:00",
+        "updated_at": "2026-10-21T06:47:44.203946+00:00"
+      },
+      "8cc0865c-e8fc-4cdd-b362-3c2845052d44": {
+        "id": "8cc0865c-e8fc-4cdd-b362-3c2845052d44",
+        "title": "Library Card Renewal",
+        "summary": "Never read; the control for the forgetting pass",
+        "topic_kind": null,
+        "salience": 0.024877508310525598,
+        "failed_salience": null,
+        "archived": true,
+        "revision_flag": {
+          "flagged": false
+        },
+        "fields": {},
+        "topic_history": [
+          {
+            "ts": "2026-10-21T06:47:44.203855+00:00",
+            "kind": "archived",
+            "detail": {
+              "salience_before": 0.049755016621051196,
+              "salience_after": 0.024877508310525598
+            }
+          }
+        ],
+        "created_at": "2026-10-21T06:47:44.203230+00:00",
+        "updated_at": "2026-10-21T06:47:44.203239+00:00"
+      }
+    },
+    "edges": [],
+    "policies": [
+      {
+        "name": "reject-empty-values",
+        "event": "write",
+        "condition": {
+          "field": "*",
+          "op": "empty"
+        },
+        "action": "reject"
+      },
+      {
+        "name": "propagate-on-change",
+        "event": "field_updated",
+        "condition": {
+          "neighbour": "extension"
+        },
+        "action": "flag"
+      }
+    ],
+    "interactions": 28
+  },
+  "state_error": null,
+  "rows": [
+    "C6-2"
+  ],
+  "verdicts": [
+    {
+      "row": "C6-2",
+      "verdict": "pass",
+      "cases": [
+        {
+          "name": "repeated retrieval keeps the topic at or above 0.05, from 0.06, until the first forgetting pass",
+          "held": true,
+          "observation": "salience 0.060 -> 0.160 -> 0.260 -> 0.360 -> 0.460 -> 0.560 -> 0.660 -> 0.760 -> 0.860 -> 0.960 -> 1.060 -> 1.160 -> 1.260 -> 1.360 -> 1.460 -> 1.560 -> 1.660 -> 1.760 -> 1.860 -> 1.960 -> 2.060 -> 2.160 -> 2.260 -> 2.360 -> 2.460 -> 2.560; 25 retrieval(s) returned the topic, expected at least 2.560",
+          "control": false,
+          "id": "retrieval-lift"
+        },
+        {
+          "name": "the topic left forgetting eligibility",
+          "held": true,
+          "observation": "during the reads the target has salience 2.560, archived=False; the never-read control at 0.06 archived=True",
+          "control": false,
+          "id": "the topic left forgetting eligibility"
+        }
+      ],
+      "observations": [
+        {
+          "name": "salience trajectory",
+          "target_topic_id": "8f7ecfae-a61e-4fa5-92aa-67d16ac77571",
+          "start": 0.05955231866827202,
+          "after_each_retrieval": [
+            0.15955231866827202,
+            0.259552318668272,
+            0.359552318668272,
+            0.45955231866827195,
+            0.5595523186682719,
+            0.6595523186682719,
+            0.7595523186682719,
+            0.8595523186682719,
+            0.9595523186682718,
+            1.0595523186682718,
+            1.159552318668272,
+            1.259552318668272,
+            1.359552318668272,
+            1.4595523186682722,
+            1.5595523186682723,
+            1.6595523186682724,
+            1.7595523186682724,
+            1.8595523186682725,
+            1.9595523186682726,
+            2.0595523186682727,
+            2.159552318668273,
+            2.259552318668273,
+            2.359552318668273,
+            2.459552318668273,
+            2.559552318668273
+          ],
+          "threshold": 0.05
+        },
+        {
+          "name": "forgetting pass",
+          "ran": true,
+          "first_pass_in_reads": true,
+          "topics_after": null,
+          "waited_s": null,
+          "control": {
+            "id": "8cc0865c-e8fc-4cdd-b362-3c2845052d44",
+            "start": 0.06,
+            "salience": 0.024877508310525598,
+            "archived": true
+          },
+          "target": {
+            "id": "8f7ecfae-a61e-4fa5-92aa-67d16ac77571",
+            "salience": 2.559552318668273,
+            "archived": false
+          }
+        },
+        {
+          "name": "salience durability",
+          "before_field_write": 2.559552318668273,
+          "after_field_write": 2.559552318668273,
+          "reset": false,
+          "note": "a field write left the salience as it was"
+        }
+      ],
+      "probe_evidence": null,
+      "measurements": {},
+      "control": false,
+      "system": "reference-gem-p2",
+      "snapshots": [],
+      "error": null
+    }
+  ]
+}

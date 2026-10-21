@@ -1,0 +1,417 @@
+{
+  "system": "reference-gem-p2",
+  "label": "reference GEM (phase 2)",
+  "check": "C1",
+  "tag": null,
+  "describe": {
+    "system": "reference GEM (phase 2)",
+    "url": null,
+    "db_path": null,
+    "commit": null,
+    "engine": "in-process reference GEM, phase 2",
+    "keeps_history": true,
+    "accepts_error": null,
+    "declared_bound": {
+      "topics": 500,
+      "name": "\u03b2"
+    },
+    "accepts_source": true,
+    "latency_comparable": false,
+    "source_surface": {
+      "request_properties": [
+        "source_message"
+      ],
+      "paths": []
+    },
+    "c6_clause_2_seeds": {
+      "target": 0.06,
+      "control": 0.06
+    },
+    "embedder": "sentence-transformers/all-MiniLM-L6-v2",
+    "top_k": 8,
+    "parameters": {
+      "theta_archive": 0.05,
+      "lambda": 0.9925386444712004,
+      "decay_horizon": 400,
+      "beta": 500,
+      "bump": 0.1,
+      "history_cap": 500,
+      "top_k": 8,
+      "salience_on_archive": 0.5,
+      "propagation": "one hop, extension edges, either direction",
+      "revision": "after every ingest",
+      "phase": 2
+    },
+    "accepts": {
+      "valid_from": true,
+      "invalid_at": true,
+      "valid_at": true,
+      "recorded_at": true
+    }
+  },
+  "describe_error": null,
+  "started_at": "2026-10-21T06:47:27.641742+00:00",
+  "finished_at": "2026-10-21T06:47:27.641923+00:00",
+  "scored_transitions": [
+    {
+      "seq": 0,
+      "kind": "scored",
+      "op": "ingest",
+      "request": {
+        "placement": "new_topic",
+        "title": "Website Redesign",
+        "topic_kind": "project",
+        "fields": [
+          {
+            "name": "Deadline",
+            "value": "March 15",
+            "provenance": "kickoff-notes"
+          }
+        ]
+      },
+      "started_at": "2026-10-21T06:47:27.641758+00:00",
+      "response": {
+        "topic_id": "470a6220-a621-45bd-a079-641e8cc1645f",
+        "applied": [
+          "created_topic:470a6220-a621-45bd-a079-641e8cc1645f",
+          "field:Deadline"
+        ],
+        "version_ids": {
+          "Deadline": "b00740a4-a79c-4ef4-8759-8b47c3e9fbb3"
+        },
+        "similar_topic_ids": []
+      },
+      "rejected": null,
+      "error": null,
+      "latency_ms": 0.039,
+      "finished_at": "2026-10-21T06:47:27.641801+00:00"
+    },
+    {
+      "seq": 1,
+      "kind": "scored",
+      "op": "ingest",
+      "request": {
+        "placement": "version_field",
+        "topic_id": "470a6220-a621-45bd-a079-641e8cc1645f",
+        "fields": [
+          {
+            "name": "Deadline",
+            "value": "April 20",
+            "provenance": "pm-email",
+            "why_changed": "vendor delay"
+          }
+        ]
+      },
+      "started_at": "2026-10-21T06:47:27.641805+00:00",
+      "response": {
+        "topic_id": "470a6220-a621-45bd-a079-641e8cc1645f",
+        "applied": [
+          "version:Deadline"
+        ],
+        "version_ids": {
+          "Deadline": "25e562f5-197c-48d9-9dd5-e2d268cb1970"
+        },
+        "similar_topic_ids": []
+      },
+      "rejected": null,
+      "error": null,
+      "latency_ms": 0.03,
+      "finished_at": "2026-10-21T06:47:27.641838+00:00"
+    },
+    {
+      "seq": 2,
+      "kind": "scored",
+      "op": "query",
+      "request": {
+        "q": "read",
+        "stages": [
+          "temporal"
+        ],
+        "topic_ids": [
+          "470a6220-a621-45bd-a079-641e8cc1645f"
+        ],
+        "explain": false
+      },
+      "started_at": "2026-10-21T06:47:27.641841+00:00",
+      "response": {
+        "query": "read",
+        "candidates": [
+          {
+            "topic_id": "470a6220-a621-45bd-a079-641e8cc1645f",
+            "title": "Website Redesign",
+            "summary": null,
+            "topic_kind": "project",
+            "salience": 1.0,
+            "failed_salience": null,
+            "neighbors": [],
+            "fields": [
+              {
+                "name": "Deadline",
+                "field_type": "string",
+                "ref_topic_id": null,
+                "current": {
+                  "id": "25e562f5-197c-48d9-9dd5-e2d268cb1970",
+                  "value": "April 20",
+                  "provenance": "pm-email",
+                  "why_changed": "vendor delay",
+                  "impact_expected": null,
+                  "valid_from": "2026-10-21T06:47:27.641807+00:00",
+                  "expired_at": null,
+                  "source_id": null,
+                  "invalid_at": null,
+                  "created_at": "2026-10-21T06:47:27.641807+00:00",
+                  "replaces_entry_id": null,
+                  "corrected_by_entry_id": null
+                },
+                "history": null
+              }
+            ],
+            "revision_flag": {
+              "flagged": false
+            },
+            "similarity": null
+          }
+        ],
+        "summary_text": ""
+      },
+      "rejected": null,
+      "error": null,
+      "latency_ms": 0.026,
+      "finished_at": "2026-10-21T06:47:27.641870+00:00"
+    },
+    {
+      "seq": 3,
+      "kind": "scored",
+      "op": "query",
+      "request": {
+        "q": "read",
+        "stages": [
+          "temporal"
+        ],
+        "topic_ids": [
+          "470a6220-a621-45bd-a079-641e8cc1645f"
+        ],
+        "explain": true
+      },
+      "started_at": "2026-10-21T06:47:27.641879+00:00",
+      "response": {
+        "query": "read",
+        "candidates": [
+          {
+            "topic_id": "470a6220-a621-45bd-a079-641e8cc1645f",
+            "title": "Website Redesign",
+            "summary": null,
+            "topic_kind": "project",
+            "salience": 1.1,
+            "failed_salience": null,
+            "neighbors": [],
+            "fields": [
+              {
+                "name": "Deadline",
+                "field_type": "string",
+                "ref_topic_id": null,
+                "current": {
+                  "id": "25e562f5-197c-48d9-9dd5-e2d268cb1970",
+                  "value": "April 20",
+                  "provenance": "pm-email",
+                  "why_changed": "vendor delay",
+                  "impact_expected": null,
+                  "valid_from": "2026-10-21T06:47:27.641807+00:00",
+                  "expired_at": null,
+                  "source_id": null,
+                  "invalid_at": null,
+                  "created_at": "2026-10-21T06:47:27.641807+00:00",
+                  "replaces_entry_id": null,
+                  "corrected_by_entry_id": null
+                },
+                "history": [
+                  {
+                    "id": "25e562f5-197c-48d9-9dd5-e2d268cb1970",
+                    "value": "April 20",
+                    "provenance": "pm-email",
+                    "why_changed": "vendor delay",
+                    "impact_expected": null,
+                    "valid_from": "2026-10-21T06:47:27.641807+00:00",
+                    "expired_at": null,
+                    "source_id": null,
+                    "invalid_at": null,
+                    "created_at": "2026-10-21T06:47:27.641807+00:00",
+                    "replaces_entry_id": null,
+                    "corrected_by_entry_id": null
+                  },
+                  {
+                    "id": "b00740a4-a79c-4ef4-8759-8b47c3e9fbb3",
+                    "value": "March 15",
+                    "provenance": "kickoff-notes",
+                    "why_changed": null,
+                    "impact_expected": null,
+                    "valid_from": "2026-10-21T06:47:27.641762+00:00",
+                    "expired_at": null,
+                    "source_id": null,
+                    "invalid_at": null,
+                    "created_at": "2026-10-21T06:47:27.641762+00:00",
+                    "replaces_entry_id": null,
+                    "corrected_by_entry_id": null
+                  }
+                ],
+                "archived_history": []
+              }
+            ],
+            "revision_flag": {
+              "flagged": false
+            },
+            "similarity": null
+          }
+        ],
+        "summary_text": ""
+      },
+      "rejected": null,
+      "error": null,
+      "latency_ms": 0.024,
+      "finished_at": "2026-10-21T06:47:27.641905+00:00"
+    }
+  ],
+  "setup_writes": [],
+  "reads": [
+    {
+      "seq": 4,
+      "kind": "read",
+      "op": "read_state",
+      "request": null,
+      "started_at": "2026-10-21T06:47:27.641929+00:00",
+      "response": {
+        "topics": 1,
+        "edges": 0
+      },
+      "rejected": null,
+      "error": null,
+      "latency_ms": 0.021,
+      "finished_at": "2026-10-21T06:47:27.641953+00:00"
+    }
+  ],
+  "waits": [],
+  "state": {
+    "topics": {
+      "470a6220-a621-45bd-a079-641e8cc1645f": {
+        "id": "470a6220-a621-45bd-a079-641e8cc1645f",
+        "title": "Website Redesign",
+        "summary": null,
+        "topic_kind": "project",
+        "salience": 1.2000000000000002,
+        "failed_salience": null,
+        "archived": false,
+        "revision_flag": {
+          "flagged": false
+        },
+        "fields": {
+          "Deadline": {
+            "field_type": "string",
+            "ref_topic_id": null,
+            "current": {
+              "id": "25e562f5-197c-48d9-9dd5-e2d268cb1970",
+              "value": "April 20",
+              "provenance": "pm-email",
+              "why_changed": "vendor delay",
+              "impact_expected": null,
+              "valid_from": "2026-10-21T06:47:27.641807+00:00",
+              "expired_at": null,
+              "source_id": null,
+              "invalid_at": null,
+              "created_at": "2026-10-21T06:47:27.641807+00:00",
+              "replaces_entry_id": null,
+              "corrected_by_entry_id": null
+            },
+            "history": [
+              {
+                "id": "25e562f5-197c-48d9-9dd5-e2d268cb1970",
+                "value": "April 20",
+                "provenance": "pm-email",
+                "why_changed": "vendor delay",
+                "impact_expected": null,
+                "valid_from": "2026-10-21T06:47:27.641807+00:00",
+                "expired_at": null,
+                "source_id": null,
+                "invalid_at": null,
+                "created_at": "2026-10-21T06:47:27.641807+00:00",
+                "replaces_entry_id": null,
+                "corrected_by_entry_id": null
+              },
+              {
+                "id": "b00740a4-a79c-4ef4-8759-8b47c3e9fbb3",
+                "value": "March 15",
+                "provenance": "kickoff-notes",
+                "why_changed": null,
+                "impact_expected": null,
+                "valid_from": "2026-10-21T06:47:27.641762+00:00",
+                "expired_at": null,
+                "source_id": null,
+                "invalid_at": null,
+                "created_at": "2026-10-21T06:47:27.641762+00:00",
+                "replaces_entry_id": null,
+                "corrected_by_entry_id": null
+              }
+            ],
+            "archived_history": []
+          }
+        },
+        "topic_history": [],
+        "created_at": "2026-10-21T06:47:27.641762+00:00",
+        "updated_at": "2026-10-21T06:47:27.641827+00:00"
+      }
+    },
+    "edges": [],
+    "policies": [
+      {
+        "name": "reject-empty-values",
+        "event": "write",
+        "condition": {
+          "field": "*",
+          "op": "empty"
+        },
+        "action": "reject"
+      },
+      {
+        "name": "propagate-on-change",
+        "event": "field_updated",
+        "condition": {
+          "neighbour": "extension"
+        },
+        "action": "flag"
+      }
+    ],
+    "interactions": 4
+  },
+  "state_error": null,
+  "rows": [
+    "C1"
+  ],
+  "verdicts": [
+    {
+      "row": "C1",
+      "verdict": "pass",
+      "cases": [
+        {
+          "name": "default read returns only April 20",
+          "held": true,
+          "observation": "current='April 20', values returned=['April 20']",
+          "control": false,
+          "id": "default read returns only April 20"
+        },
+        {
+          "name": "temporal read returns the full history",
+          "held": true,
+          "observation": "current='April 20', history newest first=['April 20', 'March 15']",
+          "control": false,
+          "id": "temporal read returns the full history"
+        }
+      ],
+      "observations": [],
+      "probe_evidence": null,
+      "measurements": {},
+      "control": true,
+      "system": "reference-gem-p2",
+      "snapshots": [],
+      "error": null
+    }
+  ]
+}

@@ -1,0 +1,4018 @@
+{
+  "system": "step1",
+  "label": "bitemporal patch step 1 (089b823, LadybugDB)",
+  "check": "C2(c)",
+  "tag": null,
+  "describe": {
+    "system": "bitemporal patch step 1 (089b823, LadybugDB)",
+    "url": "http://127.0.0.1:8765",
+    "db_path": "/home/zeyad/work/agent-systems-demo/.runtime/gem-suite/20261021-085949/step1-c2-c/memstate.lbug",
+    "commit": "089b823d2a44c65e539db51173770ee499ce80b2",
+    "engine": "MemState engine module: ladybug",
+    "keeps_history": true,
+    "accepts_error": null,
+    "declared_bound": {
+      "topics": 500,
+      "name": "topic_count_soft_limit"
+    },
+    "accepts_source": false,
+    "latency_comparable": true,
+    "source_surface": {
+      "request_properties": [],
+      "paths": []
+    },
+    "c6_clause_2_seeds": null,
+    "source_dir": "/home/zeyad/work/agent-systems-demo/MemState-patched/src",
+    "health_error": null,
+    "accepts": {
+      "valid_from": false,
+      "invalid_at": false,
+      "valid_at": false,
+      "recorded_at": false
+    }
+  },
+  "describe_error": null,
+  "started_at": "2026-10-21T06:13:45.271047+00:00",
+  "finished_at": "2026-10-21T06:13:47.104676+00:00",
+  "scored_transitions": [],
+  "setup_writes": [
+    {
+      "seq": 0,
+      "kind": "setup",
+      "op": "add_policy",
+      "request": {
+        "label": "add_policy",
+        "rule": {
+          "name": "deadline-not-before-start",
+          "event": "write",
+          "condition": {
+            "field": "Deadline",
+            "op": "<",
+            "other_field": "Start"
+          },
+          "action": "reject"
+        }
+      },
+      "started_at": "2026-10-21T06:13:46.786382+00:00",
+      "response": null,
+      "rejected": null,
+      "error": null,
+      "latency_ms": 0.001,
+      "finished_at": "2026-10-21T06:13:46.786400+00:00"
+    }
+  ],
+  "reads": [
+    {
+      "seq": 1,
+      "kind": "read",
+      "op": "probe",
+      "request": {
+        "method": "GET",
+        "path": "/openapi.json"
+      },
+      "started_at": "2026-10-21T06:13:46.786405+00:00",
+      "response": {
+        "status": 200,
+        "content_type": "application/json",
+        "body": {
+          "openapi": "3.1.0",
+          "info": {
+            "title": "MemState API",
+            "description": "Topic graph memory (Kuzu embedded + UEM) \u2014 ingest and query",
+            "version": "0.1.0"
+          },
+          "paths": {
+            "/health": {
+              "get": {
+                "summary": "Health",
+                "operationId": "health_health_get",
+                "responses": {
+                  "200": {
+                    "description": "Successful Response",
+                    "content": {
+                      "application/json": {
+                        "schema": {}
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "/health/graph": {
+              "get": {
+                "summary": "Health Graph",
+                "description": "Whether the embedded Kuzu store opens (no auth \u2014 for UI / ops checks).",
+                "operationId": "health_graph_health_graph_get",
+                "responses": {
+                  "200": {
+                    "description": "Successful Response",
+                    "content": {
+                      "application/json": {
+                        "schema": {}
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "/health/falkordb": {
+              "get": {
+                "summary": "Health Falkordb",
+                "description": "Backward-compatible alias for `/health/graph`.",
+                "operationId": "health_falkordb_health_falkordb_get",
+                "responses": {
+                  "200": {
+                    "description": "Successful Response",
+                    "content": {
+                      "application/json": {
+                        "schema": {}
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "/": {
+              "get": {
+                "summary": "Root",
+                "operationId": "root__get",
+                "responses": {
+                  "200": {
+                    "description": "Successful Response",
+                    "content": {
+                      "application/json": {
+                        "schema": {}
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "/api/ui/datamodel": {
+              "get": {
+                "tags": [
+                  "ui"
+                ],
+                "summary": "Datamodel Diagram",
+                "operationId": "datamodel_diagram_api_ui_datamodel_get",
+                "parameters": [
+                  {
+                    "name": "X-API-Key",
+                    "in": "header",
+                    "required": false,
+                    "schema": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "title": "X-Api-Key"
+                    }
+                  },
+                  {
+                    "name": "authorization",
+                    "in": "header",
+                    "required": false,
+                    "schema": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "title": "Authorization"
+                    }
+                  }
+                ],
+                "responses": {
+                  "200": {
+                    "description": "Successful Response",
+                    "content": {
+                      "application/json": {
+                        "schema": {
+                          "type": "object",
+                          "additionalProperties": {
+                            "type": "string"
+                          },
+                          "title": "Response Datamodel Diagram Api Ui Datamodel Get"
+                        }
+                      }
+                    }
+                  },
+                  "422": {
+                    "description": "Validation Error",
+                    "content": {
+                      "application/json": {
+                        "schema": {
+                          "$ref": "#/components/schemas/HTTPValidationError"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "/api/ui/transcribe": {
+              "post": {
+                "tags": [
+                  "ui"
+                ],
+                "summary": "Transcribe Voice Clip",
+                "description": "Same as POST /api/llm/transcribe \u2014 lives under /api/ui for the graph UI client.",
+                "operationId": "transcribe_voice_clip_api_ui_transcribe_post",
+                "parameters": [
+                  {
+                    "name": "X-API-Key",
+                    "in": "header",
+                    "required": false,
+                    "schema": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "title": "X-Api-Key"
+                    }
+                  },
+                  {
+                    "name": "authorization",
+                    "in": "header",
+                    "required": false,
+                    "schema": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "title": "Authorization"
+                    }
+                  }
+                ],
+                "requestBody": {
+                  "required": true,
+                  "content": {
+                    "multipart/form-data": {
+                      "schema": {
+                        "$ref": "#/components/schemas/Body_transcribe_voice_clip_api_ui_transcribe_post"
+                      }
+                    }
+                  }
+                },
+                "responses": {
+                  "200": {
+                    "description": "Successful Response",
+                    "content": {
+                      "application/json": {
+                        "schema": {
+                          "type": "object",
+                          "additionalProperties": {
+                            "type": "string"
+                          },
+                          "title": "Response Transcribe Voice Clip Api Ui Transcribe Post"
+                        }
+                      }
+                    }
+                  },
+                  "422": {
+                    "description": "Validation Error",
+                    "content": {
+                      "application/json": {
+                        "schema": {
+                          "$ref": "#/components/schemas/HTTPValidationError"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "/api/ui/graph": {
+              "get": {
+                "tags": [
+                  "ui"
+                ],
+                "summary": "Graph Snapshot",
+                "description": "Return nodes and edges for visualization (topics, RELATED, field refs, ``community`` ids).",
+                "operationId": "graph_snapshot_api_ui_graph_get",
+                "parameters": [
+                  {
+                    "name": "X-API-Key",
+                    "in": "header",
+                    "required": false,
+                    "schema": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "title": "X-Api-Key"
+                    }
+                  },
+                  {
+                    "name": "authorization",
+                    "in": "header",
+                    "required": false,
+                    "schema": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "title": "Authorization"
+                    }
+                  }
+                ],
+                "responses": {
+                  "200": {
+                    "description": "Successful Response",
+                    "content": {
+                      "application/json": {
+                        "schema": {
+                          "type": "object",
+                          "additionalProperties": true,
+                          "title": "Response Graph Snapshot Api Ui Graph Get"
+                        }
+                      }
+                    }
+                  },
+                  "422": {
+                    "description": "Validation Error",
+                    "content": {
+                      "application/json": {
+                        "schema": {
+                          "$ref": "#/components/schemas/HTTPValidationError"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "/api/ui/system-context": {
+              "get": {
+                "tags": [
+                  "ui"
+                ],
+                "summary": "Get System Context",
+                "operationId": "get_system_context_api_ui_system_context_get",
+                "parameters": [
+                  {
+                    "name": "X-API-Key",
+                    "in": "header",
+                    "required": false,
+                    "schema": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "title": "X-Api-Key"
+                    }
+                  },
+                  {
+                    "name": "authorization",
+                    "in": "header",
+                    "required": false,
+                    "schema": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "title": "Authorization"
+                    }
+                  }
+                ],
+                "responses": {
+                  "200": {
+                    "description": "Successful Response",
+                    "content": {
+                      "application/json": {
+                        "schema": {
+                          "type": "object",
+                          "additionalProperties": true,
+                          "title": "Response Get System Context Api Ui System Context Get"
+                        }
+                      }
+                    }
+                  },
+                  "422": {
+                    "description": "Validation Error",
+                    "content": {
+                      "application/json": {
+                        "schema": {
+                          "$ref": "#/components/schemas/HTTPValidationError"
+                        }
+                      }
+                    }
+                  }
+                }
+              },
+              "put": {
+                "tags": [
+                  "ui"
+                ],
+                "summary": "Set System Context",
+                "operationId": "set_system_context_api_ui_system_context_put",
+                "parameters": [
+                  {
+                    "name": "X-Admin-Key",
+                    "in": "header",
+                    "required": false,
+                    "schema": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "title": "X-Admin-Key"
+                    }
+                  },
+                  {
+                    "name": "X-API-Key",
+                    "in": "header",
+                    "required": false,
+                    "schema": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "title": "X-Api-Key"
+                    }
+                  },
+                  {
+                    "name": "authorization",
+                    "in": "header",
+                    "required": false,
+                    "schema": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "title": "Authorization"
+                    }
+                  }
+                ],
+                "requestBody": {
+                  "required": true,
+                  "content": {
+                    "application/json": {
+                      "schema": {
+                        "$ref": "#/components/schemas/SystemContextBody"
+                      }
+                    }
+                  }
+                },
+                "responses": {
+                  "200": {
+                    "description": "Successful Response",
+                    "content": {
+                      "application/json": {
+                        "schema": {
+                          "type": "object",
+                          "additionalProperties": true,
+                          "title": "Response Set System Context Api Ui System Context Put"
+                        }
+                      }
+                    }
+                  },
+                  "422": {
+                    "description": "Validation Error",
+                    "content": {
+                      "application/json": {
+                        "schema": {
+                          "$ref": "#/components/schemas/HTTPValidationError"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "/api/ui/topics": {
+              "post": {
+                "tags": [
+                  "ui"
+                ],
+                "summary": "Ui Create Topic",
+                "operationId": "ui_create_topic_api_ui_topics_post",
+                "parameters": [
+                  {
+                    "name": "X-API-Key",
+                    "in": "header",
+                    "required": false,
+                    "schema": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "title": "X-Api-Key"
+                    }
+                  },
+                  {
+                    "name": "authorization",
+                    "in": "header",
+                    "required": false,
+                    "schema": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "title": "Authorization"
+                    }
+                  }
+                ],
+                "requestBody": {
+                  "required": true,
+                  "content": {
+                    "application/json": {
+                      "schema": {
+                        "$ref": "#/components/schemas/CreateTopicBody"
+                      }
+                    }
+                  }
+                },
+                "responses": {
+                  "200": {
+                    "description": "Successful Response",
+                    "content": {
+                      "application/json": {
+                        "schema": {
+                          "type": "object",
+                          "additionalProperties": {
+                            "type": "string"
+                          },
+                          "title": "Response Ui Create Topic Api Ui Topics Post"
+                        }
+                      }
+                    }
+                  },
+                  "422": {
+                    "description": "Validation Error",
+                    "content": {
+                      "application/json": {
+                        "schema": {
+                          "$ref": "#/components/schemas/HTTPValidationError"
+                        }
+                      }
+                    }
+                  }
+                }
+              },
+              "get": {
+                "tags": [
+                  "ui"
+                ],
+                "summary": "Ui List Topics",
+                "operationId": "ui_list_topics_api_ui_topics_get",
+                "parameters": [
+                  {
+                    "name": "include_archived",
+                    "in": "query",
+                    "required": false,
+                    "schema": {
+                      "type": "boolean",
+                      "default": false,
+                      "title": "Include Archived"
+                    }
+                  },
+                  {
+                    "name": "X-API-Key",
+                    "in": "header",
+                    "required": false,
+                    "schema": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "title": "X-Api-Key"
+                    }
+                  },
+                  {
+                    "name": "authorization",
+                    "in": "header",
+                    "required": false,
+                    "schema": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "title": "Authorization"
+                    }
+                  }
+                ],
+                "responses": {
+                  "200": {
+                    "description": "Successful Response",
+                    "content": {
+                      "application/json": {
+                        "schema": {
+                          "type": "object",
+                          "additionalProperties": {
+                            "type": "array",
+                            "items": {
+                              "type": "string"
+                            }
+                          },
+                          "title": "Response Ui List Topics Api Ui Topics Get"
+                        }
+                      }
+                    }
+                  },
+                  "422": {
+                    "description": "Validation Error",
+                    "content": {
+                      "application/json": {
+                        "schema": {
+                          "$ref": "#/components/schemas/HTTPValidationError"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "/api/ui/topics/{topic_id}": {
+              "get": {
+                "tags": [
+                  "ui"
+                ],
+                "summary": "Ui Get Topic",
+                "operationId": "ui_get_topic_api_ui_topics__topic_id__get",
+                "parameters": [
+                  {
+                    "name": "topic_id",
+                    "in": "path",
+                    "required": true,
+                    "schema": {
+                      "type": "string",
+                      "title": "Topic Id"
+                    }
+                  },
+                  {
+                    "name": "X-API-Key",
+                    "in": "header",
+                    "required": false,
+                    "schema": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "title": "X-Api-Key"
+                    }
+                  },
+                  {
+                    "name": "authorization",
+                    "in": "header",
+                    "required": false,
+                    "schema": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "title": "Authorization"
+                    }
+                  }
+                ],
+                "responses": {
+                  "200": {
+                    "description": "Successful Response",
+                    "content": {
+                      "application/json": {
+                        "schema": {
+                          "type": "object",
+                          "additionalProperties": true,
+                          "title": "Response Ui Get Topic Api Ui Topics  Topic Id  Get"
+                        }
+                      }
+                    }
+                  },
+                  "422": {
+                    "description": "Validation Error",
+                    "content": {
+                      "application/json": {
+                        "schema": {
+                          "$ref": "#/components/schemas/HTTPValidationError"
+                        }
+                      }
+                    }
+                  }
+                }
+              },
+              "delete": {
+                "tags": [
+                  "ui"
+                ],
+                "summary": "Ui Delete Topic",
+                "operationId": "ui_delete_topic_api_ui_topics__topic_id__delete",
+                "parameters": [
+                  {
+                    "name": "topic_id",
+                    "in": "path",
+                    "required": true,
+                    "schema": {
+                      "type": "string",
+                      "title": "Topic Id"
+                    }
+                  },
+                  {
+                    "name": "X-API-Key",
+                    "in": "header",
+                    "required": false,
+                    "schema": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "title": "X-Api-Key"
+                    }
+                  },
+                  {
+                    "name": "authorization",
+                    "in": "header",
+                    "required": false,
+                    "schema": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "title": "Authorization"
+                    }
+                  }
+                ],
+                "responses": {
+                  "200": {
+                    "description": "Successful Response",
+                    "content": {
+                      "application/json": {
+                        "schema": {
+                          "type": "object",
+                          "additionalProperties": true,
+                          "title": "Response Ui Delete Topic Api Ui Topics  Topic Id  Delete"
+                        }
+                      }
+                    }
+                  },
+                  "422": {
+                    "description": "Validation Error",
+                    "content": {
+                      "application/json": {
+                        "schema": {
+                          "$ref": "#/components/schemas/HTTPValidationError"
+                        }
+                      }
+                    }
+                  }
+                }
+              },
+              "patch": {
+                "tags": [
+                  "ui"
+                ],
+                "summary": "Ui Update Topic",
+                "operationId": "ui_update_topic_api_ui_topics__topic_id__patch",
+                "parameters": [
+                  {
+                    "name": "topic_id",
+                    "in": "path",
+                    "required": true,
+                    "schema": {
+                      "type": "string",
+                      "title": "Topic Id"
+                    }
+                  },
+                  {
+                    "name": "X-API-Key",
+                    "in": "header",
+                    "required": false,
+                    "schema": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "title": "X-Api-Key"
+                    }
+                  },
+                  {
+                    "name": "authorization",
+                    "in": "header",
+                    "required": false,
+                    "schema": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "title": "Authorization"
+                    }
+                  }
+                ],
+                "requestBody": {
+                  "required": true,
+                  "content": {
+                    "application/json": {
+                      "schema": {
+                        "$ref": "#/components/schemas/UpdateTopicBody"
+                      }
+                    }
+                  }
+                },
+                "responses": {
+                  "200": {
+                    "description": "Successful Response",
+                    "content": {
+                      "application/json": {
+                        "schema": {
+                          "type": "object",
+                          "additionalProperties": {
+                            "type": "string"
+                          },
+                          "title": "Response Ui Update Topic Api Ui Topics  Topic Id  Patch"
+                        }
+                      }
+                    }
+                  },
+                  "422": {
+                    "description": "Validation Error",
+                    "content": {
+                      "application/json": {
+                        "schema": {
+                          "$ref": "#/components/schemas/HTTPValidationError"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "/api/ui/topics/{from_id}/relationships": {
+              "post": {
+                "tags": [
+                  "ui"
+                ],
+                "summary": "Ui Add Relationship",
+                "operationId": "ui_add_relationship_api_ui_topics__from_id__relationships_post",
+                "parameters": [
+                  {
+                    "name": "from_id",
+                    "in": "path",
+                    "required": true,
+                    "schema": {
+                      "type": "string",
+                      "title": "From Id"
+                    }
+                  },
+                  {
+                    "name": "X-API-Key",
+                    "in": "header",
+                    "required": false,
+                    "schema": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "title": "X-Api-Key"
+                    }
+                  },
+                  {
+                    "name": "authorization",
+                    "in": "header",
+                    "required": false,
+                    "schema": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "title": "Authorization"
+                    }
+                  }
+                ],
+                "requestBody": {
+                  "required": true,
+                  "content": {
+                    "application/json": {
+                      "schema": {
+                        "$ref": "#/components/schemas/RelationshipBody"
+                      }
+                    }
+                  }
+                },
+                "responses": {
+                  "200": {
+                    "description": "Successful Response",
+                    "content": {
+                      "application/json": {
+                        "schema": {
+                          "type": "object",
+                          "additionalProperties": {
+                            "type": "string"
+                          },
+                          "title": "Response Ui Add Relationship Api Ui Topics  From Id  Relationships Post"
+                        }
+                      }
+                    }
+                  },
+                  "422": {
+                    "description": "Validation Error",
+                    "content": {
+                      "application/json": {
+                        "schema": {
+                          "$ref": "#/components/schemas/HTTPValidationError"
+                        }
+                      }
+                    }
+                  }
+                }
+              },
+              "delete": {
+                "tags": [
+                  "ui"
+                ],
+                "summary": "Ui Remove Relationship",
+                "operationId": "ui_remove_relationship_api_ui_topics__from_id__relationships_delete",
+                "parameters": [
+                  {
+                    "name": "from_id",
+                    "in": "path",
+                    "required": true,
+                    "schema": {
+                      "type": "string",
+                      "title": "From Id"
+                    }
+                  },
+                  {
+                    "name": "to_topic_id",
+                    "in": "query",
+                    "required": true,
+                    "schema": {
+                      "type": "string",
+                      "title": "To Topic Id"
+                    }
+                  },
+                  {
+                    "name": "kind",
+                    "in": "query",
+                    "required": true,
+                    "schema": {
+                      "type": "string",
+                      "title": "Kind"
+                    }
+                  },
+                  {
+                    "name": "X-API-Key",
+                    "in": "header",
+                    "required": false,
+                    "schema": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "title": "X-Api-Key"
+                    }
+                  },
+                  {
+                    "name": "authorization",
+                    "in": "header",
+                    "required": false,
+                    "schema": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "title": "Authorization"
+                    }
+                  }
+                ],
+                "responses": {
+                  "200": {
+                    "description": "Successful Response",
+                    "content": {
+                      "application/json": {
+                        "schema": {
+                          "type": "object",
+                          "additionalProperties": {
+                            "type": "string"
+                          },
+                          "title": "Response Ui Remove Relationship Api Ui Topics  From Id  Relationships Delete"
+                        }
+                      }
+                    }
+                  },
+                  "422": {
+                    "description": "Validation Error",
+                    "content": {
+                      "application/json": {
+                        "schema": {
+                          "$ref": "#/components/schemas/HTTPValidationError"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "/api/ui/topics/{topic_id}/fields": {
+              "post": {
+                "tags": [
+                  "ui"
+                ],
+                "summary": "Ui Append Field",
+                "operationId": "ui_append_field_api_ui_topics__topic_id__fields_post",
+                "parameters": [
+                  {
+                    "name": "topic_id",
+                    "in": "path",
+                    "required": true,
+                    "schema": {
+                      "type": "string",
+                      "title": "Topic Id"
+                    }
+                  },
+                  {
+                    "name": "X-API-Key",
+                    "in": "header",
+                    "required": false,
+                    "schema": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "title": "X-Api-Key"
+                    }
+                  },
+                  {
+                    "name": "authorization",
+                    "in": "header",
+                    "required": false,
+                    "schema": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "title": "Authorization"
+                    }
+                  }
+                ],
+                "requestBody": {
+                  "required": true,
+                  "content": {
+                    "application/json": {
+                      "schema": {
+                        "$ref": "#/components/schemas/AppendFieldBody"
+                      }
+                    }
+                  }
+                },
+                "responses": {
+                  "200": {
+                    "description": "Successful Response",
+                    "content": {
+                      "application/json": {
+                        "schema": {
+                          "type": "object",
+                          "additionalProperties": {
+                            "type": "string"
+                          },
+                          "title": "Response Ui Append Field Api Ui Topics  Topic Id  Fields Post"
+                        }
+                      }
+                    }
+                  },
+                  "422": {
+                    "description": "Validation Error",
+                    "content": {
+                      "application/json": {
+                        "schema": {
+                          "$ref": "#/components/schemas/HTTPValidationError"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "/api/ui/topics/{topic_id}/fields/{field_name}": {
+              "get": {
+                "tags": [
+                  "ui"
+                ],
+                "summary": "Ui Get Field",
+                "operationId": "ui_get_field_api_ui_topics__topic_id__fields__field_name__get",
+                "parameters": [
+                  {
+                    "name": "topic_id",
+                    "in": "path",
+                    "required": true,
+                    "schema": {
+                      "type": "string",
+                      "title": "Topic Id"
+                    }
+                  },
+                  {
+                    "name": "field_name",
+                    "in": "path",
+                    "required": true,
+                    "schema": {
+                      "type": "string",
+                      "title": "Field Name"
+                    }
+                  },
+                  {
+                    "name": "with_history",
+                    "in": "query",
+                    "required": false,
+                    "schema": {
+                      "type": "boolean",
+                      "default": true,
+                      "title": "With History"
+                    }
+                  },
+                  {
+                    "name": "X-API-Key",
+                    "in": "header",
+                    "required": false,
+                    "schema": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "title": "X-Api-Key"
+                    }
+                  },
+                  {
+                    "name": "authorization",
+                    "in": "header",
+                    "required": false,
+                    "schema": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "title": "Authorization"
+                    }
+                  }
+                ],
+                "responses": {
+                  "200": {
+                    "description": "Successful Response",
+                    "content": {
+                      "application/json": {
+                        "schema": {
+                          "type": "object",
+                          "additionalProperties": true,
+                          "title": "Response Ui Get Field Api Ui Topics  Topic Id  Fields  Field Name  Get"
+                        }
+                      }
+                    }
+                  },
+                  "422": {
+                    "description": "Validation Error",
+                    "content": {
+                      "application/json": {
+                        "schema": {
+                          "$ref": "#/components/schemas/HTTPValidationError"
+                        }
+                      }
+                    }
+                  }
+                }
+              },
+              "delete": {
+                "tags": [
+                  "ui"
+                ],
+                "summary": "Ui Delete Field",
+                "operationId": "ui_delete_field_api_ui_topics__topic_id__fields__field_name__delete",
+                "parameters": [
+                  {
+                    "name": "topic_id",
+                    "in": "path",
+                    "required": true,
+                    "schema": {
+                      "type": "string",
+                      "title": "Topic Id"
+                    }
+                  },
+                  {
+                    "name": "field_name",
+                    "in": "path",
+                    "required": true,
+                    "schema": {
+                      "type": "string",
+                      "title": "Field Name"
+                    }
+                  },
+                  {
+                    "name": "X-API-Key",
+                    "in": "header",
+                    "required": false,
+                    "schema": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "title": "X-Api-Key"
+                    }
+                  },
+                  {
+                    "name": "authorization",
+                    "in": "header",
+                    "required": false,
+                    "schema": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "title": "Authorization"
+                    }
+                  }
+                ],
+                "responses": {
+                  "200": {
+                    "description": "Successful Response",
+                    "content": {
+                      "application/json": {
+                        "schema": {
+                          "type": "object",
+                          "additionalProperties": {
+                            "type": "string"
+                          },
+                          "title": "Response Ui Delete Field Api Ui Topics  Topic Id  Fields  Field Name  Delete"
+                        }
+                      }
+                    }
+                  },
+                  "422": {
+                    "description": "Validation Error",
+                    "content": {
+                      "application/json": {
+                        "schema": {
+                          "$ref": "#/components/schemas/HTTPValidationError"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "/api/ui/topics/{topic_id}/fields/{field_name}/ref": {
+              "put": {
+                "tags": [
+                  "ui"
+                ],
+                "summary": "Ui Set Field Ref",
+                "operationId": "ui_set_field_ref_api_ui_topics__topic_id__fields__field_name__ref_put",
+                "parameters": [
+                  {
+                    "name": "topic_id",
+                    "in": "path",
+                    "required": true,
+                    "schema": {
+                      "type": "string",
+                      "title": "Topic Id"
+                    }
+                  },
+                  {
+                    "name": "field_name",
+                    "in": "path",
+                    "required": true,
+                    "schema": {
+                      "type": "string",
+                      "title": "Field Name"
+                    }
+                  },
+                  {
+                    "name": "X-API-Key",
+                    "in": "header",
+                    "required": false,
+                    "schema": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "title": "X-Api-Key"
+                    }
+                  },
+                  {
+                    "name": "authorization",
+                    "in": "header",
+                    "required": false,
+                    "schema": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "title": "Authorization"
+                    }
+                  }
+                ],
+                "requestBody": {
+                  "required": true,
+                  "content": {
+                    "application/json": {
+                      "schema": {
+                        "$ref": "#/components/schemas/SetFieldRefBody"
+                      }
+                    }
+                  }
+                },
+                "responses": {
+                  "200": {
+                    "description": "Successful Response",
+                    "content": {
+                      "application/json": {
+                        "schema": {
+                          "type": "object",
+                          "additionalProperties": {
+                            "type": "string"
+                          },
+                          "title": "Response Ui Set Field Ref Api Ui Topics  Topic Id  Fields  Field Name  Ref Put"
+                        }
+                      }
+                    }
+                  },
+                  "422": {
+                    "description": "Validation Error",
+                    "content": {
+                      "application/json": {
+                        "schema": {
+                          "$ref": "#/components/schemas/HTTPValidationError"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "/api/ui/topics/{topic_id}/promote-nested": {
+              "post": {
+                "tags": [
+                  "ui"
+                ],
+                "summary": "Ui Promote Nested Topic",
+                "operationId": "ui_promote_nested_topic_api_ui_topics__topic_id__promote_nested_post",
+                "parameters": [
+                  {
+                    "name": "topic_id",
+                    "in": "path",
+                    "required": true,
+                    "schema": {
+                      "type": "string",
+                      "title": "Topic Id"
+                    }
+                  },
+                  {
+                    "name": "X-API-Key",
+                    "in": "header",
+                    "required": false,
+                    "schema": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "title": "X-Api-Key"
+                    }
+                  },
+                  {
+                    "name": "authorization",
+                    "in": "header",
+                    "required": false,
+                    "schema": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "title": "Authorization"
+                    }
+                  }
+                ],
+                "requestBody": {
+                  "required": true,
+                  "content": {
+                    "application/json": {
+                      "schema": {
+                        "$ref": "#/components/schemas/PromoteNestedTopicBody"
+                      }
+                    }
+                  }
+                },
+                "responses": {
+                  "200": {
+                    "description": "Successful Response",
+                    "content": {
+                      "application/json": {
+                        "schema": {
+                          "type": "object",
+                          "additionalProperties": true,
+                          "title": "Response Ui Promote Nested Topic Api Ui Topics  Topic Id  Promote Nested Post"
+                        }
+                      }
+                    }
+                  },
+                  "422": {
+                    "description": "Validation Error",
+                    "content": {
+                      "application/json": {
+                        "schema": {
+                          "$ref": "#/components/schemas/HTTPValidationError"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "/api/ui/topics/{topic_id}/nest-fields": {
+              "post": {
+                "tags": [
+                  "ui"
+                ],
+                "summary": "Ui Nest Fields In Topic",
+                "operationId": "ui_nest_fields_in_topic_api_ui_topics__topic_id__nest_fields_post",
+                "parameters": [
+                  {
+                    "name": "topic_id",
+                    "in": "path",
+                    "required": true,
+                    "schema": {
+                      "type": "string",
+                      "title": "Topic Id"
+                    }
+                  },
+                  {
+                    "name": "X-API-Key",
+                    "in": "header",
+                    "required": false,
+                    "schema": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "title": "X-Api-Key"
+                    }
+                  },
+                  {
+                    "name": "authorization",
+                    "in": "header",
+                    "required": false,
+                    "schema": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "title": "Authorization"
+                    }
+                  }
+                ],
+                "requestBody": {
+                  "required": true,
+                  "content": {
+                    "application/json": {
+                      "schema": {
+                        "$ref": "#/components/schemas/NestFieldsInTopicBody"
+                      }
+                    }
+                  }
+                },
+                "responses": {
+                  "200": {
+                    "description": "Successful Response",
+                    "content": {
+                      "application/json": {
+                        "schema": {
+                          "type": "object",
+                          "additionalProperties": true,
+                          "title": "Response Ui Nest Fields In Topic Api Ui Topics  Topic Id  Nest Fields Post"
+                        }
+                      }
+                    }
+                  },
+                  "422": {
+                    "description": "Validation Error",
+                    "content": {
+                      "application/json": {
+                        "schema": {
+                          "$ref": "#/components/schemas/HTTPValidationError"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "/api/ui/topics/{topic_id}/unnest-fields": {
+              "post": {
+                "tags": [
+                  "ui"
+                ],
+                "summary": "Ui Unnest Fields In Topic",
+                "operationId": "ui_unnest_fields_in_topic_api_ui_topics__topic_id__unnest_fields_post",
+                "parameters": [
+                  {
+                    "name": "topic_id",
+                    "in": "path",
+                    "required": true,
+                    "schema": {
+                      "type": "string",
+                      "title": "Topic Id"
+                    }
+                  },
+                  {
+                    "name": "X-API-Key",
+                    "in": "header",
+                    "required": false,
+                    "schema": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "title": "X-Api-Key"
+                    }
+                  },
+                  {
+                    "name": "authorization",
+                    "in": "header",
+                    "required": false,
+                    "schema": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "title": "Authorization"
+                    }
+                  }
+                ],
+                "requestBody": {
+                  "required": true,
+                  "content": {
+                    "application/json": {
+                      "schema": {
+                        "$ref": "#/components/schemas/UnnestFieldsBody"
+                      }
+                    }
+                  }
+                },
+                "responses": {
+                  "200": {
+                    "description": "Successful Response",
+                    "content": {
+                      "application/json": {
+                        "schema": {
+                          "type": "object",
+                          "additionalProperties": true,
+                          "title": "Response Ui Unnest Fields In Topic Api Ui Topics  Topic Id  Unnest Fields Post"
+                        }
+                      }
+                    }
+                  },
+                  "422": {
+                    "description": "Validation Error",
+                    "content": {
+                      "application/json": {
+                        "schema": {
+                          "$ref": "#/components/schemas/HTTPValidationError"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "/api/ui/topics/{topic_id}/undo-nested": {
+              "post": {
+                "tags": [
+                  "ui"
+                ],
+                "summary": "Ui Undo Nested Topic",
+                "operationId": "ui_undo_nested_topic_api_ui_topics__topic_id__undo_nested_post",
+                "parameters": [
+                  {
+                    "name": "topic_id",
+                    "in": "path",
+                    "required": true,
+                    "schema": {
+                      "type": "string",
+                      "title": "Topic Id"
+                    }
+                  },
+                  {
+                    "name": "X-API-Key",
+                    "in": "header",
+                    "required": false,
+                    "schema": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "title": "X-Api-Key"
+                    }
+                  },
+                  {
+                    "name": "authorization",
+                    "in": "header",
+                    "required": false,
+                    "schema": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "title": "Authorization"
+                    }
+                  }
+                ],
+                "requestBody": {
+                  "required": true,
+                  "content": {
+                    "application/json": {
+                      "schema": {
+                        "$ref": "#/components/schemas/UndoNestedTopicBody"
+                      }
+                    }
+                  }
+                },
+                "responses": {
+                  "200": {
+                    "description": "Successful Response",
+                    "content": {
+                      "application/json": {
+                        "schema": {
+                          "type": "object",
+                          "additionalProperties": true,
+                          "title": "Response Ui Undo Nested Topic Api Ui Topics  Topic Id  Undo Nested Post"
+                        }
+                      }
+                    }
+                  },
+                  "422": {
+                    "description": "Validation Error",
+                    "content": {
+                      "application/json": {
+                        "schema": {
+                          "$ref": "#/components/schemas/HTTPValidationError"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "/api/llm/chat": {
+              "post": {
+                "tags": [
+                  "llm"
+                ],
+                "summary": "Llm Chat",
+                "operationId": "llm_chat_api_llm_chat_post",
+                "parameters": [
+                  {
+                    "name": "X-API-Key",
+                    "in": "header",
+                    "required": false,
+                    "schema": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "title": "X-Api-Key"
+                    }
+                  },
+                  {
+                    "name": "authorization",
+                    "in": "header",
+                    "required": false,
+                    "schema": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "title": "Authorization"
+                    }
+                  }
+                ],
+                "requestBody": {
+                  "required": true,
+                  "content": {
+                    "application/json": {
+                      "schema": {
+                        "$ref": "#/components/schemas/ChatBody"
+                      }
+                    }
+                  }
+                },
+                "responses": {
+                  "200": {
+                    "description": "Successful Response",
+                    "content": {
+                      "application/json": {
+                        "schema": {
+                          "type": "object",
+                          "additionalProperties": true,
+                          "title": "Response Llm Chat Api Llm Chat Post"
+                        }
+                      }
+                    }
+                  },
+                  "422": {
+                    "description": "Validation Error",
+                    "content": {
+                      "application/json": {
+                        "schema": {
+                          "$ref": "#/components/schemas/HTTPValidationError"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "/api/llm/chat/stream": {
+              "post": {
+                "tags": [
+                  "llm"
+                ],
+                "summary": "Llm Chat Stream",
+                "operationId": "llm_chat_stream_api_llm_chat_stream_post",
+                "parameters": [
+                  {
+                    "name": "X-API-Key",
+                    "in": "header",
+                    "required": false,
+                    "schema": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "title": "X-Api-Key"
+                    }
+                  },
+                  {
+                    "name": "authorization",
+                    "in": "header",
+                    "required": false,
+                    "schema": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "title": "Authorization"
+                    }
+                  }
+                ],
+                "requestBody": {
+                  "required": true,
+                  "content": {
+                    "application/json": {
+                      "schema": {
+                        "$ref": "#/components/schemas/ChatBody"
+                      }
+                    }
+                  }
+                },
+                "responses": {
+                  "200": {
+                    "description": "Successful Response",
+                    "content": {
+                      "application/json": {
+                        "schema": {}
+                      }
+                    }
+                  },
+                  "422": {
+                    "description": "Validation Error",
+                    "content": {
+                      "application/json": {
+                        "schema": {
+                          "$ref": "#/components/schemas/HTTPValidationError"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "/api/llm/transcribe": {
+              "post": {
+                "tags": [
+                  "llm"
+                ],
+                "summary": "Transcribe Audio",
+                "description": "Speech-to-text via Groq Whisper (OpenAI-compatible transcription API).\nRequires GROQ_API_KEY on the server; independent of chat provider (Ollama vs Groq).",
+                "operationId": "transcribe_audio_api_llm_transcribe_post",
+                "parameters": [
+                  {
+                    "name": "X-API-Key",
+                    "in": "header",
+                    "required": false,
+                    "schema": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "title": "X-Api-Key"
+                    }
+                  },
+                  {
+                    "name": "authorization",
+                    "in": "header",
+                    "required": false,
+                    "schema": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "title": "Authorization"
+                    }
+                  }
+                ],
+                "requestBody": {
+                  "required": true,
+                  "content": {
+                    "multipart/form-data": {
+                      "schema": {
+                        "$ref": "#/components/schemas/Body_transcribe_audio_api_llm_transcribe_post"
+                      }
+                    }
+                  }
+                },
+                "responses": {
+                  "200": {
+                    "description": "Successful Response",
+                    "content": {
+                      "application/json": {
+                        "schema": {
+                          "type": "object",
+                          "additionalProperties": {
+                            "type": "string"
+                          },
+                          "title": "Response Transcribe Audio Api Llm Transcribe Post"
+                        }
+                      }
+                    }
+                  },
+                  "422": {
+                    "description": "Validation Error",
+                    "content": {
+                      "application/json": {
+                        "schema": {
+                          "$ref": "#/components/schemas/HTTPValidationError"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "/v1/ingest": {
+              "post": {
+                "summary": "Ingest",
+                "operationId": "ingest_v1_ingest_post",
+                "parameters": [
+                  {
+                    "name": "X-API-Key",
+                    "in": "header",
+                    "required": false,
+                    "schema": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "title": "X-Api-Key"
+                    }
+                  },
+                  {
+                    "name": "authorization",
+                    "in": "header",
+                    "required": false,
+                    "schema": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "title": "Authorization"
+                    }
+                  }
+                ],
+                "requestBody": {
+                  "required": true,
+                  "content": {
+                    "application/json": {
+                      "schema": {
+                        "$ref": "#/components/schemas/IngestRequest"
+                      }
+                    }
+                  }
+                },
+                "responses": {
+                  "200": {
+                    "description": "Successful Response",
+                    "content": {
+                      "application/json": {
+                        "schema": {
+                          "$ref": "#/components/schemas/IngestResponse"
+                        }
+                      }
+                    }
+                  },
+                  "422": {
+                    "description": "Validation Error",
+                    "content": {
+                      "application/json": {
+                        "schema": {
+                          "$ref": "#/components/schemas/HTTPValidationError"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "/v1/query": {
+              "post": {
+                "summary": "Query Op",
+                "operationId": "query_op_v1_query_post",
+                "parameters": [
+                  {
+                    "name": "X-API-Key",
+                    "in": "header",
+                    "required": false,
+                    "schema": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "title": "X-Api-Key"
+                    }
+                  },
+                  {
+                    "name": "authorization",
+                    "in": "header",
+                    "required": false,
+                    "schema": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "title": "Authorization"
+                    }
+                  }
+                ],
+                "requestBody": {
+                  "required": true,
+                  "content": {
+                    "application/json": {
+                      "schema": {
+                        "$ref": "#/components/schemas/QueryRequest"
+                      }
+                    }
+                  }
+                },
+                "responses": {
+                  "200": {
+                    "description": "Successful Response",
+                    "content": {
+                      "application/json": {
+                        "schema": {
+                          "$ref": "#/components/schemas/QueryResponse"
+                        }
+                      }
+                    }
+                  },
+                  "422": {
+                    "description": "Validation Error",
+                    "content": {
+                      "application/json": {
+                        "schema": {
+                          "$ref": "#/components/schemas/HTTPValidationError"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "components": {
+            "schemas": {
+              "AppendFieldBody": {
+                "properties": {
+                  "field_name": {
+                    "type": "string",
+                    "title": "Field Name"
+                  },
+                  "value": {
+                    "title": "Value",
+                    "default": ""
+                  },
+                  "field_type": {
+                    "type": "string",
+                    "title": "Field Type",
+                    "default": "string"
+                  },
+                  "ref_topic_id": {
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "title": "Ref Topic Id"
+                  },
+                  "why_changed": {
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "title": "Why Changed"
+                  },
+                  "impact_expected": {
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "title": "Impact Expected"
+                  },
+                  "provenance": {
+                    "type": "string",
+                    "title": "Provenance",
+                    "default": "ui"
+                  },
+                  "max_history": {
+                    "type": "integer",
+                    "maximum": 10000.0,
+                    "minimum": 1.0,
+                    "title": "Max History",
+                    "default": 500
+                  }
+                },
+                "type": "object",
+                "required": [
+                  "field_name"
+                ],
+                "title": "AppendFieldBody"
+              },
+              "Body_transcribe_audio_api_llm_transcribe_post": {
+                "properties": {
+                  "audio": {
+                    "type": "string",
+                    "contentMediaType": "application/octet-stream",
+                    "title": "Audio",
+                    "description": "Recorded speech (e.g. webm, wav, mp3, m4a)"
+                  }
+                },
+                "type": "object",
+                "required": [
+                  "audio"
+                ],
+                "title": "Body_transcribe_audio_api_llm_transcribe_post"
+              },
+              "Body_transcribe_voice_clip_api_ui_transcribe_post": {
+                "properties": {
+                  "audio": {
+                    "type": "string",
+                    "contentMediaType": "application/octet-stream",
+                    "title": "Audio",
+                    "description": "Recorded speech from the UI mic (webm, wav, mp3, m4a, \u2026)"
+                  }
+                },
+                "type": "object",
+                "required": [
+                  "audio"
+                ],
+                "title": "Body_transcribe_voice_clip_api_ui_transcribe_post"
+              },
+              "ChatBody": {
+                "properties": {
+                  "messages": {
+                    "items": {
+                      "additionalProperties": true,
+                      "type": "object"
+                    },
+                    "type": "array",
+                    "title": "Messages",
+                    "description": "Chat thread: user and optional assistant messages; last message must be user."
+                  },
+                  "provider": {
+                    "type": "string",
+                    "enum": [
+                      "ollama",
+                      "groq"
+                    ],
+                    "title": "Provider",
+                    "default": "ollama"
+                  },
+                  "model": {
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "title": "Model",
+                    "description": "Model id (provider-specific)"
+                  },
+                  "ollama_base_url": {
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "title": "Ollama Base Url",
+                    "description": "Override Ollama API base (Ollama provider only)."
+                  },
+                  "intent_turns": {
+                    "anyOf": [
+                      {
+                        "type": "integer",
+                        "maximum": 64.0,
+                        "minimum": 1.0
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "title": "Intent Turns",
+                    "description": "How many dialogue turns to include (overrides MEMSTATE_CHAT_INTENT_TURNS)."
+                  },
+                  "intent_override": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "enum": [
+                          "query",
+                          "ingest",
+                          "both"
+                        ]
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "title": "Intent Override",
+                    "description": "Skip LLM intent classification and fix route (query|ingest|both)."
+                  },
+                  "max_tool_rounds": {
+                    "anyOf": [
+                      {
+                        "type": "integer",
+                        "maximum": 256.0,
+                        "minimum": 1.0
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "title": "Max Tool Rounds",
+                    "description": "Max LLM\u2194API rounds while tools are requested (overrides MEMSTATE_CHAT_MAX_TOOL_ROUNDS)."
+                  },
+                  "internal_chunk": {
+                    "type": "boolean",
+                    "title": "Internal Chunk",
+                    "description": "Legacy hint for long messages; the server now uses Study ingest when length and intent match (see study_ingest). Kept for older clients.",
+                    "default": false
+                  },
+                  "study_ingest": {
+                    "type": "boolean",
+                    "title": "Study Ingest",
+                    "description": "When True (default), long last user messages with ingest/both intent use the Study pipeline (hierarchy + two phases). Set False to force one LLM call (may hit context limits).",
+                    "default": true
+                  }
+                },
+                "type": "object",
+                "required": [
+                  "messages"
+                ],
+                "title": "ChatBody"
+              },
+              "CreateTopicBody": {
+                "properties": {
+                  "title": {
+                    "type": "string",
+                    "title": "Title",
+                    "default": "untitled"
+                  },
+                  "summary": {
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "title": "Summary"
+                  },
+                  "topic_kind": {
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "title": "Topic Kind"
+                  },
+                  "salience": {
+                    "type": "number",
+                    "title": "Salience",
+                    "default": 1.0
+                  },
+                  "topic_id": {
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "title": "Topic Id"
+                  }
+                },
+                "type": "object",
+                "title": "CreateTopicBody"
+              },
+              "EdgeWrite": {
+                "properties": {
+                  "to_topic_id": {
+                    "type": "string",
+                    "title": "To Topic Id"
+                  },
+                  "kind": {
+                    "type": "string",
+                    "title": "Kind"
+                  }
+                },
+                "type": "object",
+                "required": [
+                  "to_topic_id",
+                  "kind"
+                ],
+                "title": "EdgeWrite"
+              },
+              "FieldOut": {
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "title": "Name"
+                  },
+                  "field_type": {
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "title": "Field Type"
+                  },
+                  "ref_topic_id": {
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "title": "Ref Topic Id"
+                  },
+                  "current": {
+                    "anyOf": [
+                      {
+                        "$ref": "#/components/schemas/FieldVersionOut"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "history": {
+                    "items": {
+                      "$ref": "#/components/schemas/FieldVersionOut"
+                    },
+                    "type": "array",
+                    "title": "History"
+                  }
+                },
+                "type": "object",
+                "required": [
+                  "name"
+                ],
+                "title": "FieldOut"
+              },
+              "FieldVersionOut": {
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "title": "Id"
+                  },
+                  "value": {
+                    "title": "Value"
+                  },
+                  "valid_from": {
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "title": "Valid From"
+                  },
+                  "provenance": {
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "title": "Provenance"
+                  },
+                  "why_changed": {
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "title": "Why Changed"
+                  },
+                  "impact_expected": {
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "title": "Impact Expected"
+                  }
+                },
+                "type": "object",
+                "required": [
+                  "id"
+                ],
+                "title": "FieldVersionOut"
+              },
+              "FieldWrite": {
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "title": "Name"
+                  },
+                  "value": {
+                    "title": "Value",
+                    "default": ""
+                  },
+                  "field_type": {
+                    "type": "string",
+                    "title": "Field Type",
+                    "default": "string"
+                  },
+                  "ref_topic_id": {
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "title": "Ref Topic Id"
+                  },
+                  "why_changed": {
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "title": "Why Changed"
+                  },
+                  "impact_expected": {
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "title": "Impact Expected"
+                  },
+                  "provenance": {
+                    "type": "string",
+                    "title": "Provenance",
+                    "default": "api"
+                  }
+                },
+                "type": "object",
+                "required": [
+                  "name"
+                ],
+                "title": "FieldWrite"
+              },
+              "HTTPValidationError": {
+                "properties": {
+                  "detail": {
+                    "items": {
+                      "$ref": "#/components/schemas/ValidationError"
+                    },
+                    "type": "array",
+                    "title": "Detail"
+                  }
+                },
+                "type": "object",
+                "title": "HTTPValidationError"
+              },
+              "IngestRequest": {
+                "properties": {
+                  "placement": {
+                    "type": "string",
+                    "enum": [
+                      "new_topic",
+                      "extend_topic",
+                      "version_field"
+                    ],
+                    "title": "Placement"
+                  },
+                  "topic_id": {
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "title": "Topic Id"
+                  },
+                  "title": {
+                    "type": "string",
+                    "title": "Title",
+                    "default": ""
+                  },
+                  "summary": {
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "title": "Summary"
+                  },
+                  "topic_kind": {
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "title": "Topic Kind"
+                  },
+                  "salience": {
+                    "type": "number",
+                    "title": "Salience",
+                    "default": 1.0
+                  },
+                  "fields": {
+                    "items": {
+                      "$ref": "#/components/schemas/FieldWrite"
+                    },
+                    "type": "array",
+                    "title": "Fields"
+                  },
+                  "edges": {
+                    "items": {
+                      "$ref": "#/components/schemas/EdgeWrite"
+                    },
+                    "type": "array",
+                    "title": "Edges"
+                  },
+                  "suggest_similar": {
+                    "type": "boolean",
+                    "title": "Suggest Similar",
+                    "default": false
+                  }
+                },
+                "type": "object",
+                "required": [
+                  "placement"
+                ],
+                "title": "IngestRequest"
+              },
+              "IngestResponse": {
+                "properties": {
+                  "topic_id": {
+                    "type": "string",
+                    "title": "Topic Id"
+                  },
+                  "applied": {
+                    "items": {
+                      "type": "string"
+                    },
+                    "type": "array",
+                    "title": "Applied"
+                  },
+                  "version_ids": {
+                    "additionalProperties": {
+                      "type": "string"
+                    },
+                    "type": "object",
+                    "title": "Version Ids"
+                  },
+                  "similar_topic_ids": {
+                    "items": {
+                      "type": "string"
+                    },
+                    "type": "array",
+                    "title": "Similar Topic Ids"
+                  }
+                },
+                "type": "object",
+                "required": [
+                  "topic_id"
+                ],
+                "title": "IngestResponse"
+              },
+              "NestFieldsInTopicBody": {
+                "properties": {
+                  "field_names": {
+                    "items": {
+                      "type": "string"
+                    },
+                    "type": "array",
+                    "title": "Field Names"
+                  },
+                  "nest_key": {
+                    "type": "string",
+                    "title": "Nest Key"
+                  },
+                  "provenance": {
+                    "type": "string",
+                    "title": "Provenance",
+                    "default": "ui"
+                  }
+                },
+                "type": "object",
+                "required": [
+                  "field_names",
+                  "nest_key"
+                ],
+                "title": "NestFieldsInTopicBody"
+              },
+              "PromoteNestedTopicBody": {
+                "properties": {
+                  "field_names": {
+                    "items": {
+                      "type": "string"
+                    },
+                    "type": "array",
+                    "title": "Field Names"
+                  },
+                  "child_title": {
+                    "type": "string",
+                    "title": "Child Title"
+                  },
+                  "child_summary": {
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "title": "Child Summary"
+                  },
+                  "child_topic_id": {
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "title": "Child Topic Id"
+                  },
+                  "relationship_kind": {
+                    "type": "string",
+                    "title": "Relationship Kind",
+                    "default": "has_detail"
+                  },
+                  "parent_link_field": {
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "title": "Parent Link Field"
+                  },
+                  "max_history": {
+                    "type": "integer",
+                    "maximum": 10000.0,
+                    "minimum": 1.0,
+                    "title": "Max History",
+                    "default": 500
+                  }
+                },
+                "type": "object",
+                "required": [
+                  "field_names",
+                  "child_title"
+                ],
+                "title": "PromoteNestedTopicBody"
+              },
+              "QueryRequest": {
+                "properties": {
+                  "q": {
+                    "type": "string",
+                    "title": "Q"
+                  },
+                  "stages": {
+                    "items": {
+                      "type": "string",
+                      "enum": [
+                        "semantic",
+                        "structural",
+                        "temporal"
+                      ]
+                    },
+                    "type": "array",
+                    "title": "Stages"
+                  },
+                  "explain": {
+                    "type": "boolean",
+                    "title": "Explain",
+                    "default": false
+                  },
+                  "top_k": {
+                    "type": "integer",
+                    "title": "Top K",
+                    "default": 8
+                  },
+                  "topic_ids": {
+                    "anyOf": [
+                      {
+                        "items": {
+                          "type": "string"
+                        },
+                        "type": "array"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "title": "Topic Ids"
+                  },
+                  "field_names": {
+                    "anyOf": [
+                      {
+                        "items": {
+                          "type": "string"
+                        },
+                        "type": "array"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "title": "Field Names"
+                  }
+                },
+                "type": "object",
+                "required": [
+                  "q"
+                ],
+                "title": "QueryRequest"
+              },
+              "QueryResponse": {
+                "properties": {
+                  "query": {
+                    "type": "string",
+                    "title": "Query"
+                  },
+                  "candidates": {
+                    "items": {
+                      "$ref": "#/components/schemas/TopicBundle"
+                    },
+                    "type": "array",
+                    "title": "Candidates"
+                  },
+                  "summary_text": {
+                    "type": "string",
+                    "title": "Summary Text",
+                    "default": ""
+                  }
+                },
+                "type": "object",
+                "required": [
+                  "query"
+                ],
+                "title": "QueryResponse"
+              },
+              "RelationshipBody": {
+                "properties": {
+                  "to_topic_id": {
+                    "type": "string",
+                    "title": "To Topic Id"
+                  },
+                  "kind": {
+                    "type": "string",
+                    "title": "Kind"
+                  }
+                },
+                "type": "object",
+                "required": [
+                  "to_topic_id",
+                  "kind"
+                ],
+                "title": "RelationshipBody"
+              },
+              "SetFieldRefBody": {
+                "properties": {
+                  "ref_topic_id": {
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "title": "Ref Topic Id"
+                  }
+                },
+                "type": "object",
+                "title": "SetFieldRefBody"
+              },
+              "SystemContextBody": {
+                "properties": {
+                  "system_role": {
+                    "type": "string",
+                    "minLength": 1,
+                    "title": "System Role",
+                    "description": "Fixed role for the assistant."
+                  },
+                  "runtime_context": {
+                    "type": "string",
+                    "minLength": 1,
+                    "title": "Runtime Context",
+                    "description": "Runtime environment/context guidance."
+                  }
+                },
+                "type": "object",
+                "required": [
+                  "system_role",
+                  "runtime_context"
+                ],
+                "title": "SystemContextBody"
+              },
+              "TopicBundle": {
+                "properties": {
+                  "topic_id": {
+                    "type": "string",
+                    "title": "Topic Id"
+                  },
+                  "title": {
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "title": "Title"
+                  },
+                  "summary": {
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "title": "Summary"
+                  },
+                  "topic_kind": {
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "title": "Topic Kind"
+                  },
+                  "salience": {
+                    "anyOf": [
+                      {
+                        "type": "number"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "title": "Salience"
+                  },
+                  "failed_salience": {
+                    "anyOf": [
+                      {
+                        "type": "number"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "title": "Failed Salience"
+                  },
+                  "neighbors": {
+                    "items": {
+                      "additionalProperties": true,
+                      "type": "object"
+                    },
+                    "type": "array",
+                    "title": "Neighbors"
+                  },
+                  "fields": {
+                    "items": {
+                      "$ref": "#/components/schemas/FieldOut"
+                    },
+                    "type": "array",
+                    "title": "Fields"
+                  },
+                  "similarity": {
+                    "anyOf": [
+                      {
+                        "type": "number"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "title": "Similarity"
+                  }
+                },
+                "type": "object",
+                "required": [
+                  "topic_id"
+                ],
+                "title": "TopicBundle"
+              },
+              "UndoNestedTopicBody": {
+                "properties": {
+                  "child_topic_id": {
+                    "type": "string",
+                    "title": "Child Topic Id"
+                  },
+                  "relationship_kind": {
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "title": "Relationship Kind"
+                  }
+                },
+                "type": "object",
+                "required": [
+                  "child_topic_id"
+                ],
+                "title": "UndoNestedTopicBody"
+              },
+              "UnnestFieldsBody": {
+                "properties": {
+                  "nest_key": {
+                    "type": "string",
+                    "title": "Nest Key"
+                  }
+                },
+                "type": "object",
+                "required": [
+                  "nest_key"
+                ],
+                "title": "UnnestFieldsBody"
+              },
+              "UpdateTopicBody": {
+                "properties": {
+                  "title": {
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "title": "Title"
+                  },
+                  "summary": {
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "title": "Summary"
+                  },
+                  "topic_kind": {
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "title": "Topic Kind"
+                  },
+                  "salience": {
+                    "anyOf": [
+                      {
+                        "type": "number"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "title": "Salience"
+                  },
+                  "archived": {
+                    "anyOf": [
+                      {
+                        "type": "boolean"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "title": "Archived"
+                  }
+                },
+                "type": "object",
+                "title": "UpdateTopicBody"
+              },
+              "ValidationError": {
+                "properties": {
+                  "loc": {
+                    "items": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "integer"
+                        }
+                      ]
+                    },
+                    "type": "array",
+                    "title": "Location"
+                  },
+                  "msg": {
+                    "type": "string",
+                    "title": "Message"
+                  },
+                  "type": {
+                    "type": "string",
+                    "title": "Error Type"
+                  },
+                  "input": {
+                    "title": "Input"
+                  },
+                  "ctx": {
+                    "type": "object",
+                    "title": "Context"
+                  }
+                },
+                "type": "object",
+                "required": [
+                  "loc",
+                  "msg",
+                  "type"
+                ],
+                "title": "ValidationError"
+              }
+            }
+          }
+        }
+      },
+      "rejected": null,
+      "error": null,
+      "latency_ms": 80.341,
+      "finished_at": "2026-10-21T06:13:46.866755+00:00"
+    },
+    {
+      "seq": 2,
+      "kind": "read",
+      "op": "probe",
+      "request": {
+        "method": "GET",
+        "path": "/docs"
+      },
+      "started_at": "2026-10-21T06:13:46.867679+00:00",
+      "response": {
+        "status": 200,
+        "content_type": "text/html; charset=utf-8",
+        "body": "\n    <!DOCTYPE html>\n    <html>\n    <head>\n    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n    <link type=\"text/css\" rel=\"stylesheet\" href=\"https://cdn.jsdelivr.net/npm/swagger-ui-dist@5/swagger-ui.css\">\n    <link rel=\"shortcut icon\" href=\"https://fastapi.tiangolo.com/img/favicon.png\">\n    <title>MemState API - Swagger UI</title>\n    </head>\n    <body>\n    <div id=\"swagger-ui\">\n    </div>\n    <script src=\"https://cdn.jsdelivr.net/npm/swagger-ui-dist@5/swagger-ui-bundle.js\"></script>\n    <!-- `SwaggerUIBundle` is now available on the page -->\n    <script>\n    const ui = SwaggerUIBundle({\n        url: '/openapi.json',\n    \"dom_id\": \"#swagger-ui\",\n\"layout\": \"BaseLayout\",\n\"deepLinking\": true,\n\"showExtensions\": true,\n\"showCommonExtensions\": true,\noauth2RedirectUrl: window.location.origin + '/docs/oauth2-redirect',\n    presets: [\n        SwaggerUIBundle.presets.apis,\n        SwaggerUIBundle.SwaggerUIStandalonePreset\n        ],\n    })\n    </script>\n    </body>\n    </html>\n    "
+      },
+      "rejected": null,
+      "error": null,
+      "latency_ms": 0.978,
+      "finished_at": "2026-10-21T06:13:46.868665+00:00"
+    },
+    {
+      "seq": 3,
+      "kind": "read",
+      "op": "probe",
+      "request": {
+        "method": "GET",
+        "path": "/redoc"
+      },
+      "started_at": "2026-10-21T06:13:46.868673+00:00",
+      "response": {
+        "status": 200,
+        "content_type": "text/html; charset=utf-8",
+        "body": "\n    <!DOCTYPE html>\n    <html>\n    <head>\n    <title>MemState API - ReDoc</title>\n    <!-- needed for adaptive design -->\n    <meta charset=\"utf-8\"/>\n    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n    \n    <link href=\"https://fonts.googleapis.com/css?family=Montserrat:300,400,700|Roboto:300,400,700\" rel=\"stylesheet\">\n    \n    <link rel=\"shortcut icon\" href=\"https://fastapi.tiangolo.com/img/favicon.png\">\n    <!--\n    ReDoc doesn't change outer page styles\n    -->\n    <style>\n      body {\n        margin: 0;\n        padding: 0;\n      }\n    </style>\n    </head>\n    <body>\n    <noscript>\n        ReDoc requires Javascript to function. Please enable it to browse the documentation.\n    </noscript>\n    <redoc spec-url=\"/openapi.json\"></redoc>\n    <script src=\"https://cdn.jsdelivr.net/npm/redoc@2/bundles/redoc.standalone.js\"> </script>\n    </body>\n    </html>\n    "
+      },
+      "rejected": null,
+      "error": null,
+      "latency_ms": 0.743,
+      "finished_at": "2026-10-21T06:13:46.869420+00:00"
+    },
+    {
+      "seq": 4,
+      "kind": "read",
+      "op": "probe",
+      "request": {
+        "method": "GET",
+        "path": "/policies"
+      },
+      "started_at": "2026-10-21T06:13:46.869426+00:00",
+      "response": {
+        "status": 404,
+        "content_type": "application/json",
+        "body": {
+          "detail": "Not Found"
+        }
+      },
+      "rejected": null,
+      "error": null,
+      "latency_ms": 0.786,
+      "finished_at": "2026-10-21T06:13:46.870216+00:00"
+    },
+    {
+      "seq": 5,
+      "kind": "read",
+      "op": "probe",
+      "request": {
+        "method": "GET",
+        "path": "/rules"
+      },
+      "started_at": "2026-10-21T06:13:46.870222+00:00",
+      "response": {
+        "status": 404,
+        "content_type": "application/json",
+        "body": {
+          "detail": "Not Found"
+        }
+      },
+      "rejected": null,
+      "error": null,
+      "latency_ms": 0.774,
+      "finished_at": "2026-10-21T06:13:46.871002+00:00"
+    },
+    {
+      "seq": 6,
+      "kind": "read",
+      "op": "probe",
+      "request": {
+        "method": "GET",
+        "path": "/config"
+      },
+      "started_at": "2026-10-21T06:13:46.871008+00:00",
+      "response": {
+        "status": 404,
+        "content_type": "application/json",
+        "body": {
+          "detail": "Not Found"
+        }
+      },
+      "rejected": null,
+      "error": null,
+      "latency_ms": 0.71,
+      "finished_at": "2026-10-21T06:13:46.871722+00:00"
+    },
+    {
+      "seq": 7,
+      "kind": "read",
+      "op": "probe",
+      "request": {
+        "method": "GET",
+        "path": "/settings"
+      },
+      "started_at": "2026-10-21T06:13:46.871728+00:00",
+      "response": {
+        "status": 404,
+        "content_type": "application/json",
+        "body": {
+          "detail": "Not Found"
+        }
+      },
+      "rejected": null,
+      "error": null,
+      "latency_ms": 0.752,
+      "finished_at": "2026-10-21T06:13:46.872484+00:00"
+    },
+    {
+      "seq": 8,
+      "kind": "read",
+      "op": "probe",
+      "request": {
+        "method": "GET",
+        "path": "/v1/policies"
+      },
+      "started_at": "2026-10-21T06:13:46.872490+00:00",
+      "response": {
+        "status": 404,
+        "content_type": "application/json",
+        "body": {
+          "detail": "Not Found"
+        }
+      },
+      "rejected": null,
+      "error": null,
+      "latency_ms": 0.65,
+      "finished_at": "2026-10-21T06:13:46.873145+00:00"
+    },
+    {
+      "seq": 9,
+      "kind": "read",
+      "op": "probe",
+      "request": {
+        "method": "GET",
+        "path": "/v1/rules"
+      },
+      "started_at": "2026-10-21T06:13:46.873150+00:00",
+      "response": {
+        "status": 404,
+        "content_type": "application/json",
+        "body": {
+          "detail": "Not Found"
+        }
+      },
+      "rejected": null,
+      "error": null,
+      "latency_ms": 0.546,
+      "finished_at": "2026-10-21T06:13:46.873702+00:00"
+    },
+    {
+      "seq": 10,
+      "kind": "read",
+      "op": "probe",
+      "request": {
+        "method": "GET",
+        "path": "/v1/config"
+      },
+      "started_at": "2026-10-21T06:13:46.873707+00:00",
+      "response": {
+        "status": 404,
+        "content_type": "application/json",
+        "body": {
+          "detail": "Not Found"
+        }
+      },
+      "rejected": null,
+      "error": null,
+      "latency_ms": 0.564,
+      "finished_at": "2026-10-21T06:13:46.874275+00:00"
+    },
+    {
+      "seq": 11,
+      "kind": "read",
+      "op": "probe",
+      "request": {
+        "method": "GET",
+        "path": "/api/policies"
+      },
+      "started_at": "2026-10-21T06:13:46.874280+00:00",
+      "response": {
+        "status": 404,
+        "content_type": "application/json",
+        "body": {
+          "detail": "Not Found"
+        }
+      },
+      "rejected": null,
+      "error": null,
+      "latency_ms": 0.522,
+      "finished_at": "2026-10-21T06:13:46.874807+00:00"
+    },
+    {
+      "seq": 12,
+      "kind": "read",
+      "op": "probe",
+      "request": {
+        "method": "GET",
+        "path": "/api/config"
+      },
+      "started_at": "2026-10-21T06:13:46.874812+00:00",
+      "response": {
+        "status": 404,
+        "content_type": "application/json",
+        "body": {
+          "detail": "Not Found"
+        }
+      },
+      "rejected": null,
+      "error": null,
+      "latency_ms": 0.629,
+      "finished_at": "2026-10-21T06:13:46.875445+00:00"
+    },
+    {
+      "seq": 13,
+      "kind": "read",
+      "op": "probe",
+      "request": {
+        "method": "GET",
+        "path": "/api/ui/policies"
+      },
+      "started_at": "2026-10-21T06:13:46.875450+00:00",
+      "response": {
+        "status": 404,
+        "content_type": "application/json",
+        "body": {
+          "detail": "Not Found"
+        }
+      },
+      "rejected": null,
+      "error": null,
+      "latency_ms": 0.659,
+      "finished_at": "2026-10-21T06:13:46.876113+00:00"
+    },
+    {
+      "seq": 14,
+      "kind": "read",
+      "op": "probe",
+      "request": {
+        "method": "GET",
+        "path": "/api/ui/rules"
+      },
+      "started_at": "2026-10-21T06:13:46.876118+00:00",
+      "response": {
+        "status": 404,
+        "content_type": "application/json",
+        "body": {
+          "detail": "Not Found"
+        }
+      },
+      "rejected": null,
+      "error": null,
+      "latency_ms": 0.714,
+      "finished_at": "2026-10-21T06:13:46.876837+00:00"
+    },
+    {
+      "seq": 15,
+      "kind": "read",
+      "op": "probe",
+      "request": {
+        "method": "GET",
+        "path": "/api/ui/config"
+      },
+      "started_at": "2026-10-21T06:13:46.876843+00:00",
+      "response": {
+        "status": 404,
+        "content_type": "application/json",
+        "body": {
+          "detail": "Not Found"
+        }
+      },
+      "rejected": null,
+      "error": null,
+      "latency_ms": 0.65,
+      "finished_at": "2026-10-21T06:13:46.877497+00:00"
+    },
+    {
+      "seq": 16,
+      "kind": "read",
+      "op": "probe",
+      "request": {
+        "method": "GET",
+        "path": "/api/ui/settings"
+      },
+      "started_at": "2026-10-21T06:13:46.877502+00:00",
+      "response": {
+        "status": 404,
+        "content_type": "application/json",
+        "body": {
+          "detail": "Not Found"
+        }
+      },
+      "rejected": null,
+      "error": null,
+      "latency_ms": 0.639,
+      "finished_at": "2026-10-21T06:13:46.878145+00:00"
+    },
+    {
+      "seq": 17,
+      "kind": "read",
+      "op": "probe",
+      "request": {
+        "method": "GET",
+        "path": "/api/llm/policies"
+      },
+      "started_at": "2026-10-21T06:13:46.878151+00:00",
+      "response": {
+        "status": 404,
+        "content_type": "application/json",
+        "body": {
+          "detail": "Not Found"
+        }
+      },
+      "rejected": null,
+      "error": null,
+      "latency_ms": 0.718,
+      "finished_at": "2026-10-21T06:13:46.878873+00:00"
+    },
+    {
+      "seq": 18,
+      "kind": "read",
+      "op": "probe",
+      "request": {
+        "method": "GET",
+        "path": "/api/llm/config"
+      },
+      "started_at": "2026-10-21T06:13:46.878878+00:00",
+      "response": {
+        "status": 404,
+        "content_type": "application/json",
+        "body": {
+          "detail": "Not Found"
+        }
+      },
+      "rejected": null,
+      "error": null,
+      "latency_ms": 0.664,
+      "finished_at": "2026-10-21T06:13:46.879547+00:00"
+    },
+    {
+      "seq": 19,
+      "kind": "read",
+      "op": "probe",
+      "request": {
+        "method": "GET",
+        "path": "/api/ui/system-context"
+      },
+      "started_at": "2026-10-21T06:13:46.879552+00:00",
+      "response": {
+        "status": 200,
+        "content_type": "application/json",
+        "body": {
+          "configured": false,
+          "system_context": null
+        }
+      },
+      "rejected": null,
+      "error": null,
+      "latency_ms": 218.656,
+      "finished_at": "2026-10-21T06:13:47.098217+00:00"
+    },
+    {
+      "seq": 20,
+      "kind": "read",
+      "op": "probe",
+      "request": {
+        "method": "GET",
+        "path": "/api/ui/datamodel"
+      },
+      "started_at": "2026-10-21T06:13:47.098229+00:00",
+      "response": {
+        "status": 200,
+        "content_type": "application/json",
+        "body": {
+          "mermaid": "flowchart LR\n  subgraph topicA [Topic A]\n    metaA[title summary salience topic_kind embedding]\n    fieldsA[fields_json]\n  end\n  subgraph topicB [Topic B]\n    metaB[...]\n    fieldsB[fields_json]\n  end\n  topicA -->|RELATED kind| topicB\n  fieldsA -->|ref_topic_id on field| topicB\n"
+        }
+      },
+      "rejected": null,
+      "error": null,
+      "latency_ms": 2.691,
+      "finished_at": "2026-10-21T06:13:47.100927+00:00"
+    },
+    {
+      "seq": 21,
+      "kind": "read",
+      "op": "read_state",
+      "request": null,
+      "started_at": "2026-10-21T06:13:47.106285+00:00",
+      "response": {
+        "topics": 0,
+        "edges": 0
+      },
+      "rejected": null,
+      "error": null,
+      "latency_ms": 4.74,
+      "finished_at": "2026-10-21T06:13:47.111036+00:00"
+    }
+  ],
+  "waits": [],
+  "state": {
+    "topics": {},
+    "edges": []
+  },
+  "state_error": null,
+  "rows": [
+    "C2(c)"
+  ],
+  "verdicts": [
+    {
+      "row": "C2(c)",
+      "verdict": "absent",
+      "cases": [],
+      "observations": [],
+      "probe_evidence": {
+        "api_schema": {
+          "status": 200,
+          "paths": {
+            "/health": [
+              "get"
+            ],
+            "/health/graph": [
+              "get"
+            ],
+            "/health/falkordb": [
+              "get"
+            ],
+            "/": [
+              "get"
+            ],
+            "/api/ui/datamodel": [
+              "get"
+            ],
+            "/api/ui/transcribe": [
+              "post"
+            ],
+            "/api/ui/graph": [
+              "get"
+            ],
+            "/api/ui/system-context": [
+              "get",
+              "put"
+            ],
+            "/api/ui/topics": [
+              "get",
+              "post"
+            ],
+            "/api/ui/topics/{topic_id}": [
+              "delete",
+              "get",
+              "patch"
+            ],
+            "/api/ui/topics/{from_id}/relationships": [
+              "delete",
+              "post"
+            ],
+            "/api/ui/topics/{topic_id}/fields": [
+              "post"
+            ],
+            "/api/ui/topics/{topic_id}/fields/{field_name}": [
+              "delete",
+              "get"
+            ],
+            "/api/ui/topics/{topic_id}/fields/{field_name}/ref": [
+              "put"
+            ],
+            "/api/ui/topics/{topic_id}/promote-nested": [
+              "post"
+            ],
+            "/api/ui/topics/{topic_id}/nest-fields": [
+              "post"
+            ],
+            "/api/ui/topics/{topic_id}/unnest-fields": [
+              "post"
+            ],
+            "/api/ui/topics/{topic_id}/undo-nested": [
+              "post"
+            ],
+            "/api/llm/chat": [
+              "post"
+            ],
+            "/api/llm/chat/stream": [
+              "post"
+            ],
+            "/api/llm/transcribe": [
+              "post"
+            ],
+            "/v1/ingest": [
+              "post"
+            ],
+            "/v1/query": [
+              "post"
+            ]
+          },
+          "schema_properties": {
+            "AppendFieldBody": [
+              "field_name",
+              "field_type",
+              "impact_expected",
+              "max_history",
+              "provenance",
+              "ref_topic_id",
+              "value",
+              "why_changed"
+            ],
+            "Body_transcribe_audio_api_llm_transcribe_post": [
+              "audio"
+            ],
+            "Body_transcribe_voice_clip_api_ui_transcribe_post": [
+              "audio"
+            ],
+            "ChatBody": [
+              "intent_override",
+              "intent_turns",
+              "internal_chunk",
+              "max_tool_rounds",
+              "messages",
+              "model",
+              "ollama_base_url",
+              "provider",
+              "study_ingest"
+            ],
+            "CreateTopicBody": [
+              "salience",
+              "summary",
+              "title",
+              "topic_id",
+              "topic_kind"
+            ],
+            "EdgeWrite": [
+              "kind",
+              "to_topic_id"
+            ],
+            "FieldOut": [
+              "current",
+              "field_type",
+              "history",
+              "name",
+              "ref_topic_id"
+            ],
+            "FieldVersionOut": [
+              "id",
+              "impact_expected",
+              "provenance",
+              "valid_from",
+              "value",
+              "why_changed"
+            ],
+            "FieldWrite": [
+              "field_type",
+              "impact_expected",
+              "name",
+              "provenance",
+              "ref_topic_id",
+              "value",
+              "why_changed"
+            ],
+            "HTTPValidationError": [
+              "detail"
+            ],
+            "IngestRequest": [
+              "edges",
+              "fields",
+              "placement",
+              "salience",
+              "suggest_similar",
+              "summary",
+              "title",
+              "topic_id",
+              "topic_kind"
+            ],
+            "IngestResponse": [
+              "applied",
+              "similar_topic_ids",
+              "topic_id",
+              "version_ids"
+            ],
+            "NestFieldsInTopicBody": [
+              "field_names",
+              "nest_key",
+              "provenance"
+            ],
+            "PromoteNestedTopicBody": [
+              "child_summary",
+              "child_title",
+              "child_topic_id",
+              "field_names",
+              "max_history",
+              "parent_link_field",
+              "relationship_kind"
+            ],
+            "QueryRequest": [
+              "explain",
+              "field_names",
+              "q",
+              "stages",
+              "top_k",
+              "topic_ids"
+            ],
+            "QueryResponse": [
+              "candidates",
+              "query",
+              "summary_text"
+            ],
+            "RelationshipBody": [
+              "kind",
+              "to_topic_id"
+            ],
+            "SetFieldRefBody": [
+              "ref_topic_id"
+            ],
+            "SystemContextBody": [
+              "runtime_context",
+              "system_role"
+            ],
+            "TopicBundle": [
+              "failed_salience",
+              "fields",
+              "neighbors",
+              "salience",
+              "similarity",
+              "summary",
+              "title",
+              "topic_id",
+              "topic_kind"
+            ],
+            "UndoNestedTopicBody": [
+              "child_topic_id",
+              "relationship_kind"
+            ],
+            "UnnestFieldsBody": [
+              "nest_key"
+            ],
+            "UpdateTopicBody": [
+              "archived",
+              "salience",
+              "summary",
+              "title",
+              "topic_kind"
+            ],
+            "ValidationError": [
+              "ctx",
+              "input",
+              "loc",
+              "msg",
+              "type"
+            ]
+          },
+          "numeric_properties": [
+            "AppendFieldBody.max_history: integer",
+            "ChatBody.intent_turns: integer",
+            "ChatBody.max_tool_rounds: integer",
+            "CreateTopicBody.salience: number",
+            "IngestRequest.salience: number",
+            "PromoteNestedTopicBody.max_history: integer",
+            "QueryRequest.top_k: integer",
+            "TopicBundle.failed_salience: number",
+            "TopicBundle.salience: number",
+            "TopicBundle.similarity: number",
+            "UpdateTopicBody.salience: number"
+          ],
+          "policy_term_hits": [],
+          "policy_term_property_hits": [],
+          "triple_schemas": []
+        },
+        "add_policy": null,
+        "policy_tried": {
+          "name": "deadline-not-before-start",
+          "event": "write",
+          "condition": {
+            "field": "Deadline",
+            "op": "<",
+            "other_field": "Start"
+          },
+          "action": "reject"
+        },
+        "docs_status": {
+          "/docs": 200,
+          "/redoc": 200
+        },
+        "guessed_route_status": {
+          "/policies": 404,
+          "/rules": 404,
+          "/config": 404,
+          "/settings": 404,
+          "/v1/policies": 404,
+          "/v1/rules": 404,
+          "/v1/config": 404,
+          "/api/policies": 404,
+          "/api/config": 404,
+          "/api/ui/policies": 404,
+          "/api/ui/rules": 404,
+          "/api/ui/config": 404,
+          "/api/ui/settings": 404,
+          "/api/llm/policies": 404,
+          "/api/llm/config": 404
+        },
+        "config_like_routes": {
+          "/api/ui/system-context": {
+            "status": 200,
+            "body": {
+              "configured": false,
+              "system_context": null
+            }
+          },
+          "/api/ui/datamodel": {
+            "status": 200,
+            "body": {
+              "mermaid": "flowchart LR\n  subgraph topicA [Topic A]\n    metaA[title summary salience topic_kind embedding]\n    fieldsA[fields_json]\n  end\n  subgraph topicB [Topic B]\n    metaB[...]\n    fieldsB[fields_json]\n  end\n  topicA -->|RELATED kind| topicB\n  fieldsA -->|ref_topic_id on field| topicB\n"
+            }
+          }
+        },
+        "policy_knob_names_in_schema": [],
+        "describe": {
+          "system": "bitemporal patch step 1 (089b823, LadybugDB)",
+          "url": "http://127.0.0.1:8765",
+          "db_path": "/home/zeyad/work/agent-systems-demo/.runtime/gem-suite/20261021-085949/step1-c2-c/memstate.lbug",
+          "commit": "089b823d2a44c65e539db51173770ee499ce80b2",
+          "engine": "MemState engine module: ladybug",
+          "keeps_history": true,
+          "accepts_error": null,
+          "declared_bound": {
+            "topics": 500,
+            "name": "topic_count_soft_limit"
+          },
+          "accepts_source": false,
+          "latency_comparable": true,
+          "source_surface": {
+            "request_properties": [],
+            "paths": []
+          },
+          "c6_clause_2_seeds": null,
+          "source_dir": "/home/zeyad/work/agent-systems-demo/MemState-patched/src",
+          "health_error": null,
+          "accepts": {
+            "valid_from": false,
+            "invalid_at": false,
+            "valid_at": false,
+            "recorded_at": false
+          }
+        },
+        "searched_words": [
+          "constraint",
+          "constraints",
+          "invariant",
+          "invariants",
+          "policies",
+          "policy",
+          "rule",
+          "rules",
+          "trigger",
+          "triggers"
+        ],
+        "searched_triple": [
+          "event",
+          "condition",
+          "action"
+        ],
+        "finding": "no policy-named route or schema in 23 routes; 11 numeric parameters in the schema; policy knob names in the schema: none; config-like routes that answer: ['/api/ui/system-context', '/api/ui/datamodel']; 15 of 15 guessed policy/config routes absent"
+      },
+      "measurements": {},
+      "control": false,
+      "system": "step1",
+      "snapshots": [],
+      "error": null
+    }
+  ]
+}

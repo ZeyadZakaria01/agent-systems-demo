@@ -16,7 +16,7 @@ Before starting MemState or Ollama, read the README section "Run MemState"; the 
 ## Docs
 
 - `docs/papers/`: the papers as Markdown (GEM, MAFBench, the two surveys, Zep, Hindsight, MemTX, StateMemBench), their PDFs, and `2605.26252v1-alignment.md` (code vs paper). Cite the paper text, not a paraphrase.
-- `docs/report/gem-limitations-and-directions.md`: the report, single source of truth; its §9 is the demo design. Edit it only on `main`. Until `gem-suite` merges, the conformance-suite spec and build tickets are edited only on `gem-suite` (worktree `../agent-systems-demo-wt/integration/`).
+- `docs/report/gem-limitations-and-directions.md`: the report, single source of truth; its §9 is the demo design. Edit it only on `main`.
 - `MemState/docs/` (HTML): upstream's own design docs (`data-model/`, `operations/`). Read them, and the code they describe, before stating what MemState intends or recommending a design that departs from it.
 - `docs/findings.md`: MemState facts proven by runs. Append when a run proves or disproves something.
 - `docs/journal.md`: difficulties and lessons.

@@ -1,0 +1,3955 @@
+{
+  "system": "upstream",
+  "label": "upstream",
+  "check": "chat-bad-merge",
+  "tag": null,
+  "describe": {
+    "system": "upstream",
+    "url": "http://127.0.0.1:8765",
+    "db_path": "/home/zeyad/work/agent-systems-demo/.runtime/gem-suite/20261021-085949/upstream-chat-bad-merge/memstate.kuzu",
+    "commit": "945d7c45a054dfc20cdcf53e37ec2b1b31384a50",
+    "engine": "MemState engine module: kuzu",
+    "keeps_history": true,
+    "accepts_error": null,
+    "declared_bound": {
+      "topics": 500,
+      "name": "topic_count_soft_limit"
+    },
+    "accepts_source": false,
+    "latency_comparable": true,
+    "source_surface": {
+      "request_properties": [],
+      "paths": []
+    },
+    "c6_clause_2_seeds": null,
+    "source_dir": "/home/zeyad/work/agent-systems-demo/MemState/src",
+    "health_error": null,
+    "accepts": {
+      "valid_from": false,
+      "invalid_at": false,
+      "valid_at": false,
+      "recorded_at": false
+    }
+  },
+  "describe_error": null,
+  "started_at": "2026-10-21T06:49:05.317866+00:00",
+  "finished_at": "2026-10-21T06:49:19.063376+00:00",
+  "scored_transitions": [
+    {
+      "seq": 0,
+      "kind": "scored",
+      "op": "ingest",
+      "request": {
+        "placement": "new_topic",
+        "title": "Website Redesign 67fbbacf3c first",
+        "topic_kind": "project",
+        "summary": "Project to redesign the company website: deadline, status and team.",
+        "fields": []
+      },
+      "started_at": "2026-10-21T06:49:07.042056+00:00",
+      "response": {
+        "topic_id": "1a2c4e22-90c9-4ab6-b825-62e620d275ae",
+        "applied": [
+          "created_topic:1a2c4e22-90c9-4ab6-b825-62e620d275ae"
+        ],
+        "version_ids": {},
+        "similar_topic_ids": []
+      },
+      "rejected": null,
+      "error": null,
+      "latency_ms": 407.096,
+      "finished_at": "2026-10-21T06:49:07.449165+00:00"
+    },
+    {
+      "seq": 1,
+      "kind": "scored",
+      "op": "ingest",
+      "request": {
+        "placement": "new_topic",
+        "title": "Website Redesign 67fbbacf3c second",
+        "topic_kind": "project",
+        "summary": "Project to redesign the company website: deadline, status and team.",
+        "fields": []
+      },
+      "started_at": "2026-10-21T06:49:07.449178+00:00",
+      "response": {
+        "topic_id": "9ebe3e10-f813-4f74-b3d4-8e634bd016b6",
+        "applied": [
+          "created_topic:9ebe3e10-f813-4f74-b3d4-8e634bd016b6"
+        ],
+        "version_ids": {},
+        "similar_topic_ids": []
+      },
+      "rejected": null,
+      "error": null,
+      "latency_ms": 14.331,
+      "finished_at": "2026-10-21T06:49:07.463518+00:00"
+    },
+    {
+      "seq": 2,
+      "kind": "scored",
+      "op": "ingest",
+      "request": {
+        "placement": "extend_topic",
+        "fields": [
+          {
+            "name": "Deadline",
+            "value": "March 15",
+            "provenance": "kickoff-notes"
+          },
+          {
+            "name": "Status",
+            "value": "Planning",
+            "provenance": "kickoff-notes"
+          }
+        ],
+        "topic_id": "9ebe3e10-f813-4f74-b3d4-8e634bd016b6"
+      },
+      "started_at": "2026-10-21T06:49:07.463548+00:00",
+      "response": {
+        "topic_id": "9ebe3e10-f813-4f74-b3d4-8e634bd016b6",
+        "applied": [
+          "field:Deadline",
+          "field:Status"
+        ],
+        "version_ids": {
+          "Deadline": "2dbc5ce4-965c-466f-b686-3227aa0d526e",
+          "Status": "aeefcb4c-ad84-4839-8769-18e01317c2fd"
+        },
+        "similar_topic_ids": []
+      },
+      "rejected": null,
+      "error": null,
+      "latency_ms": 59.0,
+      "finished_at": "2026-10-21T06:49:07.522557+00:00"
+    },
+    {
+      "seq": 3,
+      "kind": "scored",
+      "op": "ingest",
+      "request": {
+        "placement": "extend_topic",
+        "fields": [
+          {
+            "name": "Team",
+            "value": "Alice (Frontend), Bob (Backend)",
+            "provenance": "kickoff-notes"
+          }
+        ],
+        "topic_id": "9ebe3e10-f813-4f74-b3d4-8e634bd016b6"
+      },
+      "started_at": "2026-10-21T06:49:07.522573+00:00",
+      "response": {
+        "topic_id": "9ebe3e10-f813-4f74-b3d4-8e634bd016b6",
+        "applied": [
+          "field:Team"
+        ],
+        "version_ids": {
+          "Team": "03166aa8-ecf2-4e90-8e50-4951e23d4827"
+        },
+        "similar_topic_ids": []
+      },
+      "rejected": null,
+      "error": null,
+      "latency_ms": 32.449,
+      "finished_at": "2026-10-21T06:49:07.555031+00:00"
+    },
+    {
+      "seq": 4,
+      "kind": "scored",
+      "op": "ingest",
+      "request": {
+        "placement": "new_topic",
+        "fields": [
+          {
+            "name": "Favorite cuisine",
+            "value": "Thai",
+            "provenance": "chat"
+          },
+          {
+            "name": "Dietary note",
+            "value": "Two vegetarians",
+            "provenance": "chat"
+          }
+        ],
+        "title": "Lunch Preferences",
+        "summary": "What the team likes to eat when ordering lunch together.",
+        "topic_kind": "note"
+      },
+      "started_at": "2026-10-21T06:49:07.555051+00:00",
+      "response": {
+        "topic_id": "900d9a82-9f82-4ae2-991f-9d1e5bf48c0c",
+        "applied": [
+          "created_topic:900d9a82-9f82-4ae2-991f-9d1e5bf48c0c",
+          "field:Favorite cuisine",
+          "field:Dietary note"
+        ],
+        "version_ids": {
+          "Favorite cuisine": "9e45a576-fea5-4306-95e7-5262a7a3181e",
+          "Dietary note": "95685cb3-1fa2-4adf-a2b9-75fcae3b5557"
+        },
+        "similar_topic_ids": []
+      },
+      "rejected": null,
+      "error": null,
+      "latency_ms": 46.825,
+      "finished_at": "2026-10-21T06:49:07.601887+00:00"
+    },
+    {
+      "seq": 5,
+      "kind": "scored",
+      "op": "ingest",
+      "request": {
+        "placement": "new_topic",
+        "fields": [
+          {
+            "name": "Status",
+            "value": "Brainstorming",
+            "provenance": "chat"
+          },
+          {
+            "name": "Owner",
+            "value": "Carol",
+            "provenance": "chat"
+          }
+        ],
+        "title": "New Project Idea: Mobile App",
+        "summary": "Early brainstorm for a possible mobile app; nothing is planned yet.",
+        "topic_kind": "project",
+        "edges": [
+          {
+            "to_topic_id": "9ebe3e10-f813-4f74-b3d4-8e634bd016b6",
+            "kind": "association"
+          }
+        ]
+      },
+      "started_at": "2026-10-21T06:49:07.601904+00:00",
+      "response": {
+        "topic_id": "0e7b9e70-98ea-43b4-a2dd-cf3ea69a644c",
+        "applied": [
+          "created_topic:0e7b9e70-98ea-43b4-a2dd-cf3ea69a644c",
+          "field:Status",
+          "field:Owner",
+          "edge:9ebe3e10-f813-4f74-b3d4-8e634bd016b6"
+        ],
+        "version_ids": {
+          "Status": "f008af91-c555-41cf-9bf2-2ed08d6d5e92",
+          "Owner": "83337b8f-df08-4e78-9edb-d1ca3f9e5cfe"
+        },
+        "similar_topic_ids": []
+      },
+      "rejected": null,
+      "error": null,
+      "latency_ms": 62.667,
+      "finished_at": "2026-10-21T06:49:07.664604+00:00"
+    },
+    {
+      "seq": 6,
+      "kind": "scored",
+      "op": "ingest",
+      "request": {
+        "placement": "new_topic",
+        "fields": [
+          {
+            "name": "Day",
+            "value": "Tuesday",
+            "provenance": "calendar"
+          },
+          {
+            "name": "Time",
+            "value": "10:00",
+            "provenance": "calendar"
+          },
+          {
+            "name": "Location",
+            "value": "Room 4B",
+            "provenance": "calendar"
+          }
+        ],
+        "title": "Weekly Sync Meeting",
+        "summary": "Recurring weekly team meeting: day, time and room.",
+        "topic_kind": "meeting"
+      },
+      "started_at": "2026-10-21T06:49:07.664648+00:00",
+      "response": {
+        "topic_id": "cc86eb36-a1e9-4577-8484-4f5151370233",
+        "applied": [
+          "created_topic:cc86eb36-a1e9-4577-8484-4f5151370233",
+          "field:Day",
+          "field:Time",
+          "field:Location"
+        ],
+        "version_ids": {
+          "Day": "95d04055-4f4b-4ddb-a501-dfce6167e5da",
+          "Time": "abd49c19-301a-4d3d-a873-51f4c28ea18b",
+          "Location": "36340d57-8021-4f54-89ec-705693af9c86"
+        },
+        "similar_topic_ids": []
+      },
+      "rejected": null,
+      "error": null,
+      "latency_ms": 63.616,
+      "finished_at": "2026-10-21T06:49:07.728276+00:00"
+    },
+    {
+      "seq": 7,
+      "kind": "scored",
+      "op": "ingest",
+      "request": {
+        "placement": "new_topic",
+        "fields": [
+          {
+            "name": "Total",
+            "value": "$40,000",
+            "provenance": "finance-email"
+          },
+          {
+            "name": "Approver",
+            "value": "Dana",
+            "provenance": "finance-email"
+          }
+        ],
+        "title": "Redesign Budget",
+        "summary": "Money approved for the website redesign and who signs it off.",
+        "topic_kind": "budget",
+        "edges": [
+          {
+            "to_topic_id": "9ebe3e10-f813-4f74-b3d4-8e634bd016b6",
+            "kind": "association"
+          }
+        ]
+      },
+      "started_at": "2026-10-21T06:49:07.728294+00:00",
+      "response": {
+        "topic_id": "d150d9a8-2b87-4702-967a-52e9198e1bd8",
+        "applied": [
+          "created_topic:d150d9a8-2b87-4702-967a-52e9198e1bd8",
+          "field:Total",
+          "field:Approver",
+          "edge:9ebe3e10-f813-4f74-b3d4-8e634bd016b6"
+        ],
+        "version_ids": {
+          "Total": "3f25d63e-0a09-49a5-8c1a-518d2c9d2cd0",
+          "Approver": "896572b4-4369-4720-aa6e-f190b9a91004"
+        },
+        "similar_topic_ids": []
+      },
+      "rejected": null,
+      "error": null,
+      "latency_ms": 57.258,
+      "finished_at": "2026-10-21T06:49:07.785581+00:00"
+    },
+    {
+      "seq": 8,
+      "kind": "scored",
+      "op": "ingest",
+      "request": {
+        "placement": "new_topic",
+        "fields": [
+          {
+            "name": "Mockups due",
+            "value": "February 15",
+            "provenance": "vendor-email"
+          },
+          {
+            "name": "Contact",
+            "value": "Priya",
+            "provenance": "vendor-email"
+          },
+          {
+            "name": "Delivery status",
+            "value": "Pending",
+            "provenance": "vendor-email"
+          }
+        ],
+        "title": "Design Vendor: Pixel Forge",
+        "summary": "External agency producing the website mockups.",
+        "topic_kind": "vendor"
+      },
+      "started_at": "2026-10-21T06:49:07.785599+00:00",
+      "response": {
+        "topic_id": "c3bae8d0-4838-41ea-b17d-f510ee99f825",
+        "applied": [
+          "created_topic:c3bae8d0-4838-41ea-b17d-f510ee99f825",
+          "field:Mockups due",
+          "field:Contact",
+          "field:Delivery status"
+        ],
+        "version_ids": {
+          "Mockups due": "38bc43ab-684b-44d1-8328-8e964767add8",
+          "Contact": "94fa6f6a-4d29-42a8-81a9-1f46bf746246",
+          "Delivery status": "f442c361-ab7b-4a91-9276-50348723c30d"
+        },
+        "similar_topic_ids": []
+      },
+      "rejected": null,
+      "error": null,
+      "latency_ms": 65.889,
+      "finished_at": "2026-10-21T06:49:07.851499+00:00"
+    },
+    {
+      "seq": 9,
+      "kind": "scored",
+      "op": "ingest",
+      "request": {
+        "placement": "new_topic",
+        "fields": [
+          {
+            "name": "Content freeze",
+            "value": "March 1",
+            "provenance": "pm-email"
+          },
+          {
+            "name": "User testing start",
+            "value": "March 8",
+            "provenance": "pm-email"
+          },
+          {
+            "name": "Launch",
+            "value": "March 15",
+            "provenance": "pm-email"
+          }
+        ],
+        "title": "Redesign Milestones",
+        "summary": "Dated milestones that depend on the Website Redesign deadline.",
+        "topic_kind": "schedule",
+        "edges": [
+          {
+            "to_topic_id": "9ebe3e10-f813-4f74-b3d4-8e634bd016b6",
+            "kind": "extension"
+          }
+        ]
+      },
+      "started_at": "2026-10-21T06:49:07.851516+00:00",
+      "response": {
+        "topic_id": "349ebf34-c425-4b3d-9713-122e3f527c44",
+        "applied": [
+          "created_topic:349ebf34-c425-4b3d-9713-122e3f527c44",
+          "field:Content freeze",
+          "field:User testing start",
+          "field:Launch",
+          "edge:9ebe3e10-f813-4f74-b3d4-8e634bd016b6"
+        ],
+        "version_ids": {
+          "Content freeze": "efc8bcb1-7ecf-49d8-9b84-8e64473f59c6",
+          "User testing start": "27a64a61-85c4-4e4e-a73f-2ab02a55d4a5",
+          "Launch": "9f5cb148-5534-4312-86b7-1c8d1a78fdad"
+        },
+        "similar_topic_ids": []
+      },
+      "rejected": null,
+      "error": null,
+      "latency_ms": 69.176,
+      "finished_at": "2026-10-21T06:49:07.920702+00:00"
+    },
+    {
+      "seq": 10,
+      "kind": "scored",
+      "op": "ingest",
+      "request": {
+        "placement": "new_topic",
+        "fields": [
+          {
+            "name": "Primary color",
+            "value": "#1A73E8",
+            "provenance": "design-wiki"
+          },
+          {
+            "name": "Logo version",
+            "value": "v3",
+            "provenance": "design-wiki"
+          }
+        ],
+        "title": "Brand Guidelines",
+        "summary": "Colours and logo files the website has to follow.",
+        "topic_kind": "guidelines"
+      },
+      "started_at": "2026-10-21T06:49:07.920717+00:00",
+      "response": {
+        "topic_id": "dc6aa9b1-1add-49f2-b834-50bfe88b52f0",
+        "applied": [
+          "created_topic:dc6aa9b1-1add-49f2-b834-50bfe88b52f0",
+          "field:Primary color",
+          "field:Logo version"
+        ],
+        "version_ids": {
+          "Primary color": "c01018dd-e62f-4720-bdd6-5a1c8d7401e4",
+          "Logo version": "e9b05511-8bae-4790-ab8d-ac795a58834e"
+        },
+        "similar_topic_ids": []
+      },
+      "rejected": null,
+      "error": null,
+      "latency_ms": 43.142,
+      "finished_at": "2026-10-21T06:49:07.963868+00:00"
+    },
+    {
+      "seq": 11,
+      "kind": "scored",
+      "op": "ingest",
+      "request": {
+        "placement": "new_topic",
+        "fields": [
+          {
+            "name": "Deadline",
+            "value": "September 30",
+            "provenance": "pm-email"
+          },
+          {
+            "name": "Status",
+            "value": "Not started",
+            "provenance": "pm-email"
+          },
+          {
+            "name": "Team",
+            "value": "Alice (Frontend), Carol (Design)",
+            "provenance": "pm-email"
+          }
+        ],
+        "title": "Website Redesign Phase 2",
+        "summary": "Follow-up project after the Website Redesign: deadline, status and team.",
+        "topic_kind": "project",
+        "edges": [
+          {
+            "to_topic_id": "9ebe3e10-f813-4f74-b3d4-8e634bd016b6",
+            "kind": "association"
+          }
+        ]
+      },
+      "started_at": "2026-10-21T06:49:07.963887+00:00",
+      "response": {
+        "topic_id": "0702842d-eb9a-4d29-b43a-558266604e06",
+        "applied": [
+          "created_topic:0702842d-eb9a-4d29-b43a-558266604e06",
+          "field:Deadline",
+          "field:Status",
+          "field:Team",
+          "edge:9ebe3e10-f813-4f74-b3d4-8e634bd016b6"
+        ],
+        "version_ids": {
+          "Deadline": "8abeca6b-4028-4fdc-b311-7a981f92539e",
+          "Status": "e398038f-34f8-4392-807f-75b1bbe2f090",
+          "Team": "f12919d5-602f-49d0-9461-811095914de2"
+        },
+        "similar_topic_ids": []
+      },
+      "rejected": null,
+      "error": null,
+      "latency_ms": 70.113,
+      "finished_at": "2026-10-21T06:49:08.034014+00:00"
+    },
+    {
+      "seq": 12,
+      "kind": "scored",
+      "op": "ingest",
+      "request": {
+        "placement": "new_topic",
+        "fields": [
+          {
+            "name": "Total",
+            "value": "$15,000",
+            "provenance": "finance-email"
+          },
+          {
+            "name": "Approver",
+            "value": "Frank",
+            "provenance": "finance-email"
+          }
+        ],
+        "title": "Marketing Budget",
+        "summary": "Money approved for the website launch campaign and who signs it off.",
+        "topic_kind": "budget"
+      },
+      "started_at": "2026-10-21T06:49:08.034035+00:00",
+      "response": {
+        "topic_id": "f0304938-06c6-462e-94af-50ffa7b3a255",
+        "applied": [
+          "created_topic:f0304938-06c6-462e-94af-50ffa7b3a255",
+          "field:Total",
+          "field:Approver"
+        ],
+        "version_ids": {
+          "Total": "d4155f8d-164e-416d-af8c-0910a011f62c",
+          "Approver": "94009612-60e6-4b29-ba42-7e801ceaacfe"
+        },
+        "similar_topic_ids": []
+      },
+      "rejected": null,
+      "error": null,
+      "latency_ms": 46.647,
+      "finished_at": "2026-10-21T06:49:08.080696+00:00"
+    },
+    {
+      "seq": 13,
+      "kind": "scored",
+      "op": "ingest",
+      "request": {
+        "placement": "new_topic",
+        "fields": [
+          {
+            "name": "Day",
+            "value": "Thursday",
+            "provenance": "calendar"
+          },
+          {
+            "name": "Time",
+            "value": "14:00",
+            "provenance": "calendar"
+          },
+          {
+            "name": "Location",
+            "value": "Room 2A",
+            "provenance": "calendar"
+          }
+        ],
+        "title": "Design Review Meeting",
+        "summary": "Recurring design review meeting: day, time and room.",
+        "topic_kind": "meeting"
+      },
+      "started_at": "2026-10-21T06:49:08.080715+00:00",
+      "response": {
+        "topic_id": "7c86a2d6-9d0e-4c17-bc19-8c9537ea50b5",
+        "applied": [
+          "created_topic:7c86a2d6-9d0e-4c17-bc19-8c9537ea50b5",
+          "field:Day",
+          "field:Time",
+          "field:Location"
+        ],
+        "version_ids": {
+          "Day": "dfc46b0e-17e8-4ecb-8918-71264d87987f",
+          "Time": "0b823abd-3a3a-4b23-88b8-3dbf0f0c4067",
+          "Location": "bd81efbf-3ded-4387-a159-3cbd1b6ba4b9"
+        },
+        "similar_topic_ids": []
+      },
+      "rejected": null,
+      "error": null,
+      "latency_ms": 60.13,
+      "finished_at": "2026-10-21T06:49:08.140855+00:00"
+    },
+    {
+      "seq": 14,
+      "kind": "scored",
+      "op": "ingest",
+      "request": {
+        "placement": "version_field",
+        "fields": [
+          {
+            "name": "Mockups due",
+            "value": "March 22",
+            "provenance": "vendor-email",
+            "why_changed": "vendor delay"
+          }
+        ],
+        "topic_id": "c3bae8d0-4838-41ea-b17d-f510ee99f825"
+      },
+      "started_at": "2026-10-21T06:49:08.140888+00:00",
+      "response": {
+        "topic_id": "c3bae8d0-4838-41ea-b17d-f510ee99f825",
+        "applied": [
+          "version:Mockups due"
+        ],
+        "version_ids": {
+          "Mockups due": "d7387cdb-dd16-4564-93ab-41234ed35294"
+        },
+        "similar_topic_ids": []
+      },
+      "rejected": null,
+      "error": null,
+      "latency_ms": 30.383,
+      "finished_at": "2026-10-21T06:49:08.171281+00:00"
+    },
+    {
+      "seq": 15,
+      "kind": "scored",
+      "op": "ingest",
+      "request": {
+        "placement": "version_field",
+        "fields": [
+          {
+            "name": "Deadline",
+            "value": "April 20",
+            "provenance": "pm-email",
+            "why_changed": "vendor delay",
+            "impact_expected": "milestones slip about five weeks"
+          }
+        ],
+        "topic_id": "9ebe3e10-f813-4f74-b3d4-8e634bd016b6"
+      },
+      "started_at": "2026-10-21T06:49:08.171297+00:00",
+      "response": {
+        "topic_id": "9ebe3e10-f813-4f74-b3d4-8e634bd016b6",
+        "applied": [
+          "version:Deadline"
+        ],
+        "version_ids": {
+          "Deadline": "96a2ceb9-a791-4721-afba-5bf76ea63910"
+        },
+        "similar_topic_ids": []
+      },
+      "rejected": null,
+      "error": null,
+      "latency_ms": 30.947,
+      "finished_at": "2026-10-21T06:49:08.202256+00:00"
+    },
+    {
+      "seq": 16,
+      "kind": "scored",
+      "op": "ingest",
+      "request": {
+        "placement": "version_field",
+        "fields": [
+          {
+            "name": "Launch",
+            "value": "April 20",
+            "provenance": "pm-email",
+            "why_changed": "deadline moved"
+          }
+        ],
+        "topic_id": "349ebf34-c425-4b3d-9713-122e3f527c44"
+      },
+      "started_at": "2026-10-21T06:49:08.202272+00:00",
+      "response": {
+        "topic_id": "349ebf34-c425-4b3d-9713-122e3f527c44",
+        "applied": [
+          "version:Launch"
+        ],
+        "version_ids": {
+          "Launch": "e5ca03dc-1cd9-4e8f-adb2-211c0d04b449"
+        },
+        "similar_topic_ids": []
+      },
+      "rejected": null,
+      "error": null,
+      "latency_ms": 30.672,
+      "finished_at": "2026-10-21T06:49:08.232955+00:00"
+    },
+    {
+      "seq": 17,
+      "kind": "scored",
+      "op": "ingest",
+      "request": {
+        "placement": "version_field",
+        "fields": [
+          {
+            "name": "User testing start",
+            "value": "April 13",
+            "provenance": "pm-email",
+            "why_changed": "deadline moved"
+          }
+        ],
+        "topic_id": "349ebf34-c425-4b3d-9713-122e3f527c44"
+      },
+      "started_at": "2026-10-21T06:49:08.232972+00:00",
+      "response": {
+        "topic_id": "349ebf34-c425-4b3d-9713-122e3f527c44",
+        "applied": [
+          "version:User testing start"
+        ],
+        "version_ids": {
+          "User testing start": "3de60098-5ecf-43eb-bf47-2d27123ee27f"
+        },
+        "similar_topic_ids": []
+      },
+      "rejected": null,
+      "error": null,
+      "latency_ms": 30.755,
+      "finished_at": "2026-10-21T06:49:08.263738+00:00"
+    },
+    {
+      "seq": 18,
+      "kind": "scored",
+      "op": "ingest",
+      "request": {
+        "placement": "version_field",
+        "fields": [
+          {
+            "name": "Content freeze",
+            "value": "April 6",
+            "provenance": "pm-email",
+            "why_changed": "deadline moved"
+          }
+        ],
+        "topic_id": "349ebf34-c425-4b3d-9713-122e3f527c44"
+      },
+      "started_at": "2026-10-21T06:49:08.263754+00:00",
+      "response": {
+        "topic_id": "349ebf34-c425-4b3d-9713-122e3f527c44",
+        "applied": [
+          "version:Content freeze"
+        ],
+        "version_ids": {
+          "Content freeze": "678f7dad-1186-4f11-bcd4-97cb329f00d8"
+        },
+        "similar_topic_ids": []
+      },
+      "rejected": null,
+      "error": null,
+      "latency_ms": 30.321,
+      "finished_at": "2026-10-21T06:49:08.294085+00:00"
+    },
+    {
+      "seq": 19,
+      "kind": "scored",
+      "op": "ingest",
+      "request": {
+        "placement": "version_field",
+        "fields": [
+          {
+            "name": "Total",
+            "value": "$46,500",
+            "provenance": "finance-email",
+            "why_changed": "vendor rush fee"
+          }
+        ],
+        "topic_id": "d150d9a8-2b87-4702-967a-52e9198e1bd8"
+      },
+      "started_at": "2026-10-21T06:49:08.294102+00:00",
+      "response": {
+        "topic_id": "d150d9a8-2b87-4702-967a-52e9198e1bd8",
+        "applied": [
+          "version:Total"
+        ],
+        "version_ids": {
+          "Total": "40f8e779-07bf-4d46-b309-6e97304f023f"
+        },
+        "similar_topic_ids": []
+      },
+      "rejected": null,
+      "error": null,
+      "latency_ms": 31.022,
+      "finished_at": "2026-10-21T06:49:08.325134+00:00"
+    },
+    {
+      "seq": 20,
+      "kind": "scored",
+      "op": "ingest",
+      "request": {
+        "placement": "new_topic",
+        "fields": [
+          {
+            "name": "Role",
+            "value": "Frontend developer",
+            "provenance": "standup"
+          },
+          {
+            "name": "Working on",
+            "value": "Homepage prototype",
+            "provenance": "standup"
+          }
+        ],
+        "title": "Alice",
+        "summary": "Alice, frontend developer on the Website Redesign team.",
+        "topic_kind": "person",
+        "edges": [
+          {
+            "to_topic_id": "9ebe3e10-f813-4f74-b3d4-8e634bd016b6",
+            "kind": "extension"
+          }
+        ]
+      },
+      "started_at": "2026-10-21T06:49:08.325153+00:00",
+      "response": {
+        "topic_id": "309c5d00-c53d-44e3-a030-095fa20362af",
+        "applied": [
+          "created_topic:309c5d00-c53d-44e3-a030-095fa20362af",
+          "field:Role",
+          "field:Working on",
+          "edge:9ebe3e10-f813-4f74-b3d4-8e634bd016b6"
+        ],
+        "version_ids": {
+          "Role": "b93b6c62-d3fe-4f0a-811f-d20a843969fd",
+          "Working on": "4c043e6a-fad5-42a7-a074-eb80072fe926"
+        },
+        "similar_topic_ids": []
+      },
+      "rejected": null,
+      "error": null,
+      "latency_ms": 56.667,
+      "finished_at": "2026-10-21T06:49:08.381830+00:00"
+    },
+    {
+      "seq": 21,
+      "kind": "scored",
+      "op": "ingest",
+      "request": {
+        "placement": "version_field",
+        "fields": [
+          {
+            "name": "Role",
+            "value": "Frontend lead",
+            "provenance": "standup",
+            "why_changed": "promoted after the homepage prototype"
+          }
+        ],
+        "topic_id": "309c5d00-c53d-44e3-a030-095fa20362af"
+      },
+      "started_at": "2026-10-21T06:49:08.381847+00:00",
+      "response": {
+        "topic_id": "309c5d00-c53d-44e3-a030-095fa20362af",
+        "applied": [
+          "version:Role"
+        ],
+        "version_ids": {
+          "Role": "7a422e20-9fca-4dbb-9a1e-0e8ecdb19192"
+        },
+        "similar_topic_ids": []
+      },
+      "rejected": null,
+      "error": null,
+      "latency_ms": 31.216,
+      "finished_at": "2026-10-21T06:49:08.413073+00:00"
+    },
+    {
+      "seq": 22,
+      "kind": "scored",
+      "op": "ingest",
+      "request": {
+        "placement": "version_field",
+        "fields": [
+          {
+            "name": "Team",
+            "value": "Alice (Frontend lead), Bob (Backend), Erin (QA)",
+            "provenance": "standup",
+            "why_changed": "Erin joined"
+          }
+        ],
+        "topic_id": "9ebe3e10-f813-4f74-b3d4-8e634bd016b6"
+      },
+      "started_at": "2026-10-21T06:49:08.413090+00:00",
+      "response": {
+        "topic_id": "9ebe3e10-f813-4f74-b3d4-8e634bd016b6",
+        "applied": [
+          "version:Team"
+        ],
+        "version_ids": {
+          "Team": "6c1d3726-8e9e-45a0-907d-461f5009e70a"
+        },
+        "similar_topic_ids": []
+      },
+      "rejected": null,
+      "error": null,
+      "latency_ms": 29.754,
+      "finished_at": "2026-10-21T06:49:08.442854+00:00"
+    },
+    {
+      "seq": 23,
+      "kind": "scored",
+      "op": "ingest",
+      "request": {
+        "placement": "version_field",
+        "fields": [
+          {
+            "name": "Time",
+            "value": "11:30",
+            "provenance": "calendar",
+            "why_changed": "clash with the design review"
+          }
+        ],
+        "topic_id": "cc86eb36-a1e9-4577-8484-4f5151370233"
+      },
+      "started_at": "2026-10-21T06:49:08.442869+00:00",
+      "response": {
+        "topic_id": "cc86eb36-a1e9-4577-8484-4f5151370233",
+        "applied": [
+          "version:Time"
+        ],
+        "version_ids": {
+          "Time": "ddc7e9fa-a0a8-4035-9bb7-84623167707f"
+        },
+        "similar_topic_ids": []
+      },
+      "rejected": null,
+      "error": null,
+      "latency_ms": 30.03,
+      "finished_at": "2026-10-21T06:49:08.472909+00:00"
+    },
+    {
+      "seq": 24,
+      "kind": "scored",
+      "op": "ingest",
+      "request": {
+        "placement": "version_field",
+        "fields": [
+          {
+            "name": "Status",
+            "value": "In progress",
+            "provenance": "standup"
+          }
+        ],
+        "topic_id": "9ebe3e10-f813-4f74-b3d4-8e634bd016b6"
+      },
+      "started_at": "2026-10-21T06:49:08.472925+00:00",
+      "response": {
+        "topic_id": "9ebe3e10-f813-4f74-b3d4-8e634bd016b6",
+        "applied": [
+          "version:Status"
+        ],
+        "version_ids": {
+          "Status": "5620669c-7e30-4b10-a3a0-c04e4d3570be"
+        },
+        "similar_topic_ids": []
+      },
+      "rejected": null,
+      "error": null,
+      "latency_ms": 34.133,
+      "finished_at": "2026-10-21T06:49:08.507069+00:00"
+    },
+    {
+      "seq": 25,
+      "kind": "scored",
+      "op": "ingest",
+      "request": {
+        "placement": "new_topic",
+        "fields": [
+          {
+            "name": "Monthly visitors",
+            "value": "48,000",
+            "provenance": "analytics-export"
+          },
+          {
+            "name": "Top page",
+            "value": "Pricing",
+            "provenance": "analytics-export"
+          }
+        ],
+        "title": "Website Analytics Report",
+        "summary": "Monthly traffic numbers for the current website.",
+        "topic_kind": "report"
+      },
+      "started_at": "2026-10-21T06:49:08.507085+00:00",
+      "response": {
+        "topic_id": "83b643ba-66e7-4c87-908d-b3e8ff9e81b7",
+        "applied": [
+          "created_topic:83b643ba-66e7-4c87-908d-b3e8ff9e81b7",
+          "field:Monthly visitors",
+          "field:Top page"
+        ],
+        "version_ids": {
+          "Monthly visitors": "7ce37a54-5b0d-45fb-87d6-b5cee37ba718",
+          "Top page": "f349f9de-5fb9-495a-be13-fdef974bbd73"
+        },
+        "similar_topic_ids": []
+      },
+      "rejected": null,
+      "error": null,
+      "latency_ms": 45.121,
+      "finished_at": "2026-10-21T06:49:08.552216+00:00"
+    },
+    {
+      "seq": 26,
+      "kind": "scored",
+      "op": "ingest",
+      "request": {
+        "placement": "version_field",
+        "fields": [
+          {
+            "name": "Deadline",
+            "value": "October 15",
+            "provenance": "pm-email",
+            "why_changed": "waiting for phase 1"
+          }
+        ],
+        "topic_id": "0702842d-eb9a-4d29-b43a-558266604e06"
+      },
+      "started_at": "2026-10-21T06:49:08.552231+00:00",
+      "response": {
+        "topic_id": "0702842d-eb9a-4d29-b43a-558266604e06",
+        "applied": [
+          "version:Deadline"
+        ],
+        "version_ids": {
+          "Deadline": "2791933f-4bd6-4035-8158-b207eb69fa3f"
+        },
+        "similar_topic_ids": []
+      },
+      "rejected": null,
+      "error": null,
+      "latency_ms": 30.475,
+      "finished_at": "2026-10-21T06:49:08.582717+00:00"
+    },
+    {
+      "seq": 27,
+      "kind": "scored",
+      "op": "ingest",
+      "request": {
+        "placement": "version_field",
+        "fields": [
+          {
+            "name": "Delivery status",
+            "value": "Delivered",
+            "provenance": "vendor-email"
+          }
+        ],
+        "topic_id": "c3bae8d0-4838-41ea-b17d-f510ee99f825"
+      },
+      "started_at": "2026-10-21T06:49:08.582733+00:00",
+      "response": {
+        "topic_id": "c3bae8d0-4838-41ea-b17d-f510ee99f825",
+        "applied": [
+          "version:Delivery status"
+        ],
+        "version_ids": {
+          "Delivery status": "480b3b7a-5ed2-4ed3-88e8-42bbd047d519"
+        },
+        "similar_topic_ids": []
+      },
+      "rejected": null,
+      "error": null,
+      "latency_ms": 31.582,
+      "finished_at": "2026-10-21T06:49:08.614327+00:00"
+    },
+    {
+      "seq": 28,
+      "kind": "scored",
+      "op": "ingest",
+      "request": {
+        "placement": "version_field",
+        "fields": [
+          {
+            "name": "Status",
+            "value": "Complete",
+            "provenance": "standup"
+          }
+        ],
+        "topic_id": "9ebe3e10-f813-4f74-b3d4-8e634bd016b6"
+      },
+      "started_at": "2026-10-21T06:49:08.614344+00:00",
+      "response": {
+        "topic_id": "9ebe3e10-f813-4f74-b3d4-8e634bd016b6",
+        "applied": [
+          "version:Status"
+        ],
+        "version_ids": {
+          "Status": "779d4b98-d118-43cd-a6a0-df4ba3faa977"
+        },
+        "similar_topic_ids": []
+      },
+      "rejected": null,
+      "error": null,
+      "latency_ms": 31.461,
+      "finished_at": "2026-10-21T06:49:08.645825+00:00"
+    },
+    {
+      "seq": 29,
+      "kind": "scored",
+      "op": "ingest",
+      "request": {
+        "placement": "new_topic",
+        "fields": [
+          {
+            "name": "Status",
+            "value": "Interviewing",
+            "provenance": "recruiter-email"
+          },
+          {
+            "name": "Candidates",
+            "value": "3",
+            "provenance": "recruiter-email"
+          }
+        ],
+        "title": "Backend Engineer Hiring",
+        "summary": "Open backend engineer position and the interview pipeline.",
+        "topic_kind": "hiring"
+      },
+      "started_at": "2026-10-21T06:49:08.645844+00:00",
+      "response": {
+        "topic_id": "4ed681d1-3235-4a68-8a77-ae74710b5dee",
+        "applied": [
+          "created_topic:4ed681d1-3235-4a68-8a77-ae74710b5dee",
+          "field:Status",
+          "field:Candidates"
+        ],
+        "version_ids": {
+          "Status": "11c96398-96e8-4e1e-9f3a-3fba0d70a3ea",
+          "Candidates": "9889f095-a114-418b-ba08-2ce2d62e6a9f"
+        },
+        "similar_topic_ids": []
+      },
+      "rejected": null,
+      "error": null,
+      "latency_ms": 45.905,
+      "finished_at": "2026-10-21T06:49:08.691759+00:00"
+    },
+    {
+      "seq": 30,
+      "kind": "scored",
+      "op": "ingest",
+      "request": {
+        "placement": "version_field",
+        "fields": [
+          {
+            "name": "Favorite cuisine",
+            "value": "Mexican",
+            "provenance": "chat",
+            "why_changed": "tired of Thai"
+          }
+        ],
+        "topic_id": "900d9a82-9f82-4ae2-991f-9d1e5bf48c0c"
+      },
+      "started_at": "2026-10-21T06:49:08.691775+00:00",
+      "response": {
+        "topic_id": "900d9a82-9f82-4ae2-991f-9d1e5bf48c0c",
+        "applied": [
+          "version:Favorite cuisine"
+        ],
+        "version_ids": {
+          "Favorite cuisine": "64795e93-0f6b-4b4b-8e24-052796a9c215"
+        },
+        "similar_topic_ids": []
+      },
+      "rejected": null,
+      "error": null,
+      "latency_ms": 31.101,
+      "finished_at": "2026-10-21T06:49:08.722887+00:00"
+    },
+    {
+      "seq": 31,
+      "kind": "scored",
+      "op": "ingest",
+      "request": {
+        "placement": "extend_topic",
+        "topic_id": "1a2c4e22-90c9-4ab6-b825-62e620d275ae",
+        "fields": [
+          {
+            "name": "Deadline",
+            "value": "April 20",
+            "provenance": "chat-reexplanation"
+          }
+        ]
+      },
+      "started_at": "2026-10-21T06:49:08.722903+00:00",
+      "response": {
+        "topic_id": "1a2c4e22-90c9-4ab6-b825-62e620d275ae",
+        "applied": [
+          "field:Deadline"
+        ],
+        "version_ids": {
+          "Deadline": "4ed960e4-d84a-497e-8195-1fa537ed3ae9"
+        },
+        "similar_topic_ids": []
+      },
+      "rejected": null,
+      "error": null,
+      "latency_ms": 31.216,
+      "finished_at": "2026-10-21T06:49:08.754130+00:00"
+    },
+    {
+      "seq": 36,
+      "kind": "scored",
+      "op": "ingest",
+      "request": {
+        "placement": "extend_topic",
+        "topic_id": "1a2c4e22-90c9-4ab6-b825-62e620d275ae",
+        "fields": []
+      },
+      "started_at": "2026-10-21T06:49:08.842642+00:00",
+      "response": {
+        "topic_id": "1a2c4e22-90c9-4ab6-b825-62e620d275ae",
+        "applied": [],
+        "version_ids": {},
+        "similar_topic_ids": []
+      },
+      "rejected": null,
+      "error": null,
+      "latency_ms": 13.731,
+      "finished_at": "2026-10-21T06:49:08.856379+00:00"
+    }
+  ],
+  "setup_writes": [
+    {
+      "seq": 34,
+      "kind": "setup",
+      "op": "patch_topic",
+      "request": {
+        "action": "patch_topic",
+        "label": "give the duplicate pair one title (the editor never writes a value)",
+        "topic_id": "1a2c4e22-90c9-4ab6-b825-62e620d275ae",
+        "title": "Website Redesign"
+      },
+      "started_at": "2026-10-21T06:49:08.821452+00:00",
+      "response": {
+        "topic_id": "1a2c4e22-90c9-4ab6-b825-62e620d275ae"
+      },
+      "rejected": null,
+      "error": null,
+      "latency_ms": 11.237,
+      "finished_at": "2026-10-21T06:49:08.832696+00:00"
+    },
+    {
+      "seq": 35,
+      "kind": "setup",
+      "op": "patch_topic",
+      "request": {
+        "action": "patch_topic",
+        "label": "give the duplicate pair one title (the editor never writes a value)",
+        "topic_id": "9ebe3e10-f813-4f74-b3d4-8e634bd016b6",
+        "title": "Website Redesign"
+      },
+      "started_at": "2026-10-21T06:49:08.832704+00:00",
+      "response": {
+        "topic_id": "9ebe3e10-f813-4f74-b3d4-8e634bd016b6"
+      },
+      "rejected": null,
+      "error": null,
+      "latency_ms": 9.925,
+      "finished_at": "2026-10-21T06:49:08.842634+00:00"
+    }
+  ],
+  "reads": [
+    {
+      "seq": 32,
+      "kind": "read",
+      "op": "read_topic",
+      "request": {
+        "topic_id": "9ebe3e10-f813-4f74-b3d4-8e634bd016b6"
+      },
+      "started_at": "2026-10-21T06:49:08.754143+00:00",
+      "response": {
+        "id": "9ebe3e10-f813-4f74-b3d4-8e634bd016b6",
+        "title": "Website Redesign 67fbbacf3c second",
+        "summary": "Project to redesign the company website: deadline, status and team.",
+        "topic_kind": "project",
+        "salience": 1.0,
+        "failed_salience": 0.0,
+        "archived": false,
+        "fields": {
+          "Deadline": {
+            "field_type": "string",
+            "ref_topic_id": null,
+            "history": [
+              {
+                "id": "96a2ceb9-a791-4721-afba-5bf76ea63910",
+                "valid_from": "2026-10-21T06:49:08.174153+00:00",
+                "value": "April 20",
+                "why_changed": "vendor delay",
+                "impact_expected": "milestones slip about five weeks",
+                "provenance": "pm-email",
+                "operation": null
+              },
+              {
+                "id": "2dbc5ce4-965c-466f-b686-3227aa0d526e",
+                "valid_from": "2026-10-21T06:49:07.473681+00:00",
+                "value": "March 15",
+                "why_changed": null,
+                "impact_expected": null,
+                "provenance": "kickoff-notes",
+                "operation": null
+              }
+            ],
+            "current": {
+              "id": "96a2ceb9-a791-4721-afba-5bf76ea63910",
+              "valid_from": "2026-10-21T06:49:08.174153+00:00",
+              "value": "April 20",
+              "why_changed": "vendor delay",
+              "impact_expected": "milestones slip about five weeks",
+              "provenance": "pm-email",
+              "operation": null
+            }
+          },
+          "Status": {
+            "field_type": "string",
+            "ref_topic_id": null,
+            "history": [
+              {
+                "id": "779d4b98-d118-43cd-a6a0-df4ba3faa977",
+                "valid_from": "2026-10-21T06:49:08.617331+00:00",
+                "value": "Complete",
+                "why_changed": null,
+                "impact_expected": null,
+                "provenance": "standup",
+                "operation": null
+              },
+              {
+                "id": "5620669c-7e30-4b10-a3a0-c04e4d3570be",
+                "valid_from": "2026-10-21T06:49:08.475644+00:00",
+                "value": "In progress",
+                "why_changed": null,
+                "impact_expected": null,
+                "provenance": "standup",
+                "operation": null
+              },
+              {
+                "id": "aeefcb4c-ad84-4839-8769-18e01317c2fd",
+                "valid_from": "2026-10-21T06:49:07.493383+00:00",
+                "value": "Planning",
+                "why_changed": null,
+                "impact_expected": null,
+                "provenance": "kickoff-notes",
+                "operation": null
+              }
+            ],
+            "current": {
+              "id": "779d4b98-d118-43cd-a6a0-df4ba3faa977",
+              "valid_from": "2026-10-21T06:49:08.617331+00:00",
+              "value": "Complete",
+              "why_changed": null,
+              "impact_expected": null,
+              "provenance": "standup",
+              "operation": null
+            }
+          },
+          "Team": {
+            "field_type": "string",
+            "ref_topic_id": null,
+            "history": [
+              {
+                "id": "6c1d3726-8e9e-45a0-907d-461f5009e70a",
+                "valid_from": "2026-10-21T06:49:08.415859+00:00",
+                "value": "Alice (Frontend lead), Bob (Backend), Erin (QA)",
+                "why_changed": "Erin joined",
+                "impact_expected": null,
+                "provenance": "standup",
+                "operation": null
+              },
+              {
+                "id": "03166aa8-ecf2-4e90-8e50-4951e23d4827",
+                "valid_from": "2026-10-21T06:49:07.525669+00:00",
+                "value": "Alice (Frontend), Bob (Backend)",
+                "why_changed": null,
+                "impact_expected": null,
+                "provenance": "kickoff-notes",
+                "operation": null
+              }
+            ],
+            "current": {
+              "id": "6c1d3726-8e9e-45a0-907d-461f5009e70a",
+              "valid_from": "2026-10-21T06:49:08.415859+00:00",
+              "value": "Alice (Frontend lead), Bob (Backend), Erin (QA)",
+              "why_changed": "Erin joined",
+              "impact_expected": null,
+              "provenance": "standup",
+              "operation": null
+            }
+          }
+        },
+        "topic_history": [
+          {
+            "ts": "2026-10-21T06:49:07.454578+00:00",
+            "kind": "created",
+            "detail": {
+              "title": "Website Redesign 67fbbacf3c second"
+            }
+          }
+        ],
+        "created_at": "2026-10-21T06:49:07.454578+00:00",
+        "updated_at": "2026-10-21T06:49:08.636893+00:00",
+        "revision_flag": null
+      },
+      "rejected": null,
+      "error": null,
+      "latency_ms": 63.87,
+      "finished_at": "2026-10-21T06:49:08.818025+00:00"
+    },
+    {
+      "seq": 33,
+      "kind": "read",
+      "op": "read_topic",
+      "request": {
+        "topic_id": "1a2c4e22-90c9-4ab6-b825-62e620d275ae"
+      },
+      "started_at": "2026-10-21T06:49:08.818045+00:00",
+      "response": {
+        "id": "1a2c4e22-90c9-4ab6-b825-62e620d275ae",
+        "title": "Website Redesign 67fbbacf3c first",
+        "summary": "Project to redesign the company website: deadline, status and team.",
+        "topic_kind": "project",
+        "salience": 1.0,
+        "failed_salience": 0.0,
+        "archived": false,
+        "fields": {
+          "Deadline": {
+            "field_type": "string",
+            "ref_topic_id": null,
+            "history": [
+              {
+                "id": "4ed960e4-d84a-497e-8195-1fa537ed3ae9",
+                "valid_from": "2026-10-21T06:49:08.725719+00:00",
+                "value": "April 20",
+                "why_changed": null,
+                "impact_expected": null,
+                "provenance": "chat-reexplanation",
+                "operation": null
+              }
+            ],
+            "current": {
+              "id": "4ed960e4-d84a-497e-8195-1fa537ed3ae9",
+              "valid_from": "2026-10-21T06:49:08.725719+00:00",
+              "value": "April 20",
+              "why_changed": null,
+              "impact_expected": null,
+              "provenance": "chat-reexplanation",
+              "operation": null
+            }
+          }
+        },
+        "topic_history": [
+          {
+            "ts": "2026-10-21T06:49:07.437715+00:00",
+            "kind": "created",
+            "detail": {
+              "title": "Website Redesign 67fbbacf3c first"
+            }
+          }
+        ],
+        "created_at": "2026-10-21T06:49:07.437715+00:00",
+        "updated_at": "2026-10-21T06:49:08.745507+00:00",
+        "revision_flag": null
+      },
+      "rejected": null,
+      "error": null,
+      "latency_ms": 3.383,
+      "finished_at": "2026-10-21T06:49:08.821436+00:00"
+    },
+    {
+      "seq": 37,
+      "kind": "read",
+      "op": "read_state",
+      "request": null,
+      "started_at": "2026-10-21T06:49:08.856398+00:00",
+      "response": {
+        "topics": 15,
+        "edges": 5
+      },
+      "rejected": null,
+      "error": null,
+      "latency_ms": 107.029,
+      "finished_at": "2026-10-21T06:49:08.963439+00:00"
+    },
+    {
+      "seq": 39,
+      "kind": "read",
+      "op": "read_topic",
+      "request": {
+        "topic_id": "1a2c4e22-90c9-4ab6-b825-62e620d275ae"
+      },
+      "started_at": "2026-10-21T06:49:08.963499+00:00",
+      "response": {
+        "id": "1a2c4e22-90c9-4ab6-b825-62e620d275ae",
+        "title": "Website Redesign",
+        "summary": "Project to redesign the company website: deadline, status and team.",
+        "topic_kind": "project",
+        "salience": 1.0,
+        "failed_salience": 0.0,
+        "archived": false,
+        "fields": {
+          "Deadline": {
+            "field_type": "string",
+            "ref_topic_id": null,
+            "history": [
+              {
+                "id": "4ed960e4-d84a-497e-8195-1fa537ed3ae9",
+                "valid_from": "2026-10-21T06:49:08.725719+00:00",
+                "value": "April 20",
+                "why_changed": null,
+                "impact_expected": null,
+                "provenance": "chat-reexplanation",
+                "operation": null
+              }
+            ],
+            "current": {
+              "id": "4ed960e4-d84a-497e-8195-1fa537ed3ae9",
+              "valid_from": "2026-10-21T06:49:08.725719+00:00",
+              "value": "April 20",
+              "why_changed": null,
+              "impact_expected": null,
+              "provenance": "chat-reexplanation",
+              "operation": null
+            }
+          },
+          "Status": {
+            "field_type": "string",
+            "ref_topic_id": null,
+            "history": [
+              {
+                "id": "779d4b98-d118-43cd-a6a0-df4ba3faa977",
+                "valid_from": "2026-10-21T06:49:08.617331+00:00",
+                "value": "Complete",
+                "why_changed": null,
+                "impact_expected": null,
+                "provenance": "standup",
+                "operation": null
+              },
+              {
+                "id": "5620669c-7e30-4b10-a3a0-c04e4d3570be",
+                "valid_from": "2026-10-21T06:49:08.475644+00:00",
+                "value": "In progress",
+                "why_changed": null,
+                "impact_expected": null,
+                "provenance": "standup",
+                "operation": null
+              },
+              {
+                "id": "aeefcb4c-ad84-4839-8769-18e01317c2fd",
+                "valid_from": "2026-10-21T06:49:07.493383+00:00",
+                "value": "Planning",
+                "why_changed": null,
+                "impact_expected": null,
+                "provenance": "kickoff-notes",
+                "operation": null
+              }
+            ],
+            "current": {
+              "id": "779d4b98-d118-43cd-a6a0-df4ba3faa977",
+              "valid_from": "2026-10-21T06:49:08.617331+00:00",
+              "value": "Complete",
+              "why_changed": null,
+              "impact_expected": null,
+              "provenance": "standup",
+              "operation": null
+            }
+          },
+          "Team": {
+            "field_type": "string",
+            "ref_topic_id": null,
+            "history": [
+              {
+                "id": "6c1d3726-8e9e-45a0-907d-461f5009e70a",
+                "valid_from": "2026-10-21T06:49:08.415859+00:00",
+                "value": "Alice (Frontend lead), Bob (Backend), Erin (QA)",
+                "why_changed": "Erin joined",
+                "impact_expected": null,
+                "provenance": "standup",
+                "operation": null
+              },
+              {
+                "id": "03166aa8-ecf2-4e90-8e50-4951e23d4827",
+                "valid_from": "2026-10-21T06:49:07.525669+00:00",
+                "value": "Alice (Frontend), Bob (Backend)",
+                "why_changed": null,
+                "impact_expected": null,
+                "provenance": "kickoff-notes",
+                "operation": null
+              }
+            ],
+            "current": {
+              "id": "6c1d3726-8e9e-45a0-907d-461f5009e70a",
+              "valid_from": "2026-10-21T06:49:08.415859+00:00",
+              "value": "Alice (Frontend lead), Bob (Backend), Erin (QA)",
+              "why_changed": "Erin joined",
+              "impact_expected": null,
+              "provenance": "standup",
+              "operation": null
+            }
+          }
+        },
+        "topic_history": [
+          {
+            "ts": "2026-10-21T06:49:07.437715+00:00",
+            "kind": "created",
+            "detail": {
+              "title": "Website Redesign 67fbbacf3c first"
+            }
+          }
+        ],
+        "created_at": "2026-10-21T06:49:07.437715+00:00",
+        "updated_at": "2026-10-21T06:49:08.885778+00:00",
+        "revision_flag": null
+      },
+      "rejected": null,
+      "error": null,
+      "latency_ms": 2.695,
+      "finished_at": "2026-10-21T06:49:08.966203+00:00"
+    },
+    {
+      "seq": 40,
+      "kind": "read",
+      "op": "read_topic",
+      "request": {
+        "topic_id": "9ebe3e10-f813-4f74-b3d4-8e634bd016b6"
+      },
+      "started_at": "2026-10-21T06:49:08.966212+00:00",
+      "response": null,
+      "rejected": null,
+      "error": null,
+      "latency_ms": 2.35,
+      "finished_at": "2026-10-21T06:49:08.968568+00:00"
+    },
+    {
+      "seq": 41,
+      "kind": "read",
+      "op": "read_topic",
+      "request": {
+        "topic_id": "9ebe3e10-f813-4f74-b3d4-8e634bd016b6"
+      },
+      "started_at": "2026-10-21T06:49:08.968585+00:00",
+      "response": null,
+      "rejected": null,
+      "error": null,
+      "latency_ms": 2.261,
+      "finished_at": "2026-10-21T06:49:08.970852+00:00"
+    },
+    {
+      "seq": 42,
+      "kind": "read",
+      "op": "read_topic",
+      "request": {
+        "topic_id": "1a2c4e22-90c9-4ab6-b825-62e620d275ae"
+      },
+      "started_at": "2026-10-21T06:49:08.970867+00:00",
+      "response": {
+        "id": "1a2c4e22-90c9-4ab6-b825-62e620d275ae",
+        "title": "Website Redesign",
+        "summary": "Project to redesign the company website: deadline, status and team.",
+        "topic_kind": "project",
+        "salience": 1.0,
+        "failed_salience": 0.0,
+        "archived": false,
+        "fields": {
+          "Deadline": {
+            "field_type": "string",
+            "ref_topic_id": null,
+            "history": [
+              {
+                "id": "4ed960e4-d84a-497e-8195-1fa537ed3ae9",
+                "valid_from": "2026-10-21T06:49:08.725719+00:00",
+                "value": "April 20",
+                "why_changed": null,
+                "impact_expected": null,
+                "provenance": "chat-reexplanation",
+                "operation": null
+              }
+            ],
+            "current": {
+              "id": "4ed960e4-d84a-497e-8195-1fa537ed3ae9",
+              "valid_from": "2026-10-21T06:49:08.725719+00:00",
+              "value": "April 20",
+              "why_changed": null,
+              "impact_expected": null,
+              "provenance": "chat-reexplanation",
+              "operation": null
+            }
+          },
+          "Status": {
+            "field_type": "string",
+            "ref_topic_id": null,
+            "history": [
+              {
+                "id": "779d4b98-d118-43cd-a6a0-df4ba3faa977",
+                "valid_from": "2026-10-21T06:49:08.617331+00:00",
+                "value": "Complete",
+                "why_changed": null,
+                "impact_expected": null,
+                "provenance": "standup",
+                "operation": null
+              },
+              {
+                "id": "5620669c-7e30-4b10-a3a0-c04e4d3570be",
+                "valid_from": "2026-10-21T06:49:08.475644+00:00",
+                "value": "In progress",
+                "why_changed": null,
+                "impact_expected": null,
+                "provenance": "standup",
+                "operation": null
+              },
+              {
+                "id": "aeefcb4c-ad84-4839-8769-18e01317c2fd",
+                "valid_from": "2026-10-21T06:49:07.493383+00:00",
+                "value": "Planning",
+                "why_changed": null,
+                "impact_expected": null,
+                "provenance": "kickoff-notes",
+                "operation": null
+              }
+            ],
+            "current": {
+              "id": "779d4b98-d118-43cd-a6a0-df4ba3faa977",
+              "valid_from": "2026-10-21T06:49:08.617331+00:00",
+              "value": "Complete",
+              "why_changed": null,
+              "impact_expected": null,
+              "provenance": "standup",
+              "operation": null
+            }
+          },
+          "Team": {
+            "field_type": "string",
+            "ref_topic_id": null,
+            "history": [
+              {
+                "id": "6c1d3726-8e9e-45a0-907d-461f5009e70a",
+                "valid_from": "2026-10-21T06:49:08.415859+00:00",
+                "value": "Alice (Frontend lead), Bob (Backend), Erin (QA)",
+                "why_changed": "Erin joined",
+                "impact_expected": null,
+                "provenance": "standup",
+                "operation": null
+              },
+              {
+                "id": "03166aa8-ecf2-4e90-8e50-4951e23d4827",
+                "valid_from": "2026-10-21T06:49:07.525669+00:00",
+                "value": "Alice (Frontend), Bob (Backend)",
+                "why_changed": null,
+                "impact_expected": null,
+                "provenance": "kickoff-notes",
+                "operation": null
+              }
+            ],
+            "current": {
+              "id": "6c1d3726-8e9e-45a0-907d-461f5009e70a",
+              "valid_from": "2026-10-21T06:49:08.415859+00:00",
+              "value": "Alice (Frontend lead), Bob (Backend), Erin (QA)",
+              "why_changed": "Erin joined",
+              "impact_expected": null,
+              "provenance": "standup",
+              "operation": null
+            }
+          }
+        },
+        "topic_history": [
+          {
+            "ts": "2026-10-21T06:49:07.437715+00:00",
+            "kind": "created",
+            "detail": {
+              "title": "Website Redesign 67fbbacf3c first"
+            }
+          }
+        ],
+        "created_at": "2026-10-21T06:49:07.437715+00:00",
+        "updated_at": "2026-10-21T06:49:08.885778+00:00",
+        "revision_flag": null
+      },
+      "rejected": null,
+      "error": null,
+      "latency_ms": 2.662,
+      "finished_at": "2026-10-21T06:49:08.973535+00:00"
+    },
+    {
+      "seq": 43,
+      "kind": "read",
+      "op": "read_topic",
+      "request": {
+        "topic_id": "1a2c4e22-90c9-4ab6-b825-62e620d275ae"
+      },
+      "started_at": "2026-10-21T06:49:08.973583+00:00",
+      "response": {
+        "id": "1a2c4e22-90c9-4ab6-b825-62e620d275ae",
+        "title": "Website Redesign",
+        "summary": "Project to redesign the company website: deadline, status and team.",
+        "topic_kind": "project",
+        "salience": 1.0,
+        "failed_salience": 0.0,
+        "archived": false,
+        "fields": {
+          "Deadline": {
+            "field_type": "string",
+            "ref_topic_id": null,
+            "history": [
+              {
+                "id": "4ed960e4-d84a-497e-8195-1fa537ed3ae9",
+                "valid_from": "2026-10-21T06:49:08.725719+00:00",
+                "value": "April 20",
+                "why_changed": null,
+                "impact_expected": null,
+                "provenance": "chat-reexplanation",
+                "operation": null
+              }
+            ],
+            "current": {
+              "id": "4ed960e4-d84a-497e-8195-1fa537ed3ae9",
+              "valid_from": "2026-10-21T06:49:08.725719+00:00",
+              "value": "April 20",
+              "why_changed": null,
+              "impact_expected": null,
+              "provenance": "chat-reexplanation",
+              "operation": null
+            }
+          },
+          "Status": {
+            "field_type": "string",
+            "ref_topic_id": null,
+            "history": [
+              {
+                "id": "779d4b98-d118-43cd-a6a0-df4ba3faa977",
+                "valid_from": "2026-10-21T06:49:08.617331+00:00",
+                "value": "Complete",
+                "why_changed": null,
+                "impact_expected": null,
+                "provenance": "standup",
+                "operation": null
+              },
+              {
+                "id": "5620669c-7e30-4b10-a3a0-c04e4d3570be",
+                "valid_from": "2026-10-21T06:49:08.475644+00:00",
+                "value": "In progress",
+                "why_changed": null,
+                "impact_expected": null,
+                "provenance": "standup",
+                "operation": null
+              },
+              {
+                "id": "aeefcb4c-ad84-4839-8769-18e01317c2fd",
+                "valid_from": "2026-10-21T06:49:07.493383+00:00",
+                "value": "Planning",
+                "why_changed": null,
+                "impact_expected": null,
+                "provenance": "kickoff-notes",
+                "operation": null
+              }
+            ],
+            "current": {
+              "id": "779d4b98-d118-43cd-a6a0-df4ba3faa977",
+              "valid_from": "2026-10-21T06:49:08.617331+00:00",
+              "value": "Complete",
+              "why_changed": null,
+              "impact_expected": null,
+              "provenance": "standup",
+              "operation": null
+            }
+          },
+          "Team": {
+            "field_type": "string",
+            "ref_topic_id": null,
+            "history": [
+              {
+                "id": "6c1d3726-8e9e-45a0-907d-461f5009e70a",
+                "valid_from": "2026-10-21T06:49:08.415859+00:00",
+                "value": "Alice (Frontend lead), Bob (Backend), Erin (QA)",
+                "why_changed": "Erin joined",
+                "impact_expected": null,
+                "provenance": "standup",
+                "operation": null
+              },
+              {
+                "id": "03166aa8-ecf2-4e90-8e50-4951e23d4827",
+                "valid_from": "2026-10-21T06:49:07.525669+00:00",
+                "value": "Alice (Frontend), Bob (Backend)",
+                "why_changed": null,
+                "impact_expected": null,
+                "provenance": "kickoff-notes",
+                "operation": null
+              }
+            ],
+            "current": {
+              "id": "6c1d3726-8e9e-45a0-907d-461f5009e70a",
+              "valid_from": "2026-10-21T06:49:08.415859+00:00",
+              "value": "Alice (Frontend lead), Bob (Backend), Erin (QA)",
+              "why_changed": "Erin joined",
+              "impact_expected": null,
+              "provenance": "standup",
+              "operation": null
+            }
+          }
+        },
+        "topic_history": [
+          {
+            "ts": "2026-10-21T06:49:07.437715+00:00",
+            "kind": "created",
+            "detail": {
+              "title": "Website Redesign 67fbbacf3c first"
+            }
+          }
+        ],
+        "created_at": "2026-10-21T06:49:07.437715+00:00",
+        "updated_at": "2026-10-21T06:49:08.885778+00:00",
+        "revision_flag": null
+      },
+      "rejected": null,
+      "error": null,
+      "latency_ms": 2.386,
+      "finished_at": "2026-10-21T06:49:08.975975+00:00"
+    },
+    {
+      "seq": 45,
+      "kind": "read",
+      "op": "read_topic",
+      "request": {
+        "topic_id": "1a2c4e22-90c9-4ab6-b825-62e620d275ae"
+      },
+      "started_at": "2026-10-21T06:49:11.511287+00:00",
+      "response": {
+        "id": "1a2c4e22-90c9-4ab6-b825-62e620d275ae",
+        "title": "Website Redesign",
+        "summary": "Project to redesign the company website: deadline, status and team.",
+        "topic_kind": "project",
+        "salience": 1.0,
+        "failed_salience": 0.0,
+        "archived": false,
+        "fields": {
+          "Deadline": {
+            "field_type": "string",
+            "ref_topic_id": null,
+            "history": [
+              {
+                "id": "4ed960e4-d84a-497e-8195-1fa537ed3ae9",
+                "valid_from": "2026-10-21T06:49:08.725719+00:00",
+                "value": "April 20",
+                "why_changed": null,
+                "impact_expected": null,
+                "provenance": "chat-reexplanation",
+                "operation": null
+              }
+            ],
+            "current": {
+              "id": "4ed960e4-d84a-497e-8195-1fa537ed3ae9",
+              "valid_from": "2026-10-21T06:49:08.725719+00:00",
+              "value": "April 20",
+              "why_changed": null,
+              "impact_expected": null,
+              "provenance": "chat-reexplanation",
+              "operation": null
+            }
+          },
+          "Status": {
+            "field_type": "string",
+            "ref_topic_id": null,
+            "history": [
+              {
+                "id": "779d4b98-d118-43cd-a6a0-df4ba3faa977",
+                "valid_from": "2026-10-21T06:49:08.617331+00:00",
+                "value": "Complete",
+                "why_changed": null,
+                "impact_expected": null,
+                "provenance": "standup",
+                "operation": null
+              },
+              {
+                "id": "5620669c-7e30-4b10-a3a0-c04e4d3570be",
+                "valid_from": "2026-10-21T06:49:08.475644+00:00",
+                "value": "In progress",
+                "why_changed": null,
+                "impact_expected": null,
+                "provenance": "standup",
+                "operation": null
+              },
+              {
+                "id": "aeefcb4c-ad84-4839-8769-18e01317c2fd",
+                "valid_from": "2026-10-21T06:49:07.493383+00:00",
+                "value": "Planning",
+                "why_changed": null,
+                "impact_expected": null,
+                "provenance": "kickoff-notes",
+                "operation": null
+              }
+            ],
+            "current": {
+              "id": "779d4b98-d118-43cd-a6a0-df4ba3faa977",
+              "valid_from": "2026-10-21T06:49:08.617331+00:00",
+              "value": "Complete",
+              "why_changed": null,
+              "impact_expected": null,
+              "provenance": "standup",
+              "operation": null
+            }
+          },
+          "Team": {
+            "field_type": "string",
+            "ref_topic_id": null,
+            "history": [
+              {
+                "id": "6c1d3726-8e9e-45a0-907d-461f5009e70a",
+                "valid_from": "2026-10-21T06:49:08.415859+00:00",
+                "value": "Alice (Frontend lead), Bob (Backend), Erin (QA)",
+                "why_changed": "Erin joined",
+                "impact_expected": null,
+                "provenance": "standup",
+                "operation": null
+              },
+              {
+                "id": "03166aa8-ecf2-4e90-8e50-4951e23d4827",
+                "valid_from": "2026-10-21T06:49:07.525669+00:00",
+                "value": "Alice (Frontend), Bob (Backend)",
+                "why_changed": null,
+                "impact_expected": null,
+                "provenance": "kickoff-notes",
+                "operation": null
+              }
+            ],
+            "current": {
+              "id": "6c1d3726-8e9e-45a0-907d-461f5009e70a",
+              "valid_from": "2026-10-21T06:49:08.415859+00:00",
+              "value": "Alice (Frontend lead), Bob (Backend), Erin (QA)",
+              "why_changed": "Erin joined",
+              "impact_expected": null,
+              "provenance": "standup",
+              "operation": null
+            }
+          }
+        },
+        "topic_history": [
+          {
+            "ts": "2026-10-21T06:49:07.437715+00:00",
+            "kind": "created",
+            "detail": {
+              "title": "Website Redesign 67fbbacf3c first"
+            }
+          }
+        ],
+        "created_at": "2026-10-21T06:49:07.437715+00:00",
+        "updated_at": "2026-10-21T06:49:08.885778+00:00",
+        "revision_flag": null
+      },
+      "rejected": null,
+      "error": null,
+      "latency_ms": 3.524,
+      "finished_at": "2026-10-21T06:49:11.514817+00:00"
+    },
+    {
+      "seq": 46,
+      "kind": "read",
+      "op": "read_topic",
+      "request": {
+        "topic_id": "1a2c4e22-90c9-4ab6-b825-62e620d275ae"
+      },
+      "started_at": "2026-10-21T06:49:11.514933+00:00",
+      "response": {
+        "id": "1a2c4e22-90c9-4ab6-b825-62e620d275ae",
+        "title": "Website Redesign",
+        "summary": "Project to redesign the company website: deadline, status and team.",
+        "topic_kind": "project",
+        "salience": 1.0,
+        "failed_salience": 0.0,
+        "archived": false,
+        "fields": {
+          "Deadline": {
+            "field_type": "string",
+            "ref_topic_id": null,
+            "history": [
+              {
+                "id": "4ed960e4-d84a-497e-8195-1fa537ed3ae9",
+                "valid_from": "2026-10-21T06:49:08.725719+00:00",
+                "value": "April 20",
+                "why_changed": null,
+                "impact_expected": null,
+                "provenance": "chat-reexplanation",
+                "operation": null
+              }
+            ],
+            "current": {
+              "id": "4ed960e4-d84a-497e-8195-1fa537ed3ae9",
+              "valid_from": "2026-10-21T06:49:08.725719+00:00",
+              "value": "April 20",
+              "why_changed": null,
+              "impact_expected": null,
+              "provenance": "chat-reexplanation",
+              "operation": null
+            }
+          },
+          "Status": {
+            "field_type": "string",
+            "ref_topic_id": null,
+            "history": [
+              {
+                "id": "779d4b98-d118-43cd-a6a0-df4ba3faa977",
+                "valid_from": "2026-10-21T06:49:08.617331+00:00",
+                "value": "Complete",
+                "why_changed": null,
+                "impact_expected": null,
+                "provenance": "standup",
+                "operation": null
+              },
+              {
+                "id": "5620669c-7e30-4b10-a3a0-c04e4d3570be",
+                "valid_from": "2026-10-21T06:49:08.475644+00:00",
+                "value": "In progress",
+                "why_changed": null,
+                "impact_expected": null,
+                "provenance": "standup",
+                "operation": null
+              },
+              {
+                "id": "aeefcb4c-ad84-4839-8769-18e01317c2fd",
+                "valid_from": "2026-10-21T06:49:07.493383+00:00",
+                "value": "Planning",
+                "why_changed": null,
+                "impact_expected": null,
+                "provenance": "kickoff-notes",
+                "operation": null
+              }
+            ],
+            "current": {
+              "id": "779d4b98-d118-43cd-a6a0-df4ba3faa977",
+              "valid_from": "2026-10-21T06:49:08.617331+00:00",
+              "value": "Complete",
+              "why_changed": null,
+              "impact_expected": null,
+              "provenance": "standup",
+              "operation": null
+            }
+          },
+          "Team": {
+            "field_type": "string",
+            "ref_topic_id": null,
+            "history": [
+              {
+                "id": "6c1d3726-8e9e-45a0-907d-461f5009e70a",
+                "valid_from": "2026-10-21T06:49:08.415859+00:00",
+                "value": "Alice (Frontend lead), Bob (Backend), Erin (QA)",
+                "why_changed": "Erin joined",
+                "impact_expected": null,
+                "provenance": "standup",
+                "operation": null
+              },
+              {
+                "id": "03166aa8-ecf2-4e90-8e50-4951e23d4827",
+                "valid_from": "2026-10-21T06:49:07.525669+00:00",
+                "value": "Alice (Frontend), Bob (Backend)",
+                "why_changed": null,
+                "impact_expected": null,
+                "provenance": "kickoff-notes",
+                "operation": null
+              }
+            ],
+            "current": {
+              "id": "6c1d3726-8e9e-45a0-907d-461f5009e70a",
+              "valid_from": "2026-10-21T06:49:08.415859+00:00",
+              "value": "Alice (Frontend lead), Bob (Backend), Erin (QA)",
+              "why_changed": "Erin joined",
+              "impact_expected": null,
+              "provenance": "standup",
+              "operation": null
+            }
+          }
+        },
+        "topic_history": [
+          {
+            "ts": "2026-10-21T06:49:07.437715+00:00",
+            "kind": "created",
+            "detail": {
+              "title": "Website Redesign 67fbbacf3c first"
+            }
+          }
+        ],
+        "created_at": "2026-10-21T06:49:07.437715+00:00",
+        "updated_at": "2026-10-21T06:49:08.885778+00:00",
+        "revision_flag": null
+      },
+      "rejected": null,
+      "error": null,
+      "latency_ms": 2.563,
+      "finished_at": "2026-10-21T06:49:11.517502+00:00"
+    },
+    {
+      "seq": 48,
+      "kind": "read",
+      "op": "read_topic",
+      "request": {
+        "topic_id": "1a2c4e22-90c9-4ab6-b825-62e620d275ae"
+      },
+      "started_at": "2026-10-21T06:49:14.021931+00:00",
+      "response": {
+        "id": "1a2c4e22-90c9-4ab6-b825-62e620d275ae",
+        "title": "Website Redesign",
+        "summary": "Project to redesign the company website: deadline, status and team.",
+        "topic_kind": "project",
+        "salience": 1.1,
+        "failed_salience": 0.0,
+        "archived": false,
+        "fields": {
+          "Deadline": {
+            "field_type": "string",
+            "ref_topic_id": null,
+            "history": [
+              {
+                "id": "4ed960e4-d84a-497e-8195-1fa537ed3ae9",
+                "valid_from": "2026-10-21T06:49:08.725719+00:00",
+                "value": "April 20",
+                "why_changed": null,
+                "impact_expected": null,
+                "provenance": "chat-reexplanation",
+                "operation": null
+              }
+            ],
+            "current": {
+              "id": "4ed960e4-d84a-497e-8195-1fa537ed3ae9",
+              "valid_from": "2026-10-21T06:49:08.725719+00:00",
+              "value": "April 20",
+              "why_changed": null,
+              "impact_expected": null,
+              "provenance": "chat-reexplanation",
+              "operation": null
+            }
+          },
+          "Status": {
+            "field_type": "string",
+            "ref_topic_id": null,
+            "history": [
+              {
+                "id": "779d4b98-d118-43cd-a6a0-df4ba3faa977",
+                "valid_from": "2026-10-21T06:49:08.617331+00:00",
+                "value": "Complete",
+                "why_changed": null,
+                "impact_expected": null,
+                "provenance": "standup",
+                "operation": null
+              },
+              {
+                "id": "5620669c-7e30-4b10-a3a0-c04e4d3570be",
+                "valid_from": "2026-10-21T06:49:08.475644+00:00",
+                "value": "In progress",
+                "why_changed": null,
+                "impact_expected": null,
+                "provenance": "standup",
+                "operation": null
+              },
+              {
+                "id": "aeefcb4c-ad84-4839-8769-18e01317c2fd",
+                "valid_from": "2026-10-21T06:49:07.493383+00:00",
+                "value": "Planning",
+                "why_changed": null,
+                "impact_expected": null,
+                "provenance": "kickoff-notes",
+                "operation": null
+              }
+            ],
+            "current": {
+              "id": "779d4b98-d118-43cd-a6a0-df4ba3faa977",
+              "valid_from": "2026-10-21T06:49:08.617331+00:00",
+              "value": "Complete",
+              "why_changed": null,
+              "impact_expected": null,
+              "provenance": "standup",
+              "operation": null
+            }
+          },
+          "Team": {
+            "field_type": "string",
+            "ref_topic_id": null,
+            "history": [
+              {
+                "id": "6c1d3726-8e9e-45a0-907d-461f5009e70a",
+                "valid_from": "2026-10-21T06:49:08.415859+00:00",
+                "value": "Alice (Frontend lead), Bob (Backend), Erin (QA)",
+                "why_changed": "Erin joined",
+                "impact_expected": null,
+                "provenance": "standup",
+                "operation": null
+              },
+              {
+                "id": "03166aa8-ecf2-4e90-8e50-4951e23d4827",
+                "valid_from": "2026-10-21T06:49:07.525669+00:00",
+                "value": "Alice (Frontend), Bob (Backend)",
+                "why_changed": null,
+                "impact_expected": null,
+                "provenance": "kickoff-notes",
+                "operation": null
+              }
+            ],
+            "current": {
+              "id": "6c1d3726-8e9e-45a0-907d-461f5009e70a",
+              "valid_from": "2026-10-21T06:49:08.415859+00:00",
+              "value": "Alice (Frontend lead), Bob (Backend), Erin (QA)",
+              "why_changed": "Erin joined",
+              "impact_expected": null,
+              "provenance": "standup",
+              "operation": null
+            }
+          }
+        },
+        "topic_history": [
+          {
+            "ts": "2026-10-21T06:49:07.437715+00:00",
+            "kind": "created",
+            "detail": {
+              "title": "Website Redesign 67fbbacf3c first"
+            }
+          }
+        ],
+        "created_at": "2026-10-21T06:49:07.437715+00:00",
+        "updated_at": "2026-10-21T06:49:13.509275+00:00",
+        "revision_flag": null
+      },
+      "rejected": null,
+      "error": null,
+      "latency_ms": 3.501,
+      "finished_at": "2026-10-21T06:49:14.025440+00:00"
+    },
+    {
+      "seq": 49,
+      "kind": "read",
+      "op": "read_topic",
+      "request": {
+        "topic_id": "1a2c4e22-90c9-4ab6-b825-62e620d275ae"
+      },
+      "started_at": "2026-10-21T06:49:14.025487+00:00",
+      "response": {
+        "id": "1a2c4e22-90c9-4ab6-b825-62e620d275ae",
+        "title": "Website Redesign",
+        "summary": "Project to redesign the company website: deadline, status and team.",
+        "topic_kind": "project",
+        "salience": 1.1,
+        "failed_salience": 0.0,
+        "archived": false,
+        "fields": {
+          "Deadline": {
+            "field_type": "string",
+            "ref_topic_id": null,
+            "history": [
+              {
+                "id": "4ed960e4-d84a-497e-8195-1fa537ed3ae9",
+                "valid_from": "2026-10-21T06:49:08.725719+00:00",
+                "value": "April 20",
+                "why_changed": null,
+                "impact_expected": null,
+                "provenance": "chat-reexplanation",
+                "operation": null
+              }
+            ],
+            "current": {
+              "id": "4ed960e4-d84a-497e-8195-1fa537ed3ae9",
+              "valid_from": "2026-10-21T06:49:08.725719+00:00",
+              "value": "April 20",
+              "why_changed": null,
+              "impact_expected": null,
+              "provenance": "chat-reexplanation",
+              "operation": null
+            }
+          },
+          "Status": {
+            "field_type": "string",
+            "ref_topic_id": null,
+            "history": [
+              {
+                "id": "779d4b98-d118-43cd-a6a0-df4ba3faa977",
+                "valid_from": "2026-10-21T06:49:08.617331+00:00",
+                "value": "Complete",
+                "why_changed": null,
+                "impact_expected": null,
+                "provenance": "standup",
+                "operation": null
+              },
+              {
+                "id": "5620669c-7e30-4b10-a3a0-c04e4d3570be",
+                "valid_from": "2026-10-21T06:49:08.475644+00:00",
+                "value": "In progress",
+                "why_changed": null,
+                "impact_expected": null,
+                "provenance": "standup",
+                "operation": null
+              },
+              {
+                "id": "aeefcb4c-ad84-4839-8769-18e01317c2fd",
+                "valid_from": "2026-10-21T06:49:07.493383+00:00",
+                "value": "Planning",
+                "why_changed": null,
+                "impact_expected": null,
+                "provenance": "kickoff-notes",
+                "operation": null
+              }
+            ],
+            "current": {
+              "id": "779d4b98-d118-43cd-a6a0-df4ba3faa977",
+              "valid_from": "2026-10-21T06:49:08.617331+00:00",
+              "value": "Complete",
+              "why_changed": null,
+              "impact_expected": null,
+              "provenance": "standup",
+              "operation": null
+            }
+          },
+          "Team": {
+            "field_type": "string",
+            "ref_topic_id": null,
+            "history": [
+              {
+                "id": "6c1d3726-8e9e-45a0-907d-461f5009e70a",
+                "valid_from": "2026-10-21T06:49:08.415859+00:00",
+                "value": "Alice (Frontend lead), Bob (Backend), Erin (QA)",
+                "why_changed": "Erin joined",
+                "impact_expected": null,
+                "provenance": "standup",
+                "operation": null
+              },
+              {
+                "id": "03166aa8-ecf2-4e90-8e50-4951e23d4827",
+                "valid_from": "2026-10-21T06:49:07.525669+00:00",
+                "value": "Alice (Frontend), Bob (Backend)",
+                "why_changed": null,
+                "impact_expected": null,
+                "provenance": "kickoff-notes",
+                "operation": null
+              }
+            ],
+            "current": {
+              "id": "6c1d3726-8e9e-45a0-907d-461f5009e70a",
+              "valid_from": "2026-10-21T06:49:08.415859+00:00",
+              "value": "Alice (Frontend lead), Bob (Backend), Erin (QA)",
+              "why_changed": "Erin joined",
+              "impact_expected": null,
+              "provenance": "standup",
+              "operation": null
+            }
+          }
+        },
+        "topic_history": [
+          {
+            "ts": "2026-10-21T06:49:07.437715+00:00",
+            "kind": "created",
+            "detail": {
+              "title": "Website Redesign 67fbbacf3c first"
+            }
+          }
+        ],
+        "created_at": "2026-10-21T06:49:07.437715+00:00",
+        "updated_at": "2026-10-21T06:49:13.509275+00:00",
+        "revision_flag": null
+      },
+      "rejected": null,
+      "error": null,
+      "latency_ms": 2.928,
+      "finished_at": "2026-10-21T06:49:14.028422+00:00"
+    },
+    {
+      "seq": 51,
+      "kind": "read",
+      "op": "read_topic",
+      "request": {
+        "topic_id": "1a2c4e22-90c9-4ab6-b825-62e620d275ae"
+      },
+      "started_at": "2026-10-21T06:49:19.057529+00:00",
+      "response": {
+        "id": "1a2c4e22-90c9-4ab6-b825-62e620d275ae",
+        "title": "Website Redesign",
+        "summary": "Project to redesign the company website: deadline, status and team.",
+        "topic_kind": "project",
+        "salience": 1.2000000000000002,
+        "failed_salience": 0.0,
+        "archived": false,
+        "fields": {
+          "Deadline": {
+            "field_type": "string",
+            "ref_topic_id": null,
+            "history": [
+              {
+                "id": "4ed960e4-d84a-497e-8195-1fa537ed3ae9",
+                "valid_from": "2026-10-21T06:49:08.725719+00:00",
+                "value": "April 20",
+                "why_changed": null,
+                "impact_expected": null,
+                "provenance": "chat-reexplanation",
+                "operation": null
+              }
+            ],
+            "current": {
+              "id": "4ed960e4-d84a-497e-8195-1fa537ed3ae9",
+              "valid_from": "2026-10-21T06:49:08.725719+00:00",
+              "value": "April 20",
+              "why_changed": null,
+              "impact_expected": null,
+              "provenance": "chat-reexplanation",
+              "operation": null
+            }
+          },
+          "Status": {
+            "field_type": "string",
+            "ref_topic_id": null,
+            "history": [
+              {
+                "id": "779d4b98-d118-43cd-a6a0-df4ba3faa977",
+                "valid_from": "2026-10-21T06:49:08.617331+00:00",
+                "value": "Complete",
+                "why_changed": null,
+                "impact_expected": null,
+                "provenance": "standup",
+                "operation": null
+              },
+              {
+                "id": "5620669c-7e30-4b10-a3a0-c04e4d3570be",
+                "valid_from": "2026-10-21T06:49:08.475644+00:00",
+                "value": "In progress",
+                "why_changed": null,
+                "impact_expected": null,
+                "provenance": "standup",
+                "operation": null
+              },
+              {
+                "id": "aeefcb4c-ad84-4839-8769-18e01317c2fd",
+                "valid_from": "2026-10-21T06:49:07.493383+00:00",
+                "value": "Planning",
+                "why_changed": null,
+                "impact_expected": null,
+                "provenance": "kickoff-notes",
+                "operation": null
+              }
+            ],
+            "current": {
+              "id": "779d4b98-d118-43cd-a6a0-df4ba3faa977",
+              "valid_from": "2026-10-21T06:49:08.617331+00:00",
+              "value": "Complete",
+              "why_changed": null,
+              "impact_expected": null,
+              "provenance": "standup",
+              "operation": null
+            }
+          },
+          "Team": {
+            "field_type": "string",
+            "ref_topic_id": null,
+            "history": [
+              {
+                "id": "6c1d3726-8e9e-45a0-907d-461f5009e70a",
+                "valid_from": "2026-10-21T06:49:08.415859+00:00",
+                "value": "Alice (Frontend lead), Bob (Backend), Erin (QA)",
+                "why_changed": "Erin joined",
+                "impact_expected": null,
+                "provenance": "standup",
+                "operation": null
+              },
+              {
+                "id": "03166aa8-ecf2-4e90-8e50-4951e23d4827",
+                "valid_from": "2026-10-21T06:49:07.525669+00:00",
+                "value": "Alice (Frontend), Bob (Backend)",
+                "why_changed": null,
+                "impact_expected": null,
+                "provenance": "kickoff-notes",
+                "operation": null
+              }
+            ],
+            "current": {
+              "id": "6c1d3726-8e9e-45a0-907d-461f5009e70a",
+              "valid_from": "2026-10-21T06:49:08.415859+00:00",
+              "value": "Alice (Frontend lead), Bob (Backend), Erin (QA)",
+              "why_changed": "Erin joined",
+              "impact_expected": null,
+              "provenance": "standup",
+              "operation": null
+            }
+          }
+        },
+        "topic_history": [
+          {
+            "ts": "2026-10-21T06:49:07.437715+00:00",
+            "kind": "created",
+            "detail": {
+              "title": "Website Redesign 67fbbacf3c first"
+            }
+          }
+        ],
+        "created_at": "2026-10-21T06:49:07.437715+00:00",
+        "updated_at": "2026-10-21T06:49:17.233298+00:00",
+        "revision_flag": null
+      },
+      "rejected": null,
+      "error": null,
+      "latency_ms": 3.745,
+      "finished_at": "2026-10-21T06:49:19.061282+00:00"
+    },
+    {
+      "seq": 52,
+      "kind": "read",
+      "op": "read_state",
+      "request": null,
+      "started_at": "2026-10-21T06:49:19.065084+00:00",
+      "response": {
+        "topics": 14,
+        "edges": 5
+      },
+      "rejected": null,
+      "error": null,
+      "latency_ms": 75.395,
+      "finished_at": "2026-10-21T06:49:19.140494+00:00"
+    }
+  ],
+  "waits": [
+    {
+      "seq": 38,
+      "kind": "wait",
+      "op": "wait_until",
+      "request": {
+        "timeout_s": 15.0,
+        "interval_s": 0.05
+      },
+      "started_at": "2026-10-21T06:49:08.963490+00:00",
+      "response": {
+        "elapsed_s": 0.005,
+        "timed_out": false
+      },
+      "rejected": null,
+      "error": null,
+      "latency_ms": 5.081,
+      "finished_at": "2026-10-21T06:49:08.968577+00:00"
+    }
+  ],
+  "state": {
+    "topics": {
+      "1a2c4e22-90c9-4ab6-b825-62e620d275ae": {
+        "id": "1a2c4e22-90c9-4ab6-b825-62e620d275ae",
+        "title": "Website Redesign",
+        "summary": "Project to redesign the company website: deadline, status and team.",
+        "topic_kind": "project",
+        "salience": 1.2000000000000002,
+        "failed_salience": 0.0,
+        "archived": false,
+        "fields": {
+          "Deadline": {
+            "field_type": "string",
+            "ref_topic_id": null,
+            "history": [
+              {
+                "id": "4ed960e4-d84a-497e-8195-1fa537ed3ae9",
+                "valid_from": "2026-10-21T06:49:08.725719+00:00",
+                "value": "April 20",
+                "why_changed": null,
+                "impact_expected": null,
+                "provenance": "chat-reexplanation",
+                "operation": null
+              }
+            ],
+            "current": {
+              "id": "4ed960e4-d84a-497e-8195-1fa537ed3ae9",
+              "valid_from": "2026-10-21T06:49:08.725719+00:00",
+              "value": "April 20",
+              "why_changed": null,
+              "impact_expected": null,
+              "provenance": "chat-reexplanation",
+              "operation": null
+            }
+          },
+          "Status": {
+            "field_type": "string",
+            "ref_topic_id": null,
+            "history": [
+              {
+                "id": "779d4b98-d118-43cd-a6a0-df4ba3faa977",
+                "valid_from": "2026-10-21T06:49:08.617331+00:00",
+                "value": "Complete",
+                "why_changed": null,
+                "impact_expected": null,
+                "provenance": "standup",
+                "operation": null
+              },
+              {
+                "id": "5620669c-7e30-4b10-a3a0-c04e4d3570be",
+                "valid_from": "2026-10-21T06:49:08.475644+00:00",
+                "value": "In progress",
+                "why_changed": null,
+                "impact_expected": null,
+                "provenance": "standup",
+                "operation": null
+              },
+              {
+                "id": "aeefcb4c-ad84-4839-8769-18e01317c2fd",
+                "valid_from": "2026-10-21T06:49:07.493383+00:00",
+                "value": "Planning",
+                "why_changed": null,
+                "impact_expected": null,
+                "provenance": "kickoff-notes",
+                "operation": null
+              }
+            ],
+            "current": {
+              "id": "779d4b98-d118-43cd-a6a0-df4ba3faa977",
+              "valid_from": "2026-10-21T06:49:08.617331+00:00",
+              "value": "Complete",
+              "why_changed": null,
+              "impact_expected": null,
+              "provenance": "standup",
+              "operation": null
+            }
+          },
+          "Team": {
+            "field_type": "string",
+            "ref_topic_id": null,
+            "history": [
+              {
+                "id": "6c1d3726-8e9e-45a0-907d-461f5009e70a",
+                "valid_from": "2026-10-21T06:49:08.415859+00:00",
+                "value": "Alice (Frontend lead), Bob (Backend), Erin (QA)",
+                "why_changed": "Erin joined",
+                "impact_expected": null,
+                "provenance": "standup",
+                "operation": null
+              },
+              {
+                "id": "03166aa8-ecf2-4e90-8e50-4951e23d4827",
+                "valid_from": "2026-10-21T06:49:07.525669+00:00",
+                "value": "Alice (Frontend), Bob (Backend)",
+                "why_changed": null,
+                "impact_expected": null,
+                "provenance": "kickoff-notes",
+                "operation": null
+              }
+            ],
+            "current": {
+              "id": "6c1d3726-8e9e-45a0-907d-461f5009e70a",
+              "valid_from": "2026-10-21T06:49:08.415859+00:00",
+              "value": "Alice (Frontend lead), Bob (Backend), Erin (QA)",
+              "why_changed": "Erin joined",
+              "impact_expected": null,
+              "provenance": "standup",
+              "operation": null
+            }
+          }
+        },
+        "topic_history": [
+          {
+            "ts": "2026-10-21T06:49:07.437715+00:00",
+            "kind": "created",
+            "detail": {
+              "title": "Website Redesign 67fbbacf3c first"
+            }
+          }
+        ],
+        "created_at": "2026-10-21T06:49:07.437715+00:00",
+        "updated_at": "2026-10-21T06:49:17.233298+00:00",
+        "revision_flag": null
+      },
+      "900d9a82-9f82-4ae2-991f-9d1e5bf48c0c": {
+        "id": "900d9a82-9f82-4ae2-991f-9d1e5bf48c0c",
+        "title": "Lunch Preferences",
+        "summary": "What the team likes to eat when ordering lunch together.",
+        "topic_kind": "note",
+        "salience": 1.0,
+        "failed_salience": 0.0,
+        "archived": false,
+        "fields": {
+          "Favorite cuisine": {
+            "field_type": "string",
+            "ref_topic_id": null,
+            "history": [
+              {
+                "id": "64795e93-0f6b-4b4b-8e24-052796a9c215",
+                "valid_from": "2026-10-21T06:49:08.694728+00:00",
+                "value": "Mexican",
+                "why_changed": "tired of Thai",
+                "impact_expected": null,
+                "provenance": "chat",
+                "operation": null
+              },
+              {
+                "id": "9e45a576-fea5-4306-95e7-5262a7a3181e",
+                "valid_from": "2026-10-21T06:49:07.568257+00:00",
+                "value": "Thai",
+                "why_changed": null,
+                "impact_expected": null,
+                "provenance": "chat",
+                "operation": null
+              }
+            ],
+            "current": {
+              "id": "64795e93-0f6b-4b4b-8e24-052796a9c215",
+              "valid_from": "2026-10-21T06:49:08.694728+00:00",
+              "value": "Mexican",
+              "why_changed": "tired of Thai",
+              "impact_expected": null,
+              "provenance": "chat",
+              "operation": null
+            }
+          },
+          "Dietary note": {
+            "field_type": "string",
+            "ref_topic_id": null,
+            "history": [
+              {
+                "id": "95685cb3-1fa2-4adf-a2b9-75fcae3b5557",
+                "valid_from": "2026-10-21T06:49:07.584767+00:00",
+                "value": "Two vegetarians",
+                "why_changed": null,
+                "impact_expected": null,
+                "provenance": "chat",
+                "operation": null
+              }
+            ],
+            "current": {
+              "id": "95685cb3-1fa2-4adf-a2b9-75fcae3b5557",
+              "valid_from": "2026-10-21T06:49:07.584767+00:00",
+              "value": "Two vegetarians",
+              "why_changed": null,
+              "impact_expected": null,
+              "provenance": "chat",
+              "operation": null
+            }
+          }
+        },
+        "topic_history": [
+          {
+            "ts": "2026-10-21T06:49:07.559687+00:00",
+            "kind": "created",
+            "detail": {
+              "title": "Lunch Preferences"
+            }
+          }
+        ],
+        "created_at": "2026-10-21T06:49:07.559687+00:00",
+        "updated_at": "2026-10-21T06:49:08.714246+00:00",
+        "revision_flag": null
+      },
+      "0e7b9e70-98ea-43b4-a2dd-cf3ea69a644c": {
+        "id": "0e7b9e70-98ea-43b4-a2dd-cf3ea69a644c",
+        "title": "New Project Idea: Mobile App",
+        "summary": "Early brainstorm for a possible mobile app; nothing is planned yet.",
+        "topic_kind": "project",
+        "salience": 1.0,
+        "failed_salience": 0.0,
+        "archived": false,
+        "fields": {
+          "Status": {
+            "field_type": "string",
+            "ref_topic_id": null,
+            "history": [
+              {
+                "id": "f008af91-c555-41cf-9bf2-2ed08d6d5e92",
+                "valid_from": "2026-10-21T06:49:07.614961+00:00",
+                "value": "Brainstorming",
+                "why_changed": null,
+                "impact_expected": null,
+                "provenance": "chat",
+                "operation": null
+              }
+            ],
+            "current": {
+              "id": "f008af91-c555-41cf-9bf2-2ed08d6d5e92",
+              "valid_from": "2026-10-21T06:49:07.614961+00:00",
+              "value": "Brainstorming",
+              "why_changed": null,
+              "impact_expected": null,
+              "provenance": "chat",
+              "operation": null
+            }
+          },
+          "Owner": {
+            "field_type": "string",
+            "ref_topic_id": null,
+            "history": [
+              {
+                "id": "83337b8f-df08-4e78-9edb-d1ca3f9e5cfe",
+                "valid_from": "2026-10-21T06:49:07.631516+00:00",
+                "value": "Carol",
+                "why_changed": null,
+                "impact_expected": null,
+                "provenance": "chat",
+                "operation": null
+              }
+            ],
+            "current": {
+              "id": "83337b8f-df08-4e78-9edb-d1ca3f9e5cfe",
+              "valid_from": "2026-10-21T06:49:07.631516+00:00",
+              "value": "Carol",
+              "why_changed": null,
+              "impact_expected": null,
+              "provenance": "chat",
+              "operation": null
+            }
+          }
+        },
+        "topic_history": [
+          {
+            "ts": "2026-10-21T06:49:07.606598+00:00",
+            "kind": "created",
+            "detail": {
+              "title": "New Project Idea: Mobile App"
+            }
+          }
+        ],
+        "created_at": "2026-10-21T06:49:07.606598+00:00",
+        "updated_at": "2026-10-21T06:49:07.640406+00:00",
+        "revision_flag": null
+      },
+      "cc86eb36-a1e9-4577-8484-4f5151370233": {
+        "id": "cc86eb36-a1e9-4577-8484-4f5151370233",
+        "title": "Weekly Sync Meeting",
+        "summary": "Recurring weekly team meeting: day, time and room.",
+        "topic_kind": "meeting",
+        "salience": 1.0,
+        "failed_salience": 0.0,
+        "archived": false,
+        "fields": {
+          "Day": {
+            "field_type": "string",
+            "ref_topic_id": null,
+            "history": [
+              {
+                "id": "95d04055-4f4b-4ddb-a501-dfce6167e5da",
+                "valid_from": "2026-10-21T06:49:07.678042+00:00",
+                "value": "Tuesday",
+                "why_changed": null,
+                "impact_expected": null,
+                "provenance": "calendar",
+                "operation": null
+              }
+            ],
+            "current": {
+              "id": "95d04055-4f4b-4ddb-a501-dfce6167e5da",
+              "valid_from": "2026-10-21T06:49:07.678042+00:00",
+              "value": "Tuesday",
+              "why_changed": null,
+              "impact_expected": null,
+              "provenance": "calendar",
+              "operation": null
+            }
+          },
+          "Time": {
+            "field_type": "string",
+            "ref_topic_id": null,
+            "history": [
+              {
+                "id": "ddc7e9fa-a0a8-4035-9bb7-84623167707f",
+                "valid_from": "2026-10-21T06:49:08.445714+00:00",
+                "value": "11:30",
+                "why_changed": "clash with the design review",
+                "impact_expected": null,
+                "provenance": "calendar",
+                "operation": null
+              },
+              {
+                "id": "abd49c19-301a-4d3d-a873-51f4c28ea18b",
+                "valid_from": "2026-10-21T06:49:07.693764+00:00",
+                "value": "10:00",
+                "why_changed": null,
+                "impact_expected": null,
+                "provenance": "calendar",
+                "operation": null
+              }
+            ],
+            "current": {
+              "id": "ddc7e9fa-a0a8-4035-9bb7-84623167707f",
+              "valid_from": "2026-10-21T06:49:08.445714+00:00",
+              "value": "11:30",
+              "why_changed": "clash with the design review",
+              "impact_expected": null,
+              "provenance": "calendar",
+              "operation": null
+            }
+          },
+          "Location": {
+            "field_type": "string",
+            "ref_topic_id": null,
+            "history": [
+              {
+                "id": "36340d57-8021-4f54-89ec-705693af9c86",
+                "valid_from": "2026-10-21T06:49:07.710633+00:00",
+                "value": "Room 4B",
+                "why_changed": null,
+                "impact_expected": null,
+                "provenance": "calendar",
+                "operation": null
+              }
+            ],
+            "current": {
+              "id": "36340d57-8021-4f54-89ec-705693af9c86",
+              "valid_from": "2026-10-21T06:49:07.710633+00:00",
+              "value": "Room 4B",
+              "why_changed": null,
+              "impact_expected": null,
+              "provenance": "calendar",
+              "operation": null
+            }
+          }
+        },
+        "topic_history": [
+          {
+            "ts": "2026-10-21T06:49:07.669827+00:00",
+            "kind": "created",
+            "detail": {
+              "title": "Weekly Sync Meeting"
+            }
+          }
+        ],
+        "created_at": "2026-10-21T06:49:07.669827+00:00",
+        "updated_at": "2026-10-21T06:49:08.464878+00:00",
+        "revision_flag": null
+      },
+      "d150d9a8-2b87-4702-967a-52e9198e1bd8": {
+        "id": "d150d9a8-2b87-4702-967a-52e9198e1bd8",
+        "title": "Redesign Budget",
+        "summary": "Money approved for the website redesign and who signs it off.",
+        "topic_kind": "budget",
+        "salience": 1.0,
+        "failed_salience": 0.0,
+        "archived": false,
+        "fields": {
+          "Total": {
+            "field_type": "string",
+            "ref_topic_id": null,
+            "history": [
+              {
+                "id": "40f8e779-07bf-4d46-b309-6e97304f023f",
+                "valid_from": "2026-10-21T06:49:08.296883+00:00",
+                "value": "$46,500",
+                "why_changed": "vendor rush fee",
+                "impact_expected": null,
+                "provenance": "finance-email",
+                "operation": null
+              },
+              {
+                "id": "3f25d63e-0a09-49a5-8c1a-518d2c9d2cd0",
+                "valid_from": "2026-10-21T06:49:07.741511+00:00",
+                "value": "$40,000",
+                "why_changed": null,
+                "impact_expected": null,
+                "provenance": "finance-email",
+                "operation": null
+              }
+            ],
+            "current": {
+              "id": "40f8e779-07bf-4d46-b309-6e97304f023f",
+              "valid_from": "2026-10-21T06:49:08.296883+00:00",
+              "value": "$46,500",
+              "why_changed": "vendor rush fee",
+              "impact_expected": null,
+              "provenance": "finance-email",
+              "operation": null
+            }
+          },
+          "Approver": {
+            "field_type": "string",
+            "ref_topic_id": null,
+            "history": [
+              {
+                "id": "896572b4-4369-4720-aa6e-f190b9a91004",
+                "valid_from": "2026-10-21T06:49:07.758081+00:00",
+                "value": "Dana",
+                "why_changed": null,
+                "impact_expected": null,
+                "provenance": "finance-email",
+                "operation": null
+              }
+            ],
+            "current": {
+              "id": "896572b4-4369-4720-aa6e-f190b9a91004",
+              "valid_from": "2026-10-21T06:49:07.758081+00:00",
+              "value": "Dana",
+              "why_changed": null,
+              "impact_expected": null,
+              "provenance": "finance-email",
+              "operation": null
+            }
+          }
+        },
+        "topic_history": [
+          {
+            "ts": "2026-10-21T06:49:07.733101+00:00",
+            "kind": "created",
+            "detail": {
+              "title": "Redesign Budget"
+            }
+          }
+        ],
+        "created_at": "2026-10-21T06:49:07.733101+00:00",
+        "updated_at": "2026-10-21T06:49:08.316366+00:00",
+        "revision_flag": null
+      },
+      "c3bae8d0-4838-41ea-b17d-f510ee99f825": {
+        "id": "c3bae8d0-4838-41ea-b17d-f510ee99f825",
+        "title": "Design Vendor: Pixel Forge",
+        "summary": "External agency producing the website mockups.",
+        "topic_kind": "vendor",
+        "salience": 1.0,
+        "failed_salience": 0.0,
+        "archived": false,
+        "fields": {
+          "Mockups due": {
+            "field_type": "string",
+            "ref_topic_id": null,
+            "history": [
+              {
+                "id": "d7387cdb-dd16-4564-93ab-41234ed35294",
+                "valid_from": "2026-10-21T06:49:08.143798+00:00",
+                "value": "March 22",
+                "why_changed": "vendor delay",
+                "impact_expected": null,
+                "provenance": "vendor-email",
+                "operation": null
+              },
+              {
+                "id": "38bc43ab-684b-44d1-8328-8e964767add8",
+                "valid_from": "2026-10-21T06:49:07.798642+00:00",
+                "value": "February 15",
+                "why_changed": null,
+                "impact_expected": null,
+                "provenance": "vendor-email",
+                "operation": null
+              }
+            ],
+            "current": {
+              "id": "d7387cdb-dd16-4564-93ab-41234ed35294",
+              "valid_from": "2026-10-21T06:49:08.143798+00:00",
+              "value": "March 22",
+              "why_changed": "vendor delay",
+              "impact_expected": null,
+              "provenance": "vendor-email",
+              "operation": null
+            }
+          },
+          "Contact": {
+            "field_type": "string",
+            "ref_topic_id": null,
+            "history": [
+              {
+                "id": "94fa6f6a-4d29-42a8-81a9-1f46bf746246",
+                "valid_from": "2026-10-21T06:49:07.815053+00:00",
+                "value": "Priya",
+                "why_changed": null,
+                "impact_expected": null,
+                "provenance": "vendor-email",
+                "operation": null
+              }
+            ],
+            "current": {
+              "id": "94fa6f6a-4d29-42a8-81a9-1f46bf746246",
+              "valid_from": "2026-10-21T06:49:07.815053+00:00",
+              "value": "Priya",
+              "why_changed": null,
+              "impact_expected": null,
+              "provenance": "vendor-email",
+              "operation": null
+            }
+          },
+          "Delivery status": {
+            "field_type": "string",
+            "ref_topic_id": null,
+            "history": [
+              {
+                "id": "480b3b7a-5ed2-4ed3-88e8-42bbd047d519",
+                "valid_from": "2026-10-21T06:49:08.585563+00:00",
+                "value": "Delivered",
+                "why_changed": null,
+                "impact_expected": null,
+                "provenance": "vendor-email",
+                "operation": null
+              },
+              {
+                "id": "f442c361-ab7b-4a91-9276-50348723c30d",
+                "valid_from": "2026-10-21T06:49:07.833927+00:00",
+                "value": "Pending",
+                "why_changed": null,
+                "impact_expected": null,
+                "provenance": "vendor-email",
+                "operation": null
+              }
+            ],
+            "current": {
+              "id": "480b3b7a-5ed2-4ed3-88e8-42bbd047d519",
+              "valid_from": "2026-10-21T06:49:08.585563+00:00",
+              "value": "Delivered",
+              "why_changed": null,
+              "impact_expected": null,
+              "provenance": "vendor-email",
+              "operation": null
+            }
+          }
+        },
+        "topic_history": [
+          {
+            "ts": "2026-10-21T06:49:07.790198+00:00",
+            "kind": "created",
+            "detail": {
+              "title": "Design Vendor: Pixel Forge"
+            }
+          }
+        ],
+        "created_at": "2026-10-21T06:49:07.790198+00:00",
+        "updated_at": "2026-10-21T06:49:08.604888+00:00",
+        "revision_flag": null
+      },
+      "349ebf34-c425-4b3d-9713-122e3f527c44": {
+        "id": "349ebf34-c425-4b3d-9713-122e3f527c44",
+        "title": "Redesign Milestones",
+        "summary": "Dated milestones that depend on the Website Redesign deadline.",
+        "topic_kind": "schedule",
+        "salience": 1.0,
+        "failed_salience": 0.0,
+        "archived": false,
+        "fields": {
+          "Content freeze": {
+            "field_type": "string",
+            "ref_topic_id": null,
+            "history": [
+              {
+                "id": "678f7dad-1186-4f11-bcd4-97cb329f00d8",
+                "valid_from": "2026-10-21T06:49:08.266504+00:00",
+                "value": "April 6",
+                "why_changed": "deadline moved",
+                "impact_expected": null,
+                "provenance": "pm-email",
+                "operation": null
+              },
+              {
+                "id": "efc8bcb1-7ecf-49d8-9b84-8e64473f59c6",
+                "valid_from": "2026-10-21T06:49:07.863709+00:00",
+                "value": "March 1",
+                "why_changed": null,
+                "impact_expected": null,
+                "provenance": "pm-email",
+                "operation": null
+              }
+            ],
+            "current": {
+              "id": "678f7dad-1186-4f11-bcd4-97cb329f00d8",
+              "valid_from": "2026-10-21T06:49:08.266504+00:00",
+              "value": "April 6",
+              "why_changed": "deadline moved",
+              "impact_expected": null,
+              "provenance": "pm-email",
+              "operation": null
+            }
+          },
+          "User testing start": {
+            "field_type": "string",
+            "ref_topic_id": null,
+            "history": [
+              {
+                "id": "3de60098-5ecf-43eb-bf47-2d27123ee27f",
+                "valid_from": "2026-10-21T06:49:08.235802+00:00",
+                "value": "April 13",
+                "why_changed": "deadline moved",
+                "impact_expected": null,
+                "provenance": "pm-email",
+                "operation": null
+              },
+              {
+                "id": "27a64a61-85c4-4e4e-a73f-2ab02a55d4a5",
+                "valid_from": "2026-10-21T06:49:07.879063+00:00",
+                "value": "March 8",
+                "why_changed": null,
+                "impact_expected": null,
+                "provenance": "pm-email",
+                "operation": null
+              }
+            ],
+            "current": {
+              "id": "3de60098-5ecf-43eb-bf47-2d27123ee27f",
+              "valid_from": "2026-10-21T06:49:08.235802+00:00",
+              "value": "April 13",
+              "why_changed": "deadline moved",
+              "impact_expected": null,
+              "provenance": "pm-email",
+              "operation": null
+            }
+          },
+          "Launch": {
+            "field_type": "string",
+            "ref_topic_id": null,
+            "history": [
+              {
+                "id": "e5ca03dc-1cd9-4e8f-adb2-211c0d04b449",
+                "valid_from": "2026-10-21T06:49:08.204941+00:00",
+                "value": "April 20",
+                "why_changed": "deadline moved",
+                "impact_expected": null,
+                "provenance": "pm-email",
+                "operation": null
+              },
+              {
+                "id": "9f5cb148-5534-4312-86b7-1c8d1a78fdad",
+                "valid_from": "2026-10-21T06:49:07.894351+00:00",
+                "value": "March 15",
+                "why_changed": null,
+                "impact_expected": null,
+                "provenance": "pm-email",
+                "operation": null
+              }
+            ],
+            "current": {
+              "id": "e5ca03dc-1cd9-4e8f-adb2-211c0d04b449",
+              "valid_from": "2026-10-21T06:49:08.204941+00:00",
+              "value": "April 20",
+              "why_changed": "deadline moved",
+              "impact_expected": null,
+              "provenance": "pm-email",
+              "operation": null
+            }
+          }
+        },
+        "topic_history": [
+          {
+            "ts": "2026-10-21T06:49:07.855955+00:00",
+            "kind": "created",
+            "detail": {
+              "title": "Redesign Milestones"
+            }
+          }
+        ],
+        "created_at": "2026-10-21T06:49:07.855955+00:00",
+        "updated_at": "2026-10-21T06:49:08.285307+00:00",
+        "revision_flag": null
+      },
+      "dc6aa9b1-1add-49f2-b834-50bfe88b52f0": {
+        "id": "dc6aa9b1-1add-49f2-b834-50bfe88b52f0",
+        "title": "Brand Guidelines",
+        "summary": "Colours and logo files the website has to follow.",
+        "topic_kind": "guidelines",
+        "salience": 1.0,
+        "failed_salience": 0.0,
+        "archived": false,
+        "fields": {
+          "Primary color": {
+            "field_type": "string",
+            "ref_topic_id": null,
+            "history": [
+              {
+                "id": "c01018dd-e62f-4720-bdd6-5a1c8d7401e4",
+                "valid_from": "2026-10-21T06:49:07.933164+00:00",
+                "value": "#1A73E8",
+                "why_changed": null,
+                "impact_expected": null,
+                "provenance": "design-wiki",
+                "operation": null
+              }
+            ],
+            "current": {
+              "id": "c01018dd-e62f-4720-bdd6-5a1c8d7401e4",
+              "valid_from": "2026-10-21T06:49:07.933164+00:00",
+              "value": "#1A73E8",
+              "why_changed": null,
+              "impact_expected": null,
+              "provenance": "design-wiki",
+              "operation": null
+            }
+          },
+          "Logo version": {
+            "field_type": "string",
+            "ref_topic_id": null,
+            "history": [
+              {
+                "id": "e9b05511-8bae-4790-ab8d-ac795a58834e",
+                "valid_from": "2026-10-21T06:49:07.948209+00:00",
+                "value": "v3",
+                "why_changed": null,
+                "impact_expected": null,
+                "provenance": "design-wiki",
+                "operation": null
+              }
+            ],
+            "current": {
+              "id": "e9b05511-8bae-4790-ab8d-ac795a58834e",
+              "valid_from": "2026-10-21T06:49:07.948209+00:00",
+              "value": "v3",
+              "why_changed": null,
+              "impact_expected": null,
+              "provenance": "design-wiki",
+              "operation": null
+            }
+          }
+        },
+        "topic_history": [
+          {
+            "ts": "2026-10-21T06:49:07.925051+00:00",
+            "kind": "created",
+            "detail": {
+              "title": "Brand Guidelines"
+            }
+          }
+        ],
+        "created_at": "2026-10-21T06:49:07.925051+00:00",
+        "updated_at": "2026-10-21T06:49:07.956288+00:00",
+        "revision_flag": null
+      },
+      "0702842d-eb9a-4d29-b43a-558266604e06": {
+        "id": "0702842d-eb9a-4d29-b43a-558266604e06",
+        "title": "Website Redesign Phase 2",
+        "summary": "Follow-up project after the Website Redesign: deadline, status and team.",
+        "topic_kind": "project",
+        "salience": 1.0,
+        "failed_salience": 0.0,
+        "archived": false,
+        "fields": {
+          "Deadline": {
+            "field_type": "string",
+            "ref_topic_id": null,
+            "history": [
+              {
+                "id": "2791933f-4bd6-4035-8158-b207eb69fa3f",
+                "valid_from": "2026-10-21T06:49:08.554958+00:00",
+                "value": "October 15",
+                "why_changed": "waiting for phase 1",
+                "impact_expected": null,
+                "provenance": "pm-email",
+                "operation": null
+              },
+              {
+                "id": "8abeca6b-4028-4fdc-b311-7a981f92539e",
+                "valid_from": "2026-10-21T06:49:07.977475+00:00",
+                "value": "September 30",
+                "why_changed": null,
+                "impact_expected": null,
+                "provenance": "pm-email",
+                "operation": null
+              }
+            ],
+            "current": {
+              "id": "2791933f-4bd6-4035-8158-b207eb69fa3f",
+              "valid_from": "2026-10-21T06:49:08.554958+00:00",
+              "value": "October 15",
+              "why_changed": "waiting for phase 1",
+              "impact_expected": null,
+              "provenance": "pm-email",
+              "operation": null
+            }
+          },
+          "Status": {
+            "field_type": "string",
+            "ref_topic_id": null,
+            "history": [
+              {
+                "id": "e398038f-34f8-4392-807f-75b1bbe2f090",
+                "valid_from": "2026-10-21T06:49:07.992833+00:00",
+                "value": "Not started",
+                "why_changed": null,
+                "impact_expected": null,
+                "provenance": "pm-email",
+                "operation": null
+              }
+            ],
+            "current": {
+              "id": "e398038f-34f8-4392-807f-75b1bbe2f090",
+              "valid_from": "2026-10-21T06:49:07.992833+00:00",
+              "value": "Not started",
+              "why_changed": null,
+              "impact_expected": null,
+              "provenance": "pm-email",
+              "operation": null
+            }
+          },
+          "Team": {
+            "field_type": "string",
+            "ref_topic_id": null,
+            "history": [
+              {
+                "id": "f12919d5-602f-49d0-9461-811095914de2",
+                "valid_from": "2026-10-21T06:49:08.008358+00:00",
+                "value": "Alice (Frontend), Carol (Design)",
+                "why_changed": null,
+                "impact_expected": null,
+                "provenance": "pm-email",
+                "operation": null
+              }
+            ],
+            "current": {
+              "id": "f12919d5-602f-49d0-9461-811095914de2",
+              "valid_from": "2026-10-21T06:49:08.008358+00:00",
+              "value": "Alice (Frontend), Carol (Design)",
+              "why_changed": null,
+              "impact_expected": null,
+              "provenance": "pm-email",
+              "operation": null
+            }
+          }
+        },
+        "topic_history": [
+          {
+            "ts": "2026-10-21T06:49:07.969333+00:00",
+            "kind": "created",
+            "detail": {
+              "title": "Website Redesign Phase 2"
+            }
+          }
+        ],
+        "created_at": "2026-10-21T06:49:07.969333+00:00",
+        "updated_at": "2026-10-21T06:49:08.574383+00:00",
+        "revision_flag": null
+      },
+      "f0304938-06c6-462e-94af-50ffa7b3a255": {
+        "id": "f0304938-06c6-462e-94af-50ffa7b3a255",
+        "title": "Marketing Budget",
+        "summary": "Money approved for the website launch campaign and who signs it off.",
+        "topic_kind": "budget",
+        "salience": 1.0,
+        "failed_salience": 0.0,
+        "archived": false,
+        "fields": {
+          "Total": {
+            "field_type": "string",
+            "ref_topic_id": null,
+            "history": [
+              {
+                "id": "d4155f8d-164e-416d-af8c-0910a011f62c",
+                "valid_from": "2026-10-21T06:49:08.047501+00:00",
+                "value": "$15,000",
+                "why_changed": null,
+                "impact_expected": null,
+                "provenance": "finance-email",
+                "operation": null
+              }
+            ],
+            "current": {
+              "id": "d4155f8d-164e-416d-af8c-0910a011f62c",
+              "valid_from": "2026-10-21T06:49:08.047501+00:00",
+              "value": "$15,000",
+              "why_changed": null,
+              "impact_expected": null,
+              "provenance": "finance-email",
+              "operation": null
+            }
+          },
+          "Approver": {
+            "field_type": "string",
+            "ref_topic_id": null,
+            "history": [
+              {
+                "id": "94009612-60e6-4b29-ba42-7e801ceaacfe",
+                "valid_from": "2026-10-21T06:49:08.064002+00:00",
+                "value": "Frank",
+                "why_changed": null,
+                "impact_expected": null,
+                "provenance": "finance-email",
+                "operation": null
+              }
+            ],
+            "current": {
+              "id": "94009612-60e6-4b29-ba42-7e801ceaacfe",
+              "valid_from": "2026-10-21T06:49:08.064002+00:00",
+              "value": "Frank",
+              "why_changed": null,
+              "impact_expected": null,
+              "provenance": "finance-email",
+              "operation": null
+            }
+          }
+        },
+        "topic_history": [
+          {
+            "ts": "2026-10-21T06:49:08.040414+00:00",
+            "kind": "created",
+            "detail": {
+              "title": "Marketing Budget"
+            }
+          }
+        ],
+        "created_at": "2026-10-21T06:49:08.040414+00:00",
+        "updated_at": "2026-10-21T06:49:08.072840+00:00",
+        "revision_flag": null
+      },
+      "7c86a2d6-9d0e-4c17-bc19-8c9537ea50b5": {
+        "id": "7c86a2d6-9d0e-4c17-bc19-8c9537ea50b5",
+        "title": "Design Review Meeting",
+        "summary": "Recurring design review meeting: day, time and room.",
+        "topic_kind": "meeting",
+        "salience": 1.0,
+        "failed_salience": 0.0,
+        "archived": false,
+        "fields": {
+          "Day": {
+            "field_type": "string",
+            "ref_topic_id": null,
+            "history": [
+              {
+                "id": "dfc46b0e-17e8-4ecb-8918-71264d87987f",
+                "valid_from": "2026-10-21T06:49:08.093195+00:00",
+                "value": "Thursday",
+                "why_changed": null,
+                "impact_expected": null,
+                "provenance": "calendar",
+                "operation": null
+              }
+            ],
+            "current": {
+              "id": "dfc46b0e-17e8-4ecb-8918-71264d87987f",
+              "valid_from": "2026-10-21T06:49:08.093195+00:00",
+              "value": "Thursday",
+              "why_changed": null,
+              "impact_expected": null,
+              "provenance": "calendar",
+              "operation": null
+            }
+          },
+          "Time": {
+            "field_type": "string",
+            "ref_topic_id": null,
+            "history": [
+              {
+                "id": "0b823abd-3a3a-4b23-88b8-3dbf0f0c4067",
+                "valid_from": "2026-10-21T06:49:08.108444+00:00",
+                "value": "14:00",
+                "why_changed": null,
+                "impact_expected": null,
+                "provenance": "calendar",
+                "operation": null
+              }
+            ],
+            "current": {
+              "id": "0b823abd-3a3a-4b23-88b8-3dbf0f0c4067",
+              "valid_from": "2026-10-21T06:49:08.108444+00:00",
+              "value": "14:00",
+              "why_changed": null,
+              "impact_expected": null,
+              "provenance": "calendar",
+              "operation": null
+            }
+          },
+          "Location": {
+            "field_type": "string",
+            "ref_topic_id": null,
+            "history": [
+              {
+                "id": "bd81efbf-3ded-4387-a159-3cbd1b6ba4b9",
+                "valid_from": "2026-10-21T06:49:08.123635+00:00",
+                "value": "Room 2A",
+                "why_changed": null,
+                "impact_expected": null,
+                "provenance": "calendar",
+                "operation": null
+              }
+            ],
+            "current": {
+              "id": "bd81efbf-3ded-4387-a159-3cbd1b6ba4b9",
+              "valid_from": "2026-10-21T06:49:08.123635+00:00",
+              "value": "Room 2A",
+              "why_changed": null,
+              "impact_expected": null,
+              "provenance": "calendar",
+              "operation": null
+            }
+          }
+        },
+        "topic_history": [
+          {
+            "ts": "2026-10-21T06:49:08.085567+00:00",
+            "kind": "created",
+            "detail": {
+              "title": "Design Review Meeting"
+            }
+          }
+        ],
+        "created_at": "2026-10-21T06:49:08.085567+00:00",
+        "updated_at": "2026-10-21T06:49:08.132510+00:00",
+        "revision_flag": null
+      },
+      "309c5d00-c53d-44e3-a030-095fa20362af": {
+        "id": "309c5d00-c53d-44e3-a030-095fa20362af",
+        "title": "Alice",
+        "summary": "Alice, frontend developer on the Website Redesign team.",
+        "topic_kind": "person",
+        "salience": 1.0,
+        "failed_salience": 0.0,
+        "archived": false,
+        "fields": {
+          "Role": {
+            "field_type": "string",
+            "ref_topic_id": null,
+            "history": [
+              {
+                "id": "7a422e20-9fca-4dbb-9a1e-0e8ecdb19192",
+                "valid_from": "2026-10-21T06:49:08.384704+00:00",
+                "value": "Frontend lead",
+                "why_changed": "promoted after the homepage prototype",
+                "impact_expected": null,
+                "provenance": "standup",
+                "operation": null
+              },
+              {
+                "id": "b93b6c62-d3fe-4f0a-811f-d20a843969fd",
+                "valid_from": "2026-10-21T06:49:08.338500+00:00",
+                "value": "Frontend developer",
+                "why_changed": null,
+                "impact_expected": null,
+                "provenance": "standup",
+                "operation": null
+              }
+            ],
+            "current": {
+              "id": "7a422e20-9fca-4dbb-9a1e-0e8ecdb19192",
+              "valid_from": "2026-10-21T06:49:08.384704+00:00",
+              "value": "Frontend lead",
+              "why_changed": "promoted after the homepage prototype",
+              "impact_expected": null,
+              "provenance": "standup",
+              "operation": null
+            }
+          },
+          "Working on": {
+            "field_type": "string",
+            "ref_topic_id": null,
+            "history": [
+              {
+                "id": "4c043e6a-fad5-42a7-a074-eb80072fe926",
+                "valid_from": "2026-10-21T06:49:08.354922+00:00",
+                "value": "Homepage prototype",
+                "why_changed": null,
+                "impact_expected": null,
+                "provenance": "standup",
+                "operation": null
+              }
+            ],
+            "current": {
+              "id": "4c043e6a-fad5-42a7-a074-eb80072fe926",
+              "valid_from": "2026-10-21T06:49:08.354922+00:00",
+              "value": "Homepage prototype",
+              "why_changed": null,
+              "impact_expected": null,
+              "provenance": "standup",
+              "operation": null
+            }
+          }
+        },
+        "topic_history": [
+          {
+            "ts": "2026-10-21T06:49:08.330183+00:00",
+            "kind": "created",
+            "detail": {
+              "title": "Alice"
+            }
+          }
+        ],
+        "created_at": "2026-10-21T06:49:08.330183+00:00",
+        "updated_at": "2026-10-21T06:49:08.404541+00:00",
+        "revision_flag": null
+      },
+      "83b643ba-66e7-4c87-908d-b3e8ff9e81b7": {
+        "id": "83b643ba-66e7-4c87-908d-b3e8ff9e81b7",
+        "title": "Website Analytics Report",
+        "summary": "Monthly traffic numbers for the current website.",
+        "topic_kind": "report",
+        "salience": 1.0,
+        "failed_salience": 0.0,
+        "archived": false,
+        "fields": {
+          "Monthly visitors": {
+            "field_type": "string",
+            "ref_topic_id": null,
+            "history": [
+              {
+                "id": "7ce37a54-5b0d-45fb-87d6-b5cee37ba718",
+                "valid_from": "2026-10-21T06:49:08.520120+00:00",
+                "value": "48,000",
+                "why_changed": null,
+                "impact_expected": null,
+                "provenance": "analytics-export",
+                "operation": null
+              }
+            ],
+            "current": {
+              "id": "7ce37a54-5b0d-45fb-87d6-b5cee37ba718",
+              "valid_from": "2026-10-21T06:49:08.520120+00:00",
+              "value": "48,000",
+              "why_changed": null,
+              "impact_expected": null,
+              "provenance": "analytics-export",
+              "operation": null
+            }
+          },
+          "Top page": {
+            "field_type": "string",
+            "ref_topic_id": null,
+            "history": [
+              {
+                "id": "f349f9de-5fb9-495a-be13-fdef974bbd73",
+                "valid_from": "2026-10-21T06:49:08.536088+00:00",
+                "value": "Pricing",
+                "why_changed": null,
+                "impact_expected": null,
+                "provenance": "analytics-export",
+                "operation": null
+              }
+            ],
+            "current": {
+              "id": "f349f9de-5fb9-495a-be13-fdef974bbd73",
+              "valid_from": "2026-10-21T06:49:08.536088+00:00",
+              "value": "Pricing",
+              "why_changed": null,
+              "impact_expected": null,
+              "provenance": "analytics-export",
+              "operation": null
+            }
+          }
+        },
+        "topic_history": [
+          {
+            "ts": "2026-10-21T06:49:08.511906+00:00",
+            "kind": "created",
+            "detail": {
+              "title": "Website Analytics Report"
+            }
+          }
+        ],
+        "created_at": "2026-10-21T06:49:08.511906+00:00",
+        "updated_at": "2026-10-21T06:49:08.544871+00:00",
+        "revision_flag": null
+      },
+      "4ed681d1-3235-4a68-8a77-ae74710b5dee": {
+        "id": "4ed681d1-3235-4a68-8a77-ae74710b5dee",
+        "title": "Backend Engineer Hiring",
+        "summary": "Open backend engineer position and the interview pipeline.",
+        "topic_kind": "hiring",
+        "salience": 1.0,
+        "failed_salience": 0.0,
+        "archived": false,
+        "fields": {
+          "Status": {
+            "field_type": "string",
+            "ref_topic_id": null,
+            "history": [
+              {
+                "id": "11c96398-96e8-4e1e-9f3a-3fba0d70a3ea",
+                "valid_from": "2026-10-21T06:49:08.659151+00:00",
+                "value": "Interviewing",
+                "why_changed": null,
+                "impact_expected": null,
+                "provenance": "recruiter-email",
+                "operation": null
+              }
+            ],
+            "current": {
+              "id": "11c96398-96e8-4e1e-9f3a-3fba0d70a3ea",
+              "valid_from": "2026-10-21T06:49:08.659151+00:00",
+              "value": "Interviewing",
+              "why_changed": null,
+              "impact_expected": null,
+              "provenance": "recruiter-email",
+              "operation": null
+            }
+          },
+          "Candidates": {
+            "field_type": "string",
+            "ref_topic_id": null,
+            "history": [
+              {
+                "id": "9889f095-a114-418b-ba08-2ce2d62e6a9f",
+                "valid_from": "2026-10-21T06:49:08.675004+00:00",
+                "value": "3",
+                "why_changed": null,
+                "impact_expected": null,
+                "provenance": "recruiter-email",
+                "operation": null
+              }
+            ],
+            "current": {
+              "id": "9889f095-a114-418b-ba08-2ce2d62e6a9f",
+              "valid_from": "2026-10-21T06:49:08.675004+00:00",
+              "value": "3",
+              "why_changed": null,
+              "impact_expected": null,
+              "provenance": "recruiter-email",
+              "operation": null
+            }
+          }
+        },
+        "topic_history": [
+          {
+            "ts": "2026-10-21T06:49:08.650975+00:00",
+            "kind": "created",
+            "detail": {
+              "title": "Backend Engineer Hiring"
+            }
+          }
+        ],
+        "created_at": "2026-10-21T06:49:08.650975+00:00",
+        "updated_at": "2026-10-21T06:49:08.683803+00:00",
+        "revision_flag": null
+      }
+    },
+    "edges": [
+      {
+        "from": "0e7b9e70-98ea-43b4-a2dd-cf3ea69a644c",
+        "to": "1a2c4e22-90c9-4ab6-b825-62e620d275ae",
+        "kind": "association",
+        "edge_type": "related"
+      },
+      {
+        "from": "d150d9a8-2b87-4702-967a-52e9198e1bd8",
+        "to": "1a2c4e22-90c9-4ab6-b825-62e620d275ae",
+        "kind": "association",
+        "edge_type": "related"
+      },
+      {
+        "from": "349ebf34-c425-4b3d-9713-122e3f527c44",
+        "to": "1a2c4e22-90c9-4ab6-b825-62e620d275ae",
+        "kind": "extension",
+        "edge_type": "related"
+      },
+      {
+        "from": "0702842d-eb9a-4d29-b43a-558266604e06",
+        "to": "1a2c4e22-90c9-4ab6-b825-62e620d275ae",
+        "kind": "association",
+        "edge_type": "related"
+      },
+      {
+        "from": "309c5d00-c53d-44e3-a030-095fa20362af",
+        "to": "1a2c4e22-90c9-4ab6-b825-62e620d275ae",
+        "kind": "extension",
+        "edge_type": "related"
+      }
+    ]
+  },
+  "state_error": null
+}

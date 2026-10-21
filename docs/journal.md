@@ -533,3 +533,27 @@ One entry per difficulty, newest last. Fields: expected, observed, evidence, res
 - Evidence: `pytest -q --durations=15` before the change (439 passed in 396.89 s, `tests/test_mutants.py::test_the_targeted_row_gives_a_non_pass_verdict[C1]` 214.31 s setup) and after (465 passed in 39.5 s).
 - Resolution: `tests/reference_runs.py` shortens the merge timeout, the forgetting waits and the as-of gap (none changes a verdict), shrinks the C5 ramp for mutants only, and computes the unmutated runs once per session for the reference GEM and mutation tests; `c2a` reads `merge.DEFAULT_TIMEOUT_S` at call time so a test shortens it once. No marker and no test left out of the hook; the mutation tests now also cover C2(d), C5-1, C6-2 and T1-T3, T6 and check which case broke and that controls still hold.
 - Lesson: when a suite is slow and the CPU is idle, look for timeouts that an in-process system always hits, before shrinking workloads.
+
+### Ticket 19: departures from the pre-registered expected verdicts
+- Date: 2026-10-21
+- Expected: the spec's "Expected verdicts" table and the "Beside the verdicts" list, written before the build.
+- Observed (run `20261021-085949`, 49 m 39 s, exit 0): every verdict cell matches the table. The departures are in the numbers beside the verdicts and in case counts: (1) C4 n/a counts: upstream and step 1 read 2 n/a cases (expected "1 n/a"; the dated merge is n/a on a system that accepts no `valid_from`), step 2 and 3 read 1 (as expected), the versioned row reads 3 n/a (expected "merge and forgetting cases n/a", two; the dated merge is the third); (2) the natural random-ID merge count on upstream was 11/20 (expected 10/20, F9), and 10/20, 9/20 on steps 1 and 2: three more draws of a random event, none is a result; (3) the change table lists case-level changes the spec did not predict: step 2 vs step 1 C4's dated-merge case n/a → broken and C6-1's as-of case n/a → held (both cases become runnable once the system accepts dates; the rows stay partial and pass); (4) the reference GEM's C5-2 reads 396 active at n=2000, expected "about 400" (consistent, not a departure of verdict); (5) the two-weeks take of record stored no start date, while F31's earlier take of record stored one (see the next entry).
+- Evidence: `demo/record/20261021-085949/scorecard.md` and `results.json`; findings F32–F35.
+- Resolution: the expectations in the spec are not rewritten; the C4 counts are the ones the 2026-10-21 entry "C4's expected verdict counts two n/a cases" predicted from the code, now measured.
+- Lesson: pre-register counts of n/a cases only after the cases are fixed; and a verdict that matches can hide a case count that does not. report: cite the measured n/a counts, not the pre-registered ones.
+
+### Ticket 19: the two-weeks take of record changed from a take that stored a start date to one that stored nothing
+- Date: 2026-10-21
+- Expected: the run of record's recorded two-weeks chat would show the stored start date F31 found in its take of record.
+- Observed: the run records the spec's case once (no seeding, router decides). W1 was routed `query`, wrote nothing and asked for details; W2 asked what "there" means. The scored case is the newest non-variant take, so the scorecard shows this take and not `two-weeks-20261021-033752`, which stored `job_start_date` = 2026-09-23 (F31, 1 of 7 spec-faithful takes).
+- Evidence: `demo/recordings/two-weeks-20261021-085949.json`, F35, F31.
+- Resolution: nothing re-recorded to get a better take; the take of record is the one the one recorded command made. F31's table (7 spec-faithful takes: 1 stored a date) stays the context to quote beside it. report: say the run of record's take stored nothing and cite F31 for the rate.
+- Lesson: the rule "newest non-variant take wins" turns a chat case into a draw of a 2B model; cite the takes, not one.
+
+### Ticket 19: the run of record held to plan, with no difficulty to log
+- Date: 2026-10-21
+- Expected: pre-flight checks pass and the command runs to the end.
+- Observed: clean tree; `MemState-patched` clean on `bitemporal` (`cb5d48c`); `git am patches/*.patch` onto `945d7c4` in a scratch worktree gave the tree `b10a8abbbef5225b90dd04503578978e6e5e80b9`, identical to `bitemporal`; ports 8765, 11434 and 11435 free before and after; the run took 2,979 s with both locks held and exited 0 with `chat_errors` empty. The recorded `command` in `results.json` omits the `/tmp/gem-suite-live.lock` wrapper (the runner records only what it knows: the repo's lock).
+- Evidence: `/tmp/t19/log` (run log), `demo/record/20261021-085949/results.json`.
+- Resolution: none needed.
+- Lesson: the recorded command is not the whole wrapper; the journal states the live lock.

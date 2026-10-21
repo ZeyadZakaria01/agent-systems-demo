@@ -1,0 +1,912 @@
+{
+  "system": "step1",
+  "label": "bitemporal patch step 1 (089b823, LadybugDB)",
+  "check": "T1",
+  "tag": "lapsed-override-2",
+  "describe": {
+    "system": "bitemporal patch step 1 (089b823, LadybugDB)",
+    "url": "http://127.0.0.1:8765",
+    "db_path": "/home/zeyad/work/agent-systems-demo/.runtime/gem-suite/20261021-085949/step1-t1-lapsed-override-2/memstate.lbug",
+    "commit": "089b823d2a44c65e539db51173770ee499ce80b2",
+    "engine": "MemState engine module: ladybug",
+    "keeps_history": true,
+    "accepts_error": null,
+    "declared_bound": {
+      "topics": 500,
+      "name": "topic_count_soft_limit"
+    },
+    "accepts_source": false,
+    "latency_comparable": true,
+    "source_surface": {
+      "request_properties": [],
+      "paths": []
+    },
+    "c6_clause_2_seeds": null,
+    "source_dir": "/home/zeyad/work/agent-systems-demo/MemState-patched/src",
+    "health_error": null,
+    "accepts": {
+      "valid_from": false,
+      "invalid_at": false,
+      "valid_at": false,
+      "recorded_at": false
+    }
+  },
+  "describe_error": null,
+  "started_at": "2026-10-21T06:24:09.311856+00:00",
+  "finished_at": "2026-10-21T06:24:11.510649+00:00",
+  "scored_transitions": [
+    {
+      "seq": 0,
+      "kind": "scored",
+      "op": "ingest",
+      "request": {
+        "placement": "new_topic",
+        "title": "Time probe: Lapsed scoped override, plain statement during the override",
+        "topic_kind": "time-probe",
+        "fields": [
+          {
+            "name": "Budget",
+            "value": "$50",
+            "provenance": "time-probe:lapsed-override-2"
+          }
+        ]
+      },
+      "started_at": "2026-10-21T06:24:10.964480+00:00",
+      "response": {
+        "topic_id": "ef6323f7-ce15-4f94-bb82-771e83734b12",
+        "applied": [
+          "created_topic:ef6323f7-ce15-4f94-bb82-771e83734b12",
+          "field:Budget"
+        ],
+        "version_ids": {
+          "Budget": "3177e148-aee5-4530-b0a9-975397541072"
+        },
+        "similar_topic_ids": []
+      },
+      "rejected": null,
+      "error": null,
+      "latency_ms": 447.237,
+      "finished_at": "2026-10-21T06:24:11.411736+00:00"
+    },
+    {
+      "seq": 1,
+      "kind": "scored",
+      "op": "ingest",
+      "request": {
+        "placement": "version_field",
+        "topic_id": "ef6323f7-ce15-4f94-bb82-771e83734b12",
+        "fields": [
+          {
+            "name": "Budget",
+            "value": "$80",
+            "provenance": "time-probe:lapsed-override-2"
+          }
+        ]
+      },
+      "started_at": "2026-10-21T06:24:11.411749+00:00",
+      "response": {
+        "topic_id": "ef6323f7-ce15-4f94-bb82-771e83734b12",
+        "applied": [
+          "version:Budget"
+        ],
+        "version_ids": {
+          "Budget": "6a3491f1-fcdd-4164-adab-161d303e2847"
+        },
+        "similar_topic_ids": []
+      },
+      "rejected": null,
+      "error": null,
+      "latency_ms": 29.22,
+      "finished_at": "2026-10-21T06:24:11.440979+00:00"
+    },
+    {
+      "seq": 2,
+      "kind": "scored",
+      "op": "ingest",
+      "request": {
+        "placement": "version_field",
+        "topic_id": "ef6323f7-ce15-4f94-bb82-771e83734b12",
+        "fields": [
+          {
+            "name": "Budget",
+            "value": "$100",
+            "provenance": "time-probe:lapsed-override-2"
+          }
+        ]
+      },
+      "started_at": "2026-10-21T06:24:11.440991+00:00",
+      "response": {
+        "topic_id": "ef6323f7-ce15-4f94-bb82-771e83734b12",
+        "applied": [
+          "version:Budget"
+        ],
+        "version_ids": {
+          "Budget": "d17cb69f-f1cc-4eed-93d8-d544c06ae46d"
+        },
+        "similar_topic_ids": []
+      },
+      "rejected": null,
+      "error": null,
+      "latency_ms": 18.316,
+      "finished_at": "2026-10-21T06:24:11.459317+00:00"
+    },
+    {
+      "seq": 3,
+      "kind": "scored",
+      "op": "query",
+      "request": {
+        "q": "read",
+        "stages": [
+          "temporal"
+        ],
+        "topic_ids": [
+          "ef6323f7-ce15-4f94-bb82-771e83734b12"
+        ],
+        "explain": false
+      },
+      "started_at": "2026-10-21T06:24:11.459332+00:00",
+      "response": {
+        "query": "read",
+        "candidates": [
+          {
+            "topic_id": "ef6323f7-ce15-4f94-bb82-771e83734b12",
+            "title": "Time probe: Lapsed scoped override, plain statement during the override",
+            "summary": null,
+            "topic_kind": "time-probe",
+            "salience": 1.0,
+            "failed_salience": 0.0,
+            "neighbors": [],
+            "fields": [
+              {
+                "name": "Budget",
+                "field_type": "string",
+                "ref_topic_id": null,
+                "current": {
+                  "id": "d17cb69f-f1cc-4eed-93d8-d544c06ae46d",
+                  "value": "$100",
+                  "valid_from": "2026-10-21T06:24:11.443701+00:00",
+                  "provenance": "time-probe:lapsed-override-2",
+                  "why_changed": null,
+                  "impact_expected": null
+                },
+                "history": [
+                  {
+                    "id": "d17cb69f-f1cc-4eed-93d8-d544c06ae46d",
+                    "value": "$100",
+                    "valid_from": "2026-10-21T06:24:11.443701+00:00",
+                    "provenance": "time-probe:lapsed-override-2",
+                    "why_changed": null,
+                    "impact_expected": null
+                  }
+                ]
+              }
+            ],
+            "similarity": null
+          }
+        ],
+        "summary_text": "Top topics for 'read':\n- ef6323f7-ce15-4f94-bb82-771e83734b12 'Time probe: Lapsed scoped override, plain statement during the override' sim=None"
+      },
+      "rejected": null,
+      "error": null,
+      "latency_ms": 20.501,
+      "finished_at": "2026-10-21T06:24:11.479841+00:00"
+    },
+    {
+      "seq": 4,
+      "kind": "scored",
+      "op": "query",
+      "request": {
+        "q": "read",
+        "stages": [
+          "temporal"
+        ],
+        "topic_ids": [
+          "ef6323f7-ce15-4f94-bb82-771e83734b12"
+        ],
+        "explain": false
+      },
+      "started_at": "2026-10-21T06:24:11.479862+00:00",
+      "response": {
+        "query": "read",
+        "candidates": [
+          {
+            "topic_id": "ef6323f7-ce15-4f94-bb82-771e83734b12",
+            "title": "Time probe: Lapsed scoped override, plain statement during the override",
+            "summary": null,
+            "topic_kind": "time-probe",
+            "salience": 1.1,
+            "failed_salience": 0.0,
+            "neighbors": [],
+            "fields": [
+              {
+                "name": "Budget",
+                "field_type": "string",
+                "ref_topic_id": null,
+                "current": {
+                  "id": "d17cb69f-f1cc-4eed-93d8-d544c06ae46d",
+                  "value": "$100",
+                  "valid_from": "2026-10-21T06:24:11.443701+00:00",
+                  "provenance": "time-probe:lapsed-override-2",
+                  "why_changed": null,
+                  "impact_expected": null
+                },
+                "history": [
+                  {
+                    "id": "d17cb69f-f1cc-4eed-93d8-d544c06ae46d",
+                    "value": "$100",
+                    "valid_from": "2026-10-21T06:24:11.443701+00:00",
+                    "provenance": "time-probe:lapsed-override-2",
+                    "why_changed": null,
+                    "impact_expected": null
+                  }
+                ]
+              }
+            ],
+            "similarity": null
+          }
+        ],
+        "summary_text": "Top topics for 'read':\n- ef6323f7-ce15-4f94-bb82-771e83734b12 'Time probe: Lapsed scoped override, plain statement during the override' sim=None"
+      },
+      "rejected": null,
+      "error": null,
+      "latency_ms": 15.438,
+      "finished_at": "2026-10-21T06:24:11.495308+00:00"
+    },
+    {
+      "seq": 5,
+      "kind": "scored",
+      "op": "query",
+      "request": {
+        "q": "read",
+        "stages": [
+          "temporal"
+        ],
+        "topic_ids": [
+          "ef6323f7-ce15-4f94-bb82-771e83734b12"
+        ],
+        "explain": false
+      },
+      "started_at": "2026-10-21T06:24:11.495324+00:00",
+      "response": {
+        "query": "read",
+        "candidates": [
+          {
+            "topic_id": "ef6323f7-ce15-4f94-bb82-771e83734b12",
+            "title": "Time probe: Lapsed scoped override, plain statement during the override",
+            "summary": null,
+            "topic_kind": "time-probe",
+            "salience": 1.2000000000000002,
+            "failed_salience": 0.0,
+            "neighbors": [],
+            "fields": [
+              {
+                "name": "Budget",
+                "field_type": "string",
+                "ref_topic_id": null,
+                "current": {
+                  "id": "d17cb69f-f1cc-4eed-93d8-d544c06ae46d",
+                  "value": "$100",
+                  "valid_from": "2026-10-21T06:24:11.443701+00:00",
+                  "provenance": "time-probe:lapsed-override-2",
+                  "why_changed": null,
+                  "impact_expected": null
+                },
+                "history": [
+                  {
+                    "id": "d17cb69f-f1cc-4eed-93d8-d544c06ae46d",
+                    "value": "$100",
+                    "valid_from": "2026-10-21T06:24:11.443701+00:00",
+                    "provenance": "time-probe:lapsed-override-2",
+                    "why_changed": null,
+                    "impact_expected": null
+                  }
+                ]
+              }
+            ],
+            "similarity": null
+          }
+        ],
+        "summary_text": "Top topics for 'read':\n- ef6323f7-ce15-4f94-bb82-771e83734b12 'Time probe: Lapsed scoped override, plain statement during the override' sim=None"
+      },
+      "rejected": null,
+      "error": null,
+      "latency_ms": 15.306,
+      "finished_at": "2026-10-21T06:24:11.510637+00:00"
+    }
+  ],
+  "setup_writes": [],
+  "reads": [
+    {
+      "seq": 6,
+      "kind": "read",
+      "op": "read_state",
+      "request": null,
+      "started_at": "2026-10-21T06:24:11.512848+00:00",
+      "response": {
+        "topics": 1,
+        "edges": 0
+      },
+      "rejected": null,
+      "error": null,
+      "latency_ms": 11.734,
+      "finished_at": "2026-10-21T06:24:11.524592+00:00"
+    }
+  ],
+  "waits": [],
+  "state": {
+    "topics": {
+      "ef6323f7-ce15-4f94-bb82-771e83734b12": {
+        "id": "ef6323f7-ce15-4f94-bb82-771e83734b12",
+        "title": "Time probe: Lapsed scoped override, plain statement during the override",
+        "summary": "",
+        "topic_kind": "time-probe",
+        "salience": 1.3000000000000003,
+        "failed_salience": 0.0,
+        "archived": false,
+        "fields": {
+          "Budget": {
+            "field_type": "string",
+            "ref_topic_id": null,
+            "history": [
+              {
+                "id": "d17cb69f-f1cc-4eed-93d8-d544c06ae46d",
+                "valid_from": "2026-10-21T06:24:11.443701+00:00",
+                "value": "$100",
+                "why_changed": null,
+                "impact_expected": null,
+                "provenance": "time-probe:lapsed-override-2",
+                "operation": null
+              },
+              {
+                "id": "6a3491f1-fcdd-4164-adab-161d303e2847",
+                "valid_from": "2026-10-21T06:24:11.416080+00:00",
+                "value": "$80",
+                "why_changed": null,
+                "impact_expected": null,
+                "provenance": "time-probe:lapsed-override-2",
+                "operation": null
+              },
+              {
+                "id": "3177e148-aee5-4530-b0a9-975397541072",
+                "valid_from": "2026-10-21T06:24:11.395499+00:00",
+                "value": "$50",
+                "why_changed": null,
+                "impact_expected": null,
+                "provenance": "time-probe:lapsed-override-2",
+                "operation": null
+              }
+            ],
+            "current": {
+              "id": "d17cb69f-f1cc-4eed-93d8-d544c06ae46d",
+              "valid_from": "2026-10-21T06:24:11.443701+00:00",
+              "value": "$100",
+              "why_changed": null,
+              "impact_expected": null,
+              "provenance": "time-probe:lapsed-override-2",
+              "operation": null
+            }
+          }
+        },
+        "topic_history": [
+          {
+            "ts": "2026-10-21T06:24:11.384350+00:00",
+            "kind": "created",
+            "detail": {
+              "title": "Time probe: Lapsed scoped override, plain statement during the override"
+            }
+          },
+          {
+            "ts": "2026-10-21T06:24:11.471116+00:00",
+            "kind": "salience",
+            "detail": {
+              "from": 1.0,
+              "to": 1.1,
+              "reason": "query_bump"
+            }
+          },
+          {
+            "ts": "2026-10-21T06:24:11.490723+00:00",
+            "kind": "salience",
+            "detail": {
+              "from": 1.1,
+              "to": 1.2000000000000002,
+              "reason": "query_bump"
+            }
+          },
+          {
+            "ts": "2026-10-21T06:24:11.506347+00:00",
+            "kind": "salience",
+            "detail": {
+              "from": 1.2000000000000002,
+              "to": 1.3000000000000003,
+              "reason": "query_bump"
+            }
+          }
+        ],
+        "created_at": "2026-10-21T06:24:11.384350+00:00",
+        "updated_at": "2026-10-21T06:24:11.506500+00:00",
+        "revision_flag": null
+      }
+    },
+    "edges": []
+  },
+  "state_error": null,
+  "rows": [
+    "T1",
+    "T2",
+    "T3",
+    "T4",
+    "T5",
+    "T6"
+  ],
+  "verdicts": [
+    {
+      "row": "T1",
+      "verdict": "absent",
+      "cases": [],
+      "observations": [],
+      "probe_evidence": {
+        "probe": "the schema's date fields (describe()['accepts']) against the dates this probe needs",
+        "needed": [
+          "valid_from"
+        ],
+        "accepts": {
+          "valid_from": false,
+          "invalid_at": false,
+          "valid_at": false,
+          "recorded_at": false
+        },
+        "missing": [
+          "valid_from"
+        ],
+        "accepts_error": null,
+        "stories": {
+          "retroactive": {
+            "write_dates": [],
+            "asked": [
+              {
+                "asked": "today",
+                "control": false,
+                "request": {
+                  "q": "read",
+                  "stages": [
+                    "temporal"
+                  ],
+                  "topic_ids": [
+                    "86a4390e-7fcd-43a1-bffe-345f17af9042"
+                  ],
+                  "explain": false
+                },
+                "answer": "March 1"
+              },
+              {
+                "asked": "Dec 20",
+                "control": true,
+                "request": {
+                  "q": "read",
+                  "stages": [
+                    "temporal"
+                  ],
+                  "topic_ids": [
+                    "86a4390e-7fcd-43a1-bffe-345f17af9042"
+                  ],
+                  "explain": false
+                },
+                "answer": "March 1"
+              }
+            ]
+          }
+        }
+      },
+      "measurements": {
+        "accepts_dates": "no",
+        "dates_needed": "valid_from",
+        "dates_missing": "valid_from"
+      },
+      "control": false,
+      "system": "step1",
+      "snapshots": [],
+      "error": null
+    },
+    {
+      "row": "T2",
+      "verdict": "absent",
+      "cases": [],
+      "observations": [],
+      "probe_evidence": {
+        "probe": "the schema's date fields (describe()['accepts']) against the dates this probe needs",
+        "needed": [
+          "valid_from"
+        ],
+        "accepts": {
+          "valid_from": false,
+          "invalid_at": false,
+          "valid_at": false,
+          "recorded_at": false
+        },
+        "missing": [
+          "valid_from"
+        ],
+        "accepts_error": null,
+        "stories": {
+          "out-of-order": {
+            "write_dates": [],
+            "asked": [
+              {
+                "asked": "today",
+                "control": false,
+                "request": {
+                  "q": "read",
+                  "stages": [
+                    "temporal"
+                  ],
+                  "topic_ids": [
+                    "ee37c6e7-fa11-4f13-90db-b2f8671e71a2"
+                  ],
+                  "explain": false
+                },
+                "answer": "basic"
+              },
+              {
+                "asked": "Sep 1",
+                "control": true,
+                "request": {
+                  "q": "read",
+                  "stages": [
+                    "temporal"
+                  ],
+                  "topic_ids": [
+                    "ee37c6e7-fa11-4f13-90db-b2f8671e71a2"
+                  ],
+                  "explain": false
+                },
+                "answer": "basic"
+              }
+            ]
+          }
+        }
+      },
+      "measurements": {
+        "accepts_dates": "no",
+        "dates_needed": "valid_from",
+        "dates_missing": "valid_from"
+      },
+      "control": false,
+      "system": "step1",
+      "snapshots": [],
+      "error": null
+    },
+    {
+      "row": "T3",
+      "verdict": "absent",
+      "cases": [],
+      "observations": [],
+      "probe_evidence": {
+        "probe": "the schema's date fields (describe()['accepts']) against the dates this probe needs",
+        "needed": [
+          "valid_from"
+        ],
+        "accepts": {
+          "valid_from": false,
+          "invalid_at": false,
+          "valid_at": false,
+          "recorded_at": false
+        },
+        "missing": [
+          "valid_from"
+        ],
+        "accepts_error": null,
+        "stories": {
+          "future-dated": {
+            "write_dates": [],
+            "asked": [
+              {
+                "asked": "today",
+                "control": false,
+                "request": {
+                  "q": "read",
+                  "stages": [
+                    "temporal"
+                  ],
+                  "topic_ids": [
+                    "efb8b27f-1e0d-43f7-937e-812782f04c93"
+                  ],
+                  "explain": false
+                },
+                "answer": "premium"
+              },
+              {
+                "asked": "Dec 5",
+                "control": true,
+                "request": {
+                  "q": "read",
+                  "stages": [
+                    "temporal"
+                  ],
+                  "topic_ids": [
+                    "efb8b27f-1e0d-43f7-937e-812782f04c93"
+                  ],
+                  "explain": false
+                },
+                "answer": "premium"
+              }
+            ]
+          }
+        }
+      },
+      "measurements": {
+        "accepts_dates": "no",
+        "dates_needed": "valid_from",
+        "dates_missing": "valid_from"
+      },
+      "control": false,
+      "system": "step1",
+      "snapshots": [],
+      "error": null
+    },
+    {
+      "row": "T4",
+      "verdict": "absent",
+      "cases": [],
+      "observations": [],
+      "probe_evidence": {
+        "probe": "the schema's date fields (describe()['accepts']) against the dates this probe needs",
+        "needed": [
+          "valid_from",
+          "invalid_at"
+        ],
+        "accepts": {
+          "valid_from": false,
+          "invalid_at": false,
+          "valid_at": false,
+          "recorded_at": false
+        },
+        "missing": [
+          "valid_from",
+          "invalid_at"
+        ],
+        "accepts_error": null,
+        "stories": {
+          "lapsed-override-1": {
+            "write_dates": [],
+            "asked": [
+              {
+                "asked": "Oct 15",
+                "control": true,
+                "request": {
+                  "q": "read",
+                  "stages": [
+                    "temporal"
+                  ],
+                  "topic_ids": [
+                    "9737c3df-2e0f-44e8-87ec-8ffc4d5a00bb"
+                  ],
+                  "explain": false
+                },
+                "answer": "$80"
+              },
+              {
+                "asked": "today",
+                "control": false,
+                "request": {
+                  "q": "read",
+                  "stages": [
+                    "temporal"
+                  ],
+                  "topic_ids": [
+                    "9737c3df-2e0f-44e8-87ec-8ffc4d5a00bb"
+                  ],
+                  "explain": false
+                },
+                "answer": "$80"
+              }
+            ]
+          },
+          "lapsed-override-2": {
+            "write_dates": [],
+            "asked": [
+              {
+                "asked": "today",
+                "control": true,
+                "request": {
+                  "q": "read",
+                  "stages": [
+                    "temporal"
+                  ],
+                  "topic_ids": [
+                    "ef6323f7-ce15-4f94-bb82-771e83734b12"
+                  ],
+                  "explain": false
+                },
+                "answer": "$100"
+              },
+              {
+                "asked": "Oct 15",
+                "control": false,
+                "request": {
+                  "q": "read",
+                  "stages": [
+                    "temporal"
+                  ],
+                  "topic_ids": [
+                    "ef6323f7-ce15-4f94-bb82-771e83734b12"
+                  ],
+                  "explain": false
+                },
+                "answer": "$100"
+              },
+              {
+                "asked": "Oct 5",
+                "control": false,
+                "request": {
+                  "q": "read",
+                  "stages": [
+                    "temporal"
+                  ],
+                  "topic_ids": [
+                    "ef6323f7-ce15-4f94-bb82-771e83734b12"
+                  ],
+                  "explain": false
+                },
+                "answer": "$100"
+              }
+            ]
+          }
+        }
+      },
+      "measurements": {
+        "accepts_dates": "no",
+        "dates_needed": "valid_from, invalid_at",
+        "dates_missing": "valid_from, invalid_at"
+      },
+      "control": false,
+      "system": "step1",
+      "snapshots": [],
+      "error": null
+    },
+    {
+      "row": "T5",
+      "verdict": "absent",
+      "cases": [],
+      "observations": [],
+      "probe_evidence": {
+        "probe": "the schema's date fields (describe()['accepts']) against the dates this probe needs",
+        "needed": [
+          "valid_from",
+          "valid_at",
+          "recorded_at"
+        ],
+        "accepts": {
+          "valid_from": false,
+          "invalid_at": false,
+          "valid_at": false,
+          "recorded_at": false
+        },
+        "missing": [
+          "valid_from",
+          "valid_at",
+          "recorded_at"
+        ],
+        "accepts_error": null,
+        "stories": {
+          "as-of": {
+            "write_dates": [],
+            "asked": [
+              {
+                "asked": "true on Feb 10",
+                "control": true,
+                "request": {
+                  "q": "read",
+                  "stages": [
+                    "temporal"
+                  ],
+                  "topic_ids": [
+                    "f237e0cb-a092-48e9-9e1a-27c9ce86ab47"
+                  ],
+                  "explain": false,
+                  "valid_at": "2026-10-16T00:00:00+00:00"
+                },
+                "answer": "May 1"
+              },
+              {
+                "asked": "believed on Feb 10",
+                "control": false,
+                "request": {
+                  "q": "read",
+                  "stages": [
+                    "temporal"
+                  ],
+                  "topic_ids": [
+                    "f237e0cb-a092-48e9-9e1a-27c9ce86ab47"
+                  ],
+                  "explain": false,
+                  "recorded_at": "2026-10-21T06:24:13.698013+00:00"
+                },
+                "answer": "May 1"
+              }
+            ],
+            "noted_moment_after_first_write": "2026-10-21T06:24:13.698013+00:00",
+            "gap_s": 1.0
+          }
+        }
+      },
+      "measurements": {
+        "accepts_dates": "no",
+        "dates_needed": "valid_from, valid_at, recorded_at",
+        "dates_missing": "valid_from, valid_at, recorded_at"
+      },
+      "control": false,
+      "system": "step1",
+      "snapshots": [],
+      "error": null
+    },
+    {
+      "row": "T6",
+      "verdict": "absent",
+      "cases": [],
+      "observations": [],
+      "probe_evidence": {
+        "probe": "the schema's date fields (describe()['accepts']) against the dates this probe needs",
+        "needed": [
+          "valid_from"
+        ],
+        "accepts": {
+          "valid_from": false,
+          "invalid_at": false,
+          "valid_at": false,
+          "recorded_at": false
+        },
+        "missing": [
+          "valid_from"
+        ],
+        "accepts_error": null,
+        "stories": {
+          "future-value": {
+            "write_dates": [],
+            "asked": [
+              {
+                "asked": "today",
+                "control": false,
+                "request": {
+                  "q": "read",
+                  "stages": [
+                    "temporal"
+                  ],
+                  "topic_ids": [
+                    "b08cb143-55ff-40e5-9f79-18f2d9387968"
+                  ],
+                  "explain": false
+                },
+                "answer": "premium"
+              },
+              {
+                "asked": "Dec 5",
+                "control": true,
+                "request": {
+                  "q": "read",
+                  "stages": [
+                    "temporal"
+                  ],
+                  "topic_ids": [
+                    "b08cb143-55ff-40e5-9f79-18f2d9387968"
+                  ],
+                  "explain": false
+                },
+                "answer": "premium"
+              }
+            ]
+          }
+        }
+      },
+      "measurements": {
+        "accepts_dates": "no",
+        "dates_needed": "valid_from",
+        "dates_missing": "valid_from"
+      },
+      "control": false,
+      "system": "step1",
+      "snapshots": [],
+      "error": null
+    }
+  ]
+}

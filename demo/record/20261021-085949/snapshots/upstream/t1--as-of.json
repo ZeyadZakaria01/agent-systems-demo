@@ -1,0 +1,804 @@
+{
+  "system": "upstream",
+  "label": "upstream",
+  "check": "T1",
+  "tag": "as-of",
+  "describe": {
+    "system": "upstream",
+    "url": "http://127.0.0.1:8765",
+    "db_path": "/home/zeyad/work/agent-systems-demo/.runtime/gem-suite/20261021-085949/upstream-t1-as-of/memstate.kuzu",
+    "commit": "945d7c45a054dfc20cdcf53e37ec2b1b31384a50",
+    "engine": "MemState engine module: kuzu",
+    "keeps_history": true,
+    "accepts_error": null,
+    "declared_bound": {
+      "topics": 500,
+      "name": "topic_count_soft_limit"
+    },
+    "accepts_source": false,
+    "latency_comparable": true,
+    "source_surface": {
+      "request_properties": [],
+      "paths": []
+    },
+    "c6_clause_2_seeds": null,
+    "source_dir": "/home/zeyad/work/agent-systems-demo/MemState/src",
+    "health_error": null,
+    "accepts": {
+      "valid_from": false,
+      "invalid_at": false,
+      "valid_at": false,
+      "recorded_at": false
+    }
+  },
+  "describe_error": null,
+  "started_at": "2026-10-21T06:13:22.512916+00:00",
+  "finished_at": "2026-10-21T06:13:25.571013+00:00",
+  "scored_transitions": [
+    {
+      "seq": 0,
+      "kind": "scored",
+      "op": "ingest",
+      "request": {
+        "placement": "new_topic",
+        "title": "Time probe: As-of query",
+        "topic_kind": "time-probe",
+        "fields": [
+          {
+            "name": "Deadline",
+            "value": "April 20",
+            "provenance": "time-probe:as-of"
+          }
+        ]
+      },
+      "started_at": "2026-10-21T06:13:24.092110+00:00",
+      "response": {
+        "topic_id": "cf4898d6-c122-4dc5-a9b8-44b9faea9753",
+        "applied": [
+          "created_topic:cf4898d6-c122-4dc5-a9b8-44b9faea9753",
+          "field:Deadline"
+        ],
+        "version_ids": {
+          "Deadline": "538006c3-aeda-4454-828f-f236f26ac57f"
+        },
+        "similar_topic_ids": []
+      },
+      "rejected": null,
+      "error": null,
+      "latency_ms": 393.682,
+      "finished_at": "2026-10-21T06:13:24.485811+00:00"
+    },
+    {
+      "seq": 1,
+      "kind": "scored",
+      "op": "ingest",
+      "request": {
+        "placement": "version_field",
+        "topic_id": "cf4898d6-c122-4dc5-a9b8-44b9faea9753",
+        "fields": [
+          {
+            "name": "Deadline",
+            "value": "May 1",
+            "provenance": "time-probe:as-of"
+          }
+        ]
+      },
+      "started_at": "2026-10-21T06:13:25.485911+00:00",
+      "response": {
+        "topic_id": "cf4898d6-c122-4dc5-a9b8-44b9faea9753",
+        "applied": [
+          "version:Deadline"
+        ],
+        "version_ids": {
+          "Deadline": "02a4a45b-eb15-47c4-8b9c-6f40dc02d0a6"
+        },
+        "similar_topic_ids": []
+      },
+      "rejected": null,
+      "error": null,
+      "latency_ms": 34.215,
+      "finished_at": "2026-10-21T06:13:25.520152+00:00"
+    },
+    {
+      "seq": 2,
+      "kind": "scored",
+      "op": "query",
+      "request": {
+        "q": "read",
+        "stages": [
+          "temporal"
+        ],
+        "topic_ids": [
+          "cf4898d6-c122-4dc5-a9b8-44b9faea9753"
+        ],
+        "explain": false,
+        "valid_at": "2026-10-16T00:00:00+00:00"
+      },
+      "started_at": "2026-10-21T06:13:25.520178+00:00",
+      "response": {
+        "query": "read",
+        "candidates": [
+          {
+            "topic_id": "cf4898d6-c122-4dc5-a9b8-44b9faea9753",
+            "title": "Time probe: As-of query",
+            "summary": null,
+            "topic_kind": "time-probe",
+            "salience": 1.0,
+            "failed_salience": 0.0,
+            "neighbors": [],
+            "fields": [
+              {
+                "name": "Deadline",
+                "field_type": "string",
+                "ref_topic_id": null,
+                "current": {
+                  "id": "02a4a45b-eb15-47c4-8b9c-6f40dc02d0a6",
+                  "value": "May 1",
+                  "valid_from": "2026-10-21T06:13:25.489464+00:00",
+                  "provenance": "time-probe:as-of",
+                  "why_changed": null,
+                  "impact_expected": null
+                },
+                "history": [
+                  {
+                    "id": "02a4a45b-eb15-47c4-8b9c-6f40dc02d0a6",
+                    "value": "May 1",
+                    "valid_from": "2026-10-21T06:13:25.489464+00:00",
+                    "provenance": "time-probe:as-of",
+                    "why_changed": null,
+                    "impact_expected": null
+                  }
+                ]
+              }
+            ],
+            "similarity": null
+          }
+        ],
+        "summary_text": "Top topics for 'read':\n- cf4898d6-c122-4dc5-a9b8-44b9faea9753 'Time probe: As-of query' sim=None"
+      },
+      "rejected": null,
+      "error": null,
+      "latency_ms": 27.518,
+      "finished_at": "2026-10-21T06:13:25.547706+00:00"
+    },
+    {
+      "seq": 3,
+      "kind": "scored",
+      "op": "query",
+      "request": {
+        "q": "read",
+        "stages": [
+          "temporal"
+        ],
+        "topic_ids": [
+          "cf4898d6-c122-4dc5-a9b8-44b9faea9753"
+        ],
+        "explain": false,
+        "recorded_at": "2026-10-21T06:13:24.485821+00:00"
+      },
+      "started_at": "2026-10-21T06:13:25.547726+00:00",
+      "response": {
+        "query": "read",
+        "candidates": [
+          {
+            "topic_id": "cf4898d6-c122-4dc5-a9b8-44b9faea9753",
+            "title": "Time probe: As-of query",
+            "summary": null,
+            "topic_kind": "time-probe",
+            "salience": 1.1,
+            "failed_salience": 0.0,
+            "neighbors": [],
+            "fields": [
+              {
+                "name": "Deadline",
+                "field_type": "string",
+                "ref_topic_id": null,
+                "current": {
+                  "id": "02a4a45b-eb15-47c4-8b9c-6f40dc02d0a6",
+                  "value": "May 1",
+                  "valid_from": "2026-10-21T06:13:25.489464+00:00",
+                  "provenance": "time-probe:as-of",
+                  "why_changed": null,
+                  "impact_expected": null
+                },
+                "history": [
+                  {
+                    "id": "02a4a45b-eb15-47c4-8b9c-6f40dc02d0a6",
+                    "value": "May 1",
+                    "valid_from": "2026-10-21T06:13:25.489464+00:00",
+                    "provenance": "time-probe:as-of",
+                    "why_changed": null,
+                    "impact_expected": null
+                  }
+                ]
+              }
+            ],
+            "similarity": null
+          }
+        ],
+        "summary_text": "Top topics for 'read':\n- cf4898d6-c122-4dc5-a9b8-44b9faea9753 'Time probe: As-of query' sim=None"
+      },
+      "rejected": null,
+      "error": null,
+      "latency_ms": 23.257,
+      "finished_at": "2026-10-21T06:13:25.570994+00:00"
+    }
+  ],
+  "setup_writes": [],
+  "reads": [
+    {
+      "seq": 4,
+      "kind": "read",
+      "op": "read_state",
+      "request": null,
+      "started_at": "2026-10-21T06:13:25.573379+00:00",
+      "response": {
+        "topics": 1,
+        "edges": 0
+      },
+      "rejected": null,
+      "error": null,
+      "latency_ms": 12.245,
+      "finished_at": "2026-10-21T06:13:25.585638+00:00"
+    }
+  ],
+  "waits": [],
+  "state": {
+    "topics": {
+      "cf4898d6-c122-4dc5-a9b8-44b9faea9753": {
+        "id": "cf4898d6-c122-4dc5-a9b8-44b9faea9753",
+        "title": "Time probe: As-of query",
+        "summary": "",
+        "topic_kind": "time-probe",
+        "salience": 1.2000000000000002,
+        "failed_salience": 0.0,
+        "archived": false,
+        "fields": {
+          "Deadline": {
+            "field_type": "string",
+            "ref_topic_id": null,
+            "history": [
+              {
+                "id": "02a4a45b-eb15-47c4-8b9c-6f40dc02d0a6",
+                "valid_from": "2026-10-21T06:13:25.489464+00:00",
+                "value": "May 1",
+                "why_changed": null,
+                "impact_expected": null,
+                "provenance": "time-probe:as-of",
+                "operation": null
+              },
+              {
+                "id": "538006c3-aeda-4454-828f-f236f26ac57f",
+                "valid_from": "2026-10-21T06:13:24.464060+00:00",
+                "value": "April 20",
+                "why_changed": null,
+                "impact_expected": null,
+                "provenance": "time-probe:as-of",
+                "operation": null
+              }
+            ],
+            "current": {
+              "id": "02a4a45b-eb15-47c4-8b9c-6f40dc02d0a6",
+              "valid_from": "2026-10-21T06:13:25.489464+00:00",
+              "value": "May 1",
+              "why_changed": null,
+              "impact_expected": null,
+              "provenance": "time-probe:as-of",
+              "operation": null
+            }
+          }
+        },
+        "topic_history": [
+          {
+            "ts": "2026-10-21T06:13:24.452813+00:00",
+            "kind": "created",
+            "detail": {
+              "title": "Time probe: As-of query"
+            }
+          },
+          {
+            "ts": "2026-10-21T06:13:25.536548+00:00",
+            "kind": "salience",
+            "detail": {
+              "from": 1.0,
+              "to": 1.1,
+              "reason": "query_bump"
+            }
+          },
+          {
+            "ts": "2026-10-21T06:13:25.562612+00:00",
+            "kind": "salience",
+            "detail": {
+              "from": 1.1,
+              "to": 1.2000000000000002,
+              "reason": "query_bump"
+            }
+          }
+        ],
+        "created_at": "2026-10-21T06:13:24.452813+00:00",
+        "updated_at": "2026-10-21T06:13:25.563042+00:00",
+        "revision_flag": null
+      }
+    },
+    "edges": []
+  },
+  "state_error": null,
+  "rows": [
+    "T1",
+    "T2",
+    "T3",
+    "T4",
+    "T5",
+    "T6"
+  ],
+  "verdicts": [
+    {
+      "row": "T1",
+      "verdict": "absent",
+      "cases": [],
+      "observations": [],
+      "probe_evidence": {
+        "probe": "the schema's date fields (describe()['accepts']) against the dates this probe needs",
+        "needed": [
+          "valid_from"
+        ],
+        "accepts": {
+          "valid_from": false,
+          "invalid_at": false,
+          "valid_at": false,
+          "recorded_at": false
+        },
+        "missing": [
+          "valid_from"
+        ],
+        "accepts_error": null,
+        "stories": {
+          "retroactive": {
+            "write_dates": [],
+            "asked": [
+              {
+                "asked": "today",
+                "control": false,
+                "request": {
+                  "q": "read",
+                  "stages": [
+                    "temporal"
+                  ],
+                  "topic_ids": [
+                    "4bfdfa14-e5eb-4ef7-a973-31e6db52088e"
+                  ],
+                  "explain": false
+                },
+                "answer": "March 1"
+              },
+              {
+                "asked": "Dec 20",
+                "control": true,
+                "request": {
+                  "q": "read",
+                  "stages": [
+                    "temporal"
+                  ],
+                  "topic_ids": [
+                    "4bfdfa14-e5eb-4ef7-a973-31e6db52088e"
+                  ],
+                  "explain": false
+                },
+                "answer": "March 1"
+              }
+            ]
+          }
+        }
+      },
+      "measurements": {
+        "accepts_dates": "no",
+        "dates_needed": "valid_from",
+        "dates_missing": "valid_from"
+      },
+      "control": false,
+      "system": "upstream",
+      "snapshots": [],
+      "error": null
+    },
+    {
+      "row": "T2",
+      "verdict": "absent",
+      "cases": [],
+      "observations": [],
+      "probe_evidence": {
+        "probe": "the schema's date fields (describe()['accepts']) against the dates this probe needs",
+        "needed": [
+          "valid_from"
+        ],
+        "accepts": {
+          "valid_from": false,
+          "invalid_at": false,
+          "valid_at": false,
+          "recorded_at": false
+        },
+        "missing": [
+          "valid_from"
+        ],
+        "accepts_error": null,
+        "stories": {
+          "out-of-order": {
+            "write_dates": [],
+            "asked": [
+              {
+                "asked": "today",
+                "control": false,
+                "request": {
+                  "q": "read",
+                  "stages": [
+                    "temporal"
+                  ],
+                  "topic_ids": [
+                    "a04fbc10-f79a-43e6-b740-384b38d0bcad"
+                  ],
+                  "explain": false
+                },
+                "answer": "basic"
+              },
+              {
+                "asked": "Sep 1",
+                "control": true,
+                "request": {
+                  "q": "read",
+                  "stages": [
+                    "temporal"
+                  ],
+                  "topic_ids": [
+                    "a04fbc10-f79a-43e6-b740-384b38d0bcad"
+                  ],
+                  "explain": false
+                },
+                "answer": "basic"
+              }
+            ]
+          }
+        }
+      },
+      "measurements": {
+        "accepts_dates": "no",
+        "dates_needed": "valid_from",
+        "dates_missing": "valid_from"
+      },
+      "control": false,
+      "system": "upstream",
+      "snapshots": [],
+      "error": null
+    },
+    {
+      "row": "T3",
+      "verdict": "absent",
+      "cases": [],
+      "observations": [],
+      "probe_evidence": {
+        "probe": "the schema's date fields (describe()['accepts']) against the dates this probe needs",
+        "needed": [
+          "valid_from"
+        ],
+        "accepts": {
+          "valid_from": false,
+          "invalid_at": false,
+          "valid_at": false,
+          "recorded_at": false
+        },
+        "missing": [
+          "valid_from"
+        ],
+        "accepts_error": null,
+        "stories": {
+          "future-dated": {
+            "write_dates": [],
+            "asked": [
+              {
+                "asked": "today",
+                "control": false,
+                "request": {
+                  "q": "read",
+                  "stages": [
+                    "temporal"
+                  ],
+                  "topic_ids": [
+                    "4f209adb-9c60-4088-829e-0968f12d7b80"
+                  ],
+                  "explain": false
+                },
+                "answer": "premium"
+              },
+              {
+                "asked": "Dec 5",
+                "control": true,
+                "request": {
+                  "q": "read",
+                  "stages": [
+                    "temporal"
+                  ],
+                  "topic_ids": [
+                    "4f209adb-9c60-4088-829e-0968f12d7b80"
+                  ],
+                  "explain": false
+                },
+                "answer": "premium"
+              }
+            ]
+          }
+        }
+      },
+      "measurements": {
+        "accepts_dates": "no",
+        "dates_needed": "valid_from",
+        "dates_missing": "valid_from"
+      },
+      "control": false,
+      "system": "upstream",
+      "snapshots": [],
+      "error": null
+    },
+    {
+      "row": "T4",
+      "verdict": "absent",
+      "cases": [],
+      "observations": [],
+      "probe_evidence": {
+        "probe": "the schema's date fields (describe()['accepts']) against the dates this probe needs",
+        "needed": [
+          "valid_from",
+          "invalid_at"
+        ],
+        "accepts": {
+          "valid_from": false,
+          "invalid_at": false,
+          "valid_at": false,
+          "recorded_at": false
+        },
+        "missing": [
+          "valid_from",
+          "invalid_at"
+        ],
+        "accepts_error": null,
+        "stories": {
+          "lapsed-override-1": {
+            "write_dates": [],
+            "asked": [
+              {
+                "asked": "Oct 15",
+                "control": true,
+                "request": {
+                  "q": "read",
+                  "stages": [
+                    "temporal"
+                  ],
+                  "topic_ids": [
+                    "3e070b84-07ca-4d2b-9e50-c5942bfcb4be"
+                  ],
+                  "explain": false
+                },
+                "answer": "$80"
+              },
+              {
+                "asked": "today",
+                "control": false,
+                "request": {
+                  "q": "read",
+                  "stages": [
+                    "temporal"
+                  ],
+                  "topic_ids": [
+                    "3e070b84-07ca-4d2b-9e50-c5942bfcb4be"
+                  ],
+                  "explain": false
+                },
+                "answer": "$80"
+              }
+            ]
+          },
+          "lapsed-override-2": {
+            "write_dates": [],
+            "asked": [
+              {
+                "asked": "today",
+                "control": true,
+                "request": {
+                  "q": "read",
+                  "stages": [
+                    "temporal"
+                  ],
+                  "topic_ids": [
+                    "baf77b07-78ea-4524-98b3-0dcf2cf5d12f"
+                  ],
+                  "explain": false
+                },
+                "answer": "$100"
+              },
+              {
+                "asked": "Oct 15",
+                "control": false,
+                "request": {
+                  "q": "read",
+                  "stages": [
+                    "temporal"
+                  ],
+                  "topic_ids": [
+                    "baf77b07-78ea-4524-98b3-0dcf2cf5d12f"
+                  ],
+                  "explain": false
+                },
+                "answer": "$100"
+              },
+              {
+                "asked": "Oct 5",
+                "control": false,
+                "request": {
+                  "q": "read",
+                  "stages": [
+                    "temporal"
+                  ],
+                  "topic_ids": [
+                    "baf77b07-78ea-4524-98b3-0dcf2cf5d12f"
+                  ],
+                  "explain": false
+                },
+                "answer": "$100"
+              }
+            ]
+          }
+        }
+      },
+      "measurements": {
+        "accepts_dates": "no",
+        "dates_needed": "valid_from, invalid_at",
+        "dates_missing": "valid_from, invalid_at"
+      },
+      "control": false,
+      "system": "upstream",
+      "snapshots": [],
+      "error": null
+    },
+    {
+      "row": "T5",
+      "verdict": "absent",
+      "cases": [],
+      "observations": [],
+      "probe_evidence": {
+        "probe": "the schema's date fields (describe()['accepts']) against the dates this probe needs",
+        "needed": [
+          "valid_from",
+          "valid_at",
+          "recorded_at"
+        ],
+        "accepts": {
+          "valid_from": false,
+          "invalid_at": false,
+          "valid_at": false,
+          "recorded_at": false
+        },
+        "missing": [
+          "valid_from",
+          "valid_at",
+          "recorded_at"
+        ],
+        "accepts_error": null,
+        "stories": {
+          "as-of": {
+            "write_dates": [],
+            "asked": [
+              {
+                "asked": "true on Feb 10",
+                "control": true,
+                "request": {
+                  "q": "read",
+                  "stages": [
+                    "temporal"
+                  ],
+                  "topic_ids": [
+                    "cf4898d6-c122-4dc5-a9b8-44b9faea9753"
+                  ],
+                  "explain": false,
+                  "valid_at": "2026-10-16T00:00:00+00:00"
+                },
+                "answer": "May 1"
+              },
+              {
+                "asked": "believed on Feb 10",
+                "control": false,
+                "request": {
+                  "q": "read",
+                  "stages": [
+                    "temporal"
+                  ],
+                  "topic_ids": [
+                    "cf4898d6-c122-4dc5-a9b8-44b9faea9753"
+                  ],
+                  "explain": false,
+                  "recorded_at": "2026-10-21T06:13:24.485821+00:00"
+                },
+                "answer": "May 1"
+              }
+            ],
+            "noted_moment_after_first_write": "2026-10-21T06:13:24.485821+00:00",
+            "gap_s": 1.0
+          }
+        }
+      },
+      "measurements": {
+        "accepts_dates": "no",
+        "dates_needed": "valid_from, valid_at, recorded_at",
+        "dates_missing": "valid_from, valid_at, recorded_at"
+      },
+      "control": false,
+      "system": "upstream",
+      "snapshots": [],
+      "error": null
+    },
+    {
+      "row": "T6",
+      "verdict": "absent",
+      "cases": [],
+      "observations": [],
+      "probe_evidence": {
+        "probe": "the schema's date fields (describe()['accepts']) against the dates this probe needs",
+        "needed": [
+          "valid_from"
+        ],
+        "accepts": {
+          "valid_from": false,
+          "invalid_at": false,
+          "valid_at": false,
+          "recorded_at": false
+        },
+        "missing": [
+          "valid_from"
+        ],
+        "accepts_error": null,
+        "stories": {
+          "future-value": {
+            "write_dates": [],
+            "asked": [
+              {
+                "asked": "today",
+                "control": false,
+                "request": {
+                  "q": "read",
+                  "stages": [
+                    "temporal"
+                  ],
+                  "topic_ids": [
+                    "e869c0de-4df9-4f9b-8f2c-19c121608525"
+                  ],
+                  "explain": false
+                },
+                "answer": "premium"
+              },
+              {
+                "asked": "Dec 5",
+                "control": true,
+                "request": {
+                  "q": "read",
+                  "stages": [
+                    "temporal"
+                  ],
+                  "topic_ids": [
+                    "e869c0de-4df9-4f9b-8f2c-19c121608525"
+                  ],
+                  "explain": false
+                },
+                "answer": "premium"
+              }
+            ]
+          }
+        }
+      },
+      "measurements": {
+        "accepts_dates": "no",
+        "dates_needed": "valid_from",
+        "dates_missing": "valid_from"
+      },
+      "control": false,
+      "system": "upstream",
+      "snapshots": [],
+      "error": null
+    }
+  ]
+}

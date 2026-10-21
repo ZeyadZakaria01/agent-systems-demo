@@ -1,0 +1,763 @@
+{
+  "system": "step3",
+  "label": "bitemporal patch step 3 (cb5d48c, LadybugDB)",
+  "check": "T1",
+  "tag": "as-of",
+  "describe": {
+    "system": "bitemporal patch step 3 (cb5d48c, LadybugDB)",
+    "url": "http://127.0.0.1:8765",
+    "db_path": "/home/zeyad/work/agent-systems-demo/.runtime/gem-suite/20261021-085949/step3-t1-as-of/memstate.lbug",
+    "commit": "cb5d48ce496580d5fb6de0467a9dc26ed48f64ab",
+    "engine": "MemState engine module: ladybug",
+    "keeps_history": true,
+    "accepts_error": null,
+    "declared_bound": {
+      "topics": 500,
+      "name": "topic_count_soft_limit"
+    },
+    "accepts_source": false,
+    "latency_comparable": true,
+    "source_surface": {
+      "request_properties": [],
+      "paths": []
+    },
+    "c6_clause_2_seeds": null,
+    "source_dir": "/home/zeyad/work/agent-systems-demo/MemState-patched/src",
+    "health_error": null,
+    "accepts": {
+      "valid_from": true,
+      "invalid_at": true,
+      "valid_at": true,
+      "recorded_at": true
+    }
+  },
+  "describe_error": null,
+  "started_at": "2026-10-21T06:46:59.337059+00:00",
+  "finished_at": "2026-10-21T06:47:02.738757+00:00",
+  "scored_transitions": [
+    {
+      "seq": 0,
+      "kind": "scored",
+      "op": "ingest",
+      "request": {
+        "placement": "new_topic",
+        "title": "Time probe: As-of query",
+        "topic_kind": "time-probe",
+        "fields": [
+          {
+            "name": "Deadline",
+            "value": "April 20",
+            "provenance": "time-probe:as-of",
+            "valid_from": "2026-09-10T00:00:00+00:00"
+          }
+        ]
+      },
+      "started_at": "2026-10-21T06:47:01.294836+00:00",
+      "response": {
+        "topic_id": "fb69e995-f714-4220-af78-1945843ee0ef",
+        "applied": [
+          "created_topic:fb69e995-f714-4220-af78-1945843ee0ef",
+          "field:Deadline"
+        ],
+        "version_ids": {
+          "Deadline": "3f1fb59c-04db-48f9-b38c-fb67cb43d38a"
+        },
+        "similar_topic_ids": []
+      },
+      "rejected": null,
+      "error": null,
+      "latency_ms": 369.99,
+      "finished_at": "2026-10-21T06:47:01.664838+00:00"
+    },
+    {
+      "seq": 1,
+      "kind": "scored",
+      "op": "ingest",
+      "request": {
+        "placement": "version_field",
+        "topic_id": "fb69e995-f714-4220-af78-1945843ee0ef",
+        "fields": [
+          {
+            "name": "Deadline",
+            "value": "May 1",
+            "provenance": "time-probe:as-of",
+            "valid_from": "2026-10-07T00:00:00+00:00"
+          }
+        ]
+      },
+      "started_at": "2026-10-21T06:47:02.665016+00:00",
+      "response": {
+        "topic_id": "fb69e995-f714-4220-af78-1945843ee0ef",
+        "applied": [
+          "version:Deadline"
+        ],
+        "version_ids": {
+          "Deadline": "b8e3e4a4-4992-43ea-a0b7-a1d727b676e2"
+        },
+        "similar_topic_ids": []
+      },
+      "rejected": null,
+      "error": null,
+      "latency_ms": 31.684,
+      "finished_at": "2026-10-21T06:47:02.696722+00:00"
+    },
+    {
+      "seq": 2,
+      "kind": "scored",
+      "op": "query",
+      "request": {
+        "q": "read",
+        "stages": [
+          "temporal"
+        ],
+        "topic_ids": [
+          "fb69e995-f714-4220-af78-1945843ee0ef"
+        ],
+        "explain": false,
+        "valid_at": "2026-10-16T00:00:00+00:00"
+      },
+      "started_at": "2026-10-21T06:47:02.696745+00:00",
+      "response": {
+        "query": "read",
+        "candidates": [
+          {
+            "topic_id": "fb69e995-f714-4220-af78-1945843ee0ef",
+            "title": "Time probe: As-of query",
+            "summary": null,
+            "topic_kind": "time-probe",
+            "salience": 1.0,
+            "failed_salience": 0.0,
+            "neighbors": [],
+            "fields": [
+              {
+                "name": "Deadline",
+                "field_type": "string",
+                "ref_topic_id": null,
+                "current": {
+                  "id": "b8e3e4a4-4992-43ea-a0b7-a1d727b676e2",
+                  "value": "May 1",
+                  "valid_from": "2026-10-07T00:00:00+00:00",
+                  "invalid_at": null,
+                  "created_at": "2026-10-21T06:47:02.676439+00:00",
+                  "expired_at": null,
+                  "operation": null,
+                  "replaces_entry_id": null,
+                  "corrected_by_entry_id": null,
+                  "provenance": "time-probe:as-of",
+                  "why_changed": null,
+                  "impact_expected": null
+                },
+                "history": [
+                  {
+                    "id": "b8e3e4a4-4992-43ea-a0b7-a1d727b676e2",
+                    "value": "May 1",
+                    "valid_from": "2026-10-07T00:00:00+00:00",
+                    "invalid_at": null,
+                    "created_at": "2026-10-21T06:47:02.676439+00:00",
+                    "expired_at": null,
+                    "operation": null,
+                    "replaces_entry_id": null,
+                    "corrected_by_entry_id": null,
+                    "provenance": "time-probe:as-of",
+                    "why_changed": null,
+                    "impact_expected": null
+                  },
+                  {
+                    "id": "3f1fb59c-04db-48f9-b38c-fb67cb43d38a",
+                    "value": "April 20",
+                    "valid_from": "2026-09-10T00:00:00+00:00",
+                    "invalid_at": null,
+                    "created_at": "2026-10-21T06:47:01.649183+00:00",
+                    "expired_at": null,
+                    "operation": null,
+                    "replaces_entry_id": null,
+                    "corrected_by_entry_id": null,
+                    "provenance": "time-probe:as-of",
+                    "why_changed": null,
+                    "impact_expected": null
+                  }
+                ]
+              }
+            ],
+            "similarity": null
+          }
+        ],
+        "summary_text": "Top topics for 'read':\n- fb69e995-f714-4220-af78-1945843ee0ef 'Time probe: As-of query' sim=None"
+      },
+      "rejected": null,
+      "error": null,
+      "latency_ms": 18.046,
+      "finished_at": "2026-10-21T06:47:02.714800+00:00"
+    },
+    {
+      "seq": 3,
+      "kind": "scored",
+      "op": "query",
+      "request": {
+        "q": "read",
+        "stages": [
+          "temporal"
+        ],
+        "topic_ids": [
+          "fb69e995-f714-4220-af78-1945843ee0ef"
+        ],
+        "explain": false,
+        "recorded_at": "2026-10-21T06:47:01.664847+00:00"
+      },
+      "started_at": "2026-10-21T06:47:02.714820+00:00",
+      "response": {
+        "query": "read",
+        "candidates": [
+          {
+            "topic_id": "fb69e995-f714-4220-af78-1945843ee0ef",
+            "title": "Time probe: As-of query",
+            "summary": null,
+            "topic_kind": "time-probe",
+            "salience": 1.1,
+            "failed_salience": 0.0,
+            "neighbors": [],
+            "fields": [
+              {
+                "name": "Deadline",
+                "field_type": "string",
+                "ref_topic_id": null,
+                "current": {
+                  "id": "3f1fb59c-04db-48f9-b38c-fb67cb43d38a",
+                  "value": "April 20",
+                  "valid_from": "2026-09-10T00:00:00+00:00",
+                  "invalid_at": null,
+                  "created_at": "2026-10-21T06:47:01.649183+00:00",
+                  "expired_at": null,
+                  "operation": null,
+                  "replaces_entry_id": null,
+                  "corrected_by_entry_id": null,
+                  "provenance": "time-probe:as-of",
+                  "why_changed": null,
+                  "impact_expected": null
+                },
+                "history": [
+                  {
+                    "id": "b8e3e4a4-4992-43ea-a0b7-a1d727b676e2",
+                    "value": "May 1",
+                    "valid_from": "2026-10-07T00:00:00+00:00",
+                    "invalid_at": null,
+                    "created_at": "2026-10-21T06:47:02.676439+00:00",
+                    "expired_at": null,
+                    "operation": null,
+                    "replaces_entry_id": null,
+                    "corrected_by_entry_id": null,
+                    "provenance": "time-probe:as-of",
+                    "why_changed": null,
+                    "impact_expected": null
+                  },
+                  {
+                    "id": "3f1fb59c-04db-48f9-b38c-fb67cb43d38a",
+                    "value": "April 20",
+                    "valid_from": "2026-09-10T00:00:00+00:00",
+                    "invalid_at": null,
+                    "created_at": "2026-10-21T06:47:01.649183+00:00",
+                    "expired_at": null,
+                    "operation": null,
+                    "replaces_entry_id": null,
+                    "corrected_by_entry_id": null,
+                    "provenance": "time-probe:as-of",
+                    "why_changed": null,
+                    "impact_expected": null
+                  }
+                ]
+              }
+            ],
+            "similarity": null
+          }
+        ],
+        "summary_text": "Top topics for 'read':\n- fb69e995-f714-4220-af78-1945843ee0ef 'Time probe: As-of query' sim=None"
+      },
+      "rejected": null,
+      "error": null,
+      "latency_ms": 20.81,
+      "finished_at": "2026-10-21T06:47:02.735639+00:00"
+    }
+  ],
+  "setup_writes": [],
+  "reads": [
+    {
+      "seq": 4,
+      "kind": "read",
+      "op": "read_topic",
+      "request": {
+        "topic_id": "fb69e995-f714-4220-af78-1945843ee0ef"
+      },
+      "started_at": "2026-10-21T06:47:02.735672+00:00",
+      "response": {
+        "id": "fb69e995-f714-4220-af78-1945843ee0ef",
+        "title": "Time probe: As-of query",
+        "summary": "",
+        "topic_kind": "time-probe",
+        "salience": 1.2000000000000002,
+        "failed_salience": 0.0,
+        "archived": false,
+        "fields": {
+          "Deadline": {
+            "field_type": "string",
+            "ref_topic_id": null,
+            "current": {
+              "id": "b8e3e4a4-4992-43ea-a0b7-a1d727b676e2",
+              "valid_from": "2026-10-07T00:00:00+00:00",
+              "value": "May 1",
+              "why_changed": null,
+              "impact_expected": null,
+              "provenance": "time-probe:as-of",
+              "operation": null,
+              "invalid_at": null,
+              "created_at": "2026-10-21T06:47:02.676439+00:00",
+              "expired_at": null,
+              "replaces_entry_id": null,
+              "corrected_by_entry_id": null
+            },
+            "history": [
+              {
+                "id": "b8e3e4a4-4992-43ea-a0b7-a1d727b676e2",
+                "valid_from": "2026-10-07T00:00:00+00:00",
+                "value": "May 1",
+                "why_changed": null,
+                "impact_expected": null,
+                "provenance": "time-probe:as-of",
+                "operation": null,
+                "invalid_at": null,
+                "created_at": "2026-10-21T06:47:02.676439+00:00",
+                "expired_at": null,
+                "replaces_entry_id": null,
+                "corrected_by_entry_id": null
+              },
+              {
+                "id": "3f1fb59c-04db-48f9-b38c-fb67cb43d38a",
+                "valid_from": "2026-09-10T00:00:00+00:00",
+                "value": "April 20",
+                "why_changed": null,
+                "impact_expected": null,
+                "provenance": "time-probe:as-of",
+                "operation": null,
+                "invalid_at": null,
+                "created_at": "2026-10-21T06:47:01.649183+00:00",
+                "expired_at": null,
+                "replaces_entry_id": null,
+                "corrected_by_entry_id": null
+              }
+            ]
+          }
+        },
+        "topic_history": [
+          {
+            "ts": "2026-10-21T06:47:01.640302+00:00",
+            "kind": "created",
+            "detail": {
+              "title": "Time probe: As-of query"
+            }
+          },
+          {
+            "ts": "2026-10-21T06:47:02.708370+00:00",
+            "kind": "salience",
+            "detail": {
+              "from": 1.0,
+              "to": 1.1,
+              "reason": "query_bump"
+            }
+          },
+          {
+            "ts": "2026-10-21T06:47:02.724909+00:00",
+            "kind": "salience",
+            "detail": {
+              "from": 1.1,
+              "to": 1.2000000000000002,
+              "reason": "query_bump"
+            }
+          }
+        ],
+        "created_at": "2026-10-21T06:47:01.640302+00:00",
+        "updated_at": "2026-10-21T06:47:02.725093+00:00",
+        "revision_flag": null
+      },
+      "rejected": null,
+      "error": null,
+      "latency_ms": 3.059,
+      "finished_at": "2026-10-21T06:47:02.738738+00:00"
+    },
+    {
+      "seq": 5,
+      "kind": "read",
+      "op": "read_state",
+      "request": null,
+      "started_at": "2026-10-21T06:47:02.740582+00:00",
+      "response": {
+        "topics": 1,
+        "edges": 0
+      },
+      "rejected": null,
+      "error": null,
+      "latency_ms": 10.172,
+      "finished_at": "2026-10-21T06:47:02.750764+00:00"
+    }
+  ],
+  "waits": [],
+  "state": {
+    "topics": {
+      "fb69e995-f714-4220-af78-1945843ee0ef": {
+        "id": "fb69e995-f714-4220-af78-1945843ee0ef",
+        "title": "Time probe: As-of query",
+        "summary": "",
+        "topic_kind": "time-probe",
+        "salience": 1.2000000000000002,
+        "failed_salience": 0.0,
+        "archived": false,
+        "fields": {
+          "Deadline": {
+            "field_type": "string",
+            "ref_topic_id": null,
+            "current": {
+              "id": "b8e3e4a4-4992-43ea-a0b7-a1d727b676e2",
+              "valid_from": "2026-10-07T00:00:00+00:00",
+              "value": "May 1",
+              "why_changed": null,
+              "impact_expected": null,
+              "provenance": "time-probe:as-of",
+              "operation": null,
+              "invalid_at": null,
+              "created_at": "2026-10-21T06:47:02.676439+00:00",
+              "expired_at": null,
+              "replaces_entry_id": null,
+              "corrected_by_entry_id": null
+            },
+            "history": [
+              {
+                "id": "b8e3e4a4-4992-43ea-a0b7-a1d727b676e2",
+                "valid_from": "2026-10-07T00:00:00+00:00",
+                "value": "May 1",
+                "why_changed": null,
+                "impact_expected": null,
+                "provenance": "time-probe:as-of",
+                "operation": null,
+                "invalid_at": null,
+                "created_at": "2026-10-21T06:47:02.676439+00:00",
+                "expired_at": null,
+                "replaces_entry_id": null,
+                "corrected_by_entry_id": null
+              },
+              {
+                "id": "3f1fb59c-04db-48f9-b38c-fb67cb43d38a",
+                "valid_from": "2026-09-10T00:00:00+00:00",
+                "value": "April 20",
+                "why_changed": null,
+                "impact_expected": null,
+                "provenance": "time-probe:as-of",
+                "operation": null,
+                "invalid_at": null,
+                "created_at": "2026-10-21T06:47:01.649183+00:00",
+                "expired_at": null,
+                "replaces_entry_id": null,
+                "corrected_by_entry_id": null
+              }
+            ]
+          }
+        },
+        "topic_history": [
+          {
+            "ts": "2026-10-21T06:47:01.640302+00:00",
+            "kind": "created",
+            "detail": {
+              "title": "Time probe: As-of query"
+            }
+          },
+          {
+            "ts": "2026-10-21T06:47:02.708370+00:00",
+            "kind": "salience",
+            "detail": {
+              "from": 1.0,
+              "to": 1.1,
+              "reason": "query_bump"
+            }
+          },
+          {
+            "ts": "2026-10-21T06:47:02.724909+00:00",
+            "kind": "salience",
+            "detail": {
+              "from": 1.1,
+              "to": 1.2000000000000002,
+              "reason": "query_bump"
+            }
+          }
+        ],
+        "created_at": "2026-10-21T06:47:01.640302+00:00",
+        "updated_at": "2026-10-21T06:47:02.725093+00:00",
+        "revision_flag": null
+      }
+    },
+    "edges": []
+  },
+  "state_error": null,
+  "rows": [
+    "T1",
+    "T2",
+    "T3",
+    "T4",
+    "T5",
+    "T6"
+  ],
+  "verdicts": [
+    {
+      "row": "T1",
+      "verdict": "pass",
+      "cases": [
+        {
+          "name": "today: 2026-10-21 -> 'April 20'",
+          "held": true,
+          "observation": "[dated path] asked today (plain read): got 'April 20', correct 'April 20'",
+          "control": false,
+          "id": "today: 2026-10-21 -> 'April 20'"
+        },
+        {
+          "name": "Dec 20: 2026-08-25 -> 'March 1'",
+          "held": true,
+          "observation": "[dated path] asked Dec 20 (valid_at): got 'March 1', correct 'March 1'",
+          "control": true,
+          "id": "Dec 20: 2026-08-25 -> 'March 1'"
+        },
+        {
+          "name": "history intact: no value lost, expired entries copied and linked",
+          "held": true,
+          "observation": "2 entries; every written value kept; 0 expired, each copied",
+          "control": false,
+          "id": "history intact: no value lost, expired entries copied and linked"
+        }
+      ],
+      "observations": [],
+      "probe_evidence": null,
+      "measurements": {
+        "accepts_dates": "yes",
+        "dates_needed": "valid_from",
+        "dates_missing": "none"
+      },
+      "control": false,
+      "system": "step3",
+      "snapshots": [],
+      "error": null
+    },
+    {
+      "row": "T2",
+      "verdict": "pass",
+      "cases": [
+        {
+          "name": "today: 2026-10-21 -> 'pro'",
+          "held": true,
+          "observation": "[dated path] asked today (plain read): got 'pro', correct 'pro'",
+          "control": false,
+          "id": "today: 2026-10-21 -> 'pro'"
+        },
+        {
+          "name": "Sep 1: 2026-09-02 -> 'basic'",
+          "held": true,
+          "observation": "[dated path] asked Sep 1 (valid_at): got 'basic', correct 'basic'",
+          "control": true,
+          "id": "Sep 1: 2026-09-02 -> 'basic'"
+        },
+        {
+          "name": "history intact: no value lost, expired entries copied and linked",
+          "held": true,
+          "observation": "2 entries; every written value kept; 0 expired, each copied",
+          "control": false,
+          "id": "history intact: no value lost, expired entries copied and linked"
+        }
+      ],
+      "observations": [],
+      "probe_evidence": null,
+      "measurements": {
+        "accepts_dates": "yes",
+        "dates_needed": "valid_from",
+        "dates_missing": "none"
+      },
+      "control": false,
+      "system": "step3",
+      "snapshots": [],
+      "error": null
+    },
+    {
+      "row": "T3",
+      "verdict": "pass",
+      "cases": [
+        {
+          "name": "today: 2026-10-21 -> 'basic'",
+          "held": true,
+          "observation": "[dated path] asked today (plain read): got 'basic', correct 'basic'",
+          "control": false,
+          "id": "today: 2026-10-21 -> 'basic'"
+        },
+        {
+          "name": "Dec 5: 2026-11-05 -> 'premium'",
+          "held": true,
+          "observation": "[dated path] asked Dec 5 (valid_at): got 'premium', correct 'premium'",
+          "control": true,
+          "id": "Dec 5: 2026-11-05 -> 'premium'"
+        },
+        {
+          "name": "history intact: no value lost, expired entries copied and linked",
+          "held": true,
+          "observation": "2 entries; every written value kept; 0 expired, each copied",
+          "control": false,
+          "id": "history intact: no value lost, expired entries copied and linked"
+        }
+      ],
+      "observations": [],
+      "probe_evidence": null,
+      "measurements": {
+        "accepts_dates": "yes",
+        "dates_needed": "valid_from",
+        "dates_missing": "none"
+      },
+      "control": false,
+      "system": "step3",
+      "snapshots": [],
+      "error": null
+    },
+    {
+      "row": "T4",
+      "verdict": "pass",
+      "cases": [
+        {
+          "name": "story 1: Oct 15: 2026-09-30 -> '$80'",
+          "held": true,
+          "observation": "[dated path] asked Oct 15 (valid_at): got '$80', correct '$80'",
+          "control": true,
+          "id": "story 1: Oct 15: 2026-09-30 -> '$80'"
+        },
+        {
+          "name": "story 1: today: 2026-10-21 -> '$50'",
+          "held": true,
+          "observation": "[dated path] asked today (plain read): got '$50', correct '$50'",
+          "control": false,
+          "id": "story 1: today: 2026-10-21 -> '$50'"
+        },
+        {
+          "name": "story 1: history intact: no value lost, expired entries copied and linked",
+          "held": true,
+          "observation": "2 entries; every written value kept; 0 expired, each copied",
+          "control": false,
+          "id": "story 1: history intact: no value lost, expired entries copied and linked"
+        },
+        {
+          "name": "story 2: today: 2026-10-21 -> '$100'",
+          "held": true,
+          "observation": "[dated path] asked today (plain read): got '$100', correct '$100'",
+          "control": true,
+          "id": "story 2: today: 2026-10-21 -> '$100'"
+        },
+        {
+          "name": "story 2: Oct 15: 2026-09-30 -> '$100'",
+          "held": true,
+          "observation": "[dated path] asked Oct 15 (valid_at): got '$100', correct '$100'",
+          "control": false,
+          "id": "story 2: Oct 15: 2026-09-30 -> '$100'"
+        },
+        {
+          "name": "story 2: Oct 5: 2026-09-20 -> '$80'",
+          "held": true,
+          "observation": "[dated path] asked Oct 5 (valid_at): got '$80', correct '$80'",
+          "control": false,
+          "id": "story 2: Oct 5: 2026-09-20 -> '$80'"
+        },
+        {
+          "name": "story 2: history intact: no value lost, expired entries copied and linked",
+          "held": true,
+          "observation": "4 entries; every written value kept; 1 expired, each copied",
+          "control": false,
+          "id": "story 2: history intact: no value lost, expired entries copied and linked"
+        }
+      ],
+      "observations": [],
+      "probe_evidence": null,
+      "measurements": {
+        "accepts_dates": "yes",
+        "dates_needed": "valid_from, invalid_at",
+        "dates_missing": "none"
+      },
+      "control": false,
+      "system": "step3",
+      "snapshots": [],
+      "error": null
+    },
+    {
+      "row": "T5",
+      "verdict": "pass",
+      "cases": [
+        {
+          "name": "true on Feb 10: 2026-10-16 -> 'May 1'",
+          "held": true,
+          "observation": "[dated path] asked true on Feb 10 (valid_at): got 'May 1', correct 'May 1'",
+          "control": true,
+          "id": "true on Feb 10: 2026-10-16 -> 'May 1'"
+        },
+        {
+          "name": "believed on Feb 10: -> 'April 20'",
+          "held": true,
+          "observation": "[dated path] asked believed on Feb 10 (recorded_at): got 'April 20', correct 'April 20'",
+          "control": false,
+          "id": "believed on Feb 10: -> 'April 20'"
+        },
+        {
+          "name": "history intact: no value lost, expired entries copied and linked",
+          "held": true,
+          "observation": "2 entries; every written value kept; 0 expired, each copied",
+          "control": false,
+          "id": "history intact: no value lost, expired entries copied and linked"
+        }
+      ],
+      "observations": [],
+      "probe_evidence": null,
+      "measurements": {
+        "accepts_dates": "yes",
+        "dates_needed": "valid_from, valid_at, recorded_at",
+        "dates_missing": "none"
+      },
+      "control": false,
+      "system": "step3",
+      "snapshots": [],
+      "error": null
+    },
+    {
+      "row": "T6",
+      "verdict": "pass",
+      "cases": [
+        {
+          "name": "today: 2026-10-21 -> NO_VALUE",
+          "held": true,
+          "observation": "[dated path] asked today (plain read): got NO_VALUE, correct NO_VALUE",
+          "control": false,
+          "id": "today: 2026-10-21 -> NO_VALUE"
+        },
+        {
+          "name": "Dec 5: 2026-11-05 -> 'premium'",
+          "held": true,
+          "observation": "[dated path] asked Dec 5 (valid_at): got 'premium', correct 'premium'",
+          "control": true,
+          "id": "Dec 5: 2026-11-05 -> 'premium'"
+        },
+        {
+          "name": "history intact: no value lost, expired entries copied and linked",
+          "held": true,
+          "observation": "1 entries; every written value kept; 0 expired, each copied",
+          "control": false,
+          "id": "history intact: no value lost, expired entries copied and linked"
+        }
+      ],
+      "observations": [],
+      "probe_evidence": null,
+      "measurements": {
+        "accepts_dates": "yes",
+        "dates_needed": "valid_from",
+        "dates_missing": "none"
+      },
+      "control": false,
+      "system": "step3",
+      "snapshots": [],
+      "error": null
+    }
+  ]
+}

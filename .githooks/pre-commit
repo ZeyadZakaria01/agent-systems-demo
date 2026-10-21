@@ -1,6 +1,6 @@
 #!/bin/sh
 # Guardrails for every clone and worktree (enabled by: git config core.hooksPath .githooks).
-# 1. The report is edited only on `main` (single source of truth; gem-suite carries a stale copy).
+# 1. The report is edited only on `main` (single source of truth; a branch's copy goes stale).
 # 2. Wayfinder map lines added or changed stay gists: at most 400 characters.
 # 3. Staged suite code (demo/, tests/) must keep the offline suite green.
 set -eu
