@@ -12,8 +12,11 @@ The suite is built. Its run of record is [`runs/record/20261021-194912/`](runs/r
 
 ```bash
 git submodule update --init && git config core.hooksPath .githooks
+git -C MemState fetch "$PWD/patches/bitemporal.bundle" 'refs/heads/bitemporal:refs/heads/bitemporal' 'refs/superseded/*:refs/superseded/*'
+git -C MemState worktree add ../MemState-patched bitemporal   # the patched copy (patch steps 1-3)
 uv venv -p 3.12 .venv
 uv pip install -p .venv -e 'MemState[embedding]' 'kuzu==0.11.3' 'ladybug==0.21.2' httpx pytest pytest-asyncio ruff
+git -C MemState checkout -- src/memstate.egg-info            # pip rewrites it; keep the submodule pristine
 
 .venv/bin/python -m pytest                                    # offline tests: in-process systems, no server
 .venv/bin/python -m demo.run --list                           # checks and systems
@@ -38,12 +41,12 @@ demo/                 the conformance suite (python -m demo.run)
   chat/               chat runs on MemState's own chat: record, replay, Sonnet and blind-reviewer grades
 tests/                pytest, mirroring demo/ (systems/, checks/, reporting/, chat/)
 scripts/              MemState and Ollama start scripts, the think-off proxy, HTTP probes, chat-series runner
-patches/              the three patch steps on MemState 945d7c4 (git am into MemState-patched/)
-MemTX/                MemTX submodule at 4e1124c, reference only; its third_party/MemState equals 945d7c4 but README.md
+patches/              the three patch steps on MemState 945d7c4: .patch files and bitemporal.bundle (exact commits)
+runs/                 run output: record/ (run of record), recordings/ (chat takes of record), chat-series/;
                       results/ and results-live/ are local and git-ignored
 docs/                 report/, findings.md (facts proven by runs), journal.md (difficulties), adr/, papers/, suite.md
 MemState/             upstream submodule, pinned at 945d7c4 and never modified
-MemTX/                MemTX submodule at 4e1124c, reference only
+MemTX/                MemTX submodule at 4e1124c, reference only; its third_party/MemState equals 945d7c4 but README.md
 .scratch/             wayfinder map, decision tickets, suite spec
 .githooks/            commit-msg (Conventional Commits, no AI attribution) and pre-commit guardrails
 ```

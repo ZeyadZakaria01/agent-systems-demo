@@ -50,10 +50,13 @@ export MEMSTATE_API_HOST=127.0.0.1 MEMSTATE_API_PORT=8765
 export MEMSTATE_OLLAMA_BASE_URL="${MEMSTATE_OLLAMA_BASE_URL:-http://127.0.0.1:11435}"
 # Upstream's default model is llama3.2:latest (config.py:21), which is not pulled; qwen3.5:2b is.
 export MEMSTATE_OLLAMA_MODEL="${MEMSTATE_OLLAMA_MODEL:-qwen3.5:2b}"
-# Export the Groq key from MemState/.env without echoing it. Uses the MEMSTATE_ prefix because
-# upstream's GROQ_API_KEY fallback (config.py model_validator returning a copy) is discarded by
-# pydantic-settings >= 2.x, so plain GROQ_API_KEY never reaches Settings.
-MEMSTATE_GROQ_API_KEY="$(sed -n 's/^[[:space:]]*GROQ_API_KEY[[:space:]]*=[[:space:]]*//p' "$SHARED/MemState/.env" | tail -n1 | tr -d '"'"'"'\r')"
+# Export the Groq key from MemState/.env (optional: chat runs on Ollama without it) without echoing it. Uses the
+# MEMSTATE_ prefix because upstream's GROQ_API_KEY fallback (config.py model_validator returning a copy) is discarded
+# by pydantic-settings >= 2.x, so plain GROQ_API_KEY never reaches Settings.
+MEMSTATE_GROQ_API_KEY=""
+if [[ -f "$SHARED/MemState/.env" ]]; then
+  MEMSTATE_GROQ_API_KEY="$(sed -n 's/^[[:space:]]*GROQ_API_KEY[[:space:]]*=[[:space:]]*//p' "$SHARED/MemState/.env" | tail -n1 | tr -d '"'"'"'\r')"
+fi
 export MEMSTATE_GROQ_API_KEY
 
 "$PY" -c 'import sys

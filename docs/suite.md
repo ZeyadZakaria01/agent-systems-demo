@@ -46,14 +46,14 @@ The patched copy lives in a `MemState-patched/` worktree of the submodule (git-i
 | `0002-bitemporal-field-histories.patch` | 2 | dated entries, valid-time and recorded-time reads, keep-and-copy, the chat reference time |
 | `0003-merge-by-valid-time.patch` | 3 | the Reasoner's merge interleaves both topics' histories by valid time, tags the dropped topic's entries `operation: "merged"` with `merged_from_topic_id`, skips archived duplicates, rescans after each merge and gives the survivor one "merged" event; the dropped topic's summary, events and salience are still lost |
 
-The runner refuses every patch step unless `945d7c4..bitemporal` holds exactly three commits. Rebuild it from the repo root, with `MemState/` initialised:
+The runner refuses every patch step unless `945d7c4..bitemporal` holds exactly three commits. Rebuild it from the repo root, with `MemState/` initialised. `patches/bitemporal.bundle` carries the exact commits the findings cite (steps `089b823`, `4272a07`, `9bd471e`) and the superseded ones under `refs/superseded/` (`2cfabee`, `cb5d48c`, ...):
 
 ```bash
-git -C MemState worktree add -b bitemporal ../MemState-patched 945d7c4
-git -C MemState-patched am "$PWD"/patches/*.patch
+git -C MemState fetch "$PWD/patches/bitemporal.bundle" 'refs/heads/bitemporal:refs/heads/bitemporal' 'refs/superseded/*:refs/superseded/*'
+git -C MemState worktree add ../MemState-patched bitemporal
 ```
 
-Recreating the worktree this way from `patches/` gave the same tree as `bitemporal`, and upstream's 39 tests pass unedited against the patched source (`docs/journal.md`): `cd MemState-patched && PYTHONPATH=$PWD/src ../.venv/bin/python -m pytest` (`PYTHONPATH` must precede the editable install, which points at `MemState/src`). The patch runs on LadybugDB and upstream on Kuzu ([ADR 0006](adr/0006-patch-on-ladybugdb-upstream-on-kuzu.md)).
+`git -C MemState worktree add -b bitemporal ../MemState-patched 945d7c4 && git -C MemState-patched am "$PWD"/patches/*.patch` gives the same tree (`e6594ca`) but new commit ids, so the cited commits would not resolve (`tests/test_docs.py` fails). Upstream's 39 tests pass unedited against the patched source (`docs/journal.md`): `cd MemState-patched && PYTHONPATH=$PWD/src ../.venv/bin/python -m pytest` (`PYTHONPATH` must precede the editable install, which points at `MemState/src`). The patch runs on LadybugDB and upstream on Kuzu ([ADR 0006](adr/0006-patch-on-ladybugdb-upstream-on-kuzu.md)).
 
 ### Local LLM (optional)
 
