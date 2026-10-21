@@ -1,6 +1,7 @@
 # Which research direction leads the slides
 
 Type: grilling
+Status: closed
 Blocked by: —
 
 ## Question
@@ -18,3 +19,7 @@ Which research direction do the slides lead with? Report §7.9 ranks implementin
   - **Option C, lead with the MAFBench–GEM link (direction 4).** Ties both papers and the lab together. But it is the least evidenced (no run at MAFBench's scale; the nearest evidence is indirect) and would push the demo to a supporting role. If chosen, §7.9 would move direction 4 to first place, and the report's §8 would need an explicit "proposed experiment" paragraph.
   - **Option D (hybrid framing of B).** Open with MAFBench's result as the problem (slide 2), then B. The order of directions on the report and slides stays §7.9's; only the story's first half changes.
   - **Recommendation (agent's, user decides): B with D's framing.** Evidence-first; the demo is the user's contribution; C3′ is presented as the next step because C3 is measured absent on every MemState system; §7.9 stays as is plus one pointer line. Open question for the user: does the interviewer value a built result or a ranked agenda more?
+- 2026-10-22, Grilling round 1 (agent; no answers yet): Q1 lead claim (A / B1 the patch / B2 "the conditions as written let a conforming system be wrong about time; C1′ closes it" / C); Q2 keep §7.9's order apart from the slides; Q3 one pointer line in §7.9. Recommended B2, decoupled, pointer line.
+- 2026-10-22, the user asked for the answers grounded in the papers and linked across MAFBench, Anatomy, the graph survey and StateMem: [cross-paper grounding](../assets/cross-paper-grounding.md). For this ticket it adds: GEM:373's success criterion (iii) cannot be met by C1–C6 as written (reference GEM conformant, absent on T4/T5); GEM:377's "event-time semantics" analogy is C1′; MAFBench adopts MemoryAgentBench (MB:221) which GEM:351 says exercises C1 only partially ([16], GEM:404), a sharper opening for D; and P1–P13, proposed report changes awaiting the user.
+- 2026-10-22, from the user: the report comes first (ticket 33), then the slides. The two §7.9 questions (order, pointer line) move to ticket 33. This ticket keeps only the slides' lead claim and is taken up after 33 resolves.
+- 2026-10-22, closed by the user: the user writes the slides themselves, so the lead claim is the user's call. The grounding for B2 (GEM:206, :331, :373, :377) and the MemoryAgentBench opening (GEM:351, :404; MB:221) stay above as input.

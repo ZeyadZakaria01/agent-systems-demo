@@ -1,6 +1,7 @@
 # Slide outline
 
 Type: prototype
+Status: closed
 Blocked by: 32
 
 ## Question
@@ -33,3 +34,4 @@ The time split (slot length, talk, demo, Q&A) is not decided here: the user prep
   - **Handover.** Live at slide 9 and again at slide 11 if time allows; slides 10–13 can be shown without the server, so the server can be stopped after the live part (6 GB GPU, little RAM; one machine lock).
   - **Under the other direction options.** A (C3′ first): slides 10–12 shrink to one slide; the lead becomes C3 (absent everywhere, F7/F17), reference GEM's one-hop flagging and the over-flagging chain become the climax, and C1′ moves to "also built". C (MAFBench–GEM first): slides 2 and 13 expand into the thesis (answer-level scoring hides state failures), slides 10–12 become one supporting slide, and slide 15 opens with direction 4.
   - **Tool and format options.** (1) Marp (Markdown slides → PDF/HTML via Node; not installed, fetch with `npx`; fits the repo's Markdown workflow, versioned, `scorecard.md` tables paste in); (2) reveal.js HTML (Node; live code blocks and iframes of the Explorer possible); (3) LibreOffice Impress (installed; manual, hard to diff); (4) Google Slides/PowerPoint (needs account; free). Recommendation (agent's): Marp, exported to PDF as the file brought to the interview, with PNG screenshots of the scorecard rendered from `scorecard.md` through the Chromium route that works locally (see "Report final form and sending", Prep). Not verified here: Marp's install and output.
+- 2026-10-22, closed by the user: the user writes the slides themselves, from the revised report (ticket 33). The draft outline above stays as optional input.

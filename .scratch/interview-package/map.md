@@ -51,10 +51,12 @@ The way to all three deliverables Prof. Mansour asked for is clear: a buildable 
 - [Close the suite audit's design gaps before the patch tickets](issues/36-close-the-suite-audits-design-gaps.md): ordinary updates store no end date; keep-and-copy only when a stored end changes or a value is retracted (ADR 0005 narrowed); expired entries are hidden unless history is requested; details in the ticket's Answer.
 - [Reference GEM design](issues/38-reference-gem-design.md): C3 is one hop, exactly the paper's Listing 1 (flag with evidence, cleared on the dependent's next write); a transitive walk is measured once for over-flagging. Policies are ⟨event, condition, action⟩ data from a small vocabulary, addable at runtime. Decay counts interactions (θ 0.05, about 400 interactions, β 500); C6-2 stops at the first forgetting pass. Bump +0.1. Revision (merge) runs asynchronously on a declared schedule, with the merge and staleness windows counted in interactions. The history cap is 500 with overflow archived, not deleted. One scorecard in three groups, plus a phase 1 → phase 2 change chain. No latency ramps and no chat on the reference GEM. Top 8 everywhere.
 - [Revise the spec and build tickets for the reference GEM and the suite audit](issues/39-revise-spec-for-reference-gem-and-audit.md): spec, build tickets 12–32 and the report revised. Reference GEM salience reuses MemState's code (0.05, +0.1, halve on archive, β 500, revision after every ingest) and adds only decay on disuse. C3 flagging is undirected (C3's "pair" wording). The versioned row rejects empty values; its missing C2(c), C3, C5 and C6 are `absent`. Report §8: a versioned row gives C1, C2's atomic commit and C4, and lacks C3 (MAFBench's own "dependency tracking"), C5 and C6.
+- [Report content revision](issues/33-report-final-form-and-sending.md): driven by the user's paper questions ([grounding](assets/cross-paper-grounding.md)). §8 MAFBench limitations, §7.7 a unified evaluation suite, §4.2 graph structure, §5 cost points, §7.9 tags and two directions, "Demo at a glance", a state-masking finding. PDF and sending: the user's.
+- [Research direction for the slides](issues/32-which-research-direction-leads.md) and [Slide outline](issues/34-slide-outline.md): closed. The user writes the slides from the revised report; the grounding and draft outline stay as input.
 
 ## Not yet specified
 
-- Interview format, time budget, slide timing and rehearsal: the user prepares these at the end. Nothing is decided now; the slide outline takes its time split from them.
+- Interview format, time budget, slides, the final report document and rehearsal: the user prepares these from the Markdown report (2026-10-22).
 
 ## Out of scope
 
