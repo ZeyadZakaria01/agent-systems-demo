@@ -3,12 +3,14 @@
 One generator drives both (spec stories 26, 41, 43). Sizes 100 / 250 / 500 / 1,000 / 2,000, each on its own
 fresh database. `--ramp-repeats` (default 1 while building, 3 for the run of record) is set on this module by the
 runner, and the check reads every constant through it (`ramp.REPEATS`), so a test patches each constant once.
-Each ramp takes `QUERY_SAMPLES` plain reads, so the query latency has a median and a range.
+Each ramp takes `QUERY_SAMPLES` plain reads, so the query latency has a median and a range. The largest ramp of a
+system that accepts `valid_at` also takes `ASOF_SAMPLES` as-of reads, timed apart from the plain ones.
 """
 
 from __future__ import annotations
 
 import statistics
+from datetime import datetime, timezone
 
 from demo.adapter import System
 
@@ -17,6 +19,7 @@ FORGET_GATE = 500  # Policies.topic_count_soft_limit; the forgetting pass runs o
 FORGET_THRESHOLD = 0.05
 REPEATS = 1
 QUERY_SAMPLES = 5
+ASOF_SAMPLES = 20  # as-of reads timed at the largest ramp size, by systems that accept `valid_at`
 ARCHIVE_WAIT_S = 20.0
 
 
@@ -33,6 +36,12 @@ def ingest_undated(system: System, i: int) -> dict:
 
 def plain_read(system: System) -> dict:
     return system.query({"q": "Ramp Topic", "stages": ["semantic"], "top_k": 8})
+
+
+def as_of_read(system: System) -> dict:
+    """The plain read with `valid_at` (now): what a dated history costs to read at a moment."""
+    return system.query({"q": "Ramp Topic", "stages": ["semantic"], "top_k": 8,
+                         "valid_at": datetime.now(timezone.utc).isoformat()})
 
 
 def filler(system: System, i: int) -> dict:

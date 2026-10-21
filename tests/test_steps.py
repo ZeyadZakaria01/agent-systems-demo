@@ -11,7 +11,7 @@ import pytest
 from demo.checks import discover
 from demo.run import run_recorded
 from demo.steps import PatchRepo, StepError
-from demo.systems import default_systems, step_spec
+from demo.systems import SYSTEMS, step_spec
 
 
 def git(path, *args):
@@ -20,7 +20,7 @@ def git(path, *args):
 
 @pytest.fixture
 def repo(tmp_path):
-    """A base commit and a branch `bitemporal` with two commits on top."""
+    """A base commit and a branch `bitemporal` with three commits on top (the whole patch)."""
     path = tmp_path / "patched"
     path.mkdir()
     git(path, "init", "-q", "-b", "main")
@@ -31,7 +31,7 @@ def repo(tmp_path):
     git(path, "commit", "-q", "-m", "upstream")
     base = git(path, "rev-parse", "HEAD")
     git(path, "checkout", "-q", "-b", "bitemporal")
-    for n in (1, 2):
+    for n in (1, 2, 3):
         (path / "f.txt").write_text(f"step {n}\n")
         git(path, "commit", "-q", "-am", f"step {n}")
     return PatchRepo(path=path, base=base, branch="bitemporal")
@@ -39,9 +39,10 @@ def repo(tmp_path):
 
 def test_steps_are_the_commits_above_upstream_oldest_first(repo):
     steps = repo.steps()
-    assert len(steps) == 2
-    assert git(repo.path, "log", "--format=%s", "--reverse", f"{repo.base}..bitemporal").split("\n") == ["step 1", "step 2"]
-    assert repo.step_commit(1) == steps[0] and repo.step_commit(2) == steps[1]
+    assert len(steps) == 3
+    assert git(repo.path, "log", "--format=%s", "--reverse", f"{repo.base}..bitemporal").split("\n") == \
+        ["step 1", "step 2", "step 3"]
+    assert [repo.step_commit(n) for n in (1, 2, 3)] == steps
 
 
 def test_checkout_step_detaches_at_that_commit_and_returning_restores_the_branch(repo):
@@ -51,12 +52,18 @@ def test_checkout_step_detaches_at_that_commit_and_returning_restores_the_branch
     assert (repo.path / "f.txt").read_text() == "step 1\n"
     repo.return_to_branch()
     assert git(repo.path, "branch", "--show-current") == "bitemporal"
-    assert (repo.path / "f.txt").read_text() == "step 2\n"
+    assert (repo.path / "f.txt").read_text() == "step 3\n"
 
 
-def test_a_step_that_does_not_exist_is_named_with_the_commits_that_do(repo):
-    with pytest.raises(StepError, match=r"step 3 does not exist: bitemporal has 2 commit"):
-        repo.checkout_step(3)
+@pytest.mark.parametrize("extra", [-1, 1])
+def test_a_branch_without_exactly_three_commits_is_refused_naming_the_count(repo, extra):
+    if extra < 0:
+        git(repo.path, "reset", "-q", "--hard", "HEAD~1")
+    else:
+        (repo.path / "f.txt").write_text("step 4\n")
+        git(repo.path, "commit", "-q", "-am", "step 4")
+    with pytest.raises(StepError, match=rf"bitemporal has {3 + extra} commit\(s\) on top of .*exactly 3"):
+        repo.checkout_step(1)
     assert git(repo.path, "branch", "--show-current") == "bitemporal"  # nothing was touched
 
 
@@ -73,11 +80,8 @@ def test_untracked_files_do_not_count_as_dirty(repo):
     repo.checkout_step(1)
 
 
-def test_a_run_without_systems_measures_only_the_steps_that_exist(repo):
-    # two commits on the throwaway repo: step 3 is left out, everything else stays in registry order
-    assert default_systems(repo) == ["upstream", "step1", "step2", "baseline"]
-    git(repo.path, "reset", "-q", "--hard", "HEAD~1")
-    assert default_systems(repo) == ["upstream", "step1", "baseline"]
+def test_a_run_without_systems_measures_every_registered_system():
+    assert list(SYSTEMS) == ["upstream", "step1", "step2", "step3", "baseline"]
 
 
 @pytest.mark.parametrize("operation", ["MERGE_HEAD", "CHERRY_PICK_HEAD", "REVERT_HEAD", "BISECT_LOG", "rebase-merge"])
@@ -112,13 +116,14 @@ def test_the_runner_checks_the_step_out_for_its_checks_and_returns_to_the_branch
     assert git(repo.path, "branch", "--show-current") == "bitemporal"
 
 
-def test_a_missing_step_gives_error_verdicts_naming_the_missing_step_and_touches_nothing(repo, tmp_path):
-    spec = step_spec(3, repo, open_fn=lambda *_: pytest.fail("must not open"))
+def test_an_incomplete_patch_gives_error_verdicts_naming_the_commit_count_and_touches_nothing(repo, tmp_path):
+    git(repo.path, "reset", "-q", "--hard", "HEAD~1")
+    spec = step_spec(2, repo, open_fn=lambda *_: pytest.fail("must not open"))
     c1 = next(c for c in discover() if c.id == "C1")
-    run = run_recorded(["step3"], [c1], tmp_path, "cmd", run_day=date(2026, 10, 20),
-                       registry={"step3": spec}, runtime_root=tmp_path / "rt", log=lambda *_: None)
+    run = run_recorded(["step2"], [c1], tmp_path, "cmd", run_day=date(2026, 10, 20),
+                       registry={"step2": spec}, runtime_root=tmp_path / "rt", log=lambda *_: None)
     (v,) = run.verdicts
-    assert v.verdict == "error" and "step 3 does not exist" in v.error
+    assert v.verdict == "error" and "bitemporal has 2 commit(s)" in v.error and "exactly 3" in v.error
     assert git(repo.path, "branch", "--show-current") == "bitemporal"
 
 

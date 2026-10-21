@@ -212,3 +212,31 @@ def test_a_topic_with_fields_reset_to_full_salience_and_never_forgotten_is_recor
 def test_a_topic_with_fields_that_is_forgotten_is_not_reported_as_reset():
     (obs,) = run(Bounded)["C5-1"].observations
     assert obs["forgotten"] is True and obs["reset"] is False
+
+
+class AcceptsValidAt(ThresholdArchiver):
+    def _describe(self):
+        return {"keeps_history": False, "accepts": {"valid_at": True}}
+
+
+def test_the_largest_ramp_of_a_system_accepting_valid_at_times_twenty_as_of_reads_apart_from_the_plain_ones():
+    ramps = run(AcceptsValidAt)["C5-2"].measurements["ramps"]
+    largest = max(r["n"] for r in ramps)
+    assert [len(r["as_of_samples_ms"]) for r in ramps if r["n"] == largest] == [20] * len([r for r in ramps if r["n"] == largest])
+    assert all(r["as_of_samples_ms"] == [] for r in ramps if r["n"] != largest)
+    assert all(len(r["query_samples_ms"]) == 3 for r in ramps)  # the plain samples do not include the as-of reads
+
+
+def test_a_system_without_valid_at_times_no_as_of_reads():
+    ramps = run(ThresholdArchiver)["C5-2"].measurements["ramps"]
+    assert all(r["as_of_samples_ms"] == [] for r in ramps)
+    assert "As-of reads" not in render_latency([run(ThresholdArchiver)["C5-2"]])
+
+
+def test_the_latency_output_reports_the_as_of_reads_beside_the_plain_ones():
+    v = ramp_verdict("step3", {2000: [(10.0, [4.0, 6.0], 0.1)]})
+    v.measurements["ramps"][0]["as_of_samples_ms"] = [5.0] * 19 + [9.0]
+    [entry] = aggregate([v])
+    assert entry["as_of"]["median"] == 5.0 and entry["as_of"]["max"] == 9.0
+    text = render_latency([v])
+    assert "As-of reads" in text and "| step3 | 2000 | 20 | 5.0 (5.0–9.0) | 5.0 (4.0–6.0) |" in text

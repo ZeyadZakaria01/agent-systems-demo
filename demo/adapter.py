@@ -45,6 +45,9 @@ Operations
   its β), or `None` for a system that declares none. `accepts_source` says whether a field write may
   carry a `source_message` (C4' probe); False by default, `None` with `accepts_error` if the schema could not be read,
   and `source_surface` lists the source-named request properties and paths the schema declares (evidence, MemState only).
+  `c6_clause_2_seeds` is a per-system test setting for C6 clause 2, `{"target": float, "control": float}`, or `None` for
+  the check's own seeds (0.03 and 0.01, upstream's): a system whose forgetting check runs after every interaction would
+  archive a topic seeded below its threshold with that very interaction (the reference GEM declares 0.06 and 0.06).
 - `resolve_source(entry)` returns the stored source message an entry's provenance points to (`entry` is a stored
   field's `current`, as read back), or `None` where the system stores none. Logged as a read. `ingest` carries the
   message as `source_message` on a field write, only where the system accepts one.
@@ -203,7 +206,7 @@ class System(ABC):
         accepts = {**{d: False for d in DATES}, **described.pop("accepts", {})}
         return {"system": self.label, "url": None, "db_path": None, "commit": None, "engine": None,
                 "keeps_history": None, "accepts_error": None, "declared_bound": None, "accepts_source": False,
-                "source_surface": None, **described, "accepts": accepts}
+                "source_surface": None, "c6_clause_2_seeds": None, **described, "accepts": accepts}
 
     @abstractmethod
     def _ingest(self, request: dict) -> dict: ...

@@ -47,6 +47,7 @@ BUMP = 0.1  # [INFERENCE: code reading, `Policies.query_salience_bump`] added to
 START_SALIENCE = 0.03
 CONTROL_SALIENCE = 0.01
 MAX_RETRIEVALS = 10
+MAX_RETRIEVALS_TO_FIRST_PASS = 100  # seeds at or above the threshold: reads continue until the first forgetting pass
 RETRIEVALS_CLAUSE_1 = 3
 ARCHIVE_WAIT_S = 20.0  # the pass runs after the ingest response; the control's archived flag is polled for this long
 EPS = 1e-9
@@ -197,11 +198,13 @@ def _durability(s: System, target_id: str) -> dict:
 @check(row="C6-2", claim=CLAUSE_2)
 def c6_clause_2(ctx: Ctx) -> Verdict:
     s = ctx.system
+    seeds = s.describe()["c6_clause_2_seeds"] or {"target": START_SALIENCE, "control": CONTROL_SALIENCE}
+    start_salience, control_salience = seeds["target"], seeds["control"]
     title, summary = PERMIT
     target_id = s.ingest({"placement": "new_topic", "title": title, "summary": summary,
-                          "salience": START_SALIENCE})["topic_id"]
+                          "salience": start_salience})["topic_id"]
     control_id = s.ingest({"placement": "new_topic", "title": CONTROL[0], "summary": CONTROL[1],
-                           "salience": CONTROL_SALIENCE})["topic_id"]
+                           "salience": control_salience})["topic_id"]
     start = salience(s, target_id)
     if start is None and salience(s, control_id) is None:
         return Verdict.absent("C6-2", _no_salience_probe({target_id: start, control_id: None}))
@@ -210,7 +213,11 @@ def c6_clause_2(ctx: Ctx) -> Verdict:
     pass_seen = False
     # Read by id, so only the target is returned (the control must stay unread). After each read, has any topic been
     # archived (the first forgetting pass)? The check stops there.
-    while len(trajectory) <= MAX_RETRIEVALS and _eligible(trajectory[-1]) is not False and trajectory[-1] is not None:
+    # A seed below the threshold is read until it leaves eligibility. A system declaring seeds at or above it (its
+    # forgetting check runs every interaction) is read on every interaction until the first forgetting pass.
+    to_first_pass = _eligible(start) is False
+    limit = MAX_RETRIEVALS_TO_FIRST_PASS if to_first_pass else MAX_RETRIEVALS
+    while len(trajectory) <= limit and trajectory[-1] is not None and (to_first_pass or _eligible(trajectory[-1]) is not False):
         response = s.query(read_request(target_id, q=title))
         hits += any(c["topic_id"] == target_id for c in response["candidates"])
         trajectory.append(salience(s, target_id))
@@ -221,7 +228,9 @@ def c6_clause_2(ctx: Ctx) -> Verdict:
     expected_min = None if start is None else start + BUMP * hits
     lifted = (reached is not None and expected_min is not None and _eligible(reached) is False
               and reached >= expected_min - EPS)
-    cases = [Case(f"repeated retrieval lifts the topic from {START_SALIENCE} to at least {FORGET_THRESHOLD}",
+    lift = (f"keeps the topic at or above {FORGET_THRESHOLD}, from {start_salience}, until the first forgetting pass"
+            if to_first_pass else f"lifts the topic from {start_salience} to at least {FORGET_THRESHOLD}")
+    cases = [Case(f"repeated retrieval {lift}",
                   held=lifted,
                   observation=f"salience {' -> '.join(_fmt(x) for x in trajectory)}; {hits} retrieval(s) returned the "
                               f"topic, expected at least {_fmt(expected_min)}")]
@@ -237,12 +246,12 @@ def c6_clause_2(ctx: Ctx) -> Verdict:
         control_archived, target_archived = control.get("archived") is True, target.get("archived") is True
         gate = {"ran": True, "first_pass_in_reads": pass_seen, "topics_after": topics,
                 "waited_s": None if waited is None else waited.elapsed,
-                "control": {"id": control_id, "start": CONTROL_SALIENCE, "salience": control.get("salience"),
+                "control": {"id": control_id, "start": control_salience, "salience": control.get("salience"),
                             "archived": control.get("archived")},
                 "target": {"id": target_id, "salience": target.get("salience"), "archived": target.get("archived")}}
         where = "during the reads" if pass_seen else f"after the forced pass ({topics} topics)"
         seen = (f"{where} the target has salience {_fmt(target.get('salience'))}, archived={target.get('archived')!r}; "
-                f"the never-read control at {CONTROL_SALIENCE} archived={control.get('archived')!r}")
+                f"the never-read control at {control_salience} archived={control.get('archived')!r}")
         if control_archived or target_archived:
             left = not target_archived and _eligible(target.get("salience")) is False
             cases.append(Case("the topic left forgetting eligibility", held=control_archived and left,

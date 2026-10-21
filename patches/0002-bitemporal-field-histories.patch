@@ -1,18 +1,23 @@
-From 792476027e175996bb1cf6b352f018c2e481c7b9 Mon Sep 17 00:00:00 2001
+From 5f45848d1f6e2991e8fcf335b32c01daebb3ab42 Mon Sep 17 00:00:00 2001
 From: Zeyad Zakaria <zeyad.zakaria@ctchealth.ch>
 Date: Wed, 21 Oct 2026 01:47:34 +0300
-Subject: [PATCH 2/2] Bitemporal field histories: dated entries, valid-time
- reads, keep-and-copy on changed ends
+Subject: [PATCH 2/2] Bitemporal field histories: dated entries, valid-time and
+ recorded-time reads, keep-and-copy on changed ends, chat reference time
 
 ---
  src/memstate/api/ui_api.py         |   1 +
- src/memstate/core/executor.py      |  71 ++++----
- src/memstate/core/models.py        |  12 ++
- src/memstate/datamodel/fields.py   | 144 +++++++++++++++-
- src/memstate/store/graph_store.py  |  43 +++--
- tests/test_bitemporal_histories.py | 255 +++++++++++++++++++++++++++++
- 6 files changed, 478 insertions(+), 48 deletions(-)
+ src/memstate/core/executor.py      |  74 ++++---
+ src/memstate/core/models.py        |  15 ++
+ src/memstate/datamodel/fields.py   | 163 ++++++++++++++-
+ src/memstate/llm/chat_api.py       |  33 +++
+ src/memstate/llm/tool_runner.py    |  70 +++++--
+ src/memstate/llm/tools_schema.py   |  18 ++
+ src/memstate/store/graph_store.py  |  43 ++--
+ tests/test_bitemporal_histories.py | 320 +++++++++++++++++++++++++++++
+ tests/test_chat_reference_time.py  | 192 +++++++++++++++++
+ 10 files changed, 860 insertions(+), 69 deletions(-)
  create mode 100644 tests/test_bitemporal_histories.py
+ create mode 100644 tests/test_chat_reference_time.py
 
 diff --git a/src/memstate/api/ui_api.py b/src/memstate/api/ui_api.py
 index 79fb8df..c65d1e5 100644
@@ -27,7 +32,7 @@ index 79fb8df..c65d1e5 100644
          }
      th_raw = row.get("topic_history_json")
 diff --git a/src/memstate/core/executor.py b/src/memstate/core/executor.py
-index 7b2bd54..0507904 100644
+index 7b2bd54..a0438ca 100644
 --- a/src/memstate/core/executor.py
 +++ b/src/memstate/core/executor.py
 @@ -16,7 +16,7 @@ from memstate.core.models import (
@@ -81,7 +86,7 @@ index 7b2bd54..0507904 100644
                  provenance=fw.provenance,
                  why_changed=fw.why_changed,
                  impact_expected=fw.impact_expected,
-@@ -227,44 +236,38 @@ class Executor:
+@@ -227,44 +236,39 @@ class Executor:
  
          raise ValueError("unknown placement")
  
@@ -111,7 +116,8 @@ index 7b2bd54..0507904 100644
              return None
 -        cur_e = tf.current_entry()
 +        valid_at = parse_when(req.valid_at)
-+        cur_e = tf.current_entry(valid_at)
++        recorded_at = parse_when(req.recorded_at)
++        cur_e = tf.current_entry(valid_at, recorded_at)
          want_temporal = "temporal" in req.stages
 -        want_structural = "structural" in req.stages
 -        if want_structural and not want_temporal and not cur_e:
@@ -140,7 +146,7 @@ index 7b2bd54..0507904 100644
 -                )
 -                for e in tf.history
 -            ]
-+        if (want_temporal and req.explain) or valid_at is not None:
++        if (want_temporal and req.explain) or valid_at is not None or recorded_at is not None:
 +            hist_out = [self._version_out(e) for e in tf.history]
          elif cur_out:
              hist_out = [cur_out]
@@ -149,17 +155,19 @@ index 7b2bd54..0507904 100644
          return FieldOut(
              name=fn,
              field_type=tf.field_type,
-@@ -274,6 +277,8 @@ class Executor:
+@@ -274,6 +278,10 @@ class Executor:
          )
  
      def query(self, req: QueryRequest) -> QueryResponse:
 +        if req.valid_at is not None and parse_when(req.valid_at) is None:
 +            raise ValueError(f"valid_at is not a date: {req.valid_at!r}")
++        if req.recorded_at is not None and parse_when(req.recorded_at) is None:
++            raise ValueError(f"recorded_at is not a date: {req.recorded_at!r}")
          qv = np.array(self._emb.embed([req.q])[0])
          loaded = self._load_embedding_vectors()
          sim_map: dict[str, float] = {}
 diff --git a/src/memstate/core/models.py b/src/memstate/core/models.py
-index 9daf22a..d3e4b40 100644
+index 9daf22a..d71a2a8 100644
 --- a/src/memstate/core/models.py
 +++ b/src/memstate/core/models.py
 @@ -27,6 +27,10 @@ class FieldWrite(BaseModel):
@@ -173,12 +181,15 @@ index 9daf22a..d3e4b40 100644
  
  
  class EdgeWrite(BaseModel):
-@@ -68,12 +72,20 @@ class QueryRequest(BaseModel):
+@@ -68,12 +72,23 @@ class QueryRequest(BaseModel):
      top_k: int = 8
      topic_ids: list[str] | None = None
      field_names: list[str] | None = None
 +    valid_at: str | None = None
 +    """Return the value true at this time (ISO date or datetime); counts as a history request."""
++    recorded_at: str | None = None
++    """Return the value memory held at this time (ISO date or datetime), counting entries that
++    have since expired; combines with `valid_at` (default: valid now); counts as a history request."""
  
  
  class FieldVersionOut(BaseModel):
@@ -195,7 +206,7 @@ index 9daf22a..d3e4b40 100644
      why_changed: str | None = None
      impact_expected: str | None = None
 diff --git a/src/memstate/datamodel/fields.py b/src/memstate/datamodel/fields.py
-index 03a15f9..4d4516a 100644
+index 03a15f9..15da2ca 100644
 --- a/src/memstate/datamodel/fields.py
 +++ b/src/memstate/datamodel/fields.py
 @@ -4,6 +4,7 @@ from __future__ import annotations
@@ -218,19 +229,23 @@ index 03a15f9..4d4516a 100644
  
  
  class TopicField(BaseModel):
-@@ -74,8 +80,9 @@ class TopicField(BaseModel):
+@@ -74,8 +80,13 @@ class TopicField(BaseModel):
              return 1.0
          return max(0.0, min(10.0, x))
  
 -    def current_entry(self) -> FieldHistoryEntry | None:
 -        return self.history[0] if self.history else None
-+    def current_entry(self, at: datetime | None = None) -> FieldHistoryEntry | None:
-+        """The entry valid at `at` (default now); expired entries never count."""
-+        return resolve_valid(self.history, at or datetime.now(timezone.utc))
++    def current_entry(
++        self, at: datetime | None = None, recorded_at: datetime | None = None
++    ) -> FieldHistoryEntry | None:
++        """The entry valid at `at` (default now). Expired entries never count, unless
++        `recorded_at` asks what memory held at that moment (see `believed_at`)."""
++        history = self.history if recorded_at is None else believed_at(self.history, recorded_at)
++        return resolve_valid(history, at or datetime.now(timezone.utc))
  
  
  def new_history_entry(
-@@ -86,10 +93,15 @@ def new_history_entry(
+@@ -86,10 +97,15 @@ def new_history_entry(
      why_changed: str | None = None,
      impact_expected: str | None = None,
      operation: str | None = None,
@@ -246,7 +261,7 @@ index 03a15f9..4d4516a 100644
          value=value,
          why_changed=why_changed,
          impact_expected=impact_expected,
-@@ -98,6 +110,134 @@ def new_history_entry(
+@@ -98,6 +114,149 @@ def new_history_entry(
      )
  
  
@@ -290,6 +305,21 @@ index 03a15f9..4d4516a 100644
 +        if own:
 +            ends[e.id] = own
 +    return ends
++
++
++def believed_at(history: list[FieldHistoryEntry], recorded_at: datetime) -> list[FieldHistoryEntry]:
++    """The entries memory held at `recorded_at`: recorded by then (`created_at`) and not yet
++    expired then. Entries that have expired since are counted, shown as live."""
++    held: list[FieldHistoryEntry] = []
++    for e in history:
++        made = parse_when(e.created_at)
++        gone = parse_when(e.expired_at) if e.expired_at else None
++        if (made is not None and made > recorded_at) or (e.expired_at and gone is None):
++            continue
++        if gone is not None and gone <= recorded_at:
++            continue
++        held.append(e.model_copy(update={"expired_at": None}) if e.expired_at else e)
++    return held
 +
 +
 +def resolve_valid(history: list[FieldHistoryEntry], at: datetime) -> FieldHistoryEntry | None:
@@ -381,6 +411,405 @@ index 03a15f9..4d4516a 100644
  class TopicFields(BaseModel):
      """Map field name -> TopicField."""
  
+diff --git a/src/memstate/llm/chat_api.py b/src/memstate/llm/chat_api.py
+index f0f579c..7ec24cb 100644
+--- a/src/memstate/llm/chat_api.py
++++ b/src/memstate/llm/chat_api.py
+@@ -5,6 +5,7 @@ from __future__ import annotations
+ import asyncio
+ import json
+ from collections.abc import AsyncIterator, Awaitable, Callable
++from datetime import datetime, timezone
+ from typing import Any, Literal
+ 
+ import httpx
+@@ -14,6 +15,7 @@ from pydantic import BaseModel, Field
+ 
+ from memstate.api.deps import get_graph_store
+ from memstate.config import Settings, get_settings
++from memstate.datamodel.fields import parse_when
+ from memstate.llm.groq_chat import run_groq_chat
+ from memstate.llm.groq_transcribe import transcribe_audio_bytes
+ from memstate.llm.intent_router import classify_intent, dialogue_text_for_classifier
+@@ -26,6 +28,7 @@ from memstate.llm.tools_schema import (
+     build_chat_system_prompt,
+     build_study_phase_a_system_prompt,
+     build_study_phase_b_system_prompt,
++    reference_time_prompt_block,
+     tools_for_intent_route,
+     tools_for_study_phase_a,
+ )
+@@ -141,6 +144,14 @@ class ChatBody(BaseModel):
+             "(see study_ingest). Kept for older clients."
+         ),
+     )
++    reference_time: str | None = Field(
++        None,
++        description=(
++            "ISO date or datetime this message is written at (default: now). Placed in the system prompt, "
++            "default valid_from of memory_append_field, the valid-time moment of the message's reads, and "
++            "stored in the provenance of what it writes."
++        ),
++    )
+     study_ingest: bool = Field(
+         True,
+         description=(
+@@ -150,6 +161,17 @@ class ChatBody(BaseModel):
+     )
+ 
+ 
++def _resolve_reference_time(body: ChatBody) -> datetime:
++    if body.reference_time is None or not body.reference_time.strip():
++        return datetime.now(timezone.utc)
++    when = parse_when(body.reference_time)
++    if when is None:
++        raise HTTPException(
++            status_code=400, detail=f"reference_time is not an ISO date or datetime: {body.reference_time!r}"
++        )
++    return when
++
++
+ def _prepare_chat_messages(body: ChatBody, settings: Settings) -> list[dict[str, Any]]:
+     norm = _normalize_dialogue_messages(body.messages)
+     if not norm:
+@@ -280,6 +302,7 @@ async def _chat_study_ingest(
+     base_tool_rounds: int,
+     route: IntentRoute,
+     intent_source: IntentSource,
++    reference_time: datetime,
+     on_event: ChatEventCallback | None = None,
+ ) -> dict[str, Any]:
+     """Study pipeline: phase A sandbox topics, phase B integrate with existing memory."""
+@@ -302,6 +325,7 @@ async def _chat_study_ingest(
+     fixed_block = _build_system_context_prompt_block(store)
+     if fixed_block:
+         sys_a = f"{sys_a}\n\n{fixed_block}"
++    sys_a = f"{sys_a}\n\n{reference_time_prompt_block(reference_time.isoformat())}"
+     runner_a = MemoryToolRunner(
+         store,
+         chat_route=route,
+@@ -309,6 +333,7 @@ async def _chat_study_ingest(
+         field_salience_max=settings.field_salience_max,
+         study_session_kind=sk,
+         study_catalog=catalog,
++        reference_time=reference_time,
+     )
+     ev_a = _wrap_on_event(on_event, phase="study_a")
+     if body.provider == "groq":
+@@ -351,12 +376,14 @@ async def _chat_study_ingest(
+         chat_route=route,
+         query_field_salience_bump=settings.query_field_salience_bump,
+         field_salience_max=settings.field_salience_max,
++        reference_time=reference_time,
+     )
+     tools_b = tools_for_intent_route(route)
+     sys_b = build_study_phase_b_system_prompt(route)
+     fixed_block = _build_system_context_prompt_block(store)
+     if fixed_block:
+         sys_b = f"{sys_b}\n\n{fixed_block}"
++    sys_b = f"{sys_b}\n\n{reference_time_prompt_block(reference_time.isoformat())}"
+     ev_b = _wrap_on_event(on_event, phase="study_b")
+     if body.provider == "groq":
+         reply_b, log_b, used_b = await run_groq_chat(
+@@ -499,6 +526,7 @@ async def _run_standard_chat(
+     tool_rounds: int,
+     route: IntentRoute,
+     intent_source: IntentSource,
++    reference_time: datetime,
+     on_event: ChatEventCallback | None = None,
+ ) -> dict[str, Any]:
+     runner = MemoryToolRunner(
+@@ -506,12 +534,14 @@ async def _run_standard_chat(
+         chat_route=route,
+         query_field_salience_bump=settings.query_field_salience_bump,
+         field_salience_max=settings.field_salience_max,
++        reference_time=reference_time,
+     )
+     tool_defs = tools_for_intent_route(route)
+     sys_prompt = build_chat_system_prompt(route)
+     fixed_block = _build_system_context_prompt_block(store)
+     if fixed_block:
+         sys_prompt = f"{sys_prompt}\n\n{fixed_block}"
++    sys_prompt = f"{sys_prompt}\n\n{reference_time_prompt_block(reference_time.isoformat())}"
+ 
+     if body.provider == "groq":
+         try:
+@@ -587,6 +617,7 @@ async def _execute_chat_body(
+     settings: Settings,
+     on_event: ChatEventCallback | None = None,
+ ) -> dict[str, Any]:
++    reference_time = _resolve_reference_time(body)
+     dialogue, model, groq_key, ollama_base, tool_rounds, route, intent_source = await _resolve_chat_context(
+         body, store, settings
+     )
+@@ -613,6 +644,7 @@ async def _execute_chat_body(
+                 tool_rounds,
+                 route,
+                 intent_source,
++                reference_time,
+                 on_event=on_event,
+             )
+         except httpx.HTTPStatusError as e:
+@@ -651,6 +683,7 @@ async def _execute_chat_body(
+         tool_rounds=tool_rounds,
+         route=route,
+         intent_source=intent_source,
++        reference_time=reference_time,
+         on_event=on_event,
+     )
+ 
+diff --git a/src/memstate/llm/tool_runner.py b/src/memstate/llm/tool_runner.py
+index c1942d2..7bb1026 100644
+--- a/src/memstate/llm/tool_runner.py
++++ b/src/memstate/llm/tool_runner.py
+@@ -18,6 +18,7 @@ from memstate.datamodel.fields import (
+     is_nested_fields_bundle_value,
+     nested_bundle_inner_fields,
+     new_history_entry,
++    parse_when,
+ )
+ from memstate.llm.tools_schema import IntentRoute
+ from memstate.store.graph_store import REF_UNCHANGED, GraphStore
+@@ -27,8 +28,10 @@ def _utc_iso() -> str:
+     return datetime.now(timezone.utc).isoformat()
+ 
+ 
+-def _field_payload_from_topic_field(tf: TopicField, *, with_history: bool = True) -> dict[str, Any]:
+-    cur = tf.current_entry()
++def _field_payload_from_topic_field(
++    tf: TopicField, *, with_history: bool = True, at: datetime | None = None
++) -> dict[str, Any]:
++    cur = tf.current_entry(at)
+     payload: dict[str, Any] = {
+         "field_type": tf.field_type,
+         "ref_topic_id": tf.ref_topic_id,
+@@ -47,13 +50,14 @@ def _read_nested_inner_field(
+     inner_raw: dict[str, Any],
+     *,
+     with_history: bool = True,
++    at: datetime | None = None,
+ ) -> dict[str, Any]:
+     sub_tf = TopicField.model_validate(inner_raw)
+     return {
+         "ok": True,
+         "nest_key": nest_key,
+         "nested_field_name": inner_name,
+-        "field": _field_payload_from_topic_field(sub_tf, with_history=with_history),
++        "field": _field_payload_from_topic_field(sub_tf, with_history=with_history, at=at),
+     }
+ 
+ 
+@@ -140,8 +144,10 @@ _REORGANIZE_TOOL_TO_OP: dict[str, str] = {
+ }
+ 
+ 
+-def _nested_bundle_schema_extras(rec: TopicField, *, with_current_values: bool) -> dict[str, Any]:
+-    cur = rec.current_entry()
++def _nested_bundle_schema_extras(
++    rec: TopicField, *, with_current_values: bool, at: datetime | None = None
++) -> dict[str, Any]:
++    cur = rec.current_entry(at)
+     if rec.field_type != "json" or not cur or not is_nested_fields_bundle_value(cur.value):
+         return {}
+     inner = nested_bundle_inner_fields(cur.value)
+@@ -155,7 +161,7 @@ def _nested_bundle_schema_extras(rec: TopicField, *, with_current_values: bool)
+         if isinstance(sub, dict):
+             try:
+                 stf = TopicField.model_validate(sub)
+-                sce = stf.current_entry()
++                sce = stf.current_entry(at)
+                 subvals[n] = sce.value if sce else None
+             except Exception:
+                 subvals[n] = None
+@@ -165,7 +171,7 @@ def _nested_bundle_schema_extras(rec: TopicField, *, with_current_values: bool)
+     return out
+ 
+ 
+-def _fields_schema_payload(tf: TopicFields, *, detail: str) -> dict[str, Any]:
++def _fields_schema_payload(tf: TopicFields, *, detail: str, at: datetime | None = None) -> dict[str, Any]:
+     """Build per-field payload for memory_get_topic_schema (detail: minimal | current | history)."""
+     out: dict[str, Any] = {}
+     d = (detail or "minimal").strip().lower()
+@@ -178,17 +184,17 @@ def _fields_schema_payload(tf: TopicFields, *, detail: str) -> dict[str, Any]:
+                 "ref_topic_id": rec.ref_topic_id,
+                 "salience": rec.salience,
+             }
+-            row.update(_nested_bundle_schema_extras(rec, with_current_values=False))
++            row.update(_nested_bundle_schema_extras(rec, with_current_values=False, at=at))
+             out[fname] = row
+         elif d == "current":
+-            cur = rec.current_entry()
++            cur = rec.current_entry(at)
+             row = {
+                 "field_type": rec.field_type,
+                 "ref_topic_id": rec.ref_topic_id,
+                 "salience": rec.salience,
+                 "value": cur.value if cur else None,
+             }
+-            row.update(_nested_bundle_schema_extras(rec, with_current_values=True))
++            row.update(_nested_bundle_schema_extras(rec, with_current_values=True, at=at))
+             out[fname] = row
+         else:
+             row = {
+@@ -197,7 +203,7 @@ def _fields_schema_payload(tf: TopicFields, *, detail: str) -> dict[str, Any]:
+                 "salience": rec.salience,
+                 "history": [e.model_dump() for e in rec.history],
+             }
+-            row.update(_nested_bundle_schema_extras(rec, with_current_values=False))
++            row.update(_nested_bundle_schema_extras(rec, with_current_values=False, at=at))
+             out[fname] = row
+     return out
+ 
+@@ -226,8 +232,8 @@ def _parse_args(raw: Any) -> dict[str, Any]:
+     return {}
+ 
+ 
+-def _field_to_topic_out(rec: TopicField) -> dict[str, Any]:
+-    return _field_payload_from_topic_field(rec, with_history=True)
++def _field_to_topic_out(rec: TopicField, at: datetime | None = None) -> dict[str, Any]:
++    return _field_payload_from_topic_field(rec, with_history=True, at=at)
+ 
+ 
+ def _parse_with_history_flag(raw: Any, *, default: bool = True) -> bool:
+@@ -254,6 +260,7 @@ class MemoryToolRunner:
+         field_salience_max: float = 10.0,
+         study_session_kind: str | None = None,
+         study_catalog: dict[str, Any] | None = None,
++        reference_time: datetime | None = None,
+     ) -> None:
+         self._store = store
+         self._chat_route = chat_route
+@@ -261,6 +268,12 @@ class MemoryToolRunner:
+         self._field_salience_max = field_salience_max
+         self._study_kind = (study_session_kind or "").strip() or None
+         self._study_catalog = study_catalog
++        # The chat request's reference time: the default `valid_from` of appended entries, the valid-time
++        # moment this message's reads are as of, and recorded in provenance. None (MCP): reads are as of now.
++        self._reference_time = reference_time
++
++    def _reference_iso(self) -> str | None:
++        return self._reference_time.isoformat() if self._reference_time else None
+ 
+     def _study_topic_kind_ok(self, topic_id: str) -> bool:
+         if not self._study_kind:
+@@ -295,7 +308,7 @@ class MemoryToolRunner:
+             tf = s.get_field_with_history(tid, fname)
+             if not tf:
+                 return {"ok": False, "error": "field not found"}
+-            cur = tf.current_entry()
++            cur = tf.current_entry(self._reference_time)
+             if not cur or not is_nested_fields_bundle_value(cur.value):
+                 return {"ok": False, "error": "field is not a nested bundle"}
+             inner = nested_bundle_inner_fields(cur.value)
+@@ -305,7 +318,7 @@ class MemoryToolRunner:
+             try:
+                 self._bump_read_access_salience(tid, [fname])
+                 return _read_nested_inner_field(
+-                    fname, nested_fname, sub_raw, with_history=with_history
++                    fname, nested_fname, sub_raw, with_history=with_history, at=self._reference_time
+                 )
+             except Exception:
+                 return {"ok": False, "error": "nested field invalid"}
+@@ -317,7 +330,9 @@ class MemoryToolRunner:
+                 "ok": True,
+                 "topic_id": tid,
+                 "field_name": fname,
+-                "field": _field_payload_from_topic_field(tf, with_history=with_history),
++                "field": _field_payload_from_topic_field(
++                    tf, with_history=with_history, at=self._reference_time
++                ),
+             }
+ 
+         found = _find_nested_inner_field(s, tid, fname)
+@@ -326,7 +341,7 @@ class MemoryToolRunner:
+             try:
+                 self._bump_read_access_salience(tid, [nest_key])
+                 out = _read_nested_inner_field(
+-                    nest_key, fname, sub_raw, with_history=with_history
++                    nest_key, fname, sub_raw, with_history=with_history, at=self._reference_time
+                 )
+                 out["topic_id"] = tid
+                 out["field_name"] = fname
+@@ -406,7 +421,7 @@ class MemoryToolRunner:
+             self._bump_read_access_salience(tid, names)
+             row = s.get_topic(tid)
+             tf = TopicFields.from_json(row.get("fields_json") if isinstance(row.get("fields_json"), str) else "")
+-            fields = _fields_schema_payload(tf, detail=detail)
++            fields = _fields_schema_payload(tf, detail=detail, at=self._reference_time)
+             return {
+                 "ok": True,
+                 "topic_id": row.get("id"),
+@@ -435,7 +450,7 @@ class MemoryToolRunner:
+             tf = TopicFields.from_json(row.get("fields_json") if isinstance(row.get("fields_json"), str) else "")
+             out_fields: dict[str, Any] = {}
+             for fname, rec in tf.fields.items():
+-                out_fields[fname] = _field_to_topic_out(rec)
++                out_fields[fname] = _field_to_topic_out(rec, self._reference_time)
+             return {
+                 "ok": True,
+                 "topic": {
+@@ -551,10 +566,23 @@ class MemoryToolRunner:
+                 return {"ok": False, "error": "topic not found"}
+             if self._study_kind and not self._study_topic_kind_ok(tid):
+                 return {"ok": False, "error": "topic not in this Study session"}
++            valid_from = _utc_iso()
++            provenance = str(args.get("provenance") or "llm")
++            if self._reference_time is not None:
++                valid_from = self._reference_iso()
++                provenance = f"{provenance} (reference_time {valid_from})"
++            given = args.get("valid_from")
++            if given not in (None, ""):
++                if parse_when(str(given)) is None:
++                    return {
++                        "ok": False,
++                        "error": f"valid_from is not an ISO date or datetime: {given!r}. Retry with a date such as 2026-09-22, or omit it to use the reference time.",
++                    }
++                valid_from = str(given)
+             entry = new_history_entry(
+                 value=args.get("value", ""),
+-                valid_from=_utc_iso(),
+-                provenance=str(args.get("provenance") or "llm"),
++                valid_from=valid_from,
++                provenance=provenance,
+                 why_changed=args.get("why_changed"),
+             )
+             if "ref_topic_id" not in args:
+diff --git a/src/memstate/llm/tools_schema.py b/src/memstate/llm/tools_schema.py
+index 304b4b5..e48b73c 100644
+--- a/src/memstate/llm/tools_schema.py
++++ b/src/memstate/llm/tools_schema.py
+@@ -237,6 +237,14 @@ OLLAMA_TOOLS: list[dict] = [
+                         "type": "string",
+                         "description": "Optional UUID of another topic this field references",
+                     },
++                    "valid_from": {
++                        "type": "string",
++                        "description": (
++                            "Optional ISO date or datetime from which the fact holds in the world (e.g. a start "
++                            "date you worked out from the message, like 2026-09-22). Omit it when the fact holds "
++                            "from the reference time."
++                        ),
++                    },
+                     "why_changed": {"type": "string"},
+                     "provenance": {"type": "string", "default": "llm"},
+                 },
+@@ -751,6 +759,16 @@ NO_DUPLICATE_TOPICS_PROMPT = """Do not duplicate topics (mandatory on ingest/wri
+ 5) **Self-reference ("I", "my"):** Resolve to the user's existing person topic from list_topics or prior turns, not a new topic unless none exists."""
+ 
+ 
++def reference_time_prompt_block(reference_time: str) -> str:
++    """System-prompt block giving a chat request its date (the request's `reference_time`)."""
++    return (
++        f"Reference time (the date and time of this message): {reference_time}. "
++        "Resolve relative dates in the message ('two weeks ago', 'last Friday', 'yesterday') against it. "
++        "memory_append_field stores a fact as holding from this time unless you pass valid_from with the "
++        "date the fact began; reads in this message show memory as of this time."
++    )
++
++
+ def build_chat_system_prompt(route: IntentRoute) -> str:
+     """Full system prompt for /api/llm/chat after intent routing."""
+     parts = [SYSTEM_PROMPT, TOPIC_VS_ENTITY_PROMPT, INTENT_ROUTING_PROMPT]
 diff --git a/src/memstate/store/graph_store.py b/src/memstate/store/graph_store.py
 index 21a14db..9e73e7a 100644
 --- a/src/memstate/store/graph_store.py
@@ -462,16 +891,17 @@ index 21a14db..9e73e7a 100644
                      "id": e.id,
 diff --git a/tests/test_bitemporal_histories.py b/tests/test_bitemporal_histories.py
 new file mode 100644
-index 0000000..023a0c6
+index 0000000..6126b1b
 --- /dev/null
 +++ b/tests/test_bitemporal_histories.py
-@@ -0,0 +1,255 @@
-+"""Step 2a: dated field histories, valid-time reads, keep-and-copy (ADR 0005)."""
+@@ -0,0 +1,320 @@
++"""Step 2: dated field histories, valid-time reads, keep-and-copy (ADR 0005), recorded-time reads."""
 +
 +from __future__ import annotations
 +
 +import os
 +import tempfile
++import time
 +import uuid
 +from datetime import datetime, timezone
 +from pathlib import Path
@@ -720,7 +1150,269 @@ index 0000000..023a0c6
 +
 +    schemas = app.openapi()["components"]["schemas"]
 +    assert {"valid_from", "invalid_at"} <= set(schemas["FieldWrite"]["properties"])
-+    assert "valid_at" in schemas["QueryRequest"]["properties"]
++    assert {"valid_at", "recorded_at"} <= set(schemas["QueryRequest"]["properties"])
++
++
++def as_of_topic(ex: Executor) -> str:
++    """The as-of probe: Jan 5 "April 20" (true from Jan 5); Feb 15 "May 1" (true from Feb 1)."""
++    tid = make_topic(ex)
++    for value, valid, recorded in (("April 20", d(1, 5), d(1, 5)), ("May 1", d(2, 1), d(2, 15))):
++        ex.store.append_field_history(
++            tid, "f", new_history_entry(value=value, valid_from=valid, created_at=recorded, provenance="p"), max_history=50
++        )
++    return tid
++
++
++def ask(ex: Executor, tid: str, **dates):
++    out = ex.query(QueryRequest(q="x", **dates))
++    f = [f for b in out.candidates if b.topic_id == tid for f in b.fields if f.name == "f"][0]
++    return f
++
++
++def test_believed_on_feb_10_is_april_20_with_nothing_expired(ex: Executor) -> None:
++    tid = as_of_topic(ex)
++    assert all(e.expired_at is None for e in rec(ex, tid).history)
++    assert ask(ex, tid, valid_at=d(2, 10)).current.value == "May 1"  # true on Feb 10
++    f = ask(ex, tid, recorded_at=d(2, 10))  # believed on Feb 10
++    assert f.current.value == "April 20"
++    assert len(f.history) == 2  # a recorded_at read is a history request
++    assert ask(ex, tid).current.value == "May 1"
++
++
++def test_recorded_at_combines_with_valid_at(ex: Executor) -> None:
++    tid = as_of_topic(ex)
++    assert ask(ex, tid, recorded_at=d(2, 10), valid_at=d(2, 10)).current.value == "April 20"  # not yet told
++    assert ask(ex, tid, recorded_at=d(3, 1), valid_at=d(2, 10)).current.value == "May 1"
++    assert ask(ex, tid, recorded_at=d(3, 1), valid_at=d(1, 20)).current.value == "April 20"
++    assert ask(ex, tid, recorded_at=d(1, 1)).current is None  # nothing recorded yet
++    assert ask(ex, tid, recorded_at=d(1, 10), valid_at=d(1, 7)).current.value == "April 20"
++
++
++def test_recorded_at_counts_entries_that_have_since_expired(ex: Executor) -> None:
++    tid = make_topic(ex)
++    write(ex, tid, "$50", valid_from=d(9, 1))
++    write(ex, tid, "$80", valid_from=d(10, 1), invalid_at=d(11, 1))
++    time.sleep(0.05)
++    before = datetime.now(timezone.utc).isoformat()
++    time.sleep(0.05)
++    write(ex, tid, "$100", valid_from=d(10, 10))  # expires $80 and appends its corrected copy
++    assert any(e.expired_at for e in rec(ex, tid).history)
++    assert ask(ex, tid, recorded_at=before, valid_at=d(10, 15)).current.value == "$80"  # then believed
++    assert ask(ex, tid, valid_at=d(10, 15)).current.value == "$100"  # believed now
++    after = datetime.now(timezone.utc).isoformat()
++    assert ask(ex, tid, recorded_at=after, valid_at=d(10, 15)).current.value == "$100"
++    assert ask(ex, tid, recorded_at=after, valid_at=d(10, 5)).current.value == "$80"
++
++
++def test_recorded_at_read_raises_salience(ex: Executor) -> None:
++    tid = as_of_topic(ex)
++    before = float(ex.store.get_topic(tid)["salience"])
++    ask(ex, tid, recorded_at=d(2, 10))
++    assert float(ex.store.get_topic(tid)["salience"]) > before
++
++
++def test_bad_recorded_at_is_rejected(ex: Executor) -> None:
++    make_topic(ex)
++    with pytest.raises(ValueError):
++        ex.query(QueryRequest(q="x", recorded_at="not a date"))
+diff --git a/tests/test_chat_reference_time.py b/tests/test_chat_reference_time.py
+new file mode 100644
+index 0000000..34c1381
+--- /dev/null
++++ b/tests/test_chat_reference_time.py
+@@ -0,0 +1,192 @@
++"""Step 2c: the chat request's `reference_time` (system prompt, default valid_from, as-of reads, provenance)."""
++
++from __future__ import annotations
++
++import asyncio
++import os
++import tempfile
++import uuid
++from datetime import datetime, timezone
++from pathlib import Path
++
++import pytest
++from fastapi import HTTPException
++
++from memstate.config import Settings
++from memstate.datamodel.fields import new_history_entry
++from memstate.llm import chat_api
++from memstate.llm.chat_api import ChatBody, _execute_chat_body
++from memstate.llm.tool_runner import MemoryToolRunner
++from memstate.llm.tools_schema import tools_for_intent_route
++from memstate.schema import init_graph
++from memstate.store.graph_store import GraphStore
++from memstate.store.kuzu_adapter import KuzuGraph, clear_kuzu_graph_cache
++
++OCT6 = datetime(2026, 10, 6, tzinfo=timezone.utc)
++OCT20 = datetime(2026, 10, 20, tzinfo=timezone.utc)
++
++
++def _store() -> GraphStore:
++    fd, path = tempfile.mkstemp(suffix=".kuzu")
++    os.close(fd)
++    clear_kuzu_graph_cache()
++    g = KuzuGraph(str(Path(path).resolve()))
++    init_graph(g)
++    return GraphStore(g)
++
++
++def _topic(store: GraphStore) -> str:
++    tid = str(uuid.uuid4())
++    store.create_topic(tid, title="Person", summary=None, salience=1.0, archived=False, embedding=None)
++    return tid
++
++
++def _append(runner: MemoryToolRunner, tid: str, value: str, **extra) -> dict:
++    return runner.execute("memory_append_field", {"topic_id": tid, "field_name": "job", "value": value, **extra})
++
++
++def _entry(store: GraphStore, tid: str, i: int = 0):
++    return store.get_field_with_history(tid, "job").history[i]
++
++
++def test_default_valid_from_is_the_reference_time_and_provenance_records_it() -> None:
++    store = _store()
++    tid = _topic(store)
++    assert _append(MemoryToolRunner(store, reference_time=OCT6), tid, "new job")["ok"] is True
++    e = _entry(store, tid)
++    assert e.valid_from == OCT6.isoformat()
++    assert e.provenance == f"llm (reference_time {OCT6.isoformat()})"
++    assert e.created_at != OCT6.isoformat()  # recorded time is still the wall clock
++
++
++def test_model_filled_valid_from_wins_over_the_reference_time() -> None:
++    store = _store()
++    tid = _topic(store)
++    r = MemoryToolRunner(store, reference_time=OCT6)
++    assert _append(r, tid, "new job", valid_from="2026-09-22")["ok"] is True
++    e = _entry(store, tid)
++    assert e.valid_from == "2026-09-22"
++    assert OCT6.isoformat() in e.provenance
++
++
++def test_valid_from_that_is_not_a_date_is_rejected_and_nothing_is_stored() -> None:
++    store = _store()
++    tid = _topic(store)
++    out = _append(MemoryToolRunner(store, reference_time=OCT6), tid, "x", valid_from="two weeks ago")
++    assert out["ok"] is False and "valid_from" in out["error"]
++    assert store.get_field_with_history(tid, "job") is None
++
++
++def test_without_a_reference_time_the_runner_behaves_as_before() -> None:
++    store = _store()
++    tid = _topic(store)
++    _append(MemoryToolRunner(store), tid, "x")
++    e = _entry(store, tid)
++    assert e.provenance == "llm"
++    assert datetime.fromisoformat(e.valid_from).year >= 2026
++
++
++def _two_dated_jobs(store: GraphStore, tid: str) -> None:
++    for value, start in (("old job", "2026-01-01T00:00:00+00:00"), ("new job", "2026-09-22T00:00:00+00:00")):
++        store.append_field_history(tid, "job", new_history_entry(value=value, valid_from=start, provenance="t"))
++
++
++def test_reads_are_as_of_the_reference_time() -> None:
++    store = _store()
++    tid = _topic(store)
++    _two_dated_jobs(store, tid)
++    now_runner = MemoryToolRunner(store)
++    before = MemoryToolRunner(store, reference_time=datetime(2026, 8, 1, tzinfo=timezone.utc))
++    after = MemoryToolRunner(store, reference_time=OCT20)
++    args = {"topic_id": tid, "field_name": "job"}
++    assert now_runner.execute("memory_get_field", args)["field"]["value"] == "new job"
++    assert before.execute("memory_get_field", args)["field"]["value"] == "old job"
++    assert after.execute("memory_get_field", args)["field"]["value"] == "new job"
++    assert before.execute("memory_get_field_history", args)["field"]["value"] == "old job"
++    cur = before.execute("memory_get_topic_schema", {"topic_id": tid, "detail": "current"})
++    assert cur["fields"]["job"]["value"] == "old job"
++    topic = before.execute("memory_get_topic", {"topic_id": tid})
++    assert topic["topic"]["fields"]["job"]["value"] == "old job"
++    # the history stays whole: the as-of view only picks the current value
++    assert topic["topic"]["fields"]["job"]["history_count"] == 2
++
++
++def test_entry_that_starts_after_the_reference_time_is_not_current_yet() -> None:
++    store = _store()
++    tid = _topic(store)
++    r = MemoryToolRunner(store, reference_time=OCT6)
++    _append(r, tid, "future", valid_from="2026-12-01")
++    assert r.execute("memory_get_field", {"topic_id": tid, "field_name": "job"})["field"]["value"] is None
++
++
++def test_tool_schema_offers_valid_from() -> None:
++    tool = next(t for t in tools_for_intent_route("ingest") if t["function"]["name"] == "memory_append_field")
++    assert "valid_from" in tool["function"]["parameters"]["properties"]
++    assert "valid_from" not in tool["function"]["parameters"]["required"]
++
++
++class _Fake:
++    """Stands in for the Ollama loop: records the system prompt, runs the scripted tool calls."""
++
++    def __init__(self, calls):
++        self.calls = calls
++        self.system_prompt = None
++        self.results = []
++
++    async def __call__(self, *, runner, system_prompt, **_):
++        self.system_prompt = system_prompt
++        self.results = [runner.execute(n, a) for n, a in self.calls]
++        return "ok", [], "fake"
++
++
++def _chat(monkeypatch, store, body, fake) -> dict:
++    monkeypatch.setattr(chat_api, "run_ollama_chat", fake)
++    return asyncio.run(_execute_chat_body(body, store, Settings()))
++
++
++def _body(**kw) -> ChatBody:
++    return ChatBody(
++        messages=[{"role": "user", "content": "I started my new job two weeks ago"}],
++        intent_override="both",
++        study_ingest=False,
++        **kw,
++    )
++
++
++def test_chat_request_carries_reference_time_into_prompt_default_valid_from_and_provenance(monkeypatch) -> None:
++    store = _store()
++    tid = _topic(store)
++    fake = _Fake([("memory_append_field", {"topic_id": tid, "field_name": "job", "value": "new job"})])
++    _chat(monkeypatch, store, _body(reference_time="2026-10-06"), fake)
++    assert OCT6.isoformat() in fake.system_prompt
++    e = _entry(store, tid)
++    assert e.valid_from == OCT6.isoformat()
++    assert OCT6.isoformat() in e.provenance
++
++
++def test_chat_request_reads_run_as_of_its_reference_time(monkeypatch) -> None:
++    store = _store()
++    tid = _topic(store)
++    _two_dated_jobs(store, tid)
++    fake = _Fake([("memory_get_field", {"topic_id": tid, "field_name": "job"})])
++    _chat(monkeypatch, store, _body(reference_time="2026-08-01"), fake)
++    assert fake.results[0]["field"]["value"] == "old job"
++
++
++def test_chat_reference_time_defaults_to_now(monkeypatch) -> None:
++    store = _store()
++    tid = _topic(store)
++    fake = _Fake([("memory_append_field", {"topic_id": tid, "field_name": "job", "value": "x"})])
++    t0 = datetime.now(timezone.utc)
++    _chat(monkeypatch, store, _body(), fake)
++    e = _entry(store, tid)
++    stamp = datetime.fromisoformat(e.valid_from)
++    assert t0 <= stamp <= datetime.now(timezone.utc)
++    assert e.valid_from in fake.system_prompt and e.valid_from in e.provenance
++
++
++def test_chat_rejects_a_reference_time_that_is_not_a_date(monkeypatch) -> None:
++    store = _store()
++    with pytest.raises(HTTPException) as exc:
++        _chat(monkeypatch, store, _body(reference_time="last tuesday"), _Fake([]))
++    assert exc.value.status_code == 400
 -- 
 2.55.0
 

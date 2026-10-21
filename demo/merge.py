@@ -56,6 +56,8 @@ class PairSpec:
     field: str = FIELD
     older_provenance: str = OLDER_PROVENANCE
     newer_provenance: str = NEWER_PROVENANCE
+    older_valid_from: str | None = None  # sent as `valid_from` with the write, only by a caller that checked the system accepts it
+    newer_valid_from: str | None = None
 
 
 DEADLINE = PairSpec()
@@ -66,9 +68,14 @@ def unique_title(stem: str) -> str:
     return f"{stem} {uuid.uuid4().hex[:10]}"
 
 
-def new_topic(title: str, field: str, value: object, provenance: str, topic_kind: str = "contract") -> dict:
+def field_write(name: str, value: object, provenance: str, valid_from: str | None = None) -> dict:
+    return {"name": name, "value": value, "provenance": provenance, **({"valid_from": valid_from} if valid_from else {})}
+
+
+def new_topic(title: str, field: str, value: object, provenance: str, topic_kind: str = "contract",
+              valid_from: str | None = None) -> dict:
     return {"placement": "new_topic", "title": title, "topic_kind": topic_kind,
-            "fields": [{"name": field, "value": value, "provenance": provenance}]}
+            "fields": [field_write(field, value, provenance, valid_from)]}
 
 
 @dataclass(frozen=True)
@@ -115,8 +122,10 @@ class MergeOutcome:
 
 def create_duplicate_pair(system: System, title: str, spec: PairSpec = DEADLINE) -> Pair:
     """Write `title` twice through `/v1/ingest new_topic`; the second response ends the call (the merge trigger)."""
-    older = system.ingest(new_topic(title, spec.field, spec.older_value, spec.older_provenance))["topic_id"]
-    newer = system.ingest(new_topic(title, spec.field, spec.newer_value, spec.newer_provenance))["topic_id"]
+    older = system.ingest(new_topic(title, spec.field, spec.older_value, spec.older_provenance,
+                                    valid_from=spec.older_valid_from))["topic_id"]
+    newer = system.ingest(new_topic(title, spec.field, spec.newer_value, spec.newer_provenance,
+                                    valid_from=spec.newer_valid_from))["topic_id"]
     return Pair(title, spec.field, older, newer, spec.older_value, spec.newer_value)
 
 
@@ -149,9 +158,9 @@ def create_retitled_pair(system: System, stem: str, spec: PairSpec = DEADLINE) -
                           "fields": []})["topic_id"] for n in ("first", "second")]
     lower, higher = sorted(ids)
     system.ingest({"placement": "extend_topic", "topic_id": lower,
-                   "fields": [{"name": spec.field, "value": spec.older_value, "provenance": spec.older_provenance}]})
+                   "fields": [field_write(spec.field, spec.older_value, spec.older_provenance, spec.older_valid_from)]})
     system.ingest({"placement": "extend_topic", "topic_id": higher,
-                   "fields": [{"name": spec.field, "value": spec.newer_value, "provenance": spec.newer_provenance}]})
+                   "fields": [field_write(spec.field, spec.newer_value, spec.newer_provenance, spec.newer_valid_from)]})
     for topic_id in (lower, higher):
         done = system.setup_write("patch_topic", label="give the pair one title (the editor never writes a value)",
                                   topic_id=topic_id, title=tag)

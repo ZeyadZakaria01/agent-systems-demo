@@ -423,3 +423,41 @@ One entry per difficulty, newest last. Fields: expected, observed, evidence, res
 - Evidence: `/tmp/pre-commit-pytest.*` from the failed commit.
 - Resolution: committed step 2 with `git -c core.hooksPath=<dir holding only the commit-msg hook> commit`, so attribution stripping still ran; the patch's tests were run by hand first (57 passed). Not `--no-verify`.
 - Lesson: patch-step commits need their own pre-commit story (the hook should skip when the repo is the submodule); later steps hit it again.
+
+### Reference GEM phase 1: the written spec and the checks disagreed in four places (resolved without rewriting any expectation)
+- Date: 2026-10-21
+- Expected: the phase 1 column of "Expected verdicts" (C1-C6, T1, T2, T3, T6 pass; T4, T5 absent; C4′ pass) falls out of a build to the spec's parameter table, with `describe()["accepts"]` true for `valid_from` only.
+- Observed: (1) with `valid_at` not accepted, the time-probe runner sends every non-"today" ask as a plain read, so T1, T2, T3 and T6 would fail their control dates; Definition 4's "latest timestamp not after the asked date" needs an asked date. Phase 1 therefore accepts `valid_from` (writes) and `valid_at` (reads); `invalid_at` and `recorded_at` stay unaccepted, so T4 and T5 read absent as pre-registered. (2) The time probes' history check refuses entries without an `expired_at` key as "not patch-shaped"; phase 1 entries carry `expired_at: None`. (3) C6 clause 2 seeded at 0.06 starts above θ, so the check's loop (read until the topic leaves eligibility) never ran and the forced pass archived the target too; the check now reads on every interaction until the first forgetting pass when the system declares seeds at or above θ (`describe()["c6_clause_2_seeds"]`, new; default `None` keeps 0.03/0.01 and the loop as it was). (4) Reinforcement precision measured by salience differences would count decay as negative increments; `triage._increment` counts rises only (a fall is decay, not an increment); no other system's number changes.
+- Evidence: `tests/test_reference_gem.py`, `tests/test_c6.py::test_a_system_declaring_clause_2_seeds…`.
+- Resolution: all four are in the code and the ticket comment; the pre-registered column is unchanged and met.
+- Lesson: pre-register the request shape each probe sends (which date each ask needs), not only the verdicts. report: the phase 1 "accepts" cell is `valid_from` and `valid_at`.
+
+### Reference GEM: with exponential decay, resetting the decay clock is not a restore
+- Date: 2026-10-21
+- Expected: "any read or write of a topic resets its decay clock" lets a touched topic live longer.
+- Observed: if the touch materialises the decayed salience (s·λ^Δ) and restarts Δ, a write adds nothing and gives no extra life (the product of two decay factors equals one), apart from the touching interaction not decaying. If the touch instead keeps the stored salience and only restarts Δ, a read or write undoes the accrued decay: every returned topic rises by 0.1 plus a different recovered amount, so reinforcement precision would not be 1/8 and C6 clause 1's "rise by at least the bump per retrieval" would hold only by accident.
+- Resolution: the first reading is built (decay accrues over interactions of disuse; a touch at interaction n materialises interaction n-1's value, and a retrieval adds exactly 0.1). A retrieval keeps a topic alive through its bumps (+0.1 against a decay of 0.0075·s per interaction), a write does not. Declared in `demo/reference_gem.py`'s docstring.
+- Lesson: report the decay rule as "decay accrues during disuse", not as "a read restores salience".
+
+### Reference GEM phase 2: the pre-registered column held; four build decisions
+- Date: 2026-10-21
+- Expected: phase 1 → phase 2 changes exactly T4 and T5 (absent → pass) and no other row.
+- Observed: it does (`tests/test_reference_gem_phase2.py::test_phase_1_to_phase_2_changes_exactly_t4_and_t5`: same verdict and the same held/broke list per case on every other row). No departure from the column. Decisions the spec left open: (1) the rules are ported from the patch (`patches/0002-bitemporal-field-histories.patch`: `resolve_valid`, `believed_at`, `write_entry`, `retract_entry`), so the reference and the patch cannot differ by accident; (2) a retraction has no adapter request (as on the patch, which has only a store method), so `ReferenceGem.retract(topic, field, entry_id)` is a public method and not an interaction; (3) a `valid_at` or `recorded_at` read returns the field's history (the "history request"), a plain read does not, and `recorded_at` shows an entry that expired since as live; (4) merge by valid time ends an end-dated entry that a plain entry of the other topic starts inside (keep and copy), tagged `merged` as on step 3.
+- Resolution: phase 1's entry shape is unchanged (no `invalid_at`/`created_at` keys, `expired_at: None`); phase 2 adds them.
+- Lesson: a phase is one mode flag on one class; the phase-1 suite stayed green untouched.
+
+### Ticket 15: step 3 developed in a private worktree; its commit hit the pre-commit hook again
+- Date: 2026-10-21
+- Expected: a commit in the private MemState worktree (`MemState-step3`) goes through `.githooks` like any other.
+- Observed: the submodule's `core.hooksPath` points at the main checkout's `.githooks/`, which still has the version that runs the suite whenever `tests/` is staged, resolved the venv from `.git/modules/` and reported the suite red (same as step 2's commit).
+- Evidence: `/tmp/pre-commit-pytest.*`; the tests had passed by hand (82 passed).
+- Resolution: committed with `git -c core.hooksPath=<this branch's .githooks> commit`, whose pre-commit only runs the suite when both `demo/` and `tests/` exist (the submodule has no `demo/`) and whose commit-msg hook still strips attribution. Not `--no-verify`.
+- Lesson: the main checkout's hook copy lags `gem-suite`; every patch-step commit needs the override until `gem-suite` merges to `main`.
+
+### Ticket 15: step 3's duplicate scan returned stale pairs, and a three-way tie made the "one merged event" depend on pair order
+- Date: 2026-10-21
+- Expected: three same-title topics merge into one with every value; the survivor gets one `merged` event per merge.
+- Observed: upstream computes the list of pairs once and merges them all; after (A,B) the list still holds (B,C) and (A,C), where B is gone. The first fix (rescan after each merge) passed, but the survivor's event count varied run to run: `find_duplicate_titles` had no order, so (B,C) could merge first and A would see one event, not two.
+- Evidence: `tests/test_merge_by_valid_time.py::test_three_duplicates_merge_into_one_topic_with_every_value`, failing once in three runs before the `ORDER BY`.
+- Resolution: rescan after each merge and order pairs by id, so the lowest id survives a tie and each merge adds its event to it.
+- Lesson: an unordered query under a `LIMIT` makes a loop's outcome run-dependent; pin the order before asserting on counts.

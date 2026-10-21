@@ -214,3 +214,15 @@ def test_durability_compares_with_the_salience_after_the_forgetting_pass():
     durability = observation(verdict, "salience durability")
     assert durability["after_field_write"] == durability["before_field_write"]
     assert durability["reset"] is False
+
+
+def test_a_system_declaring_clause_2_seeds_is_seeded_with_them_not_with_the_checks_own():
+    class Seeded(BumpingStore):
+        def _describe(self):
+            return {**super()._describe(), "c6_clause_2_seeds": {"target": 0.06, "control": 0.04}}
+
+    verdict = run(Seeded(), "C6-2")
+    assert observation(verdict, "salience trajectory")["start"] == 0.06
+    assert observation(verdict, "forgetting pass")["control"]["start"] == 0.04
+    assert verdict.cases[0].name.startswith("repeated retrieval keeps the topic at or above 0.05, from 0.06")
+    assert verdict.verdict == PASS

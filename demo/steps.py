@@ -3,9 +3,9 @@
 `PatchRepo.steps()` resolves them with `git rev-list --reverse <upstream commit>..bitemporal` (oldest first, so
 step 1 is the first commit on top of upstream). `checkout_step(n)` checks one out detached after refusing a dirty
 worktree; `return_to_branch()` goes back to `bitemporal` (the runner's `teardown` hook calls it, also after an error).
-Step N is whatever the Nth commit is: until the patch is complete there are fewer than three, and the steps that
-exist are the ones measured (`demo/systems.py` registers `step1`..`step3`; a step that does not exist fails its
-setup with the commit count; the patch is meant to have exactly three).
+Step N is the Nth commit. The patch is exactly three commits (port, bitemporal histories, merge by valid time):
+`step_commit` refuses any other count, so every step's setup fails, naming the count, unless `bitemporal` holds
+exactly three commits on top of upstream (`demo/systems.py` registers `step1`..`step3`).
 
 Callers hold the machine-wide server lock (a checkout swaps the code a running server would load). "Dirty" means
 tracked files modified or staged (what a checkout can clobber or refuse; untracked files do not count) or a rebase,
@@ -24,6 +24,7 @@ from demo.paths import SHARED_ROOT
 
 UPSTREAM_COMMIT = "945d7c4"
 PATCH_BRANCH = "bitemporal"
+PATCH_COMMITS = 3
 PATCH_WORKTREE = SHARED_ROOT / "MemState-patched"
 
 
@@ -53,9 +54,11 @@ class PatchRepo:
 
     def step_commit(self, n: int) -> str:
         steps = self.steps()
-        if not 1 <= n <= len(steps):
-            raise StepError(f"step {n} does not exist: {self.branch} has {len(steps)} commit(s) on top of "
-                            f"{self.base} ({', '.join(c[:7] for c in steps) or 'none'})")
+        if len(steps) != PATCH_COMMITS:
+            raise StepError(f"{self.branch} has {len(steps)} commit(s) on top of {self.base} "
+                            f"({', '.join(c[:7] for c in steps) or 'none'}); the patch is exactly {PATCH_COMMITS}")
+        if not 1 <= n <= PATCH_COMMITS:
+            raise StepError(f"step {n} does not exist: the patch has steps 1 to {PATCH_COMMITS}")
         return steps[n - 1]
 
     def check_clean(self) -> None:

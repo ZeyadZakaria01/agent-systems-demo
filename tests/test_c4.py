@@ -249,3 +249,75 @@ def test_the_cap_case_breaks_when_the_overflow_is_dropped():
     cap = v.measurements["history_cap"]
     assert cap["first_present"] is False and cap["length"] == 500
     assert v.verdict != PASS
+
+
+# -- the dated merge
+
+DATED_MERGE = "a dated merge keeps both values, today reads April 20"
+
+
+class DatedStore(AppendOnlyStore):
+    """AppendOnlyStore that accepts `valid_from`, orders each history by it and reads `current` as the entry with
+    the latest `valid_from` not in the future. The merge interleaves the two histories by valid time, tagging the
+    dropped topic's entries with `merged_from_topic_id`, or with `interleaves=False` keeps only the survivor's
+    values for a field it already has (upstream's merge, and the patch before step 3)."""
+
+    def __init__(self, interleaves=True):
+        super().__init__()
+        self.interleaves = interleaves
+
+    def _topic(self, t):
+        fields = {}
+        for n, h in t["fields"].items():
+            ordered = sorted(h, key=lambda e: e.get("valid_from") or "", reverse=True)
+            started = [e for e in ordered if (e.get("valid_from") or "") <= "2999"]
+            fields[n] = {"current": started[0] if started else None, "history": ordered}
+        return {**t, "fields": fields}
+
+    def _ingest(self, request):
+        for f in request.get("fields") or []:
+            f.setdefault("valid_from", None)
+        out = super()._ingest(request)
+        tid = out["topic_id"]
+        for n, h in self.topics[tid]["fields"].items():  # the base class stored value and provenance only
+            h[0].setdefault("valid_from", next((f["valid_from"] for f in request.get("fields") or [] if f["name"] == n), None))
+        return out
+
+    def _merge_pass(self):
+        by_title = {}
+        for t in self.topics.values():
+            by_title.setdefault(t["title"], []).append(t)
+        for group in by_title.values():
+            keep, *dropped = sorted(group, key=lambda t: t["id"])
+            for drop in dropped:
+                for name, hist in drop["fields"].items():
+                    if name in keep["fields"] and not self.interleaves:
+                        continue
+                    tagged = [{**e, "merged_from_topic_id": drop["id"]} for e in hist]
+                    keep["fields"][name] = tagged + keep["fields"].get(name, [])
+                del self.topics[drop["id"]]
+
+    def _describe(self):
+        return {"keeps_history": True, "accepts": {"valid_from": True}}
+
+
+def test_a_merge_that_interleaves_by_valid_time_holds_the_dated_merge_case():
+    v = run(DatedStore())
+    case = by_name(v, DATED_MERGE)
+    assert case.held is True and case.id == "merge-dated"
+    assert v.measurements["dated_merge"]["current"] == "April 20"
+    assert v.measurements["dated_merge"]["tagged_with_dropped_id"] is True
+    assert v.verdict == PASS
+
+
+def test_a_merge_that_drops_the_later_written_value_breaks_the_dated_merge_case():
+    v = run(DatedStore(interleaves=False))
+    case = by_name(v, DATED_MERGE)
+    assert case.held is False and "merged_from_topic_id=None" in case.observation
+    assert v.verdict != PASS
+
+
+def test_the_dated_merge_case_is_not_applicable_where_no_date_is_accepted():
+    for system in (Baseline(), AppendOnlyStore()):
+        case = by_name(run(system), DATED_MERGE)
+        assert case.held is None and "no valid_from" in case.observation

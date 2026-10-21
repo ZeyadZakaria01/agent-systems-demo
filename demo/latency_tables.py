@@ -1,7 +1,8 @@
 """Latency table for the C5 ramps. `render_latency` returns "" when no C5-2 run is in the verdicts.
 
 Every ramp has one ingest median, `QUERY_SAMPLES` query reads and one settle time (the poll floor is 0.1 s; it is
-not a Reasoner wait). `aggregate` folds the repeats of one (system, n) into a median and a min-max range; a
+not a Reasoner wait). `aggregate` folds the repeats of one (system, n) into a median and a min-max range (the as-of reads of the largest n
+get their own table); a
 difference of medians inside the larger range is reported as "no measurable difference" (spec story 43), for
 ingest and for query, between ADJACENT chain steps only (the registry order in `demo/systems.py`). Systems whose
 C5-2 verdict is `absent` (the baseline) are left out.
@@ -43,6 +44,7 @@ def aggregate(verdicts: list[Verdict]) -> list[dict]:
                 "system": v.system, "n": n, "repeats": len(ramps),
                 "ingest": _stats([r["ingest_median_ms"] for r in ramps if r.get("ingest_median_ms") is not None]),
                 "query": _stats([q for r in ramps for q in r.get("query_samples_ms") or []]),
+                "as_of": _stats([q for r in ramps for q in r.get("as_of_samples_ms") or []]),
                 "settle": _stats([r["settle_s"] for r in ramps if r.get("settle_s") is not None]),
                 "archived": sorted({r["archived"] for r in ramps if r.get("archived") is not None}),
             })
@@ -92,6 +94,11 @@ def render_latency(verdicts: list[Verdict]) -> str:
         lines.append(f"| {e['system'] or '—'} | {e['n']} | {e['repeats']} | {_cell(e['ingest'])} "
                      f"| {_cell(e['query'])} | {_cell(e['settle'])} | {archived} |")
     lines += ["", NOTE]
+    if as_of := [e for e in entries if e["as_of"]]:
+        lines += ["", "As-of reads (`valid_at`) beside the plain reads at the same n; median (min–max) over every as-of read:", "",
+                  "| System | n | as-of reads | as-of read (ms) | plain read (ms) |", "|---|---:|---:|---:|---:|"]
+        lines += [f"| {e['system'] or '—'} | {e['n']} | {len(e['as_of']['samples'])} | {_cell(e['as_of'])} "
+                  f"| {_cell(e['query'])} |" for e in as_of]
     if notes := no_difference_notes(entries):
         lines += ["", *[f"- {n}" for n in notes]]
     return "\n".join(lines)

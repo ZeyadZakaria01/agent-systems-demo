@@ -40,8 +40,9 @@ from demo.failures import detail as _detail, errored as _errored, run_check
 from demo.latency_tables import with_latency
 from demo.paths import REPO_ROOT, RESULTS_ROOT, SERVER_LOCK, SHARED_ROOT
 from demo.scorecard import COLUMNS, SCOPE_NOTE, Column, counts, render_deviations, render_scorecard
+from demo.over_flagging_tables import render_over_flagging
 from demo.storyline_tables import render_storyline
-from demo.systems import SYSTEMS, SystemSpec, default_systems
+from demo.systems import SYSTEMS, SystemSpec
 from demo.verdict import Verdict, measured
 from demo.windows import render_windows
 
@@ -77,6 +78,8 @@ def run_recorded(systems: list[str], checks: list[Check], results_root: Path, co
             scorecard += "\n\n### Per-step change table\n\n" + render_change_table(rows, scored)
         if storyline := render_storyline(verdicts):
             scorecard += "\n\n" + storyline
+        if over_flagging := render_over_flagging(verdicts):
+            scorecard += "\n\n" + over_flagging
         if chat_cases := render_chat_cases(chats):  # recorded chat runs (ticket 17), replayed from demo/recordings/
             scorecard += "\n\n" + chat_cases
         scorecard = with_latency(scorecard, verdicts)
@@ -217,8 +220,8 @@ def main(argv: list[str] | None = None) -> int:
     argv = sys.argv[1:] if argv is None else argv
     ap = argparse.ArgumentParser(prog="python -m demo.run", description=__doc__.split("\n\n")[0])
     ap.add_argument("--mode", choices=["recorded", "live"], default="recorded")
-    ap.add_argument("--systems", help=f"comma-separated system ids; known: {', '.join(SYSTEMS)} (default: every one that exists; "
-                                         "patch steps beyond the commits on bitemporal are left out)")
+    ap.add_argument("--systems", help=f"comma-separated system ids; known: {', '.join(SYSTEMS)} (default: all; a patch "
+                                         "step fails unless bitemporal holds exactly three commits)")
     ap.add_argument("--checks", help="comma-separated row or check ids (default: all)")
     ap.add_argument("--results-root", type=Path, help="default demo/results (recorded) or demo/results-live (live)")
     live_group = ap.add_argument_group("live mode (--mode live; see demo/live.py)")
@@ -242,7 +245,7 @@ def main(argv: list[str] | None = None) -> int:
         return 0
     if args.mode == "live":
         return _main_live(ap, args, available, argv)
-    systems = args.systems.split(",") if args.systems else default_systems()
+    systems = args.systems.split(",") if args.systems else list(SYSTEMS)
     unknown = [s for s in systems if s not in SYSTEMS]
     if unknown:
         ap.error(f"unknown system(s) {unknown}; known: {list(SYSTEMS)}")

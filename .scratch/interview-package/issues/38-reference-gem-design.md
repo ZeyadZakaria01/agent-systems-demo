@@ -98,3 +98,5 @@ Also settled earlier (Comments above):
   - **C3 flagging:** undirected. Both ends of an extension edge are flagged, per C3's "pair" wording (`:212`, `:275`).
   - **Salience:** halved when a topic is archived, reused from MemState's code (`executor.py:360`). A read or write resets the decay clock.
   - **C6-2:** seeded at 0.06 on the reference GEM, a declared test setting.
+
+- 2026-10-21, built in ticket 26 (phase 1): all ten items hold in `demo/reference_gem.py`; read the departures in the ticket's Comments (phase 1 accepts `valid_at` as well as `valid_from`; decay clock; merge deletes the dropped topic).

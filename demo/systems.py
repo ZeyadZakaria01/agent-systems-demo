@@ -8,8 +8,8 @@ bracket ALL of the system's checks in a run: `teardown` always runs once `setup`
 failing `setup` gives every check of that system an error verdict. A system id is what checks list in `systems=`
 and what a scorecard `Column` lists in `systems=`. The patch steps `step1`, `step2`, `step3` (`demo/steps.py`) feed the
 patch column and the change table: `setup` checks the step's commit out in the shared `MemState-patched/`, the
-checks run on a `--patched` server (LadybugDB, `.lbug`), `teardown` returns to `bitemporal`. `default_systems()` is
-what a run measures without `--systems`: only the steps that exist.
+checks run on a `--patched` server (LadybugDB, `.lbug`), `teardown` returns to `bitemporal`. A run without `--systems`
+measures every system; a patch step fails its setup unless `bitemporal` holds exactly three commits.
 """
 
 from __future__ import annotations
@@ -100,12 +100,6 @@ def step_spec(n: int, repo: PatchRepo | None = None,
             yield system
 
     return SystemSpec(spec_id, name, open_fn or open_step, setup=setup, teardown=teardown, step=n)
-
-
-def default_systems(repo: PatchRepo | None = None) -> list[str]:
-    """What a run measures without `--systems`: upstream, the patch steps that exist in `repo`, the baseline."""
-    existing = len((repo or PatchRepo()).steps())
-    return [i for i, s in SYSTEMS.items() if s.step is None or s.step <= existing]
 
 
 def _upstream(tag_id: str, run: RunDir) -> ContextManager[System]:

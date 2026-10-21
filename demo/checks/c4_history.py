@@ -3,7 +3,12 @@ null writes must not replace the current value, and a 501-write case decides the
 
 Cases (spec "Stricter check pass criteria"): (1) update survives, the control: an ordinary March 15 -> April 20 keeps
 both entries. (2) Merge keeps history; n/a where the system has no merge (a second same-title write appends to the same
-topic). (3) Real forgetting keeps history: a topic with fields, ingested at salience 0.01, must reach forgetting through
+topic). (2b) The dated merge, for a system that accepts `valid_from`: topic A holds "April 20 since Jan 5"; the
+duplicate B, written later, holds "March 15 since Dec 1" (B has the higher id, so it is the one dropped); after the
+merge, today reads April 20 and both values are in the history, each with its provenance. A system that interleaves
+the two histories by valid time holds; one that drops B's value breaks. The tag on B's entry (`merged_from_topic_id`)
+is read and reported, not scored: it is the patch's own key. N/a where no date is accepted or no two-topic merge
+happened. (3) Real forgetting keeps history: a topic with fields, ingested at salience 0.01, must reach forgetting through
 the system's own operations (the count gate is driven past `ramp.FORGET_GATE` with field-less fillers, a field-less
 control at 0.01 shows the pass ran), and its history and provenance are intact after. The case is n/a where the system
 has no archived flag, where the pass is not shown to run, and where the pass ran (the control is archived) and the topic
@@ -20,11 +25,14 @@ as overflow, newest first, each shaped like a history entry. A system that delet
 
 from __future__ import annotations
 
+from datetime import date
+
 from demo import ramp
 from demo.adapter import Rejected, System
 from demo.checks import Ctx, check
-from demo.merge import DEADLINE, FIELD, NEWER, NEWER_PROVENANCE, OLDER, OLDER_PROVENANCE, trigger_and_await_merge
+from demo.merge import DEADLINE, FIELD, NEWER, NEWER_PROVENANCE, OLDER, OLDER_PROVENANCE, PairSpec, trigger_and_await_merge
 from demo.reads import current_value
+from demo.time_stories import YEAR, iso
 from demo.verdict import Case, Verdict
 
 CLAIM = ("C4 (provenance preservation): revision and forgetting preserve the provenance chain of "
@@ -32,6 +40,9 @@ CLAIM = ("C4 (provenance preservation): revision and forgetting preserve the pro
 CAP_WRITES = 501  # 1 new_topic + 500 version_field
 CAP_FIRST = "v000"
 LOW_SALIENCE = 0.01
+DATED_MERGE = PairSpec(  # "older" is written first (to the topic that survives), "newer" second (to the dropped one)
+    older_value=NEWER, older_provenance=NEWER_PROVENANCE, older_valid_from=iso(date(YEAR, 1, 5)),
+    newer_value=OLDER, newer_provenance=OLDER_PROVENANCE, newer_valid_from=iso(date(YEAR - 1, 12, 1)))
 
 
 def _field(topic: dict | None, name: str = FIELD) -> dict | None:
@@ -103,6 +114,32 @@ def _merge_case(s: System) -> Case:
                     id="merge")
     return Case(name, _holds_both(history), f"survivor {outcome.survivor_id} ({outcome.dropped_state} dropped); "
                                             f"history={_fmt(history)!r}", id="merge")
+
+
+def _dated_merge_case(s: System) -> tuple[Case, dict]:
+    name = f"a dated merge keeps both values, today reads {NEWER}"
+    accepted = s.describe()["accepts"]["valid_from"]
+    if accepted is None:
+        raise RuntimeError(f"{s.label}: could not tell whether the system accepts valid_from "
+                           f"({s.describe()['accepts_error']}); refusing to guess")
+    if not accepted:
+        return Case(name, None, "the system accepts no valid_from, so no dated write is possible", id="merge-dated"), {}
+    outcome = trigger_and_await_merge(s, "Vendor Contract (dated)", DATED_MERGE)
+    if not outcome.merged:
+        return Case(name, None, f"no merge seen within {outcome.waited.elapsed:.1f}s (timeout)", id="merge-dated"), {}
+    if outcome.pair.upserted or outcome.dropped_held_newer is not True:
+        return Case(name, None, "arrangement not met: the topic written later was not the one dropped (or no "
+                                "duplicate was created)", id="merge-dated"), {}
+    history = history_entries(s, outcome.survivor_id) or []
+    current = _current(s, outcome.survivor_id)
+    both = _has(history, NEWER, NEWER_PROVENANCE) and _has(history, OLDER, OLDER_PROVENANCE)
+    tag = next((e.get("merged_from_topic_id") for e in history if e.get("value") == OLDER), None)
+    case = Case(name, current == NEWER and both,
+                f"survivor {outcome.survivor_id} ({outcome.dropped_state} dropped {outcome.dropped_id}); "
+                f"current={current!r}, history={_fmt(history)!r}, the {OLDER!r} entry's merged_from_topic_id={tag!r}",
+                id="merge-dated")
+    return case, {"survivor_id": outcome.survivor_id, "dropped_id": outcome.dropped_id, "current": current,
+                  "merged_from_topic_id": tag, "tagged_with_dropped_id": tag == outcome.dropped_id}
 
 
 def _forgetting_case(s: System) -> tuple[Case, dict]:
@@ -193,10 +230,11 @@ def c4(ctx: Ctx) -> Verdict:
     s = ctx.system
     update, lost = _update_case(s)
     merge = _merge_case(s)
+    dated_merge, dated_merge_run = _dated_merge_case(s)
     forgetting, forgetting_run = _forgetting_case(s)
     empty_cases, empty_current, null_current = _empty_cases(s)
     cap, history_cap = _cap_case(s)
-    cases = [update, merge, forgetting, *empty_cases, cap]
+    cases = [update, merge, dated_merge, forgetting, *empty_cases, cap]
     observations = [
         {"name": "lost earlier value", "lost": lost,
          "summary": (f"the earlier value {OLDER} is missing after the update"
@@ -205,6 +243,6 @@ def c4(ctx: Ctx) -> Verdict:
          "empty_current": empty_current == "", "null_current": null_current is None,
          "summary": f'empty write current={empty_current!r}; null write current={null_current!r}'},
     ]
-    measurements = {"history_cap": history_cap, "forgetting": forgetting_run,
+    measurements = {"history_cap": history_cap, "forgetting": forgetting_run, "dated_merge": dated_merge_run,
                     "keeps_history": s.describe()["keeps_history"]}
     return Verdict.from_cases("C4", cases, observations=observations, measurements=measurements)

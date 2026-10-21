@@ -9,7 +9,9 @@ Two rows, one check each (so each row links its own snapshots and databases), ma
   topic (pass) or does not (partial); the gate case records the topic count, not an effect.
 - `C5-2` natural trajectory: at each ramp size, on a fresh database, identical undated writes and a plain read,
   no salience setup. Counts archived topics; fail if the system tracks archived and none were; absent if it does
-  not. The same runs fill the latency table (ingest / query client latency, settle time, archived count).
+  not. The same runs fill the latency table (ingest / query client latency, settle time, archived count). On the
+  largest ramp, a system that accepts `valid_at` also times `ramp.ASOF_SAMPLES` (20) as-of reads, reported in the
+  latency output beside the plain reads.
 
 C5 counts topics, not history entries. Each verdict states the system's declared bound (`describe()["declared_bound"]`:
 upstream's 500-topic soft limit, the reference GEM's β) beside the active topic count (total minus archived). F24 is
@@ -24,7 +26,7 @@ from __future__ import annotations
 from demo.checks import Ctx, Row, check
 from demo.adapter import System
 from demo import ramp
-from demo.ramp import archive_stats, filler, ingest_undated, median_ms, plain_read, scored_latencies
+from demo.ramp import archive_stats, as_of_read, filler, ingest_undated, median_ms, plain_read, scored_latencies
 from demo.verdict import Case, Verdict
 
 CLAUSE = ("C5 (Bounded active state). For every interaction count n, the active memory satisfies "
@@ -120,13 +122,18 @@ def _one_ramp(system: System, n: int, repeat: int) -> dict:
     settled = _settle(system)
     for _ in range(ramp.QUERY_SAMPLES):
         plain_read(system)
+    query = scored_latencies(system, "query")
     stats = archive_stats(system)
     ingest = scored_latencies(system, "ingest")
-    query = scored_latencies(system, "query")
+    asof: list[float] = []  # last: reads can reshape salience, so they come after the counts the verdict rests on
+    if n == max(ramp.STEPS) and system.describe()["accepts"]["valid_at"]:
+        for _ in range(ramp.ASOF_SAMPLES):
+            as_of_read(system)
+        asof = scored_latencies(system, "query")[len(query):]
     return {
         "n": n, "repeat": repeat, "total": stats["total"], "archived": stats["archived"],
         "ingest_median_ms": median_ms(ingest), "ingest_samples": len(ingest),
-        "query_samples_ms": query, "settle_s": settled.elapsed, "settle_timed_out": settled.timed_out,
+        "query_samples_ms": query, "as_of_samples_ms": asof, "settle_s": settled.elapsed, "settle_timed_out": settled.timed_out,
     }
 
 

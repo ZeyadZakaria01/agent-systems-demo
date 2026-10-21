@@ -160,8 +160,9 @@ def _saliences(system: System, ids: dict[str, str]) -> dict[str, float | None]:
 
 
 def _increment(before: dict, after: dict, topic_id: str) -> float | None:
+    """Salience gained over a question; a fall is decay on disuse (the reference GEM), not an increment, so it is 0."""
     b, a = before.get(topic_id), after.get(topic_id)
-    return None if b is None or a is None else round(a - b, 6)
+    return None if b is None or a is None else max(0.0, round(a - b, 6))
 
 
 def ask(system: System, storyline: Storyline, ids: dict[str, str], top_k: int

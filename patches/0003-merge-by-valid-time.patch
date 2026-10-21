@@ -1,0 +1,306 @@
+From 5c5c9e6707b69c0d15f96c08691377a87ef92a73 Mon Sep 17 00:00:00 2001
+From: Zeyad Zakaria <zeyad.zakaria@ctchealth.ch>
+Date: Wed, 21 Oct 2026 03:04:28 +0300
+Subject: [PATCH 3/3] Merge by valid time: the Reasoner interleaves both
+ topics' field histories by valid time, tags the dropped topic's entries,
+ skips archived duplicates and rescans after each merge
+
+---
+ src/memstate/core/executor.py     |  15 ++-
+ src/memstate/datamodel/fields.py  |  21 ++++
+ src/memstate/store/graph_store.py |  14 ++-
+ tests/test_merge_by_valid_time.py | 170 ++++++++++++++++++++++++++++++
+ 4 files changed, 216 insertions(+), 4 deletions(-)
+ create mode 100644 tests/test_merge_by_valid_time.py
+
+diff --git a/src/memstate/core/executor.py b/src/memstate/core/executor.py
+index a0438ca..9f77061 100644
+--- a/src/memstate/core/executor.py
++++ b/src/memstate/core/executor.py
+@@ -352,11 +352,22 @@ class Executor:
+         return QueryResponse(query=req.q, candidates=bundles, summary_text="\n".join(lines))
+ 
+     def run_revise_duplicates(self) -> list[str]:
++        """Merge same-title topics one pair at a time, looking for duplicates again after each merge
++        (a dropped topic can be part of other pairs)."""
+         actions: list[str] = []
+-        for title, id_a, id_b in self._store.find_duplicate_titles():
++        dropped: set[str] = set()
++        while True:
++            pairs = [p for p in self._store.find_duplicate_titles() if p[2] not in dropped]
++            if not pairs:
++                return actions
++            title, id_a, id_b = pairs[0]
+             self._store.merge_topics(keep_id=id_a, drop_id=id_b)
++            dropped.add(id_b)
++            self._store.append_topic_history(
++                id_a,
++                {"ts": _utc_iso(), "kind": "merged", "detail": {"from_topic_id": id_b, "title": title}},
++            )
+             actions.append(f"merged:{id_b}->:{id_a}:{title}")
+-        return actions
+ 
+     def run_forget_low_salience(self) -> list[str]:
+         rows = self._store.list_topics_for_embedding_scan(include_archived=False)
+diff --git a/src/memstate/datamodel/fields.py b/src/memstate/datamodel/fields.py
+index 15da2ca..ee9f1fd 100644
+--- a/src/memstate/datamodel/fields.py
++++ b/src/memstate/datamodel/fields.py
+@@ -257,6 +257,27 @@ def retract_entry(history: list[FieldHistoryEntry], entry_id: str, max_history:
+     raise ValueError(f"no live history entry: {entry_id}")
+ 
+ 
++def merge_histories(
++    kept: list[FieldHistoryEntry],
++    dropped: list[FieldHistoryEntry],
++    dropped_topic_id: str,
++    max_history: int,
++) -> None:
++    """Interleave a dropped topic's history into the kept topic's by valid time (mutates `kept`).
++
++    Every dropped entry arrives tagged `operation="merged"` and `merged_from_topic_id`, with its value,
++    dates, provenance and recorded time unchanged. A live entry goes in like a write (`write_entry`), so a
++    kept entry whose stored end it now cuts short is expired and copied; an already expired entry is only
++    carried over, still expired."""
++    for old in sorted(dropped, key=effective_from):
++        entry = old.model_copy(update={"operation": "merged", "merged_from_topic_id": dropped_topic_id})
++        if entry.expired_at:
++            _insert_ordered(kept, entry)
++        else:
++            write_entry(kept, entry, max_history)
++    del kept[max_history:]
++
++
+ class TopicFields(BaseModel):
+     """Map field name -> TopicField."""
+ 
+diff --git a/src/memstate/store/graph_store.py b/src/memstate/store/graph_store.py
+index 9e73e7a..445e616 100644
+--- a/src/memstate/store/graph_store.py
++++ b/src/memstate/store/graph_store.py
+@@ -19,6 +19,7 @@ from memstate.datamodel.fields import (
+     nested_bundle_inner_fields,
+     new_history_entry,
+     retract_entry,
++    merge_histories,
+     write_entry,
+ )
+ from memstate.schema import init_graph
+@@ -1251,12 +1252,14 @@ class GraphStore:
+         return int(row["c"]) if row else 0
+ 
+     def find_duplicate_titles(self) -> list[tuple[str, str, str]]:
+-        """Return (title, id_a, id_b) pairs for revise heuristic."""
++        """Return (title, id_a, id_b) pairs for revise heuristic; archived topics are skipped."""
+         r = self._q(
+             """
+             MATCH (a:Topic), (b:Topic)
+             WHERE a.id < b.id AND a.title = b.title AND a.title <> ''
++              AND coalesce(a.archived, false) = false AND coalesce(b.archived, false) = false
+             RETURN a.title AS title, a.id AS id_a, b.id AS id_b
++            ORDER BY id_a, id_b
+             LIMIT 50
+             """,
+             read_only=True,
+@@ -1264,7 +1267,8 @@ class GraphStore:
+         return [(str(x["title"]), str(x["id_a"]), str(x["id_b"])) for x in _rows(r)]
+ 
+     def merge_topics(self, keep_id: str, drop_id: str) -> None:
+-        """Merge RELATED edges, fields_json, then legacy field heads; delete drop."""
++        """Merge RELATED edges, fields_json (histories interleaved by valid time), then legacy field heads;
++        delete drop."""
+         self._q(
+             """
+             MATCH (d:Topic {id: $drop})-[r:RELATED]->(x:Topic)
+@@ -1288,6 +1292,12 @@ class GraphStore:
+         for name, rec in d_tf.fields.items():
+             if name not in k_tf.fields:
+                 k_tf.fields[name] = rec
++                rec.history = [
++                    e.model_copy(update={"operation": "merged", "merged_from_topic_id": drop_id})
++                    for e in rec.history
++                ]
++            else:
++                merge_histories(k_tf.fields[name].history, rec.history, drop_id, 500)
+         self._set_topic_fields(keep_id, k_tf)
+         fields = self.list_fields_for_topic(drop_id)
+         for fn in fields:
+diff --git a/tests/test_merge_by_valid_time.py b/tests/test_merge_by_valid_time.py
+new file mode 100644
+index 0000000..9861e32
+--- /dev/null
++++ b/tests/test_merge_by_valid_time.py
+@@ -0,0 +1,170 @@
++"""Step 3: the Reasoner's duplicate merge interleaves both topics' histories by valid time."""
++
++from __future__ import annotations
++
++import json
++import os
++import tempfile
++import uuid
++from datetime import datetime, timezone
++from pathlib import Path
++
++import pytest
++
++from memstate.core.executor import Executor
++from memstate.core.models import FieldWrite, IngestRequest
++from memstate.embeddings.base import HashEmbeddingProvider
++from memstate.schema import init_graph
++from memstate.store.graph_store import GraphStore
++from memstate.store.kuzu_adapter import KuzuGraph, clear_kuzu_graph_cache
++
++TITLE = "Vendor Contract"
++
++
++def dt(y: int, m: int, d: int) -> datetime:
++    return datetime(y, m, d, tzinfo=timezone.utc)
++
++
++def iso(y: int, m: int, d: int) -> str:
++    return dt(y, m, d).isoformat()
++
++
++@pytest.fixture()
++def ex() -> Executor:
++    fd, path = tempfile.mkstemp(suffix=".kuzu")
++    os.close(fd)
++    clear_kuzu_graph_cache()
++    g = KuzuGraph(str(Path(path).resolve()))
++    init_graph(g)
++    return Executor(GraphStore(g), embedder=HashEmbeddingProvider(384))
++
++
++def topic(ex: Executor, title: str = TITLE) -> str:
++    return ex.ingest(IngestRequest(placement="new_topic", title=title)).topic_id
++
++
++def write(ex: Executor, tid: str, value, *, valid_from=None, invalid_at=None, provenance="api", field="f") -> None:
++    ex.ingest(IngestRequest(placement="extend_topic", topic_id=tid, fields=[
++        FieldWrite(name=field, value=value, valid_from=valid_from, invalid_at=invalid_at, provenance=provenance)]))
++
++
++def pair(ex: Executor) -> tuple[str, str]:
++    """(kept, dropped): two same-title topics; the merge keeps the lower id."""
++    a, b = sorted([topic(ex), topic(ex)])
++    return a, b
++
++
++def rec(ex: Executor, tid: str, field: str = "f"):
++    return ex.store.get_field_with_history(tid, field)
++
++
++def val_at(ex: Executor, tid: str, at: datetime):
++    e = rec(ex, tid).current_entry(at)
++    return e.value if e else None
++
++
++def events(ex: Executor, tid: str) -> list[dict]:
++    row = ex.store.get_topic(tid)
++    return json.loads(row["topic_history_json"])
++
++
++def test_merge_interleaves_both_histories_by_valid_time(ex: Executor) -> None:
++    keep, drop = pair(ex)
++    write(ex, keep, "a1", valid_from=iso(2025, 1, 1))
++    write(ex, keep, "a3", valid_from=iso(2025, 3, 1))
++    write(ex, drop, "b2", valid_from=iso(2025, 2, 1))
++    write(ex, drop, "b4", valid_from=iso(2025, 4, 1))
++    actions = ex.run_revise_duplicates()
++    assert actions == [f"merged:{drop}->:{keep}:{TITLE}"]
++    assert ex.store.get_topic(drop) is None
++    assert [e.value for e in rec(ex, keep).history] == ["b4", "a3", "b2", "a1"]
++    assert [val_at(ex, keep, dt(2025, m, 15)) for m in (1, 2, 3, 4)] == ["a1", "b2", "a3", "b4"]
++
++
++def test_dated_merge_today_reads_april_20_and_both_values_stay(ex: Executor) -> None:
++    keep, drop = pair(ex)
++    write(ex, keep, "April 20", valid_from=iso(2025, 1, 5), provenance="pm-email")
++    write(ex, drop, "March 15", valid_from=iso(2024, 12, 1), provenance="kickoff-notes")
++    ex.run_revise_duplicates()
++    r = rec(ex, keep)
++    assert r.current_entry().value == "April 20"
++    assert {(e.value, e.provenance) for e in r.history} == {("April 20", "pm-email"), ("March 15", "kickoff-notes")}
++    assert val_at(ex, keep, dt(2024, 12, 20)) == "March 15"
++
++
++def test_dropped_entries_are_tagged_and_keep_provenance(ex: Executor) -> None:
++    keep, drop = pair(ex)
++    write(ex, keep, "new", valid_from=iso(2025, 2, 1), provenance="p-keep")
++    write(ex, drop, "old", valid_from=iso(2025, 1, 1), provenance="p-drop")
++    ex.run_revise_duplicates()
++    by_value = {e.value: e for e in rec(ex, keep).history}
++    merged = by_value["old"]
++    assert merged.operation == "merged" and merged.merged_from_topic_id == drop
++    assert merged.provenance == "p-drop" and merged.valid_from == iso(2025, 1, 1)
++    assert by_value["new"].operation != "merged" and not getattr(by_value["new"], "merged_from_topic_id", None)
++
++
++def test_a_field_only_the_dropped_topic_has_moves_over_tagged(ex: Executor) -> None:
++    keep, drop = pair(ex)
++    write(ex, keep, "x", field="g")
++    write(ex, drop, "y", field="f", provenance="p-drop")
++    ex.run_revise_duplicates()
++    e = rec(ex, keep).history[0]
++    assert (e.value, e.provenance, e.operation, e.merged_from_topic_id) == ("y", "p-drop", "merged", drop)
++
++
++def test_an_end_dated_entry_whose_validity_changes_is_expired_and_copied(ex: Executor) -> None:
++    keep, drop = pair(ex)
++    write(ex, keep, "budget", valid_from=iso(2025, 1, 1), invalid_at=iso(2025, 3, 1))
++    write(ex, drop, "override", valid_from=iso(2025, 2, 1))
++    ex.run_revise_duplicates()
++    h = rec(ex, keep).history
++    old = next(e for e in h if e.value == "budget" and e.expired_at)
++    copy = next(e for e in h if e.value == "budget" and not e.expired_at)
++    assert copy.replaces_entry_id == old.id and old.corrected_by_entry_id == copy.id
++    assert copy.invalid_at == iso(2025, 2, 1)
++    assert val_at(ex, keep, dt(2025, 1, 15)) == "budget" and val_at(ex, keep, dt(2025, 2, 15)) == "override"
++
++
++def test_entries_whose_validity_does_not_change_are_not_copied(ex: Executor) -> None:
++    keep, drop = pair(ex)
++    write(ex, keep, "a", valid_from=iso(2025, 1, 1))
++    write(ex, drop, "b", valid_from=iso(2025, 2, 1))
++    ex.run_revise_duplicates()
++    assert all(e.expired_at is None for e in rec(ex, keep).history)
++    assert len(rec(ex, keep).history) == 2
++
++
++def test_the_survivor_gets_one_merged_event(ex: Executor) -> None:
++    keep, drop = pair(ex)
++    write(ex, drop, "b")
++    before = len(events(ex, keep))
++    ex.run_revise_duplicates()
++    new = events(ex, keep)[before:]
++    assert [e["kind"] for e in new] == ["merged"]
++    assert new[0]["detail"]["from_topic_id"] == drop
++
++
++def test_an_archived_duplicate_is_skipped(ex: Executor) -> None:
++    keep, drop = pair(ex)
++    write(ex, keep, "a")
++    write(ex, drop, "b")
++    ex.store.update_topic_meta(keep, archived=True)
++    assert ex.run_revise_duplicates() == []
++    assert ex.store.get_topic(keep) is not None and ex.store.get_topic(drop) is not None
++    assert [e.value for e in rec(ex, keep).history] == ["a"]
++
++
++def test_three_duplicates_merge_into_one_topic_with_every_value(ex: Executor) -> None:
++    ids = sorted(topic(ex) for _ in range(3))
++    for i, tid in enumerate(ids):
++        write(ex, tid, f"v{i}", valid_from=iso(2025, 1 + i, 1), provenance=f"p{i}")
++    actions = ex.run_revise_duplicates()
++    assert len(actions) == 2
++    alive = [t for t in ids if ex.store.get_topic(t) is not None]
++    assert alive == [ids[0]]
++    r = rec(ex, ids[0])
++    assert [e.value for e in r.history] == ["v2", "v1", "v0"]
++    assert {e.provenance for e in r.history} == {"p0", "p1", "p2"}
++    assert r.current_entry().value == "v2"
++    assert [e["kind"] for e in events(ex, ids[0])].count("merged") == 2
+-- 
+2.55.0
+

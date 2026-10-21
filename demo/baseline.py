@@ -25,9 +25,9 @@ from datetime import datetime, timezone
 import numpy as np
 
 from demo.adapter import Rejected, System, utc_now
+from demo.embedding import MODEL, unit_vector
 
 TOP_K = 8
-MODEL = "sentence-transformers/all-MiniLM-L6-v2"
 
 
 def _instant(text: str) -> datetime:
@@ -40,8 +40,6 @@ class Baseline(System):
         super().__init__(label)
         # title -> {"title", "summary", "topic_kind", "history": {field: [entry, ...] oldest first}}
         self._rows: dict[str, dict] = {}
-        self._embedder = None
-        self._vectors: dict[str, np.ndarray] = {}  # embedding text -> unit vector
 
     # -- writes: validate the whole request, then apply it (one transaction)
     def _ingest(self, request: dict) -> dict:
@@ -110,15 +108,9 @@ class Baseline(System):
     def _read_state(self) -> dict:
         return {"topics": {tid: self._topic(row) for tid, row in self._rows.items()}, "edges": None}
 
-    def _vector(self, text: str) -> np.ndarray:
-        if text not in self._vectors:
-            if self._embedder is None:
-                from fastembed import TextEmbedding
-
-                self._embedder = TextEmbedding(model_name=MODEL)
-            v = np.asarray(next(iter(self._embedder.embed([text if text.strip() else " "]))), dtype=np.float64)
-            self._vectors[text] = v / (np.linalg.norm(v) or 1.0)
-        return self._vectors[text]
+    @staticmethod
+    def _vector(text: str) -> np.ndarray:
+        return unit_vector(text)
 
     def _query(self, request: dict) -> dict:
         stages = request.get("stages") or ["semantic", "structural", "temporal"]

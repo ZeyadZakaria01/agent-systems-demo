@@ -1,0 +1,12 @@
+{
+  "name": "Over-flagging chain A <- B <- C <- D",
+  "about": "One chain joined by extension edges (each dependent's edge points at the topic it depends on: B -> A, C -> B, D -> C). A's Deadline is updated. B (the launch date) and C (the press briefing, scheduled from the launch) need revision. D (the catering head count) is joined to C by an extension edge but does not depend on A's Deadline: the anti-trap. A flag on D is a flag not needed.",
+  "topics": {
+    "A": {"title": "Website Redesign", "topic_kind": "project", "field": {"name": "Deadline", "value": "March 15"}},
+    "B": {"title": "Launch Milestone", "topic_kind": "milestone", "field": {"name": "Date", "value": "March 20"}, "depends_on": "A"},
+    "C": {"title": "Press Briefing", "topic_kind": "event", "field": {"name": "Date", "value": "March 22"}, "depends_on": "B"},
+    "D": {"title": "Catering Order", "topic_kind": "order", "field": {"name": "Head count", "value": "12"}, "depends_on": "C"}
+  },
+  "update": {"topic": "A", "field": "Deadline", "value": "April 20"},
+  "needs_revision": {"B": true, "C": true, "D": false}
+}
