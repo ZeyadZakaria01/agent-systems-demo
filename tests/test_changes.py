@@ -45,21 +45,11 @@ def test_a_step_compared_when_upstream_was_not_measured_reports_nothing_to_compa
     assert "step 1 vs" not in table and "| C1 (control) | — | pass | — | — |" in table
 
 
-def test_patch_column_shows_the_last_step_measured_and_says_which():
-    verdicts = [v("step1", "C1", "fail"), v("step2", "C1", "pass"), v("upstream", "C1", "pass")]
-    card = render_scorecard(ROWS[:1], COLUMNS, verdicts)
-    assert "bitemporal patch (step2, LadybugDB)" in card
-    patch_cell = card.splitlines()[2].split("|")[4].strip()
-    assert patch_cell == "pass"
-    assert "no step measured" in render_scorecard(ROWS[:1], COLUMNS, [v("upstream", "C1", "pass")])
-
-
-def test_a_patch_cell_from_an_earlier_step_than_the_header_names_says_which_step_it_is():
-    # C1 was measured on step 1 and step 2, C3 only on step 1: step 2 heads the column, C3's cell is step 1's
-    verdicts = [v("step1", "C1", "fail"), v("step2", "C1", "pass"), v("step1", "C3", "fail")]
-    rows = {line.split("|")[1].strip(): line.split("|")[4].strip()
+def test_each_step_has_its_own_column_with_its_own_verdict():
+    verdicts = [v("step1", "C1", "fail"), v("step2", "C1", "pass"), v("upstream", "C1", "pass"), v("step1", "C3", "fail")]
+    rows = {line.split("|")[1].strip(): [c.strip() for c in line.split("|")[3:7]]
             for line in render_scorecard([ROWS[0], ROWS[2]], COLUMNS, verdicts).splitlines() if line.startswith("| C")}
-    assert rows == {"C1 (control)": "pass", "C3": "fail (from step1)"}
+    assert rows == {"C1 (control)": ["pass", "fail", "pass", "—"], "C3": ["—", "fail", "—", "—"]}
 
 
 def _baseline_spec(system_id):
@@ -77,10 +67,11 @@ def test_a_recorded_run_prints_the_change_table_and_stores_it_in_results(tmp_pat
     assert "### Per-step change table" in run.scorecard
     assert "- step 1 vs upstream: no change." in run.scorecard
     results = json.loads((run.dir / "results.json").read_text())
-    assert results["change_table"] == {"chain": ["upstream", "step1", "step2", "step3"],
+    assert results["change_tables"]["memstate"] == {"chain": ["upstream", "step1", "step2", "step3"],
                                        "measured": ["upstream", "step1"], "changes": {"step1": []},
                                        "case_changes": {"step1": []}}
-    assert any("bitemporal patch (step1, LadybugDB)" == c["header"] for c in results["columns"])
+    assert results["change_tables"]["reference"]["measured"] == []
+    assert [(c["group"], c["system"]) for c in results["columns"]][:2] == [("MemState", "upstream"), ("MemState", "step1")]
 
 
 def test_a_baseline_only_run_has_no_change_table(tmp_path):
@@ -126,7 +117,7 @@ def test_a_storyline_only_run_has_no_measured_systems_and_no_changes_for_the_ste
     registry = {s: _baseline_spec(s) for s in ("upstream", "step1")}
     run = run_recorded(["upstream", "step1"], [storyline], tmp_path, "cmd", run_day=date(2026, 10, 20),
                        registry=registry, runtime_root=tmp_path / "rt", log=lambda *_: None)
-    table = json.loads((run.dir / "results.json").read_text())["change_table"]
+    table = json.loads((run.dir / "results.json").read_text())["change_tables"]["memstate"]
     assert table["measured"] == [] and table["changes"] == {}
     assert "change table" not in run.scorecard
 

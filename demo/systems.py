@@ -6,8 +6,8 @@ exit, also after an error; the runner calls it once per check for `ctx.system` a
 bracket ALL of the system's checks in a run: `teardown` always runs once `setup` was attempted, including when
 `setup` or a check failed (a patch step's `setup` checks the step out, its `teardown` returns to `bitemporal`); a
 failing `setup` gives every check of that system an error verdict. A system id is what checks list in `systems=`
-and what a scorecard `Column` lists in `systems=`. The patch steps `step1`, `step2`, `step3` (`demo/steps.py`) feed the
-patch column and the change table: `setup` checks the step's commit out in the shared `MemState-patched/`, the
+and what a scorecard `Column` names as its `system`. The patch steps `step1`, `step2`, `step3` (`demo/steps.py`) each have their own column and feed the
+change table: `setup` checks the step's commit out in the shared `MemState-patched/`, the
 checks run on a `--patched` server (LadybugDB, `.lbug`), `teardown` returns to `bitemporal`. A run without `--systems`
 measures every system; a patch step fails its setup unless `bitemporal` holds exactly three commits.
 """
@@ -16,14 +16,17 @@ from __future__ import annotations
 
 from contextlib import contextmanager
 from dataclasses import dataclass
+from functools import partial
 from typing import Callable, ContextManager, Iterator
 
 from demo import server
 from demo.baseline import Baseline
 from demo.adapter import System
 from demo.memstate_system import MemStateSystem
+from demo.reference_gem import PHASES, ReferenceGem, reference_gem_id
 from demo.evidence import RunDir, slug
 from demo.steps import PatchRepo, StepError
+from demo.upstream_tests import TestCounts, run_patched, run_upstream
 
 
 @dataclass(frozen=True)
@@ -34,6 +37,9 @@ class SystemSpec:
     setup: Callable[[RunDir], None] | None = None
     teardown: Callable[[RunDir], None] | None = None
     step: int | None = None  # the patch step this system is (steps.py); None for every other system
+    # Counts MemState's upstream tests on this system's source (demo/upstream_tests.py); runs after the system's checks,
+    # while a step is still checked out. None for systems that are not MemState.
+    unit_tests: Callable[[], TestCounts] | None = None
 
 
 @contextmanager
@@ -62,9 +68,11 @@ def open_baseline(tag_id: str, run: RunDir) -> Iterator[System]:
 
 
 def step_spec(n: int, repo: PatchRepo | None = None,
-              open_fn: Callable[[str, RunDir], ContextManager[System]] | None = None) -> SystemSpec:
+              open_fn: Callable[[str, RunDir], ContextManager[System]] | None = None,
+              unit_tests: Callable[[], TestCounts] | None = None) -> SystemSpec:
     """Patch step `n`: its commit checked out detached in `repo` while its checks run, a `--patched` server on a
-    fresh `.lbug` per check, labelled with the step and commit. `open_fn` replaces the server (tests)."""
+    fresh `.lbug` per check, labelled with the step and commit. `open_fn` replaces the server (tests; then the upstream
+    tests are not run unless `unit_tests` is given)."""
     repo = repo or PatchRepo()
     spec_id = f"step{n}"
     name = f"bitemporal patch step {n}"
@@ -99,7 +107,21 @@ def step_spec(n: int, repo: PatchRepo | None = None,
                 raise StepError(f"{spec_id}: the server runs commit {served}, expected step {n} = {commit}")
             yield system
 
-    return SystemSpec(spec_id, name, open_fn or open_step, setup=setup, teardown=teardown, step=n)
+    return SystemSpec(spec_id, name, open_fn or open_step, setup=setup, teardown=teardown, step=n,
+                      unit_tests=unit_tests or (run_patched if open_fn is None else None))
+
+
+def reference_gem_spec(phase: int) -> SystemSpec:
+    """The in-process reference GEM, phase 1 or 2 (`demo/reference_gem.py`): a fresh instance per open, nothing to
+    start or clean up. It runs every check, the time probes and the storyline; its C5-2 ramps run once and are not timed
+    (`describe()["latency_comparable"]` is False) and it has no chat run."""
+    label = f"reference GEM (phase {phase})"
+
+    @contextmanager
+    def open_gem(tag_id: str, run: RunDir) -> Iterator[System]:
+        yield ReferenceGem(label, phase=phase)
+
+    return SystemSpec(reference_gem_id(phase), label, open_gem)
 
 
 def _upstream(tag_id: str, run: RunDir) -> ContextManager[System]:
@@ -107,8 +129,9 @@ def _upstream(tag_id: str, run: RunDir) -> ContextManager[System]:
 
 
 SYSTEMS: dict[str, SystemSpec] = {s.id: s for s in (
-    SystemSpec("upstream", "upstream (Kuzu)", _upstream),
+    SystemSpec("upstream", "upstream (Kuzu)", _upstream, unit_tests=run_upstream),
     step_spec(1), step_spec(2), step_spec(3),
+    *map(reference_gem_spec, PHASES),
     SystemSpec("baseline", "baseline", open_baseline),
 )}
 STEP_IDS = tuple(i for i, s in SYSTEMS.items() if s.step is not None)  # registry order = the order of the chain

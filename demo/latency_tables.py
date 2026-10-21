@@ -5,7 +5,11 @@ not a Reasoner wait). `aggregate` folds the repeats of one (system, n) into a me
 get their own table); a
 difference of medians inside the larger range is reported as "no measurable difference" (spec story 43), for
 ingest and for query, between ADJACENT chain steps only (the registry order in `demo/systems.py`). Systems whose
-C5-2 verdict is `absent` (the baseline) are left out.
+C5-2 verdict is `absent` (the baseline) are left out, and so is a system whose ramps carry no timing (the reference
+GEM: in-process milliseconds are not comparable with an HTTP server, so its C5-2 runs once and times nothing). A table
+from fewer than `MIN_REPEATS`
+repeats is labelled provisional, with its own note, and never prints "no measurable difference": one repeat gives the
+ingest no range.
 """
 
 from __future__ import annotations
@@ -18,7 +22,11 @@ from demo.verdict import ABSENT, Verdict
 
 NOTE = ("A difference of medians no larger than the larger sample range is reported as "
         "no measurable difference (spec story 43). Ingest samples are the per-repeat medians, query samples are every "
-        "plain read; with one repeat the ingest range is 0.")
+        "plain read.")
+PROVISIONAL_NOTE = ("Provisional: at least one (system, n) has fewer than {min} repeats, so the ingest range is "
+                    "narrower than the machine's real variation and the table makes no claim that two systems do or "
+                    "do not differ. A single run is reported as one run (spec story 43); {min} repeats of each ramp lift the label.")
+MIN_REPEATS = 3
 METRICS = ("ingest", "query", "settle")
 
 
@@ -38,7 +46,8 @@ def aggregate(verdicts: list[Verdict]) -> list[dict]:
             continue
         by_n: dict[int, list[dict]] = {}
         for r in v.measurements.get("ramps") or []:
-            by_n.setdefault(r["n"], []).append(r)
+            if "ingest_median_ms" in r:  # an untimed ramp (the reference GEM) has no latency to tabulate
+                by_n.setdefault(r["n"], []).append(r)
         for n, ramps in sorted(by_n.items()):
             out.append({
                 "system": v.system, "n": n, "repeats": len(ramps),
@@ -81,8 +90,10 @@ def render_latency(verdicts: list[Verdict]) -> str:
     entries = aggregate(verdicts)
     if not entries:
         return ""
+    provisional = min(e["repeats"] for e in entries) < MIN_REPEATS
     lines = [
-        "### Latency ramps",
+        "### Latency ramps" + (f" (provisional: {min(e['repeats'] for e in entries)} repeat(s), "
+                               f"fewer than {MIN_REPEATS})" if provisional else ""),
         "",
         "Median (min–max) over the repeats of each (system, n).",
         "",
@@ -93,13 +104,13 @@ def render_latency(verdicts: list[Verdict]) -> str:
         archived = "n/a" if not e["archived"] else "/".join(str(a) for a in e["archived"])
         lines.append(f"| {e['system'] or '—'} | {e['n']} | {e['repeats']} | {_cell(e['ingest'])} "
                      f"| {_cell(e['query'])} | {_cell(e['settle'])} | {archived} |")
-    lines += ["", NOTE]
+    lines += ["", PROVISIONAL_NOTE.format(min=MIN_REPEATS) if provisional else NOTE]
     if as_of := [e for e in entries if e["as_of"]]:
         lines += ["", "As-of reads (`valid_at`) beside the plain reads at the same n; median (min–max) over every as-of read:", "",
                   "| System | n | as-of reads | as-of read (ms) | plain read (ms) |", "|---|---:|---:|---:|---:|"]
         lines += [f"| {e['system'] or '—'} | {e['n']} | {len(e['as_of']['samples'])} | {_cell(e['as_of'])} "
                   f"| {_cell(e['query'])} |" for e in as_of]
-    if notes := no_difference_notes(entries):
+    if not provisional and (notes := no_difference_notes(entries)):
         lines += ["", *[f"- {n}" for n in notes]]
     return "\n".join(lines)
 

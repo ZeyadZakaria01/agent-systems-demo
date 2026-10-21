@@ -61,10 +61,16 @@ from dataclasses import dataclass, field, replace
 from datetime import datetime, timezone
 from typing import Any, Callable
 
-import numpy as np
-
 from demo.adapter import Rejected, System
 from demo.embedding import MODEL, unit_vector, unit_vectors
+
+PHASES = (1, 2)
+
+
+def reference_gem_id(phase: int) -> str:
+    """The id a phase is registered under (`demo/systems.py`), the one place the pattern is written."""
+    return f"reference-gem-p{phase}"
+
 
 # the parameter table (spec "Reference GEM")
 THETA_ARCHIVE = 0.05  # MemState's forget_salience_threshold
@@ -166,6 +172,9 @@ class Proposal:
     flags: dict[str, dict] = field(default_factory=dict)  # topic id -> evidence
     written: list[tuple[str, Any]] = field(default_factory=list)  # (field name, value) of this write
     seqs: int = 0  # write-order numbers taken by this transition (entries and corrected copies)
+    applied: list[str] = field(default_factory=list)  # what the response reports as applied
+    version_ids: dict[str, str] = field(default_factory=dict)  # field name -> id of the entry this write appended
+    updated: bool = False  # an existing topic was written to (its own flag clears)
 
 
 def _iso(moment: datetime | None) -> str | None:
@@ -194,10 +203,11 @@ def _compare(left: Any, op: str, right: Any) -> bool:
 class ReferenceGem(System):
     def __init__(self, label: str | None = None, clock: Callable[[], datetime] | None = None,
                  revise_after_ingest: bool = True, propagation: str = "one_hop", phase: int = 1) -> None:
-        if phase not in (1, 2):
-            raise ValueError(f"phase is 1 or 2, got {phase!r}")
+        if phase not in PHASES:
+            raise ValueError(f"phase is one of {PHASES}, got {phase!r}")
         super().__init__(label or f"reference GEM (phase {phase})")
         self.phase = phase
+        self.bitemporal = phase >= 2  # the one switch phase 2 turns on: dated ends, recorded time, keep-and-copy
         if propagation not in PROPAGATIONS:
             raise ValueError(f"propagation is one of {PROPAGATIONS}, got {propagation!r}")
         self.propagation = propagation
@@ -247,7 +257,7 @@ class ReferenceGem(System):
         """The entries memory holds: all of them in phase 1; in phase 2 those not expired, or, asked what memory held
         at `recorded`, those recorded by then and not yet expired then (an entry that has expired since counts as live)."""
         entries = (*f.entries, *f.archived)
-        if self.phase < 2:
+        if not self.bitemporal:
             return list(entries)
         if recorded is None:
             return [e for e in entries if e.expired_at is None]
@@ -278,7 +288,7 @@ class ReferenceGem(System):
         """The entry valid at `asked`, among all entries memory holds (phase 1: the latest timestamp not after it;
         phase 2: `_resolve`). When that entry was archived as overflow there is no current value and a note says so."""
         live = self._live(f, recorded)
-        if self.phase < 2:
+        if not self.bitemporal:
             best = max((e for e in live if e.valid_from <= asked), key=lambda e: e.order, default=None)
         else:
             best = self._resolve(live, asked)
@@ -299,7 +309,7 @@ class ReferenceGem(System):
         """Retract a value (phase 2): it is kept with `expired_at`, and a linked copy valid nowhere (its end is its
         start) is appended. Returns the copy's id. A store-level operation like the patch's `retract_field_entry`:
         the adapter has no request for it, and it is not an interaction."""
-        if self.phase < 2:
+        if not self.bitemporal:
             raise ValueError("phase 1 has no retraction")
         f = self._topics[topic_id].fields[field_name]
         old = next((e for e in f.entries if e.id == entry_id and e.expired_at is None), None)
@@ -386,11 +396,11 @@ class ReferenceGem(System):
             return other_entry is not None and _compare(entry.value, op, other_entry.value)
         return _compare(entry.value, op, condition["value"])
 
-    def _apply_policies(self, proposal: Proposal, updated: bool, now: datetime) -> None:
+    def _apply_policies(self, proposal: Proposal, now: datetime) -> None:
         """Evaluate every stored policy on the proposed next state. A `reject` that fires aborts the transition; a
         `flag` that fires collects evidence for the topics to flag (the neighbours, or the written topic itself)."""
         for policy in self._policies:
-            if policy["event"] == "field_updated" and not updated:
+            if policy["event"] == "field_updated" and not proposal.updated:
                 continue
             condition = policy["condition"]
             if not self._holds(condition, proposal):
@@ -422,7 +432,7 @@ class ReferenceGem(System):
         finally:
             self._forget(at)
 
-    def _propose(self, request: dict, at: int) -> tuple[Proposal, list[str], dict, bool]:
+    def _propose(self, request: dict, at: int) -> Proposal:
         placement = request["placement"]
         writes = request.get("fields") or []
         now = self._clock()
@@ -440,9 +450,9 @@ class ReferenceGem(System):
             topic, created = base.copy(), False
         else:
             raise Rejected(422, f"unknown placement {placement!r}")
-        proposal = Proposal(topic, created)
-        applied = [f"created_topic:{topic.id}"] if created else []
-        version_ids: dict[str, str] = {}
+        proposal = Proposal(topic, created, updated=bool(writes) and not created)
+        if created:
+            proposal.applied.append(f"created_topic:{topic.id}")
         for w in writes:
             name = w.get("name")
             if not isinstance(name, str) or not name:
@@ -451,7 +461,7 @@ class ReferenceGem(System):
             if ref is not None and ref not in self._topics:
                 raise Rejected(400, f"ref_topic_id not found: {ref}")
             moment = _utc(w["valid_from"], "valid_from") if w.get("valid_from") is not None else now
-            ends = _utc(w["invalid_at"], "invalid_at") if self.phase >= 2 and w.get("invalid_at") is not None else None
+            ends = _utc(w["invalid_at"], "invalid_at") if self.bitemporal and w.get("invalid_at") is not None else None
             f = topic.fields.setdefault(name, Field(w.get("field_type") or "string"))
             if ref is not None:
                 f.ref_topic_id = ref
@@ -459,7 +469,7 @@ class ReferenceGem(System):
             if w.get("source_message") is not None:
                 source = str(uuid.uuid4())
                 proposal.sources[source] = w["source_message"]
-            if self.phase >= 2 and ends is None:
+            if self.bitemporal and ends is None:
                 # a plain statement ends every value whose stored validity contains its start, overrides included:
                 # a changed stored end, so each is kept, expired and copied
                 for old in [e for e in f.entries if e.invalid_at is not None and e.expired_at is None
@@ -471,8 +481,8 @@ class ReferenceGem(System):
             f.entries.append(entry)
             self._cap(f)
             proposal.written.append((name, entry.value))
-            version_ids[name] = entry.id
-            applied.append(f"version:{name}" if placement == "version_field" else f"field:{name}")
+            proposal.version_ids[name] = entry.id
+            proposal.applied.append(f"version:{name}" if placement == "version_field" else f"field:{name}")
         for e in request.get("edges") or []:
             target, kind = e.get("to_topic_id"), e.get("kind")
             if kind not in EDGE_KINDS:
@@ -481,8 +491,8 @@ class ReferenceGem(System):
                 raise Rejected(400, f"edge target topic not found: {target}")
             if (topic.id, target, kind) not in proposal.edges:
                 proposal.edges.append((topic.id, target, kind))
-            applied.append(f"edge:{target}")
-        return proposal, applied, version_ids, bool(writes) and not created
+            proposal.applied.append(f"edge:{target}")
+        return proposal
 
     def _take_seq(self, proposal: Proposal) -> int:
         """The next write-order number inside a transition (committed to `_seq` with it)."""
@@ -498,12 +508,12 @@ class ReferenceGem(System):
 
     def _transact(self, request: dict, at: int) -> dict:
         """Validate, build the proposed next state, check the policies against it, commit all or nothing."""
-        proposal, applied, version_ids, updated = self._propose(request, at)
+        proposal = self._propose(request, at)
         now = self._clock()
         topic = proposal.topic
-        if updated:
+        if proposal.updated:
             topic.flag = None  # the flag clears when the topic is next written
-        self._apply_policies(proposal, updated, now)
+        self._apply_policies(proposal, now)
         if topic.id in proposal.flags:
             topic.flag = proposal.flags[topic.id]
         # commit: nothing below can fail
@@ -521,7 +531,8 @@ class ReferenceGem(System):
                 target = self._topics[tid]
                 target.flag = evidence
                 target.events.append({"ts": now.isoformat(), "kind": "flagged", "detail": evidence})
-        return {"topic_id": topic.id, "applied": applied, "version_ids": version_ids, "similar_topic_ids": []}
+        return {"topic_id": topic.id, "applied": proposal.applied, "version_ids": proposal.version_ids,
+                "similar_topic_ids": []}
 
     # -- revision (merge)
     def revise(self) -> list[str]:
@@ -563,7 +574,7 @@ class ReferenceGem(System):
             moved = [replace(e, **tag) for e in df.entries]
             kf.entries.extend(moved)
             kf.archived.extend(replace(e, **tag) for e in df.archived)
-            if self.phase >= 2:
+            if self.bitemporal:
                 self._end_overrides_across(kf, {e.id for e in moved})
             self._cap(kf)
         rewired: list[tuple[str, str, str]] = []
@@ -604,8 +615,8 @@ class ReferenceGem(System):
             sims = {t: None for t in ids[:top_k] if t in self._topics}
         asked = _utc(request["valid_at"], "valid_at") if request.get("valid_at") is not None else self._clock()
         recorded = (_utc(request["recorded_at"], "recorded_at")
-                    if self.phase >= 2 and request.get("recorded_at") is not None else None)
-        as_of = self.phase >= 2 and (request.get("valid_at") is not None or recorded is not None)
+                    if self.bitemporal and request.get("recorded_at") is not None else None)
+        as_of = self.bitemporal and (request.get("valid_at") is not None or recorded is not None)
         names = request.get("field_names")
         explain = bool(request.get("explain"))
         candidates = []
@@ -692,11 +703,17 @@ class ReferenceGem(System):
             return {"ok": "true"}
         raise ValueError(f"unknown setup action {action!r}")
 
+    def variant(self, name: str) -> "ReferenceGem | None":
+        if name != "transitive":
+            return None
+        return ReferenceGem(f"{self.label}, transitive walk", clock=self._clock,
+                            revise_after_ingest=self.revise_after_ingest, propagation="transitive", phase=self.phase)
+
     def _describe(self) -> dict:
         return {"engine": f"in-process reference GEM, phase {self.phase}", "keeps_history": True, "embedder": MODEL,
-                "top_k": TOP_K,
-                "accepts": {"valid_from": True, "invalid_at": self.phase >= 2, "valid_at": True,
-                            "recorded_at": self.phase >= 2},
+                "top_k": TOP_K, "latency_comparable": False,
+                "accepts": {"valid_from": True, "invalid_at": self.bitemporal, "valid_at": True,
+                            "recorded_at": self.bitemporal},
                 "declared_bound": {"topics": BETA, "name": "β"},
                 "accepts_source": True, "source_surface": {"request_properties": ["source_message"], "paths": []},
                 "c6_clause_2_seeds": C6_CLAUSE_2_SEEDS,
@@ -704,4 +721,6 @@ class ReferenceGem(System):
                                "beta": BETA, "bump": BUMP, "history_cap": HISTORY_CAP, "top_k": TOP_K,
                                "salience_on_archive": ARCHIVE_FACTOR,
                                "propagation": self.propagation.replace("_", " ") + ", extension edges, "
-                               "either direction", "revision": "after every ingest", "phase": self.phase}}
+                               "either direction",
+                               "revision": "after every ingest" if self.revise_after_ingest else "only on revise()",
+                               "phase": self.phase}}

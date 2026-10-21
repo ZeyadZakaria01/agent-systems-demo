@@ -17,11 +17,15 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 from demo.checks import Row
+from demo.reference_gem import PHASES, reference_gem_id
 from demo.systems import STEP_IDS, SYSTEMS
-from demo.verdict import ERROR, Case, Verdict, last_verdict, measured
+from demo.verdict import ABSENT, ERROR, FAIL, NOT_SCORED, PARTIAL, PASS, Case, Verdict, last_verdict, measured
 
 CHAIN = ("upstream", *STEP_IDS)
-HEADERS = {"upstream": "upstream", **{i: f"step {SYSTEMS[i].step}" for i in STEP_IDS}}
+REFERENCE_CHAIN = tuple(map(reference_gem_id, PHASES))  # the reference GEM's phases: its own chain
+CHAINS = (CHAIN, REFERENCE_CHAIN)
+HEADERS = {"upstream": "upstream", **{i: f"step {SYSTEMS[i].step}" for i in STEP_IDS},
+           **{reference_gem_id(p): f"phase {p}" for p in PHASES}}
 
 
 @dataclass
@@ -171,3 +175,62 @@ def _case_lines(rows: list[Row], verdicts: list[Verdict], chain: tuple[str, ...]
             lines.append(f"- {HEADERS.get(system_id, system_id)} cases: " + " · ".join(parts)
                          + f" (vs {HEADERS.get(e['vs'], e['vs'])})")
     return lines
+
+
+def render_change_tables(rows: list[Row], verdicts: list[Verdict]) -> str:
+    """The change table of every chain that has a measured system (upstream → step 1 → step 2 → step 3; phase 1 →
+    phase 2), each under its own heading; "" when no chain was measured."""
+    parts = [f"### Per-step change table: {' → '.join(HEADERS[s] for s in chain)}\n\n"
+             + render_change_table(rows, verdicts, chain)
+             for chain in CHAINS if measured(verdicts, chain)]
+    return "\n\n".join(parts)
+
+
+def change_table_payload(rows: list[Row], verdicts: list[Verdict], chain: tuple[str, ...]) -> dict:
+    """The machine-readable form of one chain's change table, for `results.json`."""
+    return {"chain": list(chain), "measured": measured(verdicts, chain), "changes": changes_per_step(rows, verdicts, chain),
+            "case_changes": case_changes_per_step(rows, verdicts, chain)}
+
+
+_RANK = {PASS: 3, PARTIAL: 2, FAIL: 1, ABSENT: 0, NOT_SCORED: 0}  # a drop in rank is "worse"; ERROR has no rank
+
+
+def regression_summary(rows: list[Row], verdicts: list[Verdict], before: str = "step1", after: str = "step3") -> str:
+    """One line on whether `after` is worse than `before` on any row. "No regressions on the rows the suite checks" is
+    said only when both were measured, every row measured on both has no lower verdict, no case that held at `before`
+    broke at `after` (the change table lists those), no row measured at `before` is missing at `after` and no verdict
+    is an `error`. Otherwise the line names what blocks the claim."""
+    name = HEADERS.get
+    if not measured(verdicts, (before,)) or not measured(verdicts, (after,)):
+        return (f"**Regressions not assessed:** {name(before, before)} and {name(after, after)} were not both measured, "
+                "so the suite makes no claim about regressions.")
+    worse, broke, unknown, missing, compared = [], [], [], [], 0
+    for r in rows:
+        a, b = last_verdict(verdicts, before, r.id), last_verdict(verdicts, after, r.id)
+        if a is None:
+            continue
+        if b is None:
+            missing.append(r.id)
+        elif ERROR in (a.verdict, b.verdict):
+            unknown.append(r.id)
+        else:
+            compared += 1
+            if _RANK[b.verdict] < _RANK[a.verdict]:
+                worse.append(f"{r.id} ({a.verdict} → {b.verdict})")
+            old = {c.id: c for c in a.cases}
+            broken = [c.name for c in b.cases if c.held is False and (o := old.get(c.id)) is not None and o.held]
+            if broken:
+                broke.append(f"{r.id} ({'; '.join(broken)})")
+    blockers = []
+    if worse:
+        blockers.append(f"worse at {name(after, after)}: {', '.join(worse)}")
+    if broke:
+        blockers.append(f"a case that held at {name(before, before)} broke: {', '.join(broke)}")
+    if unknown:
+        blockers.append(f"an error verdict, not compared: {', '.join(unknown)}")
+    if missing:
+        blockers.append(f"not measured at {name(after, after)}: {', '.join(missing)}")
+    if blockers:
+        return f"**Regressions not ruled out:** " + "; ".join(blockers) + "."
+    return (f"**No regressions on the rows the suite checks:** none of the {compared} rows measured at "
+            f"{name(before, before)} and {name(after, after)} is worse at {name(after, after)} (verdict and case level).")

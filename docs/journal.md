@@ -362,34 +362,45 @@ One entry per difficulty, newest last. Fields: expected, observed, evidence, res
 - Lesson: one latency read per cell cannot be compared across runs; take several reads and report the range before drawing an engine comparison.
 
 ### C2(b)'s input never exercised atomicity `report:`
+- Date: 2026-10-20
 - Expected: an edge to a missing topic would make upstream's ingest fail partway through, so C2(b) could tell an atomic commit from a partial one (spec story 21).
 - Observed: the edge step is a `MATCH … MERGE` that silently does nothing, so the ingest succeeds and C2(b) came out not-scored (F17). While ratifying the verdict rule, I first recommended scoring that outcome `fail`, reasoning from the paper's "commits atomically or aborts". The user challenged that reasoning, and the code showed it was wrong: no step failed, so nothing was aborted or partly committed. A field `ref_topic_id` is validated mid-write, though, and a probe using it shows a real partial commit: HTTP 400 with the topic and first field stored (F23).
+- Evidence: F17 and F23 in `docs/findings.md`; `tests/test_c2b_c2c_c3.py::test_accepting_the_missing_reference_means_atomicity_is_not_testable`.
 - Resolution: proposed in "Ratify verdict rules set during the build": C2(b) switches its input to a field `ref_topic_id` pointing to a missing topic; the edge case stays as a soundness observation.
 - Lesson: before scoring an outcome against a guarantee, check in the code that the test input actually reaches the guarantee's failure path.
 ### The "precise reading of C1" framing did not survive an adversarial review `report:`
+- Date: 2026-10-20
 - Expected (2026-10-20): C1′ could be presented as the precise reading of C1 (report §1 item 13, §7.5), and a reference GEM built to C1–C6 would show "the gap is in the conditions" (ticket 37).
 - Observed: the two framings contradict each other. The challenge list (`.scratch/interview-package/assets/challenge-conditions-baseline-suite-probes.md`, C1 and C2) computed each reading of Definition 4 over `demo/time_stories.py`: reading `t` as valid time fixes T1 and T2. A cut-off at the question date fixes T3 and T6. T4 needs an end date and T5 a second timestamp, neither of which Definition 4 has. The same review found that plain Graphiti fails T3, T4 and T6 by code reading [INFERENCE], and that the dict baseline cannot back "database guarantees are necessary but not sufficient".
 - Resolution: "Answer the challenge list": C1′ is an amendment (one clarification, two additions); reference GEM phase 1 uses the kindest reading; the model is described as "standard bitemporal, in the form Zep uses"; the baseline becomes a versioned row.
+- Evidence: `.scratch/interview-package/assets/challenge-conditions-baseline-suite-probes.md` (C1 and C2 computed over `demo/time_stories.py`); plain Graphiti failing T3, T4, T6 is by code reading, not a run.
 - Lesson: before claiming a definition is a reading of the paper's, compute what the paper's own wording returns on each test case; and run an adversarial review of the claims before building to them.
 
 ### A README grep missed the authors' own "NOT Full Implementation"
+- Date: 2026-10-20
 - Expected: a pattern search of `MemState/README.md` for "not implement|prototype|partial|…" would surface any completeness disclaimer.
 - Observed: it matched only line 107 ("research prototype… proof-of-concept"). I told the user the README never says it is incomplete. The heading at line 5 reads "(It is Proof-of-Concept, NOT Full Implementation)", which a search for "full implementation" found.
 - Resolution: ADR 0002 cites `MemState/README.md:5`.
+- Evidence: `MemState/README.md:5` (heading) and `MemState/README.md:107`; cited in `docs/adr/0002-absent-verdict-for-unimplemented-conditions.md`.
 - Lesson: before denying that a source says something, search for the user's exact words, not only my paraphrases of them.
 
 ## 2026-10-21
 
 ### "Any schema" date detection reads upstream as accepting `valid_from`
+- Date: 2026-10-21
 - Expected: searching every schema in `/openapi.json` for each date key (spec: "one flag per date, read over all schemas") gives all four flags False on upstream, as the combined flag did.
 - Observed: the first smoke run of the four-flag adapter raised on every probe: `valid_from` is a property of upstream's history-entry response model (`MemState/src/memstate/datamodel/fields.py:39`), so `valid_from` read True and the adapter refused the `history[0]` fallback on an upstream topic. The old rule (`valid_from` and `invalid_at` in one schema) had hidden this.
+- Evidence: `tests/test_time_probes.py` (line 323: `request_date_fields` on a schema whose response model returns `valid_from` gives an empty set; line 324: `valid_from`/`valid_at` read from request models); `MemState/src/memstate/datamodel/fields.py:39`; commit d3c631b.
 - Resolution: `request_date_fields` (`demo/memstate_system.py`) reads a date from the models reachable from a request body (through `$ref`, `items`, `anyOf`), by use not by name; a response model that returns `valid_from` does not count. Departure from the spec's "all schemas" wording; unit-tested on a schema document with a response model carrying `valid_from`. Re-run: all four flags False, all six probes absent.
 - Lesson: a field's presence in some schema says nothing about direction; check which models a request uses before reading a capability from the schema.
 
 ### Departures from the ticket wording
-- T5 is `absent` when any of its needed dates (`valid_from`, `valid_at`, `recorded_at`) is not accepted, not only `recorded_at`: the ticket's table lists all three, and the pre-registered versioned-row cell reads "absent (accepts `recorded_at`, not `valid_at`)". It is `fail` when all three are accepted and the two answers are identical.
-- A system that accepts `valid_at` but none of a probe's needed dates gets the plain read (same writes undated), as the spec says for "accepts none of the needed dates"; if any needed date is accepted, `valid_at` is sent whenever the system accepts it, also on T1, T2, T3, T4 and T6, whose needed lists do not name it.
-- The absent verdicts carry no cases; the answers are in `probe_evidence.stories.<id>.asked`.
+- Date: 2026-10-21
+- Expected: the ticket wording of the time-probe verdicts; T5 needs `valid_from`, `valid_at` and `recorded_at` per the ticket's table, and the pre-registered versioned-row cell reads "absent (accepts `recorded_at`, not `valid_at`)".
+- Observed: T5 is `absent` when any of its needed dates (`valid_from`, `valid_at`, `recorded_at`) is not accepted, not only `recorded_at`. It is `fail` when all three are accepted and the two answers are identical. A system that accepts `valid_at` but none of a probe's needed dates gets the plain read (same writes undated), as the spec says for "accepts none of the needed dates"; if any needed date is accepted, `valid_at` is sent whenever the system accepts it, also on T1, T2, T3, T4 and T6, whose needed lists do not name it.
+- Evidence: commit d3c631b ("Score time probes per needed date: four accepts flags, absent when a needed date is not accepted, T5 fail rule…"); `tests/test_time_probes.py`.
+- Resolution: as built, with the departures above. The absent verdicts carry no cases; the answers are in `probe_evidence.stories.<id>.asked`.
+- Lesson: none recorded.
 
 
 ### Ticket 20: the versioned row's expected verdicts depend on checks that later tickets rewrite `report:`
@@ -409,9 +420,11 @@ One entry per difficulty, newest last. Fields: expected, observed, evidence, res
 - Lesson: a check's n/a on one system needs the run to show the pass happened (the control), otherwise "cannot be forgotten" and "forgetting never ran" read the same.
 
 ### Ticket 17: the bad-merge chat run
+- Date: 2026-10-21
 - Expected: asking Q02 plus questions on fields only the original topic held would show a loss on those fields after the merge (ticket 17 comment, 2026-10-20).
 - Observed: upstream's merge copies a field the keeper lacks, so `Team` and `Status` survived with their histories (F25); only the history of a field both topics hold (`Deadline`) is lost. The turns on Q06 and Q11 therefore record no state violation, and the C4 contrast rests on Q02's field.
 - Observed: the chat answer is not stable across takes of the same state. Take 1 (recording deleted by mistake while re-recording after a matcher fix; its replay output: Q02 "April 20", Q06 correct, Q11 "I don't know" with a false-positive word match on "completed") ; take 2 answered Q02 "I don't have access to that information" (kept in `demo/recordings/attempts/`); take 3, the case on the scorecard, answered all three correctly. The kept take is the one that shows the "answer looks right" contrast the ticket asks for, chosen with the other two disclosed; no claim about how often a 2B model answers right follows from n = 1.
+- Evidence: F25 in `docs/findings.md` (fields only the original held are copied; Deadline history lost); `tests/test_chat_run.py::test_the_word_match_needs_every_word_of_the_ground_truth_and_no_longer_word` (whole-word match); takes in `demo/recordings/attempts/`.
 - Resolution: the answer-versus-ground-truth hint is a whole-word match (a substring match read "completed" as "Complete"); every turn keeps an empty hand-grade slot. Recording from a worktree: the venv, `MemState/` and the Ollama state live in the main checkout (`demo/paths.py`); the command in a recording uses the interpreter it was run with.
 - Lesson: a recorder should refuse to delete its own evidence: re-recording to fix a rendering detail cost the first take. Fix the renderer, replay the old file; record again only for new evidence.
 - Lock: this run held `/tmp/gem-suite-live.lock` (session rule); the README's command uses the repo's `server.lock` like the other runner commands.
@@ -436,6 +449,7 @@ One entry per difficulty, newest last. Fields: expected, observed, evidence, res
 - Date: 2026-10-21
 - Expected: "any read or write of a topic resets its decay clock" lets a touched topic live longer.
 - Observed: if the touch materialises the decayed salience (s·λ^Δ) and restarts Δ, a write adds nothing and gives no extra life (the product of two decay factors equals one), apart from the touching interaction not decaying. If the touch instead keeps the stored salience and only restarts Δ, a read or write undoes the accrued decay: every returned topic rises by 0.1 plus a different recovered amount, so reinforcement precision would not be 1/8 and C6 clause 1's "rise by at least the bump per retrieval" would hold only by accident.
+- Evidence: `tests/test_reference_gem.py::test_a_write_resets_the_decay_clock_without_changing_salience_and_a_retrieval_adds_0_1` (the built reading); commit 94f1843. The alternative reading was found by reasoning from the spec's wording; no run recorded.
 - Resolution: the first reading is built (decay accrues over interactions of disuse; a touch at interaction n materialises interaction n-1's value, and a retrieval adds exactly 0.1). A retrieval keeps a topic alive through its bumps (+0.1 against a decay of 0.0075·s per interaction), a write does not. Declared in `demo/reference_gem.py`'s docstring.
 - Lesson: report the decay rule as "decay accrues during disuse", not as "a read restores salience".
 
@@ -443,8 +457,17 @@ One entry per difficulty, newest last. Fields: expected, observed, evidence, res
 - Date: 2026-10-21
 - Expected: phase 1 → phase 2 changes exactly T4 and T5 (absent → pass) and no other row.
 - Observed: it does (`tests/test_reference_gem_phase2.py::test_phase_1_to_phase_2_changes_exactly_t4_and_t5`: same verdict and the same held/broke list per case on every other row). No departure from the column. Decisions the spec left open: (1) the rules are ported from the patch (`patches/0002-bitemporal-field-histories.patch`: `resolve_valid`, `believed_at`, `write_entry`, `retract_entry`), so the reference and the patch cannot differ by accident; (2) a retraction has no adapter request (as on the patch, which has only a store method), so `ReferenceGem.retract(topic, field, entry_id)` is a public method and not an interaction; (3) a `valid_at` or `recorded_at` read returns the field's history (the "history request"), a plain read does not, and `recorded_at` shows an entry that expired since as live; (4) merge by valid time ends an end-dated entry that a plain entry of the other topic starts inside (keep and copy), tagged `merged` as on step 3.
+- Evidence: `tests/test_reference_gem_phase2.py::test_phase_1_to_phase_2_changes_exactly_t4_and_t5`; commit 6a4f040 ("Reference GEM phase 2…").
 - Resolution: phase 1's entry shape is unchanged (no `invalid_at`/`created_at` keys, `expired_at: None`); phase 2 adds them.
 - Lesson: a phase is one mode flag on one class; the phase-1 suite stayed green untouched.
+
+### Reference GEM workloads: both windows are 0 interactions, so the unit is what carries the information
+- Date: 2026-10-21
+- Expected: the merge revision window and the dependent-topic staleness window, in interactions, as ticket 30 predicts: 0 (revision runs after every ingest; the flag is raised in the same transition).
+- Observed: both are 0 on both phases (`tests/test_reference_gem_workloads.py`). Polling reads of stored state are not interactions on the reference GEM, so a poll can never move the count: the window is the interactions between the trigger's response and the first read that shows the merge or the flag, and a probe's own query is subtracted (C3 reads B once right after the update). A system that does not count interactions (`read_state()["interactions"]` absent: MemState, the baseline) keeps seconds, unchanged. The pre-merge window is visible only with `revise_after_ingest=False`, where polling never revises, so `await_merge` times out; the test shows both copies and the merge after `revise()` directly.
+- Evidence: `tests/test_reference_gem_workloads.py` (`test_merge_window_is_zero_interactions_with_revision_after_every_ingest`, `test_pre_merge_window_is_exposed_when_revision_is_held_back`, `test_dependent_topic_window_is_zero_interactions`, `test_windows_table_cites_the_interaction_unit`); commit b50347d; ticket `30-reference-gem-workloads-and-windows.md`.
+- Resolution: `demo/windows.py::interactions` is the one place the unit is chosen; `await_merge` and C3 record `window_interactions`, the windows table prints "N interactions". The reference GEM runs C5-2's ramps (the archived counts and the 396 active at n=2000 against β need them) but is excluded from the latency table by `SystemSpec.latency=False`; chat runs are recordings of upstream only, so no chat cell exists for it.
+- Lesson: report a window with its unit; "0 interactions" is a property of the design (revision in the same transition), not a measured latency.
 
 ### Ticket 15: step 3 developed in a private worktree; its commit hit the pre-commit hook again
 - Date: 2026-10-21
@@ -461,3 +484,52 @@ One entry per difficulty, newest last. Fields: expected, observed, evidence, res
 - Evidence: `tests/test_merge_by_valid_time.py::test_three_duplicates_merge_into_one_topic_with_every_value`, failing once in three runs before the `ORDER BY`.
 - Resolution: rescan after each merge and order pairs by id, so the lowest id survives a tie and each merge adds its event to it.
 - Lesson: an unordered query under a `LIMIT` makes a loop's outcome run-dependent; pin the order before asserting on counts.
+
+### Ticket 32: the recorded folder had to link snapshots without rewriting the scorecard
+- Date: 2026-10-21
+- Expected: copying a run to `demo/record/<run id>/` needs its scorecard links rewritten to point there.
+- Observed: the scorecard's snapshot links are already relative to the run folder (`snapshots/<system>/<check>.json`), so a verbatim copy of `scorecard.md` next to `snapshots/` resolves inside the record; a test follows a link in the copied file.
+- Evidence: `tests/test_run_of_record.py::test_record_copies_scorecard_results_and_snapshots_but_not_logs`; commit 1b36a29 ("Run of record: copy a run to demo/record…"); ticket `32-run-of-record-folder-and-upstream-tests.md`.
+- Resolution: copy verbatim; no rewriting.
+- Lesson: keep links run-relative and a copy stays valid wherever the folder lands.
+
+### Ticket 18: the two-weeks chat run
+- Date: 2026-10-21
+- Expected: two requests on step 3 ("I started my new job two weeks ago" at Oct 6, "how long have I been there?" at Oct 20, shifted to the run day) would store a start date for the first turn to be graded on and give the second something to read.
+- Observed: MemState's router sent the first statement to `query` in every router-decided take (9/9 with the seeded takes), so the first turn runs on read tools; a 2B model on an empty database mostly asked what the job was and wrote nothing. 13 takes in four variants (F31): one spec-faithful take stored a start date (the right one, in the value; `valid_from` was the reference time), one seeded take stored a date one day off; no take answered "four weeks". A `query`-routed turn also executed `memory_create_topic` and `memory_append_field` (the tool log shows both succeeded).
+- Evidence: `demo/recordings/two-weeks-20261021-033752.json` (the take of record) and 12 takes in `demo/recordings/attempts/`; F31 has the table.
+- Resolution: the case follows the spec (empty database, no `intent_override`, nothing seeded). `--no-router-decides` (force W1 to `ingest`) and `--seed-profile` exist as variants because the router makes the spec's case rarely store anything; their takes are disclosed, not the case of record. I added both after the first takes, so four attempt files carry a command that now describes a different variant (the recording's `state` fields are authoritative). The take of record is the only spec-faithful take that stored a start date, picked among 7 router-decided takes; I did not rerun it to see whether it repeats.
+- Lesson: choosing the take that shows the mechanism is a selection, so say how many takes there were and what the others did; and read the route the server reports before assuming a chat turn can write.
+- Lock: every take held `/tmp/gem-suite-live.lock` and the repo's `server.lock` (13 times, one server at a time); Ollama and the proxy were started and stopped by the run each time; `MemState-patched` was on `bitemporal` and clean afterwards.
+
+### Ticket 19: "the reference GEM runs no ramps" read as "runs C5-2's counts once"
+- Date: 2026-10-21
+- Expected: the run of record's box "the reference GEM runs no ramps and no chat" means no C5-2 ramp on the reference GEM.
+- Observed: C5-2 has no system filter and its verdict rests on the active and archived counts at n=2000 (about 400 active against β = 500, `tests/test_reference_gem_workloads.py::test_c5_states_beta_beside_the_active_count_at_2000`); `SystemSpec.latency=False` only hid the latency table, so both phases still ran every size times `--ramp-repeats` and their milliseconds sat in `results.json`.
+- Evidence: review of `92099d8...ec9e321` (spec axis, blocker 1); `demo/checks/c5_topic_ramp.py` before this change.
+- Resolution: decided with the user: the reference GEM runs each C5-2 size once, with no repeats, no timing, no latency rows and no ramp milliseconds in `results.json` (`describe()["latency_comparable"]` is False; `SystemSpec.latency` is gone); it runs no chat. The reading is in the deviations table ("Reference GEM ramps"). Test: `test_c5_runs_each_size_once_and_records_no_milliseconds_on_the_reference_gem`.
+- Lesson: a box that says "runs no X" needs the verdict that depends on X named beside it; here the verdict was the thing the ramp existed for.
+
+### C4's expected verdict counts two n/a cases on upstream and step 1, not one
+- Date: 2026-10-21
+- Expected: ticket 22's "C4 partial, 1 case n/a" on upstream.
+- Observed: the dated-merge case (added with step 3) is n/a on a system that accepts no `valid_from` (`demo/checks/c4_history.py`, `_dated_merge_case`), so upstream and step 1 read two n/a cases (the dated merge and real forgetting, F24) [INFERENCE: from the check's code, not re-run here]; step 3 reads one (F29: "C4 stays `partial` (the forgetting case is n/a, F24)"), and the versioned row reads n/a on the merge, dated-merge and forgetting cases (`tests/test_c4.py::test_c4_passes_on_the_baseline_with_the_merge_and_forgetting_cases_not_applicable`). No entry recorded the change.
+- Evidence: `demo/checks/c4_history.py`, F29, `tests/test_c4.py`.
+- Resolution: the verdict is unchanged (partial on upstream: the merge case breaks); the run of record states the n/a counts it measures.
+- Lesson: when a later ticket adds a case, re-read the earlier ticket's expected count of n/a cases.
+
+### Review fixes: the patch's graph snapshot and inner-field reads ignored the chat reference time, so `bitemporal` was rebuilt
+- Date: 2026-10-21
+- Expected: "the as-of time of that message's reads" (spec, chat) covers every read tool of a chat message.
+- Observed: `memory_graph_snapshot` (`build_ui_graph_snapshot`) and `memory_get_field` by an inner field's name (`_find_nested_inner_field`) still read the current value as of now; the other reads took the reference time.
+- Evidence: `MemState-patched/tests/test_chat_reference_time.py::test_the_graph_snapshot_is_as_of_the_reference_time` and `test_reads_of_a_nested_field_by_its_inner_name_are_as_of_the_reference_time` (both failed before the change; the patched copy's 84 tests pass with upstream's 39).
+- Resolution: both take the reference time; commit 2 was amended and commit 3 rebased, so step 2 is now `2cfabee` and step 3 `cb5d48c`; `patches/` was re-exported as one series (`[PATCH n/3]`) and `git am` of it on `945d7c4` gives the tree of `bitemporal`. Earlier tickets' and findings' commit ids (`5f45848`, `5c5c9e6`) name the commits before this change.
+- Lesson: when the spec lists what a time applies to, test each read path by name, not the one the first smoke run happened to use.
+
+### The offline suite took 6.6 minutes on every commit that touched `demo/` or `tests/`
+- Date: 2026-10-21
+- Expected: a pre-commit suite of in-process tests runs in well under a minute.
+- Observed: 439 tests took 6 m 37 s (`pytest --durations`): the mutation tests alone 214 s of setup. Almost all of it was waiting, not computing (user time 1 m 24 s): C2(a)'s "active topic merged into an archived duplicate" extra waits its full 15 s merge timeout on every in-process run (it times out by design there), and every one of about 15 reference-GEM runs of all the checks paid it; mutants that never forget also sat through several 20 s forgetting waits.
+- Evidence: `pytest -q --durations=15` before the change (439 passed in 396.89 s, `tests/test_mutants.py::test_the_targeted_row_gives_a_non_pass_verdict[C1]` 214.31 s setup) and after (465 passed in 39.5 s).
+- Resolution: `tests/reference_runs.py` shortens the merge timeout, the forgetting waits and the as-of gap (none changes a verdict), shrinks the C5 ramp for mutants only, and computes the unmutated runs once per session for the reference GEM and mutation tests; `c2a` reads `merge.DEFAULT_TIMEOUT_S` at call time so a test shortens it once. No marker and no test left out of the hook; the mutation tests now also cover C2(d), C5-1, C6-2 and T1-T3, T6 and check which case broke and that controls still hold.
+- Lesson: when a suite is slow and the CPU is idle, look for timeouts that an in-process system always hits, before shrinking workloads.

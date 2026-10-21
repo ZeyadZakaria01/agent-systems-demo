@@ -17,6 +17,7 @@ def _shared_root() -> Path:
 # The main checkout; equals REPO_ROOT outside a linked worktree (same resolution as scripts/run_memstate.sh).
 SHARED_ROOT = _shared_root()
 RESULTS_ROOT = REPO_ROOT / "demo" / "results"
+RECORD_ROOT = REPO_ROOT / "demo" / "record"  # tracked: the run of record, copied from RESULTS_ROOT
 RUN_SCRIPT = REPO_ROOT / "scripts" / "run_memstate.sh"
 # The machine-wide one-server lock every run that starts a server is wrapped in (the runner never takes it itself).
 SERVER_LOCK = SHARED_ROOT.parent / f"{SHARED_ROOT.name}-wt" / "server.lock"

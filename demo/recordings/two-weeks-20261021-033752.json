@@ -1,0 +1,266 @@
+{
+  "schema": 1,
+  "case": "two-weeks",
+  "title": "Two weeks ago on step 3: \"I started my new job two weeks ago\", then \"how long have I been there?\"",
+  "run_id": "20261021-033752",
+  "recorded_at": "2026-10-21T00:37:59+00:00",
+  "command": "cd /home/zeyad/work/agent-systems-demo-wt/18-two-weeks-chat && /home/zeyad/work/agent-systems-demo/.venv/bin/python -m demo.chat_run record two-weeks --router-decides",
+  "snapshot": "demo/results/20261021-033752/snapshots/step3/chat-two-weeks.json",
+  "system": {
+    "label": "bitemporal patch step 3 (5c5c9e6, LadybugDB)",
+    "url": "http://127.0.0.1:8765",
+    "db_path": "/home/zeyad/work/agent-systems-demo/.runtime/gem-suite/20261021-033752/step3-chat-two-weeks/memstate.lbug",
+    "commit": "5c5c9e6707b69c0d15f96c08691377a87ef92a73",
+    "engine": "MemState engine module: ladybug",
+    "source_dir": "/home/zeyad/work/agent-systems-demo/MemState-patched/src"
+  },
+  "llm": {
+    "provider": "ollama",
+    "model": "qwen3.5:2b",
+    "base_url": "http://127.0.0.1:11435 (think-off proxy, ADR 0003) -> Ollama :11434",
+    "left_unset": [
+      "no `intent_override`",
+      "no `model` in the request (the server's `MEMSTATE_OLLAMA_MODEL`)",
+      "no Groq",
+      "no judge"
+    ]
+  },
+  "state": {
+    "fresh_db": true,
+    "seeded_topics": 0,
+    "seed": null,
+    "events_played": 0,
+    "setup_writes": [],
+    "first_intent_override": null,
+    "dates": {
+      "run_day": "2026-10-21",
+      "first_reference_time": "2026-10-07",
+      "second_reference_time": "2026-10-21",
+      "start_date": "2026-09-23",
+      "shift_days": 1,
+      "story_first_day": "2026-10-06",
+      "story_run_day": "2026-10-20"
+    }
+  },
+  "turns": [
+    {
+      "question": "W1",
+      "ability": "temporal reasoning",
+      "text": "I started my new job two weeks ago",
+      "graded_on": "the stored start date",
+      "reference_time": "2026-10-07T00:00:00+00:00",
+      "ground_truth": "2026-09-23 (two weeks before the reference time 2026-10-07), +- 1 day",
+      "request": {
+        "messages": [
+          {
+            "role": "user",
+            "content": "I started my new job two weeks ago"
+          }
+        ],
+        "provider": "ollama",
+        "reference_time": "2026-10-07T00:00:00+00:00"
+      },
+      "answer": "I've successfully stored information about your new job start. The field `job_start_date` now contains \"Started new job two weeks ago on 2026-09-23\" in the topic I created (ID: 5df84610-93dd-4bdf-8d1b-c26d5d59c2a4).\n\nWhat would you like to add next, or do you have other information about your job that should go here?",
+      "route": {
+        "intent": "query",
+        "intent_source": "classifier",
+        "tool_calls": [
+          "memory_list_topics",
+          "memory_graph_snapshot",
+          "memory_list_topics",
+          "memory_create_topic",
+          "memory_get_topic",
+          "memory_append_field",
+          "memory_append_field"
+        ]
+      },
+      "latency_ms": 9556.253,
+      "model": "qwen3.5:2b",
+      "provider": "ollama",
+      "tool_log": [
+        {
+          "tool": "memory_list_topics",
+          "args": {
+            "include_archived": false
+          },
+          "result": {
+            "ok": true,
+            "topics": [],
+            "topic_ids": []
+          }
+        },
+        {
+          "tool": "memory_graph_snapshot",
+          "args": {},
+          "result": {
+            "ok": true,
+            "data": {
+              "nodes": [],
+              "edges": []
+            }
+          }
+        },
+        {
+          "tool": "memory_list_topics",
+          "args": {
+            "include_archived": true
+          },
+          "result": {
+            "ok": true,
+            "topics": [],
+            "topic_ids": []
+          }
+        },
+        {
+          "tool": "memory_create_topic",
+          "args": {
+            "title": "New Job Information",
+            "topic_kind": "JobEntry"
+          },
+          "result": {
+            "ok": true,
+            "topic_id": "5df84610-93dd-4bdf-8d1b-c26d5d59c2a4"
+          }
+        },
+        {
+          "tool": "memory_get_topic",
+          "args": {
+            "topic_id": "5df84610-93dd-4bdf-8d1b-c26d5d59c2a4"
+          },
+          "result": {
+            "ok": true,
+            "topic": {
+              "id": "5df84610-93dd-4bdf-8d1b-c26d5d59c2a4",
+              "title": "New Job Information",
+              "summary": "",
+              "topic_kind": "JobEntry",
+              "salience": 1.0,
+              "failed_salience": 0.0,
+              "archived": false,
+              "fields": {},
+              "topic_history": [
+                {
+                  "ts": "2026-10-21T00:38:03.861260+00:00",
+                  "kind": "created",
+                  "detail": {
+                    "title": "New Job Information"
+                  }
+                }
+              ],
+              "created_at": "2026-10-21T00:38:03.861260+00:00",
+              "updated_at": "2026-10-21T00:38:03.861260+00:00"
+            }
+          }
+        },
+        {
+          "tool": "memory_append_field",
+          "args": {
+            "topic_id": "5df84610-93dd-4bdf-8d1b-c26d5d59c2a4",
+            "value": "Started new job two weeks ago on 2026-09-23"
+          },
+          "result": {
+            "ok": false,
+            "error": "topic_id and field_name required"
+          }
+        },
+        {
+          "tool": "memory_append_field",
+          "args": {
+            "topic_id": "5df84610-93dd-4bdf-8d1b-c26d5d59c2a4",
+            "field_name": "job_start_date",
+            "value": "Started new job two weeks ago on 2026-09-23"
+          },
+          "result": {
+            "ok": true,
+            "version_id": "f04c33fd-be10-49a5-b0c0-2cefec886b84"
+          }
+        }
+      ],
+      "written": [
+        {
+          "topic_id": "5df84610-93dd-4bdf-8d1b-c26d5d59c2a4",
+          "title": "New Job Information",
+          "field": "job_start_date",
+          "value": "Started new job two weeks ago on 2026-09-23",
+          "valid_from": "2026-10-07T00:00:00+00:00",
+          "invalid_at": null,
+          "provenance": "llm (reference_time 2026-10-07T00:00:00+00:00)",
+          "created_at": "2026-10-21T00:38:07.834222+00:00",
+          "why_changed": null
+        }
+      ],
+      "topics_created": [
+        {
+          "topic_id": "5df84610-93dd-4bdf-8d1b-c26d5d59c2a4",
+          "title": "New Job Information"
+        }
+      ],
+      "hand_grade": {
+        "grade": null,
+        "note": null
+      },
+      "stored_start_date": {
+        "truth": "2026-09-23",
+        "tolerance_days": 1,
+        "candidates": [
+          {
+            "source": "value",
+            "topic_id": "5df84610-93dd-4bdf-8d1b-c26d5d59c2a4",
+            "field": "job_start_date",
+            "date": "2026-09-23",
+            "from": "Started new job two weeks ago on 2026-09-23"
+          },
+          {
+            "source": "valid_from",
+            "topic_id": "5df84610-93dd-4bdf-8d1b-c26d5d59c2a4",
+            "field": "job_start_date",
+            "date": "2026-10-07",
+            "from": "2026-10-07T00:00:00+00:00"
+          }
+        ],
+        "within_tolerance": true
+      }
+    },
+    {
+      "question": "W2",
+      "ability": "temporal reasoning",
+      "text": "how long have I been there?",
+      "graded_on": "the answer",
+      "reference_time": "2026-10-21T00:00:00+00:00",
+      "ground_truth": "four weeks",
+      "request": {
+        "messages": [
+          {
+            "role": "user",
+            "content": "how long have I been there?"
+          }
+        ],
+        "provider": "ollama",
+        "reference_time": "2026-10-21T00:00:00+00:00"
+      },
+      "answer": "I understand you're asking about your location (\"there\"). To give you an accurate answer, I need to know which \"there\" you're referring to - a place, situation, or event? Could you please provide more context so I can find the relevant information in my stored data?",
+      "route": {
+        "intent": "query",
+        "intent_source": "classifier",
+        "tool_calls": []
+      },
+      "latency_ms": 1089.36,
+      "model": "qwen3.5:2b",
+      "provider": "ollama",
+      "tool_log": [],
+      "written": [],
+      "topics_created": [],
+      "hand_grade": {
+        "grade": null,
+        "note": null
+      },
+      "answer_contains_ground_truth": false,
+      "hint_rule": "the answer says four weeks (\"four weeks\", \"4 weeks\" or \"28 days\")"
+    }
+  ],
+  "environment": {
+    "model_warmed_up_s": 3.68,
+    "ollama_started_by_run": true,
+    "ollama_model_setting": "qwen3.5:2b"
+  }
+}

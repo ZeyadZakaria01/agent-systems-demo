@@ -16,6 +16,8 @@ To add a check, drop a module `demo/checks/<name>.py` that decorates a function:
 - Read fields with `demo.reads.current_value` (it returns `NO_VALUE` for "no current value", `None` for a written
   `null`), and read capabilities from `system.describe()` (`keeps_history`), never from missing keys.
 - Modules starting with `_` are skipped. No list needs editing: `discover()` imports every module here.
+- `Row(..., probe=True)` marks a probe of a proposed condition (the time probes, C4'): it is not [P1]'s claim, so the
+  scorecard prints it in its own "probes" section (still in the change tables), never in the main table.
 - Rows are ordered on the scorecard by natural order of the row ID.
 - `Row(..., on_scorecard=False)` marks a measurement that has its own table, not a scorecard row (the storyline). Its
   verdict still lands in `verdicts`, `results.json` and the snapshots, so anything that counts or tabulates by row
@@ -43,6 +45,7 @@ class Row:
     claim: str
     control: bool = False
     on_scorecard: bool = True  # False: a measurement with its own table (the storyline), not a scorecard row
+    probe: bool = False  # True: a probe of a proposed condition (C1', C4'), outside [P1]'s claims: the probes section, not the main table
 
 
 @dataclass

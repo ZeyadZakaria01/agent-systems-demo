@@ -50,6 +50,7 @@ def test_c4_passes_on_the_baseline_with_the_merge_and_forgetting_cases_not_appli
     assert by_name(v, "history survives a value update").held is True
     assert by_name(v, "history survives a merge").held is None  # no duplicate is ever created, so no merge
     assert by_name(v, "history survives real forgetting").held is None  # no archived flag
+    assert by_name(v, "history survives real forgetting").id == "forgetting"
     assert "no archived flag" in by_name(v, "history survives real forgetting").observation
     assert not [e for e in Baseline().log.entries if e["kind"] == "setup"]  # never an editor archive write
     assert by_name(v, 'version_field with "" does not replace April 20').held is True
@@ -182,7 +183,7 @@ FORGETTING = "history survives real forgetting"
 def test_a_topic_with_fields_that_cannot_be_forgotten_makes_the_case_not_applicable_confirmed_by_the_run():
     v = run(Forgetter(resets=True))  # upstream's shape (F24): a field write resets salience to 1.0
     case = by_name(v, FORGETTING)
-    assert case.held is None and "was not forgotten" in case.observation
+    assert case.held is None and "was not forgotten" in case.observation and case.id == "forgetting"
     assert v.measurements["forgetting"]["ran"] is True and v.measurements["forgetting"]["target_archived"] is False
     assert v.verdict == PASS  # the verdict rests on the cases that could run
 
@@ -210,6 +211,7 @@ def test_forgetting_not_shown_to_run_is_not_applicable():
     v = run(Forgetter(resets=False, forgets=False))
     case = by_name(v, FORGETTING)
     assert case.held is None and "forgetting was not shown to run" in case.observation
+    assert case.id == "forgetting"  # the id is the same on every path, so the change table lines the systems up
 
 
 class Capped(AppendOnlyStore):

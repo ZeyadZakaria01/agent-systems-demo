@@ -85,10 +85,12 @@ def _read_schema(openapi: dict) -> dict:
 
 
 def _stored(s: System) -> str:
-    """Every topic and its fields' current values, as the system stores them (salience and events left out)."""
-    topics = s.read_state()["topics"]
-    return json.dumps({tid: [t.get("title"), {n: repr(current_value(f)) for n, f in sorted(t["fields"].items())}]
-                       for tid, t in sorted(topics.items())}, sort_keys=True)
+    """The whole stored state (topics with every field's history, archived flags, events and timestamps; the edges),
+    minus salience, which the system may let decay or be touched. A rejected write must leave this exactly as it was."""
+    state = s.read_state()
+    topics = {tid: {k: v for k, v in t.items() if k not in ("salience", "failed_salience")}
+              for tid, t in state["topics"].items()}
+    return json.dumps({"topics": topics, "edges": state.get("edges")}, sort_keys=True, default=str)
 
 
 def _write(title: str, deadline: str) -> dict:

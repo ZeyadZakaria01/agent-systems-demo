@@ -4,12 +4,15 @@ A recording is one JSON file per chat run under `demo/recordings/` (tracked: it 
 case). Nothing here starts a server, calls Ollama or imports `httpx`: replay reads the file and prints it, so
 interview day does not depend on the laptop's GPU.
 
-Shape (schema 1): `case` ("bad-merge", later "two-weeks"), `title`, `run_id`, `recorded_at`, `command`, `system`
+Shape (schema 1): `case` ("bad-merge", "two-weeks"), `title`, `run_id`, `recorded_at`, `command`, `system`
 (label, URL, DB path, commit, engine), `llm` (provider, model, base URL, the settings the run left unset), `state`
-(how the state was built and, for the bad merge, what the merge lost), `turns` (one per question: `question`,
-`ability`, `text`, `ground_truth`, `answer`, `answer_contains_ground_truth` (every word of the ground truth appears in the answer: a hint, not a grade), `route`,
-`latency_ms`, `model`, `provider`, `tool_log`, `state_violation`, `topic_changed_by_turn`, and the empty `hand_grade`
-slot the grader fills in by hand).
+(how the state was built; for the bad merge what the merge lost, for the two-weeks run the dates), `turns` (one per
+question: `question`, `ability`, `text`, `ground_truth`, `answer`, `answer_contains_ground_truth` (a hint, not a
+grade: every word of the ground truth in the answer, or the rule named in `hint_rule`), `route`, `latency_ms`,
+`model`, `provider`, `tool_log`, and the empty `hand_grade` slot the grader fills in by hand). A case adds its own
+per-turn evidence under its own key, which the renderer prints only when a turn carries it: `state_violation` and
+`topic_changed_by_turn` (bad merge); `reference_time`, `graded_on`, `written`, `topics_created` and
+`stored_start_date` (two weeks).
 """
 
 from __future__ import annotations
@@ -23,6 +26,31 @@ from demo.paths import REPO_ROOT
 SCHEMA = 1
 RECORDINGS_ROOT = REPO_ROOT / "demo" / "recordings"
 EMPTY_GRADE = {"grade": None, "note": None}
+LEFT_UNSET = ("no `intent_override`", "no `model` in the request (the server's `MEMSTATE_OLLAMA_MODEL`)", "no Groq",
+              "no judge")  # what every chat run leaves to MemState's defaults
+
+
+def new_recording(described: dict, *, case: str, title: str, run_id: str, recorded_at: str, command: str,
+                  snapshot: str | None, ollama_base_url: str | None, left_unset: list[str], state: dict,
+                  turns: list[dict], extra: dict | None = None) -> dict:
+    """The recording both chat runs write: the envelope (case, run, system as `describe()` states it, the LLM) around
+    the case's own `state` and `turns`. `extra` is merged last (the run's environment)."""
+    return {
+        "schema": SCHEMA, "case": case, "title": title, "run_id": run_id, "recorded_at": recorded_at,
+        "command": command, "snapshot": snapshot,
+        "system": {"label": described.get("system"), "url": described.get("url"), "db_path": described.get("db_path"),
+                   "commit": described.get("commit"), "engine": described.get("engine"),
+                   "source_dir": described.get("source_dir")},
+        "llm": {"provider": "ollama", "model": next((t["model"] for t in turns if t["model"]), None),
+                "base_url": ollama_base_url or "(not stated)", "left_unset": list(left_unset)},
+        "state": state, "turns": turns, **(extra or {})}
+
+
+def is_variant(recording: dict) -> bool:
+    """A take that deviates from the case as the spec states it (W1's route forced, or a profile topic seeded): kept as
+    evidence, never the scored case."""
+    state = recording.get("state") or {}
+    return bool(state.get("first_intent_override") or state.get("seed"))
 
 
 def save_recording(recording: dict, root: Path = RECORDINGS_ROOT) -> Path:
@@ -46,12 +74,15 @@ def recording_files(root: Path = RECORDINGS_ROOT) -> list[Path]:
 
 def latest_per_case(root: Path = RECORDINGS_ROOT) -> list[dict]:
     """The newest recording of every case in `root` (by `recorded_at`), ordered by case name; each carries its
-    file name as `file`. Files that are not recordings are skipped."""
+    file name as `file`. Files that are not recordings are skipped, and so are variant takes (`is_variant`): the
+    scored case is the newest take run as the spec states it."""
     newest: dict[str, dict] = {}
     for path in recording_files(root):
         try:
             rec = load_recording(path)
         except (ValueError, json.JSONDecodeError):
+            continue
+        if is_variant(rec):
             continue
         rec = {**rec, "file": path.name}
         if rec["case"] not in newest or rec["recorded_at"] > newest[rec["case"]]["recorded_at"]:
@@ -89,24 +120,47 @@ def violation_text(turn: dict, loss: dict | None) -> str:
     return f"none on {v['field']} (current value {_shown(v['current_after'])}, no entry lost){elsewhere}"
 
 
+def _written(e: dict) -> str:
+    dated = f", valid_from {e['valid_from']}" if e.get("valid_from") else ""
+    return f"{e['title'] or e['topic_id']} / {e['field']} = {_shown(e['value'])} ({e.get('provenance')}{dated})"
+
+
+def start_date_text(start: dict) -> str:
+    found = "; ".join(f"{c['date']} (in the {c['source'].replace('_', ' ')}: {_shown(c['from'])})" for c in start["candidates"])
+    verdict = "yes" if start["within_tolerance"] else "no"
+    return (f"dates read from the stored entries: {found or 'none'}; one within {start['tolerance_days']} day of "
+            f"{start['truth']}: {verdict} (a date match, not a grade)")
+
+
 def render_turn(turn: dict, loss: dict | None) -> list[str]:
-    """One turn. A case adds its own per-turn evidence under its own key (`state_violation` for the bad merge);
-    a key a turn does not carry is not printed."""
+    """One turn. A case adds its own per-turn evidence under its own key (`state_violation` for the bad merge,
+    `written` and `stored_start_date` for the two-weeks run); a key a turn does not carry is not printed."""
     route = turn["route"]
     tools = ", ".join(route["tool_calls"]) if route["tool_calls"] else "none"
-    contains = "yes" if turn["answer_contains_ground_truth"] else "no"
     grade = turn["hand_grade"]
-    lines = [f"- **{turn['question']}** [{turn['ability']}] {turn['text']}",
-             f"  - ground truth: {_shown(turn['ground_truth'])}",
-             f"  - answer: {' '.join(str(turn['answer']).split()) or '(empty)'}",
-             f"  - answer contains every word of the ground truth: {contains} (a word match, not a grade)",
-             f"  - route: {route['intent']} ({route['intent_source']}); tool calls: {tools}",
-             f"  - latency: {turn['latency_ms']:,.0f} ms; model {turn['model']} ({turn['provider']})"]
+    lines = [f"- **{turn['question']}** [{turn['ability']}] {turn['text']}"]
+    if "reference_time" in turn:
+        lines.append(f"  - reference time sent: {turn['reference_time']}")
+    lines += [f"  - ground truth: {_shown(turn['ground_truth'])}",
+              f"  - answer: {' '.join(str(turn['answer']).split()) or '(empty)'}"]
+    if "answer_contains_ground_truth" in turn:
+        contains = "yes" if turn["answer_contains_ground_truth"] else "no"
+        rule = turn.get("hint_rule") or "answer contains every word of the ground truth"
+        lines.append(f"  - {rule}: {contains} (a match, not a grade)")
+    lines += [f"  - route: {route['intent']} ({route['intent_source']}); tool calls: {tools}",
+              f"  - latency: {turn['latency_ms']:,.0f} ms; model {turn['model']} ({turn['provider']})"]
+    if "written" in turn:
+        wrote = "; ".join(_written(e) for e in turn["written"])
+        made = [t["title"] or t["topic_id"] for t in turn.get("topics_created") or []]
+        lines.append(f"  - entries the turn wrote: {wrote or 'none'}" + (f"; topics it created: {', '.join(made)}" if made else ""))
+    if "stored_start_date" in turn:
+        lines.append(f"  - stored start date: {start_date_text(turn['stored_start_date'])}")
     if "state_violation" in turn:
         lines.append(f"  - state violation: {violation_text(turn, loss)}")
     if "topic_changed_by_turn" in turn:
         lines.append(f"  - state changed by the turn itself: {'yes' if turn['topic_changed_by_turn'] else 'no'}")
-    lines.append(f"  - hand grade: [ ] {_shown(grade['grade']) if grade['grade'] is not None else '(empty)'}; "
+    graded_on = f" (graded on: {turn['graded_on']})" if turn.get("graded_on") else ""
+    lines.append(f"  - hand grade{graded_on}: [ ] {_shown(grade['grade']) if grade['grade'] is not None else '(empty)'}; "
                  f"note: {grade['note'] or '(empty)'}")
     return lines
 
@@ -125,6 +179,22 @@ def render_state(rec: dict) -> list[str]:
     return lines
 
 
+def render_two_weeks_state(rec: dict) -> list[str]:
+    d = rec["state"]["dates"]
+    shifted = (f"the story (Oct 6, Oct 20) is shifted by {d['shift_days']:+d} day(s) so that its last day is the run day"
+               if d["shift_days"] else "the story's own dates (Oct 6, Oct 20) fall on the run day")
+    forced = rec["state"].get("first_intent_override")
+    route = (f" The first request forces the route (`intent_override: {forced}`), a variant of the case; the router decides "
+             "the second." if forced else " Both routes are the router's.")
+    seed = rec["state"].get("seed")
+    first = seed["request"]["fields"][0] if seed else None
+    start = (f"one profile topic seeded through `/v1` ({seed['request']['title']}: {first['name']} = {first['value']}, "
+             f"from {first['valid_from'][:10]})" if seed else "nothing written through `/v1` and no topic seeded")
+    return [f"A fresh database: {start}. Two separate chat requests follow: reference time {d['first_reference_time']} "
+            f"(\"two weeks ago\" means {d['start_date']}), then reference time {d['second_reference_time']} (the run day, "
+            f"{d['run_day']}; {shifted}).{route}"]
+
+
 def render_recording(rec: dict, level: int = 2) -> str:
     """One recording as Markdown (replay prints it, the scorecard embeds it one level deeper)."""
     system, llm = rec["system"], rec["llm"]
@@ -136,6 +206,8 @@ def render_recording(rec: dict, level: int = 2) -> str:
              f"{'; '.join(llm['left_unset'])}.", ""]
     if rec["case"] == "bad-merge":
         lines += render_state(rec) + [""]
+    elif rec["case"] == "two-weeks":
+        lines += render_two_weeks_state(rec) + [""]
     lines += [f"{h}# Turns", ""]
     for turn in rec["turns"]:
         lines += render_turn(turn, rec["state"].get("loss"))
@@ -150,4 +222,6 @@ def render_chat_cases(recordings: list[dict], level: int = 3) -> str:
                        for rec in recordings)
     return (f"{'#' * level} Chat cases (recorded, n = 1 each, hand-graded; no verdict)\n\n"
             "Each case is one recorded Ollama chat run on MemState, replayed from `demo/recordings/` without a server "
-            "(`python -m demo.chat_run replay`). The grade slots are empty until a person fills them in.\n\n" + body)
+            "(`python -m demo.chat_run replay`). The grade slots are empty until a person fills them in. A recording is one "
+            "sample of a 2B model: the other takes of a case are in `demo/recordings/attempts/`, and `docs/journal.md` says "
+            "how many were made.\n\n" + body)

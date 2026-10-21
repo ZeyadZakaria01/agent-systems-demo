@@ -8,10 +8,9 @@ from math import isclose
 import pytest
 
 from demo.adapter import Rejected
-from demo.checks import discover
 from demo.reads import NO_VALUE, current_value, field_in_response, read_request
 from demo.reference_gem import BETA, LAMBDA, ReferenceGem
-from demo.session import Session
+from tests.reference_runs import unmutated
 from demo.storyline import WEBSITE_REDESIGN
 from demo.triage import run_storyline
 from demo.verdict import ABSENT, PASS
@@ -39,13 +38,7 @@ def value(system, topic_id, name):
 
 @pytest.fixture(scope="module")
 def verdicts():
-    out = {}
-    for check in discover():
-        if check.id == "Storyline":
-            continue
-        for v in check.execute(Session.in_process(ReferenceGem), run_day=RUN_DAY):
-            out[v.row] = v
-    return out
+    return unmutated(1)
 
 
 @pytest.mark.parametrize("row", ["C1", "C2(b)", "C2(c)", "C2(d)", "C3", "C4", "C5-1", "C5-2", "C6-1", "C6-2",

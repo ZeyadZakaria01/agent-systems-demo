@@ -1,21 +1,22 @@
-From 5f45848d1f6e2991e8fcf335b32c01daebb3ab42 Mon Sep 17 00:00:00 2001
+From 2cfabeecc94a3963ba6c1f3281491712e902e3f3 Mon Sep 17 00:00:00 2001
 From: Zeyad Zakaria <zeyad.zakaria@ctchealth.ch>
 Date: Wed, 21 Oct 2026 01:47:34 +0300
-Subject: [PATCH 2/2] Bitemporal field histories: dated entries, valid-time and
+Subject: [PATCH 2/3] Bitemporal field histories: dated entries, valid-time and
  recorded-time reads, keep-and-copy on changed ends, chat reference time
 
 ---
- src/memstate/api/ui_api.py         |   1 +
- src/memstate/core/executor.py      |  74 ++++---
- src/memstate/core/models.py        |  15 ++
- src/memstate/datamodel/fields.py   | 163 ++++++++++++++-
- src/memstate/llm/chat_api.py       |  33 +++
- src/memstate/llm/tool_runner.py    |  70 +++++--
- src/memstate/llm/tools_schema.py   |  18 ++
- src/memstate/store/graph_store.py  |  43 ++--
- tests/test_bitemporal_histories.py | 320 +++++++++++++++++++++++++++++
- tests/test_chat_reference_time.py  | 192 +++++++++++++++++
- 10 files changed, 860 insertions(+), 69 deletions(-)
+ src/memstate/api/ui_api.py           |   1 +
+ src/memstate/api/ui_graph_payload.py |   7 +-
+ src/memstate/core/executor.py        |  74 ++++---
+ src/memstate/core/models.py          |  15 ++
+ src/memstate/datamodel/fields.py     | 163 +++++++++++++-
+ src/memstate/llm/chat_api.py         |  33 +++
+ src/memstate/llm/tool_runner.py      |  84 ++++---
+ src/memstate/llm/tools_schema.py     |  18 ++
+ src/memstate/store/graph_store.py    |  43 ++--
+ tests/test_bitemporal_histories.py   | 320 +++++++++++++++++++++++++++
+ tests/test_chat_reference_time.py    | 232 +++++++++++++++++++
+ 11 files changed, 912 insertions(+), 78 deletions(-)
  create mode 100644 tests/test_bitemporal_histories.py
  create mode 100644 tests/test_chat_reference_time.py
 
@@ -31,6 +32,45 @@ index 79fb8df..c65d1e5 100644
              "history": [e.model_dump() for e in rec.history],
          }
      th_raw = row.get("topic_history_json")
+diff --git a/src/memstate/api/ui_graph_payload.py b/src/memstate/api/ui_graph_payload.py
+index 6ec4e8e..e2ec149 100644
+--- a/src/memstate/api/ui_graph_payload.py
++++ b/src/memstate/api/ui_graph_payload.py
+@@ -2,6 +2,7 @@
+ 
+ from __future__ import annotations
+ 
++from datetime import datetime
+ from typing import Any
+ 
+ from memstate.api.graph_viz_communities import compute_topic_communities
+@@ -15,7 +16,7 @@ from memstate.datamodel.mappers import topic_from_graph_row
+ from memstate.store.graph_store import GraphStore
+ 
+ 
+-def build_ui_graph_snapshot(store: GraphStore) -> dict[str, Any]:
++def build_ui_graph_snapshot(store: GraphStore, at: datetime | None = None) -> dict[str, Any]:
+     """
+     Return ``{ "nodes": [...], "edges": [...] }`` for visualization and tools.
+ 
+@@ -47,7 +48,7 @@ def build_ui_graph_snapshot(store: GraphStore) -> dict[str, Any]:
+         tf = TopicFields.from_json(row.get("fields_json") if isinstance(row.get("fields_json"), str) else "")
+         fields_summary: list[dict[str, Any]] = []
+         for name, rec in tf.fields.items():
+-            cur = rec.current_entry()
++            cur = rec.current_entry(at)
+             row_fs: dict[str, Any] = {
+                 "name": name,
+                 "field_type": rec.field_type,
+@@ -63,7 +64,7 @@ def build_ui_graph_snapshot(store: GraphStore) -> dict[str, Any]:
+                     if isinstance(sub_raw, dict):
+                         try:
+                             srec = TopicField.model_validate(sub_raw)
+-                            sce = srec.current_entry()
++                            sce = srec.current_entry(at)
+                             nested_fields.append(
+                                 {
+                                     "name": sub_name,
 diff --git a/src/memstate/core/executor.py b/src/memstate/core/executor.py
 index 7b2bd54..a0438ca 100644
 --- a/src/memstate/core/executor.py
@@ -559,7 +599,7 @@ index f0f579c..7ec24cb 100644
      )
  
 diff --git a/src/memstate/llm/tool_runner.py b/src/memstate/llm/tool_runner.py
-index c1942d2..7bb1026 100644
+index c1942d2..6df8bba 100644
 --- a/src/memstate/llm/tool_runner.py
 +++ b/src/memstate/llm/tool_runner.py
 @@ -18,6 +18,7 @@ from memstate.datamodel.fields import (
@@ -583,7 +623,7 @@ index c1942d2..7bb1026 100644
      payload: dict[str, Any] = {
          "field_type": tf.field_type,
          "ref_topic_id": tf.ref_topic_id,
-@@ -47,13 +50,14 @@ def _read_nested_inner_field(
+@@ -47,23 +50,26 @@ def _read_nested_inner_field(
      inner_raw: dict[str, Any],
      *,
      with_history: bool = True,
@@ -599,7 +639,33 @@ index c1942d2..7bb1026 100644
      }
  
  
-@@ -140,8 +144,10 @@ _REORGANIZE_TOOL_TO_OP: dict[str, str] = {
+-def _find_nested_inner_field(store: GraphStore, topic_id: str, inner_name: str) -> tuple[str, dict[str, Any]] | None:
++def _find_nested_inner_field(
++    store: GraphStore, topic_id: str, inner_name: str, at: datetime | None = None
++) -> tuple[str, dict[str, Any]] | None:
+     """Return (nest_key, inner TopicField dict) when inner_name lives in a nest bundle."""
+     for nest_key in store.list_field_names(topic_id):
+         rec = store.get_field_with_history(topic_id, nest_key)
+         if not rec:
+             continue
+-        cur = rec.current_entry()
++        cur = rec.current_entry(at)
+         if not cur or not is_nested_fields_bundle_value(cur.value):
+             continue
+         inner = nested_bundle_inner_fields(cur.value)
+@@ -73,9 +79,9 @@ def _find_nested_inner_field(store: GraphStore, topic_id: str, inner_name: str)
+     return None
+ 
+ 
+-def _graph_snapshot(store: GraphStore) -> dict[str, Any]:
++def _graph_snapshot(store: GraphStore, at: datetime | None = None) -> dict[str, Any]:
+     """Same shape as GET /api/ui/graph (includes ``community`` per node)."""
+-    return build_ui_graph_snapshot(store)
++    return build_ui_graph_snapshot(store, at=at)
+ 
+ 
+ def _topics_schema_snapshot(store: GraphStore) -> dict[str, Any]:
+@@ -140,8 +146,10 @@ _REORGANIZE_TOOL_TO_OP: dict[str, str] = {
  }
  
  
@@ -612,7 +678,7 @@ index c1942d2..7bb1026 100644
      if rec.field_type != "json" or not cur or not is_nested_fields_bundle_value(cur.value):
          return {}
      inner = nested_bundle_inner_fields(cur.value)
-@@ -155,7 +161,7 @@ def _nested_bundle_schema_extras(rec: TopicField, *, with_current_values: bool)
+@@ -155,7 +163,7 @@ def _nested_bundle_schema_extras(rec: TopicField, *, with_current_values: bool)
          if isinstance(sub, dict):
              try:
                  stf = TopicField.model_validate(sub)
@@ -621,7 +687,7 @@ index c1942d2..7bb1026 100644
                  subvals[n] = sce.value if sce else None
              except Exception:
                  subvals[n] = None
-@@ -165,7 +171,7 @@ def _nested_bundle_schema_extras(rec: TopicField, *, with_current_values: bool)
+@@ -165,7 +173,7 @@ def _nested_bundle_schema_extras(rec: TopicField, *, with_current_values: bool)
      return out
  
  
@@ -630,7 +696,7 @@ index c1942d2..7bb1026 100644
      """Build per-field payload for memory_get_topic_schema (detail: minimal | current | history)."""
      out: dict[str, Any] = {}
      d = (detail or "minimal").strip().lower()
-@@ -178,17 +184,17 @@ def _fields_schema_payload(tf: TopicFields, *, detail: str) -> dict[str, Any]:
+@@ -178,17 +186,17 @@ def _fields_schema_payload(tf: TopicFields, *, detail: str) -> dict[str, Any]:
                  "ref_topic_id": rec.ref_topic_id,
                  "salience": rec.salience,
              }
@@ -651,7 +717,7 @@ index c1942d2..7bb1026 100644
              out[fname] = row
          else:
              row = {
-@@ -197,7 +203,7 @@ def _fields_schema_payload(tf: TopicFields, *, detail: str) -> dict[str, Any]:
+@@ -197,7 +205,7 @@ def _fields_schema_payload(tf: TopicFields, *, detail: str) -> dict[str, Any]:
                  "salience": rec.salience,
                  "history": [e.model_dump() for e in rec.history],
              }
@@ -660,7 +726,7 @@ index c1942d2..7bb1026 100644
              out[fname] = row
      return out
  
-@@ -226,8 +232,8 @@ def _parse_args(raw: Any) -> dict[str, Any]:
+@@ -226,8 +234,8 @@ def _parse_args(raw: Any) -> dict[str, Any]:
      return {}
  
  
@@ -671,7 +737,7 @@ index c1942d2..7bb1026 100644
  
  
  def _parse_with_history_flag(raw: Any, *, default: bool = True) -> bool:
-@@ -254,6 +260,7 @@ class MemoryToolRunner:
+@@ -254,6 +262,7 @@ class MemoryToolRunner:
          field_salience_max: float = 10.0,
          study_session_kind: str | None = None,
          study_catalog: dict[str, Any] | None = None,
@@ -679,7 +745,7 @@ index c1942d2..7bb1026 100644
      ) -> None:
          self._store = store
          self._chat_route = chat_route
-@@ -261,6 +268,12 @@ class MemoryToolRunner:
+@@ -261,6 +270,12 @@ class MemoryToolRunner:
          self._field_salience_max = field_salience_max
          self._study_kind = (study_session_kind or "").strip() or None
          self._study_catalog = study_catalog
@@ -692,7 +758,7 @@ index c1942d2..7bb1026 100644
  
      def _study_topic_kind_ok(self, topic_id: str) -> bool:
          if not self._study_kind:
-@@ -295,7 +308,7 @@ class MemoryToolRunner:
+@@ -295,7 +310,7 @@ class MemoryToolRunner:
              tf = s.get_field_with_history(tid, fname)
              if not tf:
                  return {"ok": False, "error": "field not found"}
@@ -701,7 +767,7 @@ index c1942d2..7bb1026 100644
              if not cur or not is_nested_fields_bundle_value(cur.value):
                  return {"ok": False, "error": "field is not a nested bundle"}
              inner = nested_bundle_inner_fields(cur.value)
-@@ -305,7 +318,7 @@ class MemoryToolRunner:
+@@ -305,7 +320,7 @@ class MemoryToolRunner:
              try:
                  self._bump_read_access_salience(tid, [fname])
                  return _read_nested_inner_field(
@@ -710,7 +776,7 @@ index c1942d2..7bb1026 100644
                  )
              except Exception:
                  return {"ok": False, "error": "nested field invalid"}
-@@ -317,7 +330,9 @@ class MemoryToolRunner:
+@@ -317,16 +332,18 @@ class MemoryToolRunner:
                  "ok": True,
                  "topic_id": tid,
                  "field_name": fname,
@@ -720,8 +786,10 @@ index c1942d2..7bb1026 100644
 +                ),
              }
  
-         found = _find_nested_inner_field(s, tid, fname)
-@@ -326,7 +341,7 @@ class MemoryToolRunner:
+-        found = _find_nested_inner_field(s, tid, fname)
++        found = _find_nested_inner_field(s, tid, fname, self._reference_time)
+         if found:
+             nest_key, sub_raw = found
              try:
                  self._bump_read_access_salience(tid, [nest_key])
                  out = _read_nested_inner_field(
@@ -730,7 +798,16 @@ index c1942d2..7bb1026 100644
                  )
                  out["topic_id"] = tid
                  out["field_name"] = fname
-@@ -406,7 +421,7 @@ class MemoryToolRunner:
+@@ -352,7 +369,7 @@ class MemoryToolRunner:
+                     "ok": False,
+                     "error": "In Study phase A use study_graph_snapshot, not memory_graph_snapshot.",
+                 }
+-            return {"ok": True, "data": _graph_snapshot(s)}
++            return {"ok": True, "data": _graph_snapshot(s, self._reference_time)}
+ 
+         if name == "memory_list_topics":
+             inc = bool(args.get("include_archived", False))
+@@ -406,7 +423,7 @@ class MemoryToolRunner:
              self._bump_read_access_salience(tid, names)
              row = s.get_topic(tid)
              tf = TopicFields.from_json(row.get("fields_json") if isinstance(row.get("fields_json"), str) else "")
@@ -739,7 +816,7 @@ index c1942d2..7bb1026 100644
              return {
                  "ok": True,
                  "topic_id": row.get("id"),
-@@ -435,7 +450,7 @@ class MemoryToolRunner:
+@@ -435,7 +452,7 @@ class MemoryToolRunner:
              tf = TopicFields.from_json(row.get("fields_json") if isinstance(row.get("fields_json"), str) else "")
              out_fields: dict[str, Any] = {}
              for fname, rec in tf.fields.items():
@@ -748,7 +825,7 @@ index c1942d2..7bb1026 100644
              return {
                  "ok": True,
                  "topic": {
-@@ -551,10 +566,23 @@ class MemoryToolRunner:
+@@ -551,10 +568,23 @@ class MemoryToolRunner:
                  return {"ok": False, "error": "topic not found"}
              if self._study_kind and not self._study_topic_kind_ok(tid):
                  return {"ok": False, "error": "topic not in this Study session"}
@@ -1217,10 +1294,10 @@ index 0000000..6126b1b
 +        ex.query(QueryRequest(q="x", recorded_at="not a date"))
 diff --git a/tests/test_chat_reference_time.py b/tests/test_chat_reference_time.py
 new file mode 100644
-index 0000000..34c1381
+index 0000000..b080833
 --- /dev/null
 +++ b/tests/test_chat_reference_time.py
-@@ -0,0 +1,192 @@
+@@ -0,0 +1,232 @@
 +"""Step 2c: the chat request's `reference_time` (system prompt, default valid_from, as-of reads, provenance)."""
 +
 +from __future__ import annotations
@@ -1236,7 +1313,12 @@ index 0000000..34c1381
 +from fastapi import HTTPException
 +
 +from memstate.config import Settings
-+from memstate.datamodel.fields import new_history_entry
++from memstate.datamodel.fields import (
++    MEMSTATE_NESTED_BUNDLE,
++    MEMSTATE_NESTED_FIELDS_KEY,
++    TopicField,
++    new_history_entry,
++)
 +from memstate.llm import chat_api
 +from memstate.llm.chat_api import ChatBody, _execute_chat_body
 +from memstate.llm.tool_runner import MemoryToolRunner
@@ -1413,6 +1495,41 @@ index 0000000..34c1381
 +    with pytest.raises(HTTPException) as exc:
 +        _chat(monkeypatch, store, _body(reference_time="last tuesday"), _Fake([]))
 +    assert exc.value.status_code == 400
++
++
++def _bundle(store: GraphStore, tid: str) -> None:
++    """A json field `Address` whose nested bundle holds `city`: the bundle says Cairo until 2026-09-01, Giza from then."""
++    for city, start in (("Cairo", "2026-01-01T00:00:00+00:00"), ("Giza", "2026-09-01T00:00:00+00:00")):
++        inner = TopicField(field_type="string", history=[new_history_entry(value=city, valid_from=start, provenance="t")])
++        value = {MEMSTATE_NESTED_BUNDLE: True, MEMSTATE_NESTED_FIELDS_KEY: {"city": inner.model_dump()}}
++        store.append_field_history(
++            tid, "Address", new_history_entry(value=value, valid_from=start, provenance="t"), field_type="json"
++        )
++
++
++def test_reads_of_a_nested_field_by_its_inner_name_are_as_of_the_reference_time() -> None:
++    store = _store()
++    tid = _topic(store)
++    _bundle(store, tid)
++    args = {"topic_id": tid, "field_name": "city"}
++    before = MemoryToolRunner(store, reference_time=datetime(2026, 8, 1, tzinfo=timezone.utc))
++    assert MemoryToolRunner(store).execute("memory_get_field", args)["field"]["value"] == "Giza"
++    assert before.execute("memory_get_field", args)["field"]["value"] == "Cairo"
++
++
++def _snapshot_values(out: dict) -> dict:
++    (node,) = out["data"]["nodes"]
++    return {f["name"]: f["current_value"] for f in node["fields"]}
++
++
++def test_the_graph_snapshot_is_as_of_the_reference_time() -> None:
++    store = _store()
++    tid = _topic(store)
++    _two_dated_jobs(store, tid)
++    now = MemoryToolRunner(store).execute("memory_graph_snapshot", {})
++    before = MemoryToolRunner(store, reference_time=datetime(2026, 8, 1, tzinfo=timezone.utc))
++    assert _snapshot_values(now) == {"job": "new job"}
++    assert _snapshot_values(before.execute("memory_graph_snapshot", {})) == {"job": "old job"}
 -- 
 2.55.0
 

@@ -125,7 +125,12 @@ class MemStateSystem(System):
         dates_accepted = None
         for f in topic["fields"].values():
             if "current" not in f and dates_accepted is None:
-                dates_accepted = any(self._date_capabilities()["accepts"].values())
+                caps = self._date_capabilities()
+                if any(v is None for v in caps["accepts"].values()):  # no schema: the fallback would be a guess
+                    raise RuntimeError(f"the system returned a field without `current` and which dates it accepts is "
+                                       f"unknown ({caps['accepts_error']}); refusing the newest-entry fallback, "
+                                       "which would read the wrong entry if it accepts dates")
+                dates_accepted = any(caps["accepts"].values())
             with_current(f, bool(dates_accepted))
         return topic
 

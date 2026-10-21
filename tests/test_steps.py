@@ -81,7 +81,7 @@ def test_untracked_files_do_not_count_as_dirty(repo):
 
 
 def test_a_run_without_systems_measures_every_registered_system():
-    assert list(SYSTEMS) == ["upstream", "step1", "step2", "step3", "baseline"]
+    assert list(SYSTEMS) == ["upstream", "step1", "step2", "step3", "reference-gem-p1", "reference-gem-p2", "baseline"]
 
 
 @pytest.mark.parametrize("operation", ["MERGE_HEAD", "CHERRY_PICK_HEAD", "REVERT_HEAD", "BISECT_LOG", "rebase-merge"])

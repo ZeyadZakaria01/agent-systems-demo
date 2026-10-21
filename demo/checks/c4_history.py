@@ -118,11 +118,7 @@ def _merge_case(s: System) -> Case:
 
 def _dated_merge_case(s: System) -> tuple[Case, dict]:
     name = f"a dated merge keeps both values, today reads {NEWER}"
-    accepted = s.describe()["accepts"]["valid_from"]
-    if accepted is None:
-        raise RuntimeError(f"{s.label}: could not tell whether the system accepts valid_from "
-                           f"({s.describe()['accepts_error']}); refusing to guess")
-    if not accepted:
+    if not s.dates_accepted("valid_from")["valid_from"]:
         return Case(name, None, "the system accepts no valid_from, so no dated write is possible", id="merge-dated"), {}
     outcome = trigger_and_await_merge(s, "Vendor Contract (dated)", DATED_MERGE)
     if not outcome.merged:
@@ -170,7 +166,7 @@ def _forgetting_case(s: System) -> tuple[Case, dict]:
                 "target_archived": topic.get("archived"), "topics": ramp.archive_stats(s)["total"]}
     if not evidence["ran"]:
         return Case(name, None, f"forgetting was not shown to run: the never-read control at {LOW_SALIENCE} was not "
-                                f"archived after {evidence['topics']} topics"), evidence
+                                f"archived after {evidence['topics']} topics", id="forgetting"), evidence
     if topic.get("archived") is not True:
         return Case(name, None, f"the pass ran (the control is archived) but a topic with fields ingested at "
                                 f"{LOW_SALIENCE} was not forgotten: salience {topic.get('salience')!r}, "

@@ -7,21 +7,31 @@ No MemState mock and no MemState verdict is pinned: the dated paths are proven b
 from contextlib import nullcontext
 from datetime import date, datetime
 
+import httpx
 import pytest
 
-from demo.adapter import utc_now
+from demo.adapter import Rejected, utc_now
 from demo.baseline import Baseline
 from demo.checks import discover
+from demo.checks import time_probes
 from demo.checks.time_probes import NEEDS
 from demo.reads import NO_VALUE, current_value, field_in_response
 from demo.session import Session
 from demo.time_stories import (AS_OF, LAPSED_OVERRIDE_1, LAPSED_OVERRIDE_2, STORIES, history_intact, ingest_request, query_request,
                                shift_story)
 from demo.adapter import DATES, utc_now
-from demo.memstate_system import request_date_fields, with_current
+from demo.memstate_system import MemStateSystem, request_date_fields, with_current
 from demo.verdict import ABSENT, FAIL, PASS
 
 RUN_DAY = date(2026, 10, 20)
+
+
+@pytest.fixture(scope="module", autouse=True)
+def short_as_of_gap():
+    """The as-of probe waits between its two writes only to be later than the clock's resolution."""
+    with pytest.MonkeyPatch.context() as mp:
+        mp.setattr(time_probes, "AS_OF_GAP_S", 0.05)
+        yield
 
 
 def time_check():
@@ -171,6 +181,9 @@ def test_the_baseline_accepts_recorded_at_only_so_every_probe_is_absent_with_the
     asked = v["T5"].probe_evidence["stories"]["as-of"]["asked"]
     assert (asked[0]["answer"], asked[1]["answer"]) == ("May 1", "April 20")  # `valid_at` ignored, `recorded_at` answered
     assert "valid_at" in asked[0]["request"] and "recorded_at" in asked[1]["request"]
+    (believed,) = [o for o in v["T5"].observations if o["name"] == "believed-on half"]  # recorded, not scored
+    assert believed["answer"] == "April 20" and believed["correct"] == "April 20"
+    assert not any(o["name"] == "believed-on half" for r in ("T1", "T2", "T3", "T4", "T6") for o in v[r].observations)
     assert "valid_at" not in v["T1"].probe_evidence["stories"]["retroactive"]["asked"][1]["request"]  # plain read
 
 
@@ -244,11 +257,11 @@ class Dated(Baseline):
         return {"keeps_history": False, "accepts": {d: d in self.accepts for d in DATES}}
 
 
-def run_stand_in(**kwargs):
+def run_stand_in(kind=Dated, **kwargs):
     made = []
 
     def open_system(tag):
-        made.append(Dated(**kwargs))
+        made.append(kind(**kwargs))
         return nullcontext(made[-1])
 
     verdicts = {v.row: v for v in time_check().execute(Session(open_system), run_day=RUN_DAY)}
@@ -289,6 +302,20 @@ def test_a_recorded_at_system_with_identical_answers_on_t5_reads_fail_not_absent
     assert all(v[r].verdict == PASS for r in ("T1", "T2", "T3", "T4", "T6"))
 
 
+def test_case_ids_do_not_change_when_the_system_rejects_a_write():
+    class RejectsDatedWrites(Dated):
+        def _ingest(self, request):
+            if any("valid_from" in f for f in request.get("fields") or []):
+                raise Rejected(422, "no dated writes")
+            return super()._ingest(request)
+
+    accepted, _ = run_stand_in(accepts=set(DATES))
+    rejected, _ = run_stand_in(RejectsDatedWrites, accepts=set(DATES))
+    for row in ("T1", "T2", "T3", "T4", "T5", "T6"):
+        assert [c.id for c in rejected[row].cases] == [c.id for c in accepted[row].cases], row
+        assert all(c.held is False for c in rejected[row].cases), row
+
+
 def test_a_stand_in_with_no_dates_reads_absent_on_all_six():
     v, made = run_stand_in(accepts=set())
     assert {r: x.verdict for r, x in v.items()} == {r: ABSENT for r in ("T1", "T2", "T3", "T4", "T5", "T6")}
@@ -303,6 +330,30 @@ def test_a_missing_current_is_refused_where_a_date_is_accepted_and_falls_back_to
         with_current(dict(field), dates_accepted=True)
     stated = {"history": [{"value": "x"}], "current": None}
     assert with_current(stated, dates_accepted=True)["current"] is None  # a stated `current` is taken at its word
+
+
+def _server(openapi_status: int, document: dict | None = None) -> MemStateSystem:
+    """A MemStateSystem over a canned transport: a topic whose field states no `current`, and `/openapi.json`."""
+    def handler(request: httpx.Request) -> httpx.Response:
+        if request.url.path == "/openapi.json":
+            return httpx.Response(openapi_status, json=document or {})
+        return httpx.Response(200, json={"id": "t", "title": "T", "fields": {"F": {"history": [{"value": "new"}]}}})
+
+    system = MemStateSystem("canned", "http://canned")
+    system.http = httpx.Client(base_url="http://canned", transport=httpx.MockTransport(handler))
+    return system
+
+
+def test_an_unreadable_schema_refuses_the_newest_entry_fallback_instead_of_guessing():
+    with pytest.raises(RuntimeError, match="refusing the newest-entry fallback"):
+        _server(500).read_topic("t")
+    with pytest.raises(RuntimeError, match="could not read /openapi.json"):
+        _server(500).read_topic("t")
+
+
+def test_a_readable_schema_with_no_date_falls_back_to_the_newest_entry():
+    system = _server(200, _openapi())
+    assert system.read_topic("t")["fields"]["F"]["current"] == {"value": "new"}
 
 
 def _openapi(*, write_fields=(), query_fields=(), entry_fields=("valid_from",)):

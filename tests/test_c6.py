@@ -122,6 +122,20 @@ def test_clause_2_is_not_scored_when_no_forgetting_pass_ran(monkeypatch):
     assert observation(verdict, "forgetting was not shown to run")["summary"].startswith("forgetting was not shown to run")
 
 
+def test_clause_2_is_not_scored_when_only_the_read_topic_is_archived(monkeypatch):
+    class ArchivesOnlyTheReadTopic(BumpingStore):
+        def _query(self, request):
+            response = super()._query(request)
+            self.archived[c6mod.PERMIT[0]] = True  # a pass that took the read topic and spared the never-read control
+            return response
+
+    monkeypatch.setattr(c6mod, "ARCHIVE_WAIT_S", 0.2)
+    verdict = run(ArchivesOnlyTheReadTopic(forgets=False), "C6-2")
+    assert verdict.verdict == NOT_SCORED  # the control was not archived: forgetting was not shown to run
+    assert observation(verdict, "forgetting pass")["control"]["archived"] is False
+    assert observation(verdict, "forgetting was not shown to run")
+
+
 def test_clause_2_stops_at_the_first_forgetting_pass_seen_during_the_reads():
     class ForgetsAtOnce(BumpingStore):
         """The pass runs on the first read: every topic below the threshold is archived by it (the control is)."""

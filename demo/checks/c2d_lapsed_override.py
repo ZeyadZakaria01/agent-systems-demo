@@ -32,11 +32,7 @@ _WRITE_DATES = ("valid_from", "invalid_at")
 
 
 def _write_dates(system: System) -> frozenset[str]:
-    described = system.describe()
-    if any(described["accepts"][d] is None for d in _WRITE_DATES):
-        raise RuntimeError(f"{system.label}: could not tell which dates the system accepts "
-                           f"({described['accepts_error']}); refusing to guess")
-    return frozenset(d for d in _WRITE_DATES if described["accepts"][d])
+    return frozenset(d for d, accepted in system.dates_accepted(*_WRITE_DATES).items() if accepted)
 
 
 def _today(ctx: Ctx, story, tag: str) -> tuple[dict, object]:

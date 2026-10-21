@@ -17,6 +17,9 @@ Two ways to arrange a duplicate pair (both leave the merge to the system):
 - `create_duplicate_pair`: two same-title `new_topic` writes, the second being the trigger. Which topic is dropped is
   then chance (random ids), and a system that upserts never creates a duplicate.
 
+On a system that counts interactions (the reference GEM) the window is the number of interactions between the two
+instead of seconds (polling reads of stored state are not interactions).
+
 The window is measured from the moment the duplicate-creating ingest has returned to the first poll that sees the
 merge. It is the wait's `elapsed`, logged by the adapter apart from client latency; it is not the ingest latency.
 """
@@ -29,6 +32,7 @@ from enum import StrEnum
 
 from demo.adapter import System, Waited
 from demo.reads import NO_VALUE, current_value
+from demo.windows import interactions
 
 DEFAULT_TIMEOUT_S = 15.0
 DEFAULT_INTERVAL_S = 0.05
@@ -102,6 +106,7 @@ class MergeOutcome:
     survivor_id: str | None
     dropped_id: str | None
     dropped_state: DroppedState | None
+    window_interactions: int | None = None  # interactions between the trigger's response and the merge seen; None: not counted
 
     @property
     def window_s(self) -> float | None:
@@ -141,13 +146,15 @@ def await_merge(system: System, pair: Pair, timeout: float = DEFAULT_TIMEOUT_S,
     """Poll until one of the pair is deleted or archived, or `timeout` seconds pass (a timeout is an outcome)."""
     if pair.upserted:
         return MergeOutcome(pair, True, None, pair.older_id, None, None)
+    start = interactions(system)
     waited = system.wait_until(
         lambda: any(topic_gone_or_archived(system, t) for t in (pair.older_id, pair.newer_id)), timeout, interval)
+    window = None if start is None else interactions(system) - start
     for survivor, dropped in ((pair.older_id, pair.newer_id), (pair.newer_id, pair.older_id)):
         state = topic_gone_or_archived(system, dropped)
         if state:
-            return MergeOutcome(pair, True, waited, survivor, dropped, state)
-    return MergeOutcome(pair, False, waited, None, None, None)
+            return MergeOutcome(pair, True, waited, survivor, dropped, state, window)
+    return MergeOutcome(pair, False, waited, None, None, None, window)
 
 
 def create_retitled_pair(system: System, stem: str, spec: PairSpec = DEADLINE) -> Pair | None:

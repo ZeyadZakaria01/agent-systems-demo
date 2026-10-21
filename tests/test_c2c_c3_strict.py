@@ -129,6 +129,25 @@ def test_a_stand_in_that_never_flags_and_never_propagates_is_absent_with_the_pro
         assert v.measurements["windows"][0]["value"] == "unbounded (C3 absent)"
 
 
+def test_a_system_that_changes_b_without_a_flag_fails_c3_and_its_control_is_not_scored():
+    class RewritesDependents(GemStandIn):
+        """Has a flag surface, never flags, and rewrites the topic linked to A by an extension edge instead."""
+
+        def _ingest(self, request):
+            out = super()._ingest(request)
+            if request["placement"] == "version_field":
+                for e in self.edges:
+                    if e["kind"] == "extension" and out["topic_id"] in (e["from"], e["to"]):
+                        other = e["to"] if e["from"] == out["topic_id"] else e["from"]
+                        Baseline._ingest(self, {"placement": "version_field", "topic_id": other, "fields": [
+                            {"name": "Date", "value": "April 25", "provenance": "propagated"}]})
+            return out
+
+    v = run("C3", RewritesDependents(flags=False))
+    assert v.verdict == FAIL, [(c.name, c.held) for c in v.cases]
+    assert [c.held for c in v.cases if c.control] == [None, None]  # nothing was flagged: "not flagged" shows nothing
+
+
 def test_a_flag_that_does_not_name_the_update_breaks_case_1():
     v = run("C3", GemStandIn(evidence="none"))
     assert v.verdict != PASS
@@ -175,6 +194,18 @@ def test_a_stand_in_whose_runtime_policy_is_ignored_fails_c2c():
     v = run("C2(c)", GemStandIn(policies_enforced=False))
     assert v.verdict == FAIL
     assert v.cases[0].held is False and "accepted" in v.cases[0].observation
+
+
+def test_a_rejected_write_that_changes_anything_else_in_the_stored_state_does_not_hold():
+    class StoresAnEdgeThenRejects(GemStandIn):
+        def _ingest(self, request):
+            if self._violates(request):
+                self.edges.append({"from": "a", "to": "b", "kind": "extension"})  # not a title or a current value
+                raise Rejected(422, "policy violated (after a side effect)")
+            return super()._ingest(request)
+
+    v = run("C2(c)", StoresAnEdgeThenRejects())
+    assert v.cases[0].held is False and "changed by the write" in v.cases[0].observation
 
 
 def test_a_stand_in_that_rejects_the_ordinary_write_breaks_the_control():

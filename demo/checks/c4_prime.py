@@ -20,17 +20,14 @@ SOURCE_MESSAGE = "Kickoff call, Mar 3: Dana said the deadline is March 15."
 TITLE, FIELD, VALUE = "Provenance probe", "Deadline", "March 15"
 
 ROWS = [Row("C4′", "Not claimed by [P1]: probe of the proposed C4' (C4 plus the retained source). An entry's "
-                   "provenance resolves to the stored source message it was written with")]
+                   "provenance resolves to the stored source message it was written with", probe=True)]
 
 
 @check(rows=ROWS)
 def c4_prime(ctx: Ctx) -> Verdict:
     s = ctx.system
     d = s.describe()
-    if d["accepts_source"] is None:
-        raise RuntimeError(f"{s.label}: could not tell whether the system accepts a source message "
-                           f"({d['accepts_error']}); refusing to guess")
-    if not d["accepts_source"]:
+    if not s.source_accepted():
         return Verdict.absent("C4′", {
             "probe": "the schema: a source message among the properties of a write request, or a source endpoint "
                      "(describe()['accepts_source'], ['source_surface'])",

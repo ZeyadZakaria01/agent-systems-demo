@@ -28,7 +28,7 @@ from typing import Any
 from demo.checks import Ctx, Row, check
 from demo.adapter import DATES, Rejected, System, utc_now
 from demo.reads import current_value, field_in_response
-from demo.time_stories import (AS_OF, FUTURE_DATED, FUTURE_ONLY, LAPSED_OVERRIDE_1, LAPSED_OVERRIDE_2, OUT_OF_ORDER,
+from demo.time_stories import (AS_OF, Ask, FUTURE_DATED, FUTURE_ONLY, LAPSED_OVERRIDE_1, LAPSED_OVERRIDE_2, OUT_OF_ORDER,
                                RETROACTIVE, Story, history_intact, ingest_request, query_request, shift_story)
 from demo.verdict import FAIL, PASS, Case, Verdict
 
@@ -36,14 +36,14 @@ AS_OF_GAP_S = 1.0  # between noting the moment after the first write and the sec
 
 _C1 = "C1 read as C1': the value valid on the asked date is returned, not merely the last one written"
 ROWS = [
-    Row("T1", f"{_C1}. Retroactive fact: \"the deadline was March 1 before the change\" arrives last; April 20 stays current"),
-    Row("T2", f"{_C1}. Out-of-order arrival: an older update is ingested after a newer one; the newer value stays current"),
-    Row("T3", f"{_C1}. Future-dated change: \"from December you are on premium\", asked Nov 20, still the old tier"),
+    Row("T1", f"{_C1}. Retroactive fact: \"the deadline was March 1 before the change\" arrives last; April 20 stays current", probe=True),
+    Row("T2", f"{_C1}. Out-of-order arrival: an older update is ingested after a newer one; the newer value stays current", probe=True),
+    Row("T3", f"{_C1}. Future-dated change: \"from December you are on premium\", asked Nov 20, still the old tier", probe=True),
     Row("T4", f"{_C1}. Lapsed scoped override: $50, \"$80 for October only\", asked Nov 5 returns $50 (and a plain "
-              "statement during the override still wins)"),
-    Row("T5", f"{_C1}. As-of query: both \"what was true on Feb 10\" and \"what did memory believe on Feb 10\" answerable"),
+              "statement during the override still wins)", probe=True),
+    Row("T5", f"{_C1}. As-of query: both \"what was true on Feb 10\" and \"what did memory believe on Feb 10\" answerable", probe=True),
     Row("T6", f"{_C1}. Future value, nothing before: \"from December you are on premium\" as the only value, asked Nov 20, "
-              "no current value"),
+              "no current value", probe=True),
 ]
 
 
@@ -101,9 +101,7 @@ class Outcome:
 def _capabilities(system: System, row: str) -> Caps:
     d = system.describe()
     needed = NEEDS[row]
-    if any(d["accepts"][n] is None for n in needed):
-        raise RuntimeError(f"{system.label}: could not tell which dates the system accepts ({d['accepts_error']}); "
-                           "refusing to guess")
+    system.dates_accepted(*needed)  # refuses a system whose schema could not be read
     return Caps(needed, {k: d["accepts"][k] for k in DATES}, d["accepts_error"], bool(d["keeps_history"]))
 
 
@@ -133,6 +131,22 @@ def _history_case(system: System, story: Story, topic_id: str) -> Case:
     return Case("history intact: no value lost, expired entries copied and linked", intact, why)
 
 
+def _case_name(ask: Ask) -> str:
+    """The case's name (and so its id) is the ask, whether or not the system took the story's writes."""
+    when = f"{ask.when.isoformat()} " if ask.when else ""
+    return f"{ask.label}: {when}-> {ask.correct!r}"
+
+
+def _believed_on_observation(asks: tuple[Ask, ...], answers: list[dict]) -> dict:
+    """A system that takes `recorded_at` but not `valid_at` cannot be scored on T5 (absent), but its answer to the
+    "believed on" question is still a finding: recorded here beside the verdict, not scored."""
+    ask, answer = next((a, r) for a, r in zip(asks, answers) if "recorded_at" in r["request"])
+    got = f"rejected ({answer['rejected']})" if "rejected" in answer else repr(answer["answer"])
+    return {"name": "believed-on half", "asked": ask.label, "answer": answer.get("answer"), "correct": ask.correct,
+            "summary": f"the system takes recorded_at but not every date T5 needs (so T5 is absent); asked "
+                       f"{ask.label!r} it answered {got}, the correct answer is {ask.correct!r}"}
+
+
 def _run_story(ctx: Ctx, story: Story, row: str, as_of: bool = False) -> Outcome:
     """One story in a fresh system. The as-of story sends `valid_at` and `recorded_at` on every ask, to every system."""
     shifted = shift_story(story, ctx.run_day)
@@ -145,7 +159,7 @@ def _run_story(ctx: Ctx, story: Story, row: str, as_of: bool = False) -> Outcome
             topic_id, noted = _write_story(s, shifted, caps.write_dates, pause_after_first=as_of)
         except Rejected as e:
             record["write_rejected"] = str(e)
-            out.cases = [Case(f"{a.label}: {story.title}", False,
+            out.cases = [Case(_case_name(a), False,
                               f"[{path}] a write was {e}; the legitimate update was blocked", control=a.control)
                          for a in shifted.asks]
             return out
@@ -162,11 +176,12 @@ def _run_story(ctx: Ctx, story: Story, row: str, as_of: bool = False) -> Outcome
                 result.update(rejected=str(e), answer=None)
             record["asked"].append(result)
             answers.append(result)
-        if caps.missing:
-            return out  # absent: the answers are the evidence, not cases
+        if caps.missing:  # absent: the answers are the evidence, not cases
+            if as_of and caps.accepts["recorded_at"]:  # the half the system can answer is an observation (spec "T5")
+                out.observations.append(_believed_on_observation(shifted.asks, answers))
+            return out
         for ask, r in zip(shifted.asks, answers):
-            when = f"{ask.when.isoformat()} " if ask.when else ""
-            name = f"{ask.label}: {when}-> {ask.correct!r}"
+            name = _case_name(ask)
             if "rejected" in r:
                 out.cases.append(Case(name, False, f"[{path}] the read was {r['rejected']}", control=ask.control))
                 continue
@@ -189,7 +204,8 @@ def _verdict(row: str, outcomes: list[Outcome], cases: list[Case] | None = None)
     caps = outcomes[0].caps
     stories = {k: v for o in outcomes for k, v in o.stories.items()}
     if caps.missing:
-        return Verdict.absent(row, {**caps.evidence(), "stories": stories}, measurements=caps.measurements())
+        return Verdict.absent(row, {**caps.evidence(), "stories": stories}, measurements=caps.measurements(),
+                              observations=[o for out in outcomes for o in out.observations])
     cases = cases if cases is not None else outcomes[0].cases
     v = Verdict(row=row, verdict=PASS if all(c.held for c in cases) else FAIL, cases=cases,
                 measurements=caps.measurements(), observations=[o for out in outcomes for o in out.observations])

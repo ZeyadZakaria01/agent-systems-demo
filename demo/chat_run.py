@@ -1,8 +1,9 @@
 """The chat runs: record one on a memory system, replay it from a file (`python -m demo.chat_run`).
 
-This file holds the bad-merge run (spec stories 52, 54; ticket 17). The "two weeks ago" run (ticket 18) records into the
-same recording format and is rendered by the same replay. Replay reads JSON only: it starts no server, needs no Ollama
-and no GPU, and imports neither `httpx` nor `demo.server`.
+This file holds the bad-merge run (spec stories 52, 54; ticket 17) and the recording command line for both runs. The
+"two weeks ago" run (ticket 18, `demo/chat_two_weeks.py`) records into the same recording format and is rendered by
+the same replay. Replay reads JSON only: it starts no server, needs no Ollama and no GPU, and imports neither `httpx`
+nor `demo.server`.
 
 The bad-merge run, on upstream MemState through `/v1` and the system adapter:
 
@@ -35,20 +36,25 @@ import sys
 from contextlib import contextmanager
 from dataclasses import dataclass, field
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 from demo.adapter import System
-from demo.chat_recording import (EMPTY_GRADE, RECORDINGS_ROOT, SCHEMA, load_recording, recording_files, render_recording,
-                                 save_recording)
+from demo.chat_recording import (EMPTY_GRADE, LEFT_UNSET, RECORDINGS_ROOT, is_variant, load_recording, new_recording,
+                                 recording_files, render_recording, save_recording)
+from demo.chat_two_weeks import CASE as TWO_WEEKS_CASE, FIRST_INTENT_OVERRIDE, record_two_weeks
 from demo.merge import DEFAULT_INTERVAL_S, DEFAULT_TIMEOUT_S, MergeOutcome, Pair, await_merge, unique_title
 from demo.paths import REPO_ROOT
 from demo.reads import NO_VALUE, current_value
 from demo.storyline import WEBSITE_REDESIGN, Storyline
 
+if TYPE_CHECKING:
+    from demo.evidence import RunDir
+
 TITLE = "Website Redesign"
 REEXPLAINED_FIELD = "Deadline"
 REEXPLAINED_VALUE = "April 20"
 REEXPLAINED_PROVENANCE = "chat-reexplanation"
-ENTRY_KEYS = ("value", "provenance", "why_changed")  # what identifies a history entry across the merge
+IDENTITY_KEYS = ("value", "provenance", "why_changed")  # what identifies a history entry across the merge
 
 
 class ScenarioError(RuntimeError):
@@ -70,7 +76,7 @@ def trim(topic: dict | None) -> dict | None:
 
 
 def _identity(entry: dict) -> tuple:
-    return tuple(entry.get(k) for k in ENTRY_KEYS)
+    return tuple(entry.get(k) for k in IDENTITY_KEYS)
 
 
 def lost_in_merge(before: dict, after: dict) -> dict:
@@ -172,8 +178,6 @@ def build_bad_merge_state(system: System, storyline: Storyline = WEBSITE_REDESIG
 QUESTIONS = ("Q02", "Q06", "Q11")  # deadline (looks right), then two fields only the original topic held
 CASE = "bad-merge"
 CASE_TITLE = "Bad merge on upstream: the re-explained Website Redesign is merged over the original"
-LEFT_UNSET = ("no `intent_override`", "no `model` in the request (the server's `MEMSTATE_OLLAMA_MODEL`)", "no Groq",
-              "no judge")
 
 
 def _setup_writes(system: System) -> list[dict]:
@@ -235,15 +239,10 @@ def record_bad_merge(system: System, *, run_id: str, recorded_at: str, command: 
             raise ScenarioError(f"{q.id} asks about {q.topic!r}, not the duplicated topic {first.topic!r}")
     built = build_bad_merge_state(system, storyline, merge_timeout)
     turns = [ask(system, built, asked[i]) for i in question_ids]
-    d = system.describe()
-    return {
-        "schema": SCHEMA, "case": CASE, "title": CASE_TITLE, "run_id": run_id, "recorded_at": recorded_at,
-        "command": command, "snapshot": snapshot,
-        "system": {"label": d.get("system"), "url": d.get("url"), "db_path": d.get("db_path"),
-                   "commit": d.get("commit"), "engine": d.get("engine"), "source_dir": d.get("source_dir")},
-        "llm": {"provider": "ollama", "model": next((t["model"] for t in turns if t["model"]), None),
-                "base_url": ollama_base_url or "(not stated)", "left_unset": list(LEFT_UNSET)},
-        "state": {
+    return new_recording(
+        system.describe(), case=CASE, title=CASE_TITLE, run_id=run_id, recorded_at=recorded_at, command=command,
+        snapshot=snapshot, ollama_base_url=ollama_base_url, left_unset=list(LEFT_UNSET), turns=turns, extra=extra,
+        state={
             "title": first.title, "events_played": built.events, "topic_ids": built.topic_ids,
             "original_id": built.original_id, "reexplanation_id": built.reexplanation_id,
             "reexplained": {"field": REEXPLAINED_FIELD, "value": REEXPLAINED_VALUE,
@@ -254,8 +253,7 @@ def record_bad_merge(system: System, *, run_id: str, recorded_at: str, command: 
             "setup_writes": _setup_writes(system),
             "before_merge": {"original": built.before_original, "reexplanation": built.before_reexplanation},
             "after_merge": {"survivor": built.survivor},
-            "loss": built.loss},
-        "turns": turns, **(extra or {})}
+            "loss": built.loss})
 
 
 # -- command line: replay (JSON only) and record (needs the machine: MemState, Ollama, the GPU)
@@ -290,48 +288,63 @@ class OllamaError(RuntimeError):
     pass
 
 
-@contextmanager
-def ollama_running():
-    """Ollama and the think-off proxy (`scripts/run_ollama.sh --bg`, ADR 0003) for the length of the block. Servers
-    this call started are stopped on exit, errors included; servers already running are left alone. The caller holds
-    the machine-wide lock, so a running one is a leftover or the user's own."""
+def _listener_pid(port: int) -> int | None:
+    out = subprocess.run(["ss", "-H", "-ltnp", f"sport = :{port}"], capture_output=True, text=True).stdout
+    found = re.search(r"pid=(\d+)", out)
+    return int(found.group(1)) if found else None
+
+
+def stop_ollama() -> None:
+    """SIGTERM whatever listens on Ollama's port and on the proxy's, and wait until both are closed."""
     import os
     import signal
     import time
-    import urllib.request
 
-    up = (_port_open(OLLAMA_PORT), _port_open(PROXY_PORT))
-    if all(up):
-        yield False
-        return
-    if any(up):
-        raise OllamaError(f"Ollama ({OLLAMA_PORT}) or its proxy ({PROXY_PORT}) is half running; stop it first")
-    subprocess.run(["bash", str(REPO_ROOT / "scripts" / "run_ollama.sh"), "--bg"], cwd=REPO_ROOT, check=True)
-    pids = [int((REPO_ROOT / ".logs" / f).read_text()) for f in ("ollama.pid", "ollama-proxy.pid")]
-    try:
-        deadline = time.monotonic() + 120
-        while True:
-            try:
-                with urllib.request.urlopen(f"http://127.0.0.1:{OLLAMA_PORT}/api/tags", timeout=2):
-                    if _port_open(PROXY_PORT):
-                        break
-            except OSError:
-                pass
-            if time.monotonic() > deadline:
-                raise OllamaError("Ollama did not answer within 120 s")
-            time.sleep(0.5)
-        yield True
-    finally:
-        for pid in pids:
+    for port in (OLLAMA_PORT, PROXY_PORT):
+        pid = _listener_pid(port)
+        if pid is not None:
             try:
                 os.kill(pid, signal.SIGTERM)
             except ProcessLookupError:
                 pass
-        deadline = time.monotonic() + 30
-        while (_port_open(OLLAMA_PORT) or _port_open(PROXY_PORT)) and time.monotonic() < deadline:
-            time.sleep(0.3)
-        if _port_open(OLLAMA_PORT) or _port_open(PROXY_PORT):
-            raise OllamaError("Ollama or its proxy is still up 30 s after SIGTERM")
+    deadline = time.monotonic() + 30
+    while (_port_open(OLLAMA_PORT) or _port_open(PROXY_PORT)) and time.monotonic() < deadline:
+        time.sleep(0.3)
+    if _port_open(OLLAMA_PORT) or _port_open(PROXY_PORT):
+        raise OllamaError("Ollama or its proxy is still up 30 s after SIGTERM (or no pid could be found for it)")
+
+
+@contextmanager
+def ollama_running():
+    """Ollama and the think-off proxy (`scripts/run_ollama.sh --bg`, ADR 0003) for the length of the block; yields
+    whether this call started them. Both are stopped on exit, errors included, also when they were already running:
+    the caller holds the machine-wide lock, so a running one is a leftover or the user's own, and the run owns the
+    machine until it ends (README, "Chat runs and replay"; ticket 19: Ollama and the proxy are stopped at the end).
+    One running without the other is a leftover too: it is stopped and both are started fresh."""
+    import time
+    import urllib.request
+
+    up = (_port_open(OLLAMA_PORT), _port_open(PROXY_PORT))
+    started = not all(up)
+    try:
+        if started:
+            if any(up):
+                stop_ollama()
+            subprocess.run(["bash", str(REPO_ROOT / "scripts" / "run_ollama.sh"), "--bg"], cwd=REPO_ROOT, check=True)
+            deadline = time.monotonic() + 120
+            while True:
+                try:
+                    with urllib.request.urlopen(f"http://127.0.0.1:{OLLAMA_PORT}/api/tags", timeout=2):
+                        if _port_open(PROXY_PORT):
+                            break
+                except OSError:
+                    pass
+                if time.monotonic() > deadline:
+                    raise OllamaError("Ollama did not answer within 120 s")
+                time.sleep(0.5)
+        yield started
+    finally:
+        stop_ollama()
 
 
 def warm_up(model: str) -> float:
@@ -348,55 +361,131 @@ def warm_up(model: str) -> float:
     return round(time.perf_counter() - t0, 2)
 
 
-def record_cli(recordings: Path) -> int:
-    """Record the bad-merge run on upstream: a fresh DB, a server started and stopped here, Ollama likewise.
-    Run it under the machine-wide lock (README, "Chat runs and replay")."""
-    import os
-    from datetime import datetime, timezone
+TWO_WEEKS_VARIANTS = {"--no-router-decides": {"first_intent_override": FIRST_INTENT_OVERRIDE},
+                      "--seed-profile": {"seed": True}}
+CASES = (CASE, TWO_WEEKS_CASE)  # the order the run of record records them in
+CASE_SYSTEM = {CASE: ("upstream", "chat-bad-merge"), TWO_WEEKS_CASE: ("step3", "chat-two-weeks")}
+
+
+@dataclass
+class Recorded:
+    saved: list[Path] = field(default_factory=list)
+    errors: list[str] = field(default_factory=list)  # one per case that could not be recorded
+
+
+def _link(path: Path) -> str:
+    try:
+        return str(path.relative_to(REPO_ROOT))
+    except ValueError:
+        return str(path)
+
+
+def _record_case(case: str, run: "RunDir", recordings: Path, link_root: Path, flags: tuple[str, ...],
+                 environment: dict, command: str, ollama_url: str) -> Path:
+    """One chat run on a fresh DB: its server started and stopped here (a step checked out for the run and returned
+    after it). The snapshot goes to `<run dir>/snapshots/...` and the recording cites it as `<link_root>/<run id>/...`:
+    `link_root` is where the run folder will be (the results root, or `demo/record/` for the run of record), so the
+    link resolves from the repository root. A variant take is saved under `attempts/`, never as the scored case."""
+    from datetime import date, datetime, timezone
     from demo import evidence
     from demo.adapter import utc_now
-    from demo.paths import RESULTS_ROOT, SHARED_ROOT
     from demo.systems import SYSTEMS
+
+    system_id, tag = CASE_SYSTEM[case]
+    spec = SYSTEMS[system_id]
+    snapshot = evidence.snapshot_path(system_id, tag)
+    try:
+        if spec.setup is not None:
+            spec.setup(run)
+        started_at = utc_now()
+        with spec.open(tag, run) as system:
+            common = dict(run_id=run.id, recorded_at=datetime.now(timezone.utc).isoformat(timespec="seconds"),
+                          command=command, ollama_base_url=ollama_url, snapshot=_link(link_root / run.id / snapshot),
+                          extra={"environment": environment})
+            recording = (record_bad_merge(system, **common) if case == CASE
+                         else record_two_weeks(system, run_day=date.today(), **common,
+                                               **{k: v for f in flags for k, v in TWO_WEEKS_VARIANTS[f].items()}))
+            captured = evidence.capture(system_id, tag, system, None, started_at, utc_now())
+    finally:
+        if spec.teardown is not None:
+            spec.teardown(run)
+    path = run.dir / snapshot
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(captured, indent=2, default=str))
+    return save_recording(recording, recordings / "attempts" if is_variant(recording) else recordings)
+
+
+def record_chats(run: "RunDir", recordings: Path, link_root: Path, command: str, cases: tuple[str, ...] = CASES,
+                 flags: tuple[str, ...] = (), log=print) -> Recorded:
+    """Record `cases` in `run`, with Ollama and the proxy up for the whole block and stopped after it. A case that fails
+    is reported in `errors` and the next one still runs. Used by `record_cli` (one case, a run folder of its own) and
+    by `python -m demo.run --chat` (both cases, in the suite's run folder). Run it under the machine-wide lock."""
+    import os
 
     base = os.environ.get("MEMSTATE_OLLAMA_BASE_URL")
     if base and base.rstrip("/") != PROXY_URL:
-        print(f"MEMSTATE_OLLAMA_BASE_URL={base} bypasses the think-off proxy (ADR 0003); unset it", file=sys.stderr)
-        return 2
+        raise OllamaError(f"MEMSTATE_OLLAMA_BASE_URL={base} bypasses the think-off proxy (ADR 0003); unset it")
     model = os.environ.get("MEMSTATE_OLLAMA_MODEL") or DEFAULT_MODEL
-    run = evidence.new_run_dir(RESULTS_ROOT, SHARED_ROOT / ".runtime" / "gem-suite")
-    command = f"cd {REPO_ROOT} && {sys.executable} -m demo.chat_run record bad-merge"
+    ollama_url = f"{PROXY_URL} (think-off proxy, ADR 0003) -> Ollama :{OLLAMA_PORT}"
+    result = Recorded()
     with ollama_running() as started:
         warm = warm_up(model)
-        started_at = utc_now()
-        with SYSTEMS["upstream"].open("chat-bad-merge", run) as system:
-            snapshot = evidence.snapshot_path("upstream", "chat-bad-merge")
-            recording = record_bad_merge(
-                system, run_id=run.id, recorded_at=datetime.now(timezone.utc).isoformat(timespec="seconds"),
-                command=command, ollama_base_url=f"{PROXY_URL} (think-off proxy, ADR 0003) -> Ollama :{OLLAMA_PORT}",
-                snapshot=f"demo/results/{run.id}/{snapshot}",
-                extra={"environment": {"model_warmed_up_s": warm, "ollama_started_by_run": started,
-                                       "ollama_model_setting": model}})
-            captured = evidence.capture("upstream", "chat-bad-merge", system, None, started_at, utc_now())
-        path = run.dir / snapshot
-        path.parent.mkdir(parents=True, exist_ok=True)
-        path.write_text(json.dumps(captured, indent=2, default=str))
-    saved = save_recording(recording, recordings)
-    print(f"recorded {saved} (servers stopped; snapshot {path})")
-    return 0
+        environment = {"model_warmed_up_s": warm, "ollama_started_by_run": started, "ollama_model_setting": model}
+        for case in cases:
+            log(f"[chat] {case}: recording")
+            try:
+                result.saved.append(_record_case(case, run, recordings, link_root, flags, environment,
+                                                 command, ollama_url))
+            except Exception as e:
+                result.errors.append(f"{case}: {type(e).__name__}: {e}")
+                log(f"[chat] {case}: failed: {e}")
+    return result
+
+
+def record_cli(recordings: Path, case: str = CASE, flags: tuple[str, ...] = ()) -> int:
+    """Record one chat run on its own: a fresh DB, a server started and stopped here, Ollama likewise. `bad-merge` runs
+    on upstream; `two-weeks` on patch step 3 (its commit checked out in `MemState-patched` for the run, then back on
+    `bitemporal`). Run it under the machine-wide lock (README, "Chat runs and replay"). The run of record records both
+    in its own run folder instead: `python -m demo.run --record --chat`."""
+    from demo import evidence
+    from demo.paths import RESULTS_ROOT, SHARED_ROOT
+
+    run = evidence.new_run_dir(RESULTS_ROOT, SHARED_ROOT / ".runtime" / "gem-suite")
+    command = f"cd {REPO_ROOT} && {sys.executable} -m demo.chat_run record {case}" + "".join(f" {f}" for f in flags)
+    try:
+        result = record_chats(run, recordings, RESULTS_ROOT, command, (case,), flags)
+    except OllamaError as e:
+        print(e, file=sys.stderr)
+        return 2
+    for error in result.errors:
+        print(f"error: {error}", file=sys.stderr)
+    for saved in result.saved:
+        print(f"recorded {saved} (servers stopped; snapshot under {run.dir / 'snapshots'})")
+    return 1 if result.errors else 0
 
 
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(prog="python -m demo.chat_run", description=__doc__.split("\n\n")[0])
     sub = ap.add_subparsers(dest="mode", required=True)
     rec = sub.add_parser("record", help="record a chat run (starts MemState and Ollama; run under the lock)")
-    rec.add_argument("case", choices=[CASE])
-    rec.add_argument("--recordings", type=Path, default=RECORDINGS_ROOT, help="where the recording is written")
+    rec.add_argument("case", choices=[CASE, TWO_WEEKS_CASE])
+    rec.add_argument("--recordings", type=Path, default=RECORDINGS_ROOT, help="where the recording is written (a variant take goes to its attempts/ folder)")
+    rec.add_argument("--router-decides", action=argparse.BooleanOptionalAction, default=True,
+                     help="two-weeks only, default on: W1 carries no `intent_override`; --no-router-decides forces the "
+                          "ingest route for W1 (a variant: the router sends the statement to `query`, F31; a variant take is saved "
+                          "under attempts/ and is never the scored case)")
+    rec.add_argument("--seed-profile", action="store_true",
+                     help="two-weeks only: write one profile topic (Me: job = analyst at Acme) through /v1 first (a variant: "
+                          "saved under attempts/, never the scored case)")
     rep = sub.add_parser("replay", help="print recordings: no server, no Ollama, no GPU")
     rep.add_argument("paths", nargs="*", type=Path, help=f"files or folders (default {RECORDINGS_ROOT})")
     args = ap.parse_args(argv)
     if args.mode == "replay":
         return replay(args.paths or [RECORDINGS_ROOT])
-    return record_cli(args.recordings)
+    flags = tuple(f for f in TWO_WEEKS_VARIANTS if (not args.router_decides if f == "--no-router-decides" else args.seed_profile))
+    if flags and args.case != TWO_WEEKS_CASE:
+        ap.error(f"{', '.join(flags)} apply to the two-weeks case only")
+    return record_cli(args.recordings, args.case, flags)
 
 
 if __name__ == "__main__":

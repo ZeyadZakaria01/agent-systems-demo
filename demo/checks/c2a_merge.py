@@ -30,6 +30,7 @@ from __future__ import annotations
 
 import statistics
 
+from demo import merge
 from demo.adapter import System
 from demo.checks import Ctx, check
 from demo.merge import (DEADLINE, DEFAULT_TIMEOUT_S, NEWER, OLDER, DroppedState, MergeOutcome, await_merge,
@@ -54,7 +55,8 @@ def _repetition(i: int, outcome: MergeOutcome, current: object) -> dict:
     return {"repetition": i, "title": pair.title, "older_id": pair.older_id, "newer_id": pair.newer_id,
             "merged": outcome.merged, "upserted": pair.upserted, "survivor_id": outcome.survivor_id,
             "dropped_id": outcome.dropped_id, "dropped_state": outcome.dropped_state,
-            "window_s": outcome.window_s, "waited_s": None if outcome.waited is None else outcome.waited.elapsed,
+            "window_s": outcome.window_s, "window_interactions": outcome.window_interactions,
+            "waited_s": None if outcome.waited is None else outcome.waited.elapsed,
             "survivor_held": outcome.survivor_held, "current": "NO_VALUE" if current is NO_VALUE else current,
             "scored": _scored(outcome), "violation": _scored(outcome) and current == OLDER,
             "dropped_held_newer": outcome.dropped_held_newer}
@@ -62,13 +64,26 @@ def _repetition(i: int, outcome: MergeOutcome, current: object) -> dict:
 
 def _windows(reps: list[dict], seen: list[dict], repetitions: int, timeout: float) -> tuple[dict, dict]:
     """The window measurements and the `windows` entry the scorecard renders."""
+    counted = [r["window_interactions"] for r in reps if r["merged"] and r["window_interactions"] is not None]
+    if counted:  # a system that counts interactions (the reference GEM): the window is in interactions
+        median = statistics.median(counted)
+        median = int(median) if median == int(median) else median
+        low, high = min(counted), max(counted)
+        base = ("interactions from the duplicate-creating ingest's response to the first read that sees the merge "
+                "(polling reads are not interactions)")
+        measures = {"merge_timeouts": sum(not r["merged"] for r in reps), "window_unit": "interactions",
+                    "window_median_interactions": median, "window_min_interactions": low,
+                    "window_max_interactions": high, "window_samples_interactions": counted,
+                    "window_samples": len(counted), "window_note": base}
+        value = f"median {median} interactions, range {low}-{high} over {len(counted)} repetitions"
+        return measures, {"name": "Merge revision window", "value": value}
     samples = [r["window_s"] for r in reps if r["window_s"] is not None]
     timeouts = sum(not r["merged"] for r in reps)
     median = round(statistics.median(samples), 3) if samples else None
     low, high = (min(samples), max(samples)) if samples else (None, None)
     base = "from the duplicate-creating ingest's response to the poll that sees the merge"
-    measures = {"merge_timeouts": timeouts, "window_median_s": median, "window_min_s": low, "window_max_s": high,
-                "window_samples": len(samples),
+    measures = {"merge_timeouts": timeouts, "window_unit": "seconds", "window_median_s": median,
+                "window_min_s": low, "window_max_s": high, "window_samples": len(samples),
                 "window_note": f"{base}; no duplicate is ever created on this system (same-topic write)"
                 if seen and not samples else base}
     value = (f"median {median} s, range {low}-{high} s over {len(samples)} repetitions" if samples else
@@ -152,4 +167,4 @@ def measure_merges(system: System, repetitions: int = REPETITIONS, timeout: floa
 
 @check(row="C2(a)", claim=CLAIM)
 def c2a(ctx: Ctx) -> Verdict:
-    return measure_merges(ctx.system)
+    return measure_merges(ctx.system, timeout=merge.DEFAULT_TIMEOUT_S)  # read at call time: a test shortens it once

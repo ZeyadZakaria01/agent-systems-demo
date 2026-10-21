@@ -12,7 +12,8 @@ Pass criteria, per pair, each scored as a case (the reference GEM tickets are bu
    `updated_field` is `Deadline` and it has a `timestamp`. The flag is due to the extension edge, whatever its
    direction (B -> A and A -> B are both scored).
 2. *Control.* After the same update, C (association edge only) is not flagged. Not applicable (`held=None`) on a system
-   with no flag surface.
+   with no flag surface, and in a pair where nothing was flagged (neither B nor C): a system that never flags holds "not
+   flagged" for every topic, which tells discrimination from nothing, so a system that changes B without a flag fails.
 3. *The flag clears.* B is written next (`version_field` on `Date`); the next read of B carries no flag. Applicable only
    when case 1 saw a flag.
 
@@ -33,6 +34,7 @@ from demo.checks import Ctx, check
 from demo.reads import current_value, field_in_response, read_request
 from demo.merge import DEFAULT_TIMEOUT_S
 from demo.verdict import Case, Verdict
+from demo.windows import interactions
 
 CLAIM = ("C3 (dependency consistency): updating a unit triggers evaluation of units linked by propagation-bearing "
          "edges. Claimed by §4's opening ('by construction'); not listed in §4.3.")
@@ -109,6 +111,13 @@ class Pair:
     control_flagged: bool | None  # None: no flag surface
     b_flag_after_write: dict | None
     flag_cleared: bool | None  # None: B was never flagged, so nothing to clear
+    window_interactions: int | None = None  # interactions between A's update and B's flag seen, our own probe read
+    # excluded; None on a system that does not count interactions (it is measured in `wait_s`)
+
+    @property
+    def control_scored(self) -> bool:
+        """The control is evidence only on a system that flags: it has a flag surface and flagged B or the control."""
+        return self.control_flagged is not None and (self.control_flagged or bool((self.b_flag_after or {}).get("flagged")))
 
 
 def _probe_pair(s, direction: str, n: int) -> Pair:
@@ -143,13 +152,16 @@ def _probe_pair(s, direction: str, n: int) -> Pair:
                        "fields": [{"name": "Deadline", "value": "April 20", "provenance": "pm-email",
                                    "why_changed": "vendor delay"}]})
     t_update = time.perf_counter()  # the window starts when the update's response is back
-    in_window = _stale_read(s, b_id)
+    n_update = interactions(s)
+    in_window = _stale_read(s, b_id)  # one read interaction of our own, not part of the window
     def reflects() -> bool:
         topic = s.read_topic(b_id)
         return bool((_flag(topic) or {}).get("flagged")) or _signature(topic) != before
 
     waited = s.wait_until(reflects, max(REVISION_WAIT_S - (time.perf_counter() - t_update), 0.0))
     wait_s = time.perf_counter() - t_update
+    n_seen = interactions(s)
+    window_interactions = None if n_update is None else n_seen - n_update - 1
     b_after = s.read_topic(b_id)
     b_flag = _flag(b_after)
     c_flag = _flag(s.read_topic(c_id))
@@ -175,10 +187,21 @@ def _probe_pair(s, direction: str, n: int) -> Pair:
         b_topic_keys_after=sorted(b_after), wait_s=wait_s, reflected=not waited.timed_out,
         flag_surface=surface, b_flag_after=b_flag, flag_names_update=_names_the_update(b_flag, a_id),
         control_flag_after=c_flag, control_flagged=None if c_flag is None else bool(c_flag.get("flagged")),
-        b_flag_after_write=flag_after_write, flag_cleared=cleared)
+        b_flag_after_write=flag_after_write, flag_cleared=cleared,
+        window_interactions=window_interactions)
+
+
+def _control_held(p: Pair) -> bool | None:
+    """The control shows a system discriminates only when it flagged something in this pair: a system with a flag
+    surface that never flags holds "not flagged" for every topic, which is no evidence. `None` also without a surface."""
+    return None if not p.control_scored else not p.control_flagged
 
 
 def _window_value(pairs: list[Pair]) -> str:
+    counted = {p.direction: p.window_interactions for p in pairs if p.reflected and p.window_interactions is not None}
+    if counted and len(counted) == len(pairs):  # a system that counts interactions: the window is in interactions
+        times = ", ".join(f"{d} {n}" for d, n in counted.items())
+        return f"median {median(counted.values()):g} interactions ({times})"
     seen = {p.direction: p.wait_s for p in pairs if p.reflected}
     if not seen:
         return "unbounded (C3 absent)"
@@ -203,8 +226,9 @@ def c3(ctx: Ctx) -> Verdict:
                              f"{'no flag surface' if not p.flag_surface else p.b_flag_after}; edge stored: "
                              f"{'no edges in this system' if p.edge_linked is None else p.edge_linked}"),
             Case(f"control: a topic linked to A only by an association edge is not flagged ({p.direction})",
-                 held=None if p.control_flagged is None else not p.control_flagged, control=True,
+                 held=_control_held(p), control=True,
                  observation=f"control flag: {'no flag surface' if p.control_flagged is None else p.control_flag_after}; "
+                             f"{'' if p.control_scored else 'nothing was flagged in this pair, so not being flagged shows nothing; '}"
                              f"association edge stored: "
                              f"{'no edges in this system' if p.control_edge_linked is None else p.control_edge_linked}"),
             Case(f"the flag clears when B is next written ({p.direction})", held=p.flag_cleared,

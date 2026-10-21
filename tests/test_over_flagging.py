@@ -6,6 +6,7 @@ from datetime import date
 
 import pytest
 
+from demo.baseline import Baseline
 from demo.checks import discover
 from demo.over_flagging import SCENARIO_PATH, load_scenario, measure
 from demo.over_flagging_tables import render_over_flagging
@@ -66,10 +67,19 @@ def test_the_check_reports_both_runs_with_no_verdict():
     json.dumps(v.to_dict())  # lands in results.json
 
 
-def test_the_check_is_not_a_scorecard_row_and_runs_on_the_reference_gem_only():
+def test_the_check_is_not_a_scorecard_row_and_runs_once_on_the_reference_gem():
     c = check()
     assert not c.rows[0].on_scorecard
-    assert c.applies_to("reference-gem") and not c.applies_to("upstream") and not c.applies_to("step3")
+    assert c.applies_to("reference-gem-p1") and not c.applies_to("reference-gem-p2")  # once, not per phase
+    assert not c.applies_to("upstream") and not c.applies_to("step3")
+
+
+def test_the_transitive_run_comes_from_the_system_s_variant_not_from_the_check():
+    gem = ReferenceGem()
+    walker = gem.variant("transitive")
+    assert walker is not gem and walker.propagation == "transitive" and walker.phase == gem.phase
+    assert gem.propagation == "one_hop" and gem.variant("anything else") is None
+    assert Baseline().variant("transitive") is None
 
 
 def test_the_table_lists_both_runs_and_is_empty_without_one():

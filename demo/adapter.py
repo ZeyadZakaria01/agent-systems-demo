@@ -48,6 +48,12 @@ Operations
   `c6_clause_2_seeds` is a per-system test setting for C6 clause 2, `{"target": float, "control": float}`, or `None` for
   the check's own seeds (0.03 and 0.01, upstream's): a system whose forgetting check runs after every interaction would
   archive a topic seeded below its threshold with that very interaction (the reference GEM declares 0.06 and 0.06).
+  A check reads a date flag through `dates_accepted(*names)` and `accepts_source` through `source_accepted()`, which
+  refuse (raise) when the flag is `None` instead of letting the check guess.
+  `latency_comparable` (default True) says whether the system's client latencies can be compared with the HTTP servers'
+  (the reference GEM is in-process: False); a check that would time operations does not for a system that says False.
+- `variant(name)` returns a fresh instance of the system in an alternate mode, or `None` (the reference GEM offers
+  `"transitive"` propagation, used only by the over-flagging measurement).
 - `resolve_source(entry)` returns the stored source message an entry's provenance points to (`entry` is a stored
   field's `current`, as read back), or `None` where the system stores none. Logged as a read. `ingest` carries the
   message as `source_message` on a field write, only where the system accepts one.
@@ -206,7 +212,30 @@ class System(ABC):
         accepts = {**{d: False for d in DATES}, **described.pop("accepts", {})}
         return {"system": self.label, "url": None, "db_path": None, "commit": None, "engine": None,
                 "keeps_history": None, "accepts_error": None, "declared_bound": None, "accepts_source": False,
+                "latency_comparable": True,
                 "source_surface": None, "c6_clause_2_seeds": None, **described, "accepts": accepts}
+
+    def dates_accepted(self, *names: str) -> dict[str, bool]:
+        """Which of the dates `names` the system accepts, from `describe()["accepts"]`. A flag the system could not state
+        (`None`: its schema was unreadable) raises: a check never scores a system on a capability it guessed."""
+        described = self.describe()
+        if any(described["accepts"][n] is None for n in names):
+            raise RuntimeError(f"{self.label}: could not tell which dates the system accepts "
+                               f"({described['accepts_error']}); refusing to guess")
+        return {n: described["accepts"][n] for n in names}
+
+    def source_accepted(self) -> bool:
+        """Whether a field write may carry a `source_message` (`describe()["accepts_source"]`); raises when unknown."""
+        described = self.describe()
+        if described["accepts_source"] is None:
+            raise RuntimeError(f"{self.label}: could not tell whether the system accepts a source message "
+                               f"({described['accepts_error']}); refusing to guess")
+        return described["accepts_source"]
+
+    def variant(self, name: str) -> "System | None":
+        """A fresh instance of this system in the alternate mode `name` (a labelled deviation one measurement needs, e.g.
+        the reference GEM's "transitive" propagation), or `None` when the system has no such mode."""
+        return None
 
     @abstractmethod
     def _ingest(self, request: dict) -> dict: ...

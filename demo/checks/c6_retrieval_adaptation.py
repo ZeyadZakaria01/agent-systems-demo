@@ -230,7 +230,7 @@ def c6_clause_2(ctx: Ctx) -> Verdict:
               and reached >= expected_min - EPS)
     lift = (f"keeps the topic at or above {FORGET_THRESHOLD}, from {start_salience}, until the first forgetting pass"
             if to_first_pass else f"lifts the topic from {start_salience} to at least {FORGET_THRESHOLD}")
-    cases = [Case(f"repeated retrieval {lift}",
+    cases = [Case(f"repeated retrieval {lift}", id="retrieval-lift",  # the name carries this system's seeds, the id is shared
                   held=lifted,
                   observation=f"salience {' -> '.join(_fmt(x) for x in trajectory)}; {hits} retrieval(s) returned the "
                               f"topic, expected at least {_fmt(expected_min)}")]
@@ -252,10 +252,9 @@ def c6_clause_2(ctx: Ctx) -> Verdict:
         where = "during the reads" if pass_seen else f"after the forced pass ({topics} topics)"
         seen = (f"{where} the target has salience {_fmt(target.get('salience'))}, archived={target.get('archived')!r}; "
                 f"the never-read control at {control_salience} archived={control.get('archived')!r}")
-        if control_archived or target_archived:
+        if control_archived:  # only a pass the never-read control went through shows forgetting ran
             left = not target_archived and _eligible(target.get("salience")) is False
-            cases.append(Case("the topic left forgetting eligibility", held=control_archived and left,
-                              observation=seen))
+            cases.append(Case("the topic left forgetting eligibility", held=left, observation=seen))
         else:
             not_shown = True
             cases.append(Case("the topic left forgetting eligibility", held=None,

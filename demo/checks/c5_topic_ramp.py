@@ -11,7 +11,9 @@ Two rows, one check each (so each row links its own snapshots and databases), ma
   no salience setup. Counts archived topics; fail if the system tracks archived and none were; absent if it does
   not. The same runs fill the latency table (ingest / query client latency, settle time, archived count). On the
   largest ramp, a system that accepts `valid_at` also times `ramp.ASOF_SAMPLES` (20) as-of reads, reported in the
-  latency output beside the plain reads.
+  latency output beside the plain reads. A system whose milliseconds are not comparable with an HTTP server
+  (`describe()["latency_comparable"]` False: the reference GEM) runs each size once and records the counts only: no
+  repeats, no timing, no ramp milliseconds; its verdict rests on the active and archived counts at n=2000.
 
 C5 counts topics, not history entries. Each verdict states the system's declared bound (`describe()["declared_bound"]`:
 upstream's 500-topic soft limit, the reference GEM's β) beside the active topic count (total minus archived). F24 is
@@ -116,14 +118,19 @@ def _settle(system: System):
     return system.wait_until(pred, 5.0, interval=0.1)
 
 
-def _one_ramp(system: System, n: int, repeat: int) -> dict:
+def _one_ramp(system: System, n: int, repeat: int, timed: bool) -> dict:
+    """One ramp. An untimed one (a system whose milliseconds are not comparable, the reference GEM) does the same writes
+    and reads and keeps only the counts: no latency, no settle wait, no ramp milliseconds in the evidence."""
     for i in range(n):
         ingest_undated(system, i)
-    settled = _settle(system)
+    settled = _settle(system) if timed else None
     for _ in range(ramp.QUERY_SAMPLES):
         plain_read(system)
     query = scored_latencies(system, "query")
     stats = archive_stats(system)
+    counts = {"n": n, "repeat": repeat, "total": stats["total"], "archived": stats["archived"]}
+    if not timed:
+        return counts
     ingest = scored_latencies(system, "ingest")
     asof: list[float] = []  # last: reads can reshape salience, so they come after the counts the verdict rests on
     if n == max(ramp.STEPS) and system.describe()["accepts"]["valid_at"]:
@@ -131,8 +138,7 @@ def _one_ramp(system: System, n: int, repeat: int) -> dict:
             as_of_read(system)
         asof = scored_latencies(system, "query")[len(query):]
     return {
-        "n": n, "repeat": repeat, "total": stats["total"], "archived": stats["archived"],
-        "ingest_median_ms": median_ms(ingest), "ingest_samples": len(ingest),
+        **counts, "ingest_median_ms": median_ms(ingest), "ingest_samples": len(ingest),
         "query_samples_ms": query, "as_of_samples_ms": asof, "settle_s": settled.elapsed, "settle_timed_out": settled.timed_out,
     }
 
@@ -142,17 +148,23 @@ def c5_natural(ctx: Ctx) -> Verdict:
     ramps: list[dict] = []
     bound = None
     for n in ramp.STEPS:
-        for repeat in range(1, ramp.REPEATS + 1):
+        repeat = 1
+        while True:  # the verdict rests on the counts of one ramp; repeats serve the latency table, which an untimed system has none of
             with ctx.fresh_system(f"ramp-{n}-r{repeat}") as s:
-                ramps.append(_one_ramp(s, n, repeat))
+                timed = s.describe()["latency_comparable"]
+                ramps.append(_one_ramp(s, n, repeat, timed))
                 bound = s.describe()["declared_bound"]
+            if not timed or repeat >= ramp.REPEATS:
+                break
+            repeat += 1
+    repeats = max(r["repeat"] for r in ramps)
     archived_values = [r["archived"] for r in ramps]
     if all(a is None for a in archived_values):
         return Verdict.absent("C5-2", {"probe": "archived flag is a nothing-value at every ramp step",
-                                       "steps": list(ramp.STEPS), "repeats": ramp.REPEATS},
+                                       "steps": list(ramp.STEPS), "repeats": repeats},
                               cases=[Case("archived topics counted at each ramp step", None,
                                           "the system has no archived flag")],
-                              measurements={"ramps": ramps, "steps": list(ramp.STEPS), "repeats": ramp.REPEATS,
+                              measurements={"ramps": ramps, "steps": list(ramp.STEPS), "repeats": repeats,
                                             "declared_bound": bound})
     any_archived = any((a or 0) > 0 for a in archived_values)
     counts = ", ".join(f"n={r['n']} r{r['repeat']}: {r['archived']}" for r in ramps)
@@ -164,7 +176,7 @@ def c5_natural(ctx: Ctx) -> Verdict:
         [Case("archived topics counted at each ramp step", any_archived,
               f"archived at each (n, repeat): {counts}" + ("" if any_archived else "; none archived")
               + f"; {against}")],
-        measurements={"ramps": ramps, "steps": list(ramp.STEPS), "repeats": ramp.REPEATS, "declared_bound": bound,
+        measurements={"ramps": ramps, "steps": list(ramp.STEPS), "repeats": repeats, "declared_bound": bound,
                       "active_at_largest_n": {"n": largest["n"], "active": active}},
     )
 

@@ -35,10 +35,10 @@ def test_absent_is_only_asserted_with_probe_evidence():
 def test_a_verdict_resting_on_fewer_cases_than_were_run_says_so_in_its_scorecard_cell():
     from demo.checks import Row
     from demo.scorecard import Column, render_scorecard
-    column = Column("baseline", ("baseline",))
+    column = Column("baseline", "baseline")
     rows = [Row("C0", "claim")]
     for held, cell in (((True, None), "pass (1 case n/a)"), ((True, True), "pass"), ((None, None), "not-scored")):
         v = Verdict.from_cases("C0", cases(*held))
         v.system = "baseline"
-        assert cell in render_scorecard(rows, (column,), [v]).splitlines()[2]
+        assert cell in render_scorecard(rows, (column,), [v]).splitlines()[2].split("|")[3]
     assert "(" not in render_scorecard(rows, (column,), [Verdict.from_cases("C0", cases(True, True), system="baseline")]).splitlines()[2].split("|")[3]

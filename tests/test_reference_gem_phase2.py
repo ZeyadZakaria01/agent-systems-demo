@@ -3,15 +3,13 @@ adapter, in-process. Pins the phase 2 column of the spec's "Expected verdicts" a
 changes exactly T4 and T5 (absent -> pass) and no other row. The unit tests state the patch's rules (the same rules
 as `patches/0002-bitemporal-field-histories.patch`)."""
 
-from datetime import date, datetime, timezone
-from functools import partial
+from datetime import date, datetime, timedelta, timezone
 
 import pytest
 
-from demo.checks import discover
 from demo.reads import NO_VALUE, current_value, field_in_response, read_request
 from demo.reference_gem import BUMP, ReferenceGem
-from demo.session import Session
+from tests.reference_runs import unmutated
 from demo.verdict import ABSENT, PASS
 
 RUN_DAY = date(2026, 10, 20)
@@ -19,24 +17,14 @@ ROWS = ["C1", "C2(a)", "C2(b)", "C2(c)", "C2(d)", "C3", "C4", "C5-1", "C5-2", "C
         "T1", "T2", "T3", "T4", "T5", "T6"]
 
 
-def run_checks(factory):
-    out = {}
-    for check in discover():
-        if check.id == "Storyline":
-            continue
-        for v in check.execute(Session.in_process(factory), run_day=RUN_DAY):
-            out[v.row] = v
-    return out
-
-
 @pytest.fixture(scope="module")
 def phase1():
-    return run_checks(ReferenceGem)
+    return unmutated(1)
 
 
 @pytest.fixture(scope="module")
 def phase2():
-    return run_checks(partial(ReferenceGem, phase=2))
+    return unmutated(2)
 
 
 # ---------------------------------------------------------------- the phase 2 column of "Expected verdicts"
@@ -65,6 +53,26 @@ def test_phase_1_to_phase_2_changes_exactly_t4_and_t5(phase1, phase2):
 
 # ---------------------------------------------------------------- the model
 
+class StepClock:
+    """A clock every reading of which is a second after the last: a moment noted between two writes is strictly
+    between them, whatever the machine's clock resolution."""
+
+    def __init__(self):
+        self.now = datetime(2026, 10, 20, tzinfo=timezone.utc)
+
+    def __call__(self):
+        self.now += timedelta(seconds=1)
+        return self.now
+
+    def iso(self):
+        return self().isoformat()
+
+
+@pytest.fixture
+def clock():
+    return StepClock()
+
+
 def day(month, d, year=2026):
     return datetime(year, month, d, tzinfo=timezone.utc).isoformat()
 
@@ -90,8 +98,8 @@ def stored(s, topic_id, name):
 
 
 @pytest.fixture
-def gem():
-    return ReferenceGem(phase=2)
+def gem(clock):
+    return ReferenceGem(phase=2, clock=clock)
 
 
 def test_phase_2_is_a_mode_of_the_same_adapter_and_accepts_all_four_dates(gem):
@@ -223,29 +231,29 @@ def test_expired_entries_are_hidden_unless_history_is_requested(gem):
     assert ask(gem, t, "Budget", valid_at=day(10, 15)) == "$100"  # the expired original never answers a valid_at read
 
 
-def test_recorded_at_reads_what_memory_held_then():
-    s2 = ReferenceGem(phase=2)
+def test_recorded_at_reads_what_memory_held_then(clock):
+    s2 = ReferenceGem(phase=2, clock=clock)
     t2 = new(s2, "Plan", Deadline={"value": "April 20", "valid_from": day(1, 5)})["topic_id"]
-    noted = datetime.now(timezone.utc).isoformat()
+    noted = clock.iso()
     put(s2, t2, "Deadline", "May 1", valid_from=day(2, 1))
     assert ask(s2, t2, "Deadline", valid_at=day(2, 10)) == "May 1"  # true on Feb 10
     assert ask(s2, t2, "Deadline", valid_at=day(2, 10), recorded_at=noted) == "April 20"  # believed on that day
     assert ask(s2, t2, "Deadline", recorded_at=noted) == "April 20"
-    assert ask(s2, t2, "Deadline", recorded_at=datetime.now(timezone.utc).isoformat()) == "May 1"
+    assert ask(s2, t2, "Deadline", recorded_at=clock.iso()) == "May 1"
 
 
-def test_recorded_at_sees_an_entry_that_has_expired_since_as_live(gem):
+def test_recorded_at_sees_an_entry_that_has_expired_since_as_live(gem, clock):
     t = new(gem, "Plan", Budget={"value": "$50", "valid_from": day(9, 1)})["topic_id"]
     put(gem, t, "Budget", "$80", valid_from=day(10, 1), invalid_at=day(11, 1))
-    noted = datetime.now(timezone.utc).isoformat()
+    noted = clock.iso()
     put(gem, t, "Budget", "$100", valid_from=day(10, 10))
     assert ask(gem, t, "Budget", valid_at=day(10, 15), recorded_at=noted) == "$80"  # before the $100 was recorded
     assert ask(gem, t, "Budget", valid_at=day(10, 15)) == "$100"
 
 
-def test_as_of_reads_on_both_axes_count_as_history_requests_and_raise_salience(gem):
+def test_as_of_reads_on_both_axes_count_as_history_requests_and_raise_salience(gem, clock):
     t = new(gem, "Plan", Deadline={"value": "April 20", "valid_from": day(1, 5)})["topic_id"]
-    for extra in ({"valid_at": day(2, 1)}, {"recorded_at": datetime.now(timezone.utc).isoformat()}):
+    for extra in ({"valid_at": day(2, 1)}, {"recorded_at": clock.iso()}):
         before = gem.read_topic(t)["salience"]
         response = gem.query({**read_request(t), **extra})
         field = next(f for c in response["candidates"] if c["topic_id"] == t for f in c["fields"])

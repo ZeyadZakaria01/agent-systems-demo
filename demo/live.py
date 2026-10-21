@@ -40,7 +40,7 @@ from demo.failures import run_check
 from demo.latency_tables import with_latency
 from demo.memstate_system import MemStateSystem
 from demo.paths import REPO_ROOT, RESULTS_ROOT
-from demo.scorecard import Column, counts, render_scorecard
+from demo.scorecard import Column, claimed_by_p1, counts, render_probes, render_scorecard
 from demo.storyline_tables import render_storyline
 from demo.verdict import Verdict
 
@@ -161,11 +161,13 @@ def run_live(url: str, checks: list[Check], results_root: Path, command: str, as
     verdicts: list[Verdict] = []
     applicable = [c for c in checks if c.applies_to(as_system)]
     rows = sorted((r for c in applicable for r in c.rows if r.on_scorecard), key=lambda r: natural_key(r.id))
-    column = Column(f"live ({url})", (LIVE,))
+    column = Column(f"live ({url})", LIVE)
     pace = make_pace(delay, step, lambda m: log(f"[LIVE] {m}"), wait, sleep)
 
     def save(complete: bool) -> str:
         scorecard = f"**{BANNER}**\n\n" + render_scorecard(rows, (column,), verdicts)
+        if any(r.probe for r in rows):
+            scorecard += "\n\n" + render_probes(rows, (column,), verdicts)
         if storyline := render_storyline(verdicts):
             scorecard += "\n\n" + storyline
         scorecard = with_latency(scorecard, verdicts)
@@ -174,9 +176,10 @@ def run_live(url: str, checks: list[Check], results_root: Path, command: str, as
             "run_id": run.id, "mode": "live", "label": BANNER, "complete": complete, "command": command,
             "started_at": started, "finished_at": utc_now(), "server": server, "as_system": as_system,
             "delay_s": delay, "step": step, "checks": [c.id for c in applicable],
-            "rows": [{"id": r.id, "claim": r.claim, "control": r.control} for r in rows],
+            "rows": [{"id": r.id, "claim": r.claim, "control": r.control, "probe": r.probe,
+                      "claimed_by_p1": claimed_by_p1(r)} for r in rows],
             "verdicts": [{**v.to_dict(), "mode": "live"} for v in verdicts],
-            "counts": {column.header: counts(column, rows, verdicts)},
+            "counts": {column.header: counts(column, [r for r in rows if not r.probe], verdicts)},
             "deviations": [d.__dict__ for d in DEVIATIONS],
         })
         return scorecard

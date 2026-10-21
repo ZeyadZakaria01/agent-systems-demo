@@ -10,7 +10,12 @@ The runner does not take the machine-wide lock; wrap it:
 Flags: `--systems a,b` (default: every system that exists; `step1`..`step3` need that many commits on `bitemporal`),
 `--checks C1,...` (row or check ids, default all),
 `--ramp-repeats N` (C5 latency ramps, default 1 while building, 3 for the run of record),
-`--list`, `--results-root DIR`. The scorecard is followed by the per-step change table (`demo/changes.py`) once
+`--record` (final step: copy the scorecard, `results.json` and snapshots to the tracked `demo/record/<run id>/`),
+`--chat` (after the systems: record both chat runs, `bad-merge` on upstream and `two-weeks` on step 3, into this run's
+folder; Ollama and the proxy are started for them and stopped after, also when they were running), `--recordings DIR`
+(where the chat recordings are read and written, default `demo/recordings/`), `--list`, `--results-root DIR`. After each MemState system's checks the runner runs MemState's 39 upstream tests
+(`demo/upstream_tests.py`: upstream in `MemState/`, a step in the patched copy while it is checked out) and records the
+counts. The scorecard is followed by the per-step change table (`demo/changes.py`) once
 upstream or a patch step was measured. The printed output ends with a block that pastes into `docs/findings.md`.
 
 Failure handling: a check that raises, a system that cannot open (server did not start, setup failed) or a server
@@ -25,24 +30,28 @@ import argparse
 import json
 import shlex
 import sys
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import date
 from pathlib import Path
+from typing import Callable
 
-from demo import live
+from demo import chat_run, live
 from demo.adapter import utc_now
-from demo.changes import CHAIN, case_changes_per_step, changes_per_step, render_change_table
+from demo.changes import CHAIN, REFERENCE_CHAIN, change_table_payload, regression_summary, render_change_tables
 from demo.checks import Check, discover, natural_key
 from demo.deviations import DEVIATIONS
 from demo.chat_recording import RECORDINGS_ROOT, latest_per_case, render_chat_cases, results_payload
 from demo.evidence import RunDir, new_run_dir, write_results
 from demo.failures import detail as _detail, errored as _errored, run_check
 from demo.latency_tables import with_latency
-from demo.paths import REPO_ROOT, RESULTS_ROOT, SERVER_LOCK, SHARED_ROOT
-from demo.scorecard import COLUMNS, SCOPE_NOTE, Column, counts, render_deviations, render_scorecard
+from demo.paths import RECORD_ROOT, REPO_ROOT, RESULTS_ROOT, SERVER_LOCK, SHARED_ROOT
+from demo.scorecard import (COLUMNS, SCOPE_NOTE, Column, claimed_by_p1, counts, render_deviations, render_limits,
+                            render_merge_existence, render_probes, render_scorecard)
 from demo.over_flagging_tables import render_over_flagging
 from demo.storyline_tables import render_storyline
+from demo.record import record_run
 from demo.systems import SYSTEMS, SystemSpec
+from demo.upstream_tests import render_upstream_tests
 from demo.verdict import Verdict, measured
 from demo.windows import render_windows
 
@@ -53,18 +62,26 @@ class RunResult:
     verdicts: list[Verdict]
     scorecard: str  # scorecard table, then the deviations table
     findings_block: str
+    chat_errors: list[str] = field(default_factory=list)  # chat cases the run asked for and could not record
+
+
+ChatRecorder = Callable[[RunDir, Path], "chat_run.Recorded"]  # (this run's folder, the recordings folder) -> what it recorded
 
 
 def run_recorded(systems: list[str], checks: list[Check], results_root: Path, command: str,
                  run_day: date | None = None, columns: tuple[Column, ...] = COLUMNS,
                  runtime_root: Path | None = None, registry: dict[str, SystemSpec] | None = None,
-                 recordings_dir: Path | None = None, log=print) -> RunResult:
+                 recordings_dir: Path | None = None, record_chats: ChatRecorder | None = None,
+                 log=print) -> RunResult:
     registry = registry or SYSTEMS
     run_day = run_day or date.today()
     run = new_run_dir(results_root, runtime_root or SHARED_ROOT / ".runtime" / "gem-suite")
-    chats = latest_per_case(recordings_dir or RECORDINGS_ROOT)  # read once: the run prints what existed at its start
+    recordings_dir = recordings_dir or RECORDINGS_ROOT
+    chats = latest_per_case(recordings_dir)  # what existed at the start; a run that records chats re-reads after them
+    chat_errors: list[str] = []
     started = utc_now()
     verdicts: list[Verdict] = []
+    test_counts: dict[str, dict] = {}  # system id -> upstream-test counts (or {"error": ...})
     rows = sorted((r for c in checks for r in c.rows if r.on_scorecard), key=lambda r: natural_key(r.id))
 
     def save(complete: bool) -> str:
@@ -72,10 +89,16 @@ def run_recorded(systems: list[str], checks: list[Check], results_root: Path, co
         scored = [v for v in verdicts if any(r.id == v.row for r in rows)]
         windows = render_windows(verdicts)
         scorecard = render_scorecard(rows, columns, verdicts)
+        if measured(scored, CHAIN):  # the claim is about the patch steps; a run without them says nothing of regressions
+            scorecard += "\n\n" + regression_summary(rows, scored)
+        if any(r.probe for r in rows):
+            scorecard += "\n\n" + render_probes(rows, columns, scored)
+        if merge := render_merge_existence(rows, columns, scored):
+            scorecard += "\n\n" + merge
         if windows:
             scorecard += f"\n\n### Staleness windows\n\n{windows}"
-        if measured(scored, CHAIN):  # the table is about upstream and the patch steps; a baseline-only run has none
-            scorecard += "\n\n### Per-step change table\n\n" + render_change_table(rows, scored)
+        if change_tables := render_change_tables(rows, scored):  # one per chain; a baseline-only run has none
+            scorecard += "\n\n" + change_tables
         if storyline := render_storyline(verdicts):
             scorecard += "\n\n" + storyline
         if over_flagging := render_over_flagging(verdicts):
@@ -83,22 +106,27 @@ def run_recorded(systems: list[str], checks: list[Check], results_root: Path, co
         if chat_cases := render_chat_cases(chats):  # recorded chat runs (ticket 17), replayed from demo/recordings/
             scorecard += "\n\n" + chat_cases
         scorecard = with_latency(scorecard, verdicts)
+        if tests := render_upstream_tests(test_counts, {s: registry[s].label for s in test_counts}):
+            scorecard += "\n\n" + tests
+        scorecard += "\n\n" + render_limits()
         scorecard += "\n\n" + SCOPE_NOTE + "\n\n### Deviations\n\n" + render_deviations()
         (run.dir / "scorecard.md").write_text(scorecard + "\n")
         write_results(run, {
             "run_id": run.id, "mode": "recorded", "complete": complete, "command": command,
             "run_day": run_day.isoformat(), "started_at": started, "finished_at": utc_now(),
             "systems": systems, "checks": [c.id for c in checks],
-            "columns": [{"header": c.title(verdicts), "systems": list(c.systems)} for c in columns],
-            "rows": [{"id": r.id, "claim": r.claim, "control": r.control} for r in rows],
+            "columns": [{"header": c.title, "group": c.group, "system": c.system} for c in columns],
+            "rows": [{"id": r.id, "claim": r.claim, "control": r.control, "probe": r.probe,
+                      "claimed_by_p1": claimed_by_p1(r)} for r in rows],
             "verdicts": [v.to_dict() for v in verdicts],
-            "counts": {c.title(verdicts): counts(c, rows, verdicts) for c in columns},
-            "change_table": {"chain": list(CHAIN), "measured": measured(scored, CHAIN),
-                             "changes": changes_per_step(rows, scored),
-                             "case_changes": case_changes_per_step(rows, scored)},
+            "counts": {c.system: counts(c, [r for r in rows if not r.probe], verdicts) for c in columns},
+            "change_tables": {"memstate": change_table_payload(rows, scored, CHAIN),
+                              "reference": change_table_payload(rows, scored, REFERENCE_CHAIN)},
+            "regression_summary": regression_summary(rows, scored) if measured(scored, CHAIN) else None,
+            "upstream_tests": test_counts,
             "servers": run.events,
             "deviations": [d.__dict__ for d in DEVIATIONS],
-            "chat_cases": results_payload(chats),
+            "chat_cases": results_payload(chats), "chat_errors": chat_errors,
         })
         return scorecard
 
@@ -124,6 +152,13 @@ def run_recorded(systems: list[str], checks: list[Check], results_root: Path, co
                 log(f"[{system_id}] {check.id}: running")
                 verdicts += _run_one(run, spec, check, run_day)
                 save(False)
+            if spec.unit_tests is not None:  # before teardown: a step is still checked out
+                log(f"[{system_id}] upstream tests: running")
+                try:
+                    test_counts[system_id] = spec.unit_tests().to_dict()
+                except Exception as e:
+                    test_counts[system_id] = {"error": _detail(e)}
+                save(False)
         finally:
             if spec.teardown is not None:
                 try:
@@ -131,9 +166,16 @@ def run_recorded(systems: list[str], checks: list[Check], results_root: Path, co
                 except Exception as e:  # recorded, not fatal: the next system's setup starts from its own state
                     run.events.append({"system": system_id, "teardown_error": _detail(e)})
                     log(f"[{system_id}] teardown failed: {e}")
+    if record_chats is not None:  # after every server of the suite is down: Ollama has the GPU to itself
+        log("[chat] recording both chat runs")
+        try:
+            chat_errors += record_chats(run, recordings_dir).errors
+        except Exception as e:  # e.g. the proxy bypass, a half-running Ollama: the suite's results are kept
+            chat_errors.append(_detail(e))
+        chats = latest_per_case(recordings_dir)
     scorecard = save(True)
     return RunResult(dir=run.dir, verdicts=verdicts, scorecard=scorecard,
-                     findings_block=findings_block(run, command, verdicts))
+                     findings_block=findings_block(run, command, verdicts), chat_errors=chat_errors)
 
 
 def _run_one(run: RunDir, spec: SystemSpec, check: Check, run_day: date) -> list[Verdict]:
@@ -231,6 +273,13 @@ def main(argv: list[str] | None = None) -> int:
     live_group.add_argument("--step", action="store_true", help="wait for Enter after every write or query")
     ap.add_argument("--ramp-repeats", type=int, default=1,
                     help="times to run each C5 latency ramp (1 while building, 3 for the run of record)")
+    ap.add_argument("--chat", action="store_true",
+                    help="after the systems, record both chat runs (bad-merge on upstream, two-weeks on step 3) into "
+                         "this run's folder; starts Ollama and the proxy and stops them (needs the machine lock)")
+    ap.add_argument("--recordings", type=Path, default=RECORDINGS_ROOT,
+                    help="the chat recordings folder: read for the scorecard, written by --chat (default demo/recordings)")
+    ap.add_argument("--record", action="store_true",
+                    help="final step: copy scorecard.md, results.json and snapshots/ to the tracked demo/record/<run id>/")
     ap.add_argument("--list", action="store_true", help="list checks and systems, then exit")
     args = ap.parse_args(argv)
     import demo.ramp as ramp
@@ -244,19 +293,30 @@ def main(argv: list[str] | None = None) -> int:
         print("systems:", ", ".join(SYSTEMS))
         return 0
     if args.mode == "live":
+        if args.chat:
+            ap.error("--chat is for recorded mode: the chat runs start their own servers")
         return _main_live(ap, args, available, argv)
     systems = args.systems.split(",") if args.systems else list(SYSTEMS)
     unknown = [s for s in systems if s not in SYSTEMS]
     if unknown:
         ap.error(f"unknown system(s) {unknown}; known: {list(SYSTEMS)}")
     checks = _select(ap, available, args.checks)
-    result = run_recorded(systems, checks, args.results_root or RESULTS_ROOT, pasteable_command(argv))
+    results_root = args.results_root or RESULTS_ROOT
+    command = pasteable_command(argv)
+    # the recordings cite their snapshots by the folder the run ends in: demo/record/ when it is recorded, else here
+    link_root = RECORD_ROOT if args.record else results_root
+    chats = (lambda run, recordings: chat_run.record_chats(run, recordings, link_root, command)) if args.chat else None
+    result = run_recorded(systems, checks, results_root, command, recordings_dir=args.recordings, record_chats=chats)
     print("\n## Scorecard\n")
     print(result.scorecard)
     print(f"\nResults: {result.dir}/results.json\n")
+    if args.record:
+        print(f"Run of record: {record_run(result.dir, RECORD_ROOT)}\n")
     print("## Paste into docs/findings.md\n")
     print(result.findings_block)
-    return 0
+    for error in result.chat_errors:
+        print(f"error: chat run not recorded: {error}", file=sys.stderr)
+    return 1 if result.chat_errors else 0
 
 
 if __name__ == "__main__":
