@@ -597,3 +597,11 @@ One entry per difficulty, newest last. Fields: expected, observed, evidence, res
 - Evidence: F39, F40; `/tmp/pilot-b` (not kept).
 - Resolution: values that already state the date are kept as written; `valid_from` is set by rule; only a single differing ISO date is replaced. The final series is fresh takes, not the ones the rules were tuned on (F40).
 - Lesson: check a rule change offline on recorded model output, then on a small live pilot, before a series; prefer fixing structured fields over editing model text.
+
+### Moving the checkout broke the worktree, the venv and the lock path
+- Date: 2026-10-21
+- Expected: the repo moved from `/home/zeyad/work/agent-systems-demo` to `/home/zeyad/personal/agent-systems-demo` runs unchanged.
+- Observed: `git -C MemState-patched` failed (its `.git` file named the old gitdir); `.venv/bin/*` shebangs, the editable `memstate` `.pth` (`MemState/src`) and `direct_url.json` still pointed at the old path; `git worktree list` showed `.runtime/ms-ladybug` and `MemState-patched` as prunable.
+- Evidence: `git -C MemState worktree list`; `head -1 .venv/bin/pytest`; `grep -rIl /home/zeyad/work .venv`.
+- Resolution: `git -C MemState worktree repair "$PWD/MemState-patched"` and `worktree prune` (the `ms-ladybug` directory was gone and nothing uses it); the old path in the `.venv` text files was rewritten in place, so `MemState/` stays untouched (`git -C MemState status --porcelain` empty). The lock moved to `../agent-systems-demo-wt/server.lock` (README, `demo/run.py`). Recorded run folders under `demo/results/` and findings keep the old paths as evidence.
+- Lesson: absolute paths leak into worktree links and the venv; after a move, repair worktrees and re-point the venv before any run.

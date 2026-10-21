@@ -6,8 +6,9 @@ Interview package for Prof. Essam Mansour: a demo of MemState (the GEM paper's s
 
 - `MemState/` is upstream at `945d7c4` and stays byte-for-byte unmodified. Measure it as published, over its HTTP API. Changes to MemState live in a separate patched worktree.
 - A claim about MemState behaviour enters `docs/findings.md`, the report, or the slides only with a reproducing run (command, DB path, key output); the command runs a script committed in the repo (probes go in `scripts/`: `probe_memstate.py` for the HTTP probes, `probe_chat_reference_time.py` for the chat `reference_time`). Claims from reading code carry `[INFERENCE]`.
-- Commit messages and PR bodies contain the change description and human co-authors only. `.githooks/` strips AI attribution (`commit-msg`) and guards commits (`pre-commit`: report only on `main`, map lines ≤ 400 chars, offline suite green); each clone enables it with `git config core.hooksPath .githooks`.
+- Commit messages and PR bodies contain the change description and human co-authors only. `.githooks/` strips AI attribution (`commit-msg`) and guards commits (`pre-commit`: report only on `main`, map lines ≤ 400 chars, offline suite green, no test identity, no API key in a staged line); each clone enables it with `git config core.hooksPath .githooks`. Keys live in git-ignored files (`.secrets/`, `MemState/.env`), never in a command or a committed file.
 - Record each difficulty when it happens in `docs/journal.md`: date, expected, observed, evidence, resolution, lesson. Tag `report:` when the report should cite it.
+- A chat result (model, router, resolver) enters findings or the report only from a fresh series of at least 10 takes, never from the pilot or the takes a rule was tuned on. Before a series: replay a rule change offline on recorded model output (`scripts/replay_two_weeks_writes.py`), then a 3-take pilot; series run one take at a time with `scripts/chat_series.py`, which stops at the first error.
 
 ## Running
 

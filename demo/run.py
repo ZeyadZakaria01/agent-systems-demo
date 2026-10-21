@@ -6,7 +6,7 @@ systems, stopped when the check ends; the baseline in-process); results go to `d
 A run that starts a server (a MemState system, or `--chat`) holds the machine-wide lock for its whole length
 (`demo/server_lock.py`), also when started under `flock .../server.lock`, which the commands below keep:
 
-    flock /home/zeyad/work/agent-systems-demo-wt/server.lock .venv/bin/python -m demo.run --systems upstream,baseline
+    flock ../agent-systems-demo-wt/server.lock .venv/bin/python -m demo.run --systems upstream,baseline
 
 Flags: `--systems a,b` (default: every system that exists; `step1`..`step3` need that many commits on `bitemporal`),
 `--checks C1,...` (row or check ids, default all),

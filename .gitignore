@@ -7,3 +7,6 @@ __pycache__/
 MemState-patched/
 demo/results/
 demo/results-live/
+
+# API keys (never committed; see AGENTS.md)
+.secrets/

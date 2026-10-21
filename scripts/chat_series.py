@@ -27,6 +27,7 @@ from pathlib import Path
 REPO = Path(__file__).resolve().parent.parent
 GROQ_URL = "https://api.groq.com/openai/v1/chat/completions"
 MARGIN = 1.2
+MARGIN_TOKENS = 1.3
 
 
 def take_fits(remaining_requests: int | None, per_take: int | None) -> bool:
@@ -34,6 +35,24 @@ def take_fits(remaining_requests: int | None, per_take: int | None) -> bool:
     if remaining_requests is None or per_take is None:
         return True
     return remaining_requests >= per_take * MARGIN
+
+
+def fits_per_minute(prompt_tokens: int, tokens_per_minute: int | None) -> bool:
+    """One MemState request (static prompt plus a turn's messages, about 1.3x) must fit the per-minute token limit."""
+    return tokens_per_minute is None or tokens_per_minute >= prompt_tokens * MARGIN_TOKENS
+
+
+def static_prompt_tokens() -> int:
+    """The largest static request MemState sends (system prompt and tool list of the ingest or both route), counted
+    with the o200k tokenizer from upstream's own source, so a provider too small for it is refused before any take."""
+    code = ("import json, tiktoken\n"
+            "from memstate.llm.tools_schema import build_chat_system_prompt, tools_for_intent_route\n"
+            "enc = tiktoken.get_encoding('o200k_base')\n"
+            "print(max(len(enc.encode(build_chat_system_prompt(r))) + len(enc.encode(json.dumps(tools_for_intent_route(r))))"
+            " for r in ('query', 'ingest', 'both')))")
+    out = subprocess.run([sys.executable, "-c", code], capture_output=True, text=True, check=True,
+                         env={**os.environ, "PYTHONPATH": str(REPO.parent / REPO.name / "MemState" / "src")})
+    return int(out.stdout.strip())
 
 
 def groq_key() -> str:
@@ -77,6 +96,11 @@ def main() -> int:
     before = groq_quota(args.model) if args.provider == "groq" else None
     if before:
         print(f"[series] quota: {before}", flush=True)
+        prompt = static_prompt_tokens()
+        if not fits_per_minute(prompt, before["tokens_per_minute"]):
+            print(f"[series] stop: one MemState request is about {prompt} static tokens plus the turn, over this tier's "
+                  f"{before['tokens_per_minute']} tokens per minute; no take can run", flush=True)
+            return 4
     while (done := len(list(args.out.glob(f"{args.case}-*.json")))) < args.takes:
         left = before["requests_left_today"] if before else None
         if not take_fits(left, per_take):

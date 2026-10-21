@@ -4,6 +4,7 @@
 # 2. Wayfinder map lines added or changed stay gists: at most 400 characters.
 # 3. Staged suite code (demo/, tests/) must keep the offline suite green.
 # 4. No commit is authored or committed by a test identity (@example.com).
+# 5. No staged line adds an API key (Groq, Google, xAI, OpenAI-style); keys live in git-ignored files only.
 set -eu
 staged="$(git diff --cached --name-only --diff-filter=ACMR)"
 [ -n "$staged" ] || exit 0
@@ -16,6 +17,14 @@ for ident in "$(git var GIT_AUTHOR_IDENT)" "$(git var GIT_COMMITTER_IDENT)"; do
     fail=1
   fi
 done
+
+keys='(gsk_[A-Za-z0-9]{30,}|AIza[0-9A-Za-z_-]{30,}|AQ\.[A-Za-z0-9_-]{30,}|xai-[A-Za-z0-9]{20,}|sk-[A-Za-z0-9_-]{30,})'
+printf '%s\n' "$staged" | while IFS= read -r f; do
+  if git diff --cached -U0 -- "$f" | grep '^+' | grep -v '^+++' | grep -qE "$keys"; then
+    echo "pre-commit: $f adds what looks like an API key; keep keys in a git-ignored file (.secrets/, MemState/.env)." >&2
+    exit 1
+  fi
+done || fail=1
 
 if [ "$branch" != "main" ] && printf '%s\n' "$staged" | grep -q '^docs/report/'; then
   echo "pre-commit: docs/report/ is edited only on main (this branch: $branch)." >&2

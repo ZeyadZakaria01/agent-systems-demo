@@ -46,3 +46,22 @@ def test_a_test_identity_is_refused_naming_it(staged_repo, author, committer):
     result = run_hook(staged_repo, author, committer)
     assert result.returncode == 1
     assert "t@example.com" in result.stderr
+
+
+FAKE_KEYS = ["gs" + "k_" + "A1b2C3d4" * 6, "AI" + "za" + "Sy" + "Q9w8E7r6" * 4, "AQ" + ".Ab8" + "X" * 40,
+             "xa" + "i-" + "Z9y8X7w6" * 4]
+
+
+@pytest.mark.parametrize("key", FAKE_KEYS)
+def test_a_staged_api_key_is_refused_without_printing_it(staged_repo, key):
+    (staged_repo / "config.env").write_text(f"API_KEY={key}\n")
+    subprocess.run(["git", "-C", str(staged_repo), "add", "config.env"], check=True)
+    result = run_hook(staged_repo, "Zeyad Zakaria <zeyad.zakaria01@gmail.com>")
+    assert result.returncode == 1
+    assert "config.env" in result.stderr and key not in result.stderr
+
+
+def test_text_that_only_resembles_a_key_passes(staged_repo):
+    (staged_repo / "notes.txt").write_text("the task-runner and sk-learn; gsk_ prefix; AIza is Google's\n")
+    subprocess.run(["git", "-C", str(staged_repo), "add", "notes.txt"], check=True)
+    assert run_hook(staged_repo, "Zeyad Zakaria <zeyad.zakaria01@gmail.com>").returncode == 0
