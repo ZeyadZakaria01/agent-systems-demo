@@ -16,6 +16,6 @@
 
 ## Comments
 
-Merged to `gem-suite` as `f7ef18e`. Workload: `demo/storyline.py` (29 events, 15 questions); triage in `demo/triage.py`; tables in `demo/storyline_tables.py`; draft `.scratch/gem-conformance-suite/storyline-draft.md`. Smoke run F20: upstream 15/15 correct, 0 search / 0 memory failures, reinforcement precision 0.125 = Precision@8. Ticket 11 is the human review of that draft.
+Merged to `gem-suite` as `5cd5c71`. Workload: `demo/workloads/storyline.py` (29 events, 15 questions); triage in `demo/workloads/triage.py`; tables in `demo/reporting/storyline.py`; draft `.scratch/gem-conformance-suite/storyline-draft.md`. Smoke run F20: upstream 15/15 correct, 0 search / 0 memory failures, reinforcement precision 0.125 = Precision@8. Ticket 11 is the human review of that draft.
 
 - 2026-10-21, spec revision (this ticket stays resolved): the storyline stays duplicate-free (ticket 11). The baseline now answers with MiniLM top 8, not top 10 (ticket 20), and the storyline, triage and reinforcement precision also run on the reference GEM, both phases (ticket 30).

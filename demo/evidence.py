@@ -16,7 +16,7 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
 
-from demo.adapter import System
+from demo.systems.adapter import System
 from demo.verdict import Verdict
 
 

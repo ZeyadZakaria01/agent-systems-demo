@@ -7,13 +7,13 @@ To add a check, drop a module `demo/checks/<name>.py` that decorates a function:
 
 - `row` / `claim` / `control`: the scorecard row ID, [P1]'s claim text, whether the row is a control.
   A module with several rows passes `rows=[Row(id, claim, control), ...]` and returns one verdict per row.
-- `systems`: ids the check runs on (see `demo/systems.py`); `None` = every system.
+- `systems`: ids the check runs on (see `demo/systems/registry.py`); `None` = every system.
 - The function gets a `Ctx` (`ctx.system` is the system adapter on a fresh database, `ctx.run_day` the run's date),
   uses only the adapter, and returns a `Verdict` (or a list, one per declared row). A check needing several fresh
   databases (a story each, a ramp per repeat) uses `with ctx.fresh_system(tag) as s:`, one at a time, each with its
-  own snapshot (`demo/session.py`). It does not start servers, write snapshots or set `system` / `snapshots` on the
+  own snapshot (`demo/systems/session.py`). It does not start servers, write snapshots or set `system` / `snapshots` on the
   verdict: the runner does.
-- Read fields with `demo.reads.current_value` (it returns `NO_VALUE` for "no current value", `None` for a written
+- Read fields with `demo.systems.reads.current_value` (it returns `NO_VALUE` for "no current value", `None` for a written
   `null`), and read capabilities from `system.describe()` (`keeps_history`), never from missing keys.
 - Modules starting with `_` are skipped. No list needs editing: `discover()` imports every module here.
 - `Row(..., probe=True)` marks a probe of a proposed condition (the time probes, C4'): it is not [P1]'s claim, so the
@@ -34,8 +34,8 @@ from collections.abc import Callable
 from dataclasses import dataclass
 from datetime import date
 
-from demo.adapter import System
-from demo.session import Session
+from demo.systems.adapter import System
+from demo.systems.session import Session
 from demo.verdict import Verdict
 
 
@@ -60,7 +60,7 @@ class Ctx:
 
     def fresh_system(self, tag: str):
         """`with ctx.fresh_system("story-1") as s:` opens another fresh system (own DB / server) with its own
-        snapshot; one at a time (see `demo/session.py`)."""
+        snapshot; one at a time (see `demo/systems/session.py`)."""
         return self.session.fresh_system(tag)
 
 

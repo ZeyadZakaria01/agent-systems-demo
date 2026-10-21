@@ -28,9 +28,9 @@ with nothing, which is the evidence.
 import json
 import re
 
-from demo.adapter import Rejected, System
 from demo.checks import Ctx, check
-from demo.reads import current_value
+from demo.systems.adapter import Rejected, System
+from demo.systems.reads import current_value
 from demo.verdict import FAIL, Case, Verdict
 
 CLAIM = (

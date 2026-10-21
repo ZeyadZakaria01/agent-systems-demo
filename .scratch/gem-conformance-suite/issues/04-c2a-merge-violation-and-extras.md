@@ -15,6 +15,6 @@
 
 ## Comments
 
-Merged as `85ef4ae`; reviewed and fixed in `16f2bd5` (dropped-holds-newer enforced, upserts counted apart, tests through the adapter with a generic stand-in). Smoke F18.
+Merged as `5cd5c71`; reviewed and fixed in `467de6a` (dropped-holds-newer enforced, upserts counted apart, tests through the adapter with a generic stand-in). Smoke F18.
 
 - 2026-10-21, spec revision (this ticket stays resolved): C2(a) is reported as existence, with the natural random-ID count (10/20, F9) beside it and not as a rate, and a lapsed-override read joins C2 as C2(d); both are ticket 22. The merge revision window is also measured in interactions on the reference GEM (ticket 30).

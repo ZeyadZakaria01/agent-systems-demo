@@ -2,9 +2,9 @@
 """Record a series of chat takes on a rate-limited provider, spending quota only on takes that can finish.
 
     .venv/bin/python scripts/chat_series.py bad-merge --takes 10 --provider groq --model openai/gpt-oss-20b \
-        --out demo/chat-series/gpt-oss-20b/bad-merge
+        --out runs/chat-series/gpt-oss-20b/bad-merge
 
-One take at a time with `demo.chat_run record`. Resumes: takes already in `--out` count. Before each take on Groq, one
+One take at a time with `demo.chat.run record`. Resumes: takes already in `--out` count. Before each take on Groq, one
 1-token request reads the free-tier quota left today (`x-ratelimit-remaining-requests`); the requests the last take
 used (the drop between two readings, minus the reading itself) estimate the next take, which starts only if it fits
 with a 20% margin. The series stops at the first failed take and never retries it (a failed take saves nothing, and
@@ -87,7 +87,7 @@ def groq_quota(model: str) -> dict:
         with urllib.request.urlopen(req, timeout=30) as resp:
             h = resp.headers
     except urllib.error.HTTPError as e:
-        raise SystemExit(f"Groq refused the quota check: HTTP {e.code} {e.read()[:200]!r}")
+        raise SystemExit(f"Groq refused the quota check: HTTP {e.code} {e.read()[:200]!r}") from e
 
     def num(name):
         v = h.get(name)
@@ -136,7 +136,7 @@ def main() -> int:
             return 3
         print(f"[series] {args.case} take {done + 1}/{args.takes}", flush=True)
         rc = subprocess.run(
-            [sys.executable, "-m", "demo.chat_run", "record", args.case, "--recordings", str(args.out)],
+            [sys.executable, "-m", "demo.chat.run", "record", args.case, "--recordings", str(args.out)],
             cwd=REPO,
             env=env,
         ).returncode

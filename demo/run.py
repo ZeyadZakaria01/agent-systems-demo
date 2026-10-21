@@ -2,27 +2,27 @@
 `--url`, `--as`, `--delay`, `--step`).
 
 Recorded mode: per system, per check, a fresh database (a server started with `scripts/run_memstate.sh` for MemState
-systems, stopped when the check ends; the baseline in-process); results go to `demo/results/<run id>/`.
+systems, stopped when the check ends; the baseline in-process); results go to `runs/results/<run id>/`.
 A run that starts a server (a MemState system, or `--chat`) holds the machine-wide lock for its whole length
-(`demo/server_lock.py`), also when started under `flock .../server.lock`, which the commands below keep:
+(`demo/systems/server_lock.py`), also when started under `flock .../server.lock`, which the commands below keep:
 
     flock ../agent-systems-demo-wt/server.lock .venv/bin/python -m demo.run --systems upstream,baseline
 
 Flags: `--systems a,b` (default: every system that exists; `step1`..`step3` need that many commits on `bitemporal`),
 `--checks C1,...` (row or check ids, default all),
 `--ramp-repeats N` (C5 latency ramps, default 1 while building, 3 for the run of record),
-`--record` (final step: copy the scorecard, `results.json` and snapshots to the tracked `demo/record/<run id>/`),
+`--record` (final step: copy the scorecard, `results.json` and snapshots to the tracked `runs/record/<run id>/`),
 `--chat` (after the systems: record both chat runs, `bad-merge` on upstream and `two-weeks` on step 3, into this run's
 folder; Ollama and the proxy are started for them and stopped after, also when they were running), `--recordings DIR`
-(where the chat recordings are read and written, default `demo/recordings/`), `--list`, `--results-root DIR`. After each MemState system's checks the runner runs MemState's 39 upstream tests
-(`demo/upstream_tests.py`: upstream in `MemState/`, a step in the patched copy while it is checked out) and records the
-counts. The scorecard is followed by the per-step change table (`demo/changes.py`) once
+(where the chat recordings are read and written, default `runs/recordings/`), `--list`, `--results-root DIR`. After each MemState system's checks the runner runs MemState's 39 upstream tests
+(`demo/systems/upstream_tests.py`: upstream in `MemState/`, a step in the patched copy while it is checked out) and records the
+counts. The scorecard is followed by the per-step change table (`demo/reporting/changes.py`) once
 upstream or a patch step was measured. The printed output ends with a block that pastes into `docs/findings.md`.
 
 Failure handling: a check that raises, a system that cannot open (server did not start, setup failed) or a server
 that dies mid-check gives `error` verdicts (with the evidence that could still be captured) and the run goes on;
 `results.json` and `scorecard.md` are rewritten after every check (`"complete": false` until the end), so an
-interrupted run keeps what it collected. Each system's `setup`/`teardown` hooks (`demo/systems.py`) bracket its checks.
+interrupted run keeps what it collected. Each system's `setup`/`teardown` hooks (`demo/systems/registry.py`) bracket its checks.
 """
 
 from __future__ import annotations
@@ -36,21 +36,35 @@ from dataclasses import dataclass, field
 from datetime import date
 from pathlib import Path
 
-from demo import chat_run, live
-from demo.adapter import utc_now
-from demo.changes import CHAIN, REFERENCE_CHAIN, change_table_payload, regression_summary, render_change_tables
-from demo.chat_recording import RECORDINGS_ROOT, latest_per_case, render_chat_cases, results_payload
+from demo import live
+from demo.chat import run as chat_run
+from demo.chat.recording import latest_per_case, render_chat_cases, results_payload
 from demo.checks import Check, discover, natural_key
-from demo.deviations import DEVIATIONS
 from demo.evidence import RunDir, new_run_dir, write_results
 from demo.failures import detail as _detail
 from demo.failures import errored as _errored
 from demo.failures import run_check
-from demo.latency_tables import with_latency
-from demo.over_flagging_tables import render_over_flagging
-from demo.paths import RECORD_ROOT, REPO_ROOT, RESULTS_ROOT, SERVER_LOCK, SHARED_ROOT
-from demo.record import record_run
-from demo.scorecard import (
+from demo.paths import (
+    RECORD_ROOT,
+    RECORDINGS_ROOT,
+    REPO_ROOT,
+    RESULTS_ROOT,
+    RESULTS_ROOT_LIVE,
+    SERVER_LOCK,
+    SHARED_ROOT,
+)
+from demo.reporting.changes import (
+    CHAIN,
+    REFERENCE_CHAIN,
+    change_table_payload,
+    regression_summary,
+    render_change_tables,
+)
+from demo.reporting.deviations import DEVIATIONS
+from demo.reporting.latency import with_latency
+from demo.reporting.over_flagging import render_over_flagging
+from demo.reporting.record import record_run
+from demo.reporting.scorecard import (
     COLUMNS,
     SCOPE_NOTE,
     Column,
@@ -62,12 +76,13 @@ from demo.scorecard import (
     render_probes,
     render_scorecard,
 )
-from demo.server_lock import server_lock
-from demo.storyline_tables import render_storyline
-from demo.systems import SYSTEMS, SystemSpec
-from demo.upstream_tests import render_upstream_tests
+from demo.reporting.storyline import render_storyline
+from demo.systems.adapter import utc_now
+from demo.systems.registry import SYSTEMS, SystemSpec
+from demo.systems.server_lock import server_lock
+from demo.systems.upstream_tests import render_upstream_tests
 from demo.verdict import Verdict, measured
-from demo.windows import render_windows
+from demo.workloads.windows import render_windows
 
 
 @dataclass
@@ -129,7 +144,7 @@ def run_recorded(
             scorecard += "\n\n" + storyline
         if over_flagging := render_over_flagging(verdicts):
             scorecard += "\n\n" + over_flagging
-        if chat_cases := render_chat_cases(chats):  # recorded chat runs (ticket 17), replayed from demo/recordings/
+        if chat_cases := render_chat_cases(chats):  # recorded chat runs (ticket 17), replayed from runs/recordings/
             scorecard += "\n\n" + chat_cases
         scorecard = with_latency(scorecard, verdicts)
         if tests := render_upstream_tests(test_counts, {s: registry[s].label for s in test_counts}):
@@ -317,7 +332,7 @@ def _main_live(ap: argparse.ArgumentParser, args, available: list[Check], argv: 
         result = live.run_live(
             args.url,
             _select(ap, available, args.checks),
-            args.results_root or live.RESULTS_ROOT_LIVE,
+            args.results_root or RESULTS_ROOT_LIVE,
             shlex.join(["python", "-m", "demo.run", *argv]),
             as_system=args.as_system,
             delay=args.delay,
@@ -342,7 +357,7 @@ def main(argv: list[str] | None = None) -> int:
         "step fails unless bitemporal holds exactly three commits)",
     )
     ap.add_argument("--checks", help="comma-separated row or check ids (default: all)")
-    ap.add_argument("--results-root", type=Path, help="default demo/results (recorded) or demo/results-live (live)")
+    ap.add_argument("--results-root", type=Path, help="default runs/results (recorded) or runs/results-live (live)")
     live_group = ap.add_argument_group("live mode (--mode live; see demo/live.py)")
     live_group.add_argument("--url", help="the running MemState server to drive, e.g. http://127.0.0.1:8765 (required)")
     live_group.add_argument(
@@ -366,16 +381,16 @@ def main(argv: list[str] | None = None) -> int:
         "--recordings",
         type=Path,
         default=RECORDINGS_ROOT,
-        help="the chat recordings folder: read for the scorecard, written by --chat (default demo/recordings)",
+        help="the chat recordings folder: read for the scorecard, written by --chat (default runs/recordings)",
     )
     ap.add_argument(
         "--record",
         action="store_true",
-        help="final step: copy scorecard.md, results.json and snapshots/ to the tracked demo/record/<run id>/",
+        help="final step: copy scorecard.md, results.json and snapshots/ to the tracked runs/record/<run id>/",
     )
     ap.add_argument("--list", action="store_true", help="list checks and systems, then exit")
     args = ap.parse_args(argv)
-    import demo.ramp as ramp
+    import demo.workloads.ramp as ramp
 
     ramp.REPEATS = max(1, args.ramp_repeats)
 
@@ -397,7 +412,7 @@ def main(argv: list[str] | None = None) -> int:
     checks = _select(ap, available, args.checks)
     results_root = args.results_root or RESULTS_ROOT
     command = pasteable_command(argv)
-    # the recordings cite their snapshots by the folder the run ends in: demo/record/ when it is recorded, else here
+    # the recordings cite their snapshots by the folder the run ends in: runs/record/ when it is recorded, else here
     link_root = RECORD_ROOT if args.record else results_root
     chats = (lambda run, recordings: chat_run.record_chats(run, recordings, link_root, command)) if args.chat else None
     with server_lock() if needs_server_lock(systems, args.chat) else nullcontext():

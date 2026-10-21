@@ -31,10 +31,10 @@ from dataclasses import asdict, dataclass
 from statistics import median
 
 from demo.checks import Ctx, check
-from demo.merge import DEFAULT_TIMEOUT_S
-from demo.reads import current_value, field_in_response, read_request
+from demo.systems.reads import current_value, field_in_response, read_request
 from demo.verdict import Case, Verdict
-from demo.windows import interactions
+from demo.workloads.merge import DEFAULT_TIMEOUT_S
+from demo.workloads.windows import interactions
 
 CLAIM = (
     "C3 (dependency consistency): updating a unit triggers evaluation of units linked by propagation-bearing "

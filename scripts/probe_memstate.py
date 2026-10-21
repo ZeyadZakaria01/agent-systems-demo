@@ -187,7 +187,7 @@ def probe_salience(c: Client, args) -> dict:
 def probe_merge(c: Client, args) -> dict:
     """Two same-title topics; the second (to be merged) holds the newer value."""
     runs = []
-    for i in range(args.repeats):
+    for _ in range(args.repeats):
         title = f"Vendor Contract {uuid.uuid4().hex[:8]}"
         t1, _ = c.ingest(
             {"placement": "new_topic", "title": title, "fields": [field("March 15", "Deadline", "kickoff-notes")]}

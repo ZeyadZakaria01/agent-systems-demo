@@ -1,6 +1,6 @@
 # Storyline draft: the Website Redesign example (for review)
 
-Generated from `demo/storyline.py` by `python -m demo.storyline_draft`; edit the data there and regenerate. Recorded-run numbers (triage counts, reinforcement precision, unexpected-state counts) live in `docs/findings.md` under the storyline F-entry for the date of that run; they are not copied here.
+Generated from `demo/workloads/storyline.py` by `python -m demo.reporting.storyline_draft`; edit the data there and regenerate. Recorded-run numbers (triage counts, reinforcement precision, unexpected-state counts) live in `docs/findings.md` under the storyline F-entry for the date of that run; they are not copied here.
 
 **29 events** (each one `/v1/ingest` placement) and **15 questions** (each with a LongMemEval ability, a ground-truth answer and the topic that holds the answer), on the paper's example.
 

@@ -1,0 +1,358 @@
+{
+  "schema": 1,
+  "case": "two-weeks",
+  "title": "Two weeks ago on step 3: \"I started my new job two weeks ago\", then \"how long have I been there?\"",
+  "run_id": "20261021-033615",
+  "recorded_at": "2026-10-21T00:36:25+00:00",
+  "command": "cd /home/zeyad/work/agent-systems-demo-wt/18-two-weeks-chat && /home/zeyad/work/agent-systems-demo/.venv/bin/python -m demo.chat_run record two-weeks --seed-profile",
+  "snapshot": "runs/results/20261021-033615/snapshots/step3/chat-two-weeks.json",
+  "system": {
+    "label": "bitemporal patch step 3 (5c5c9e6, LadybugDB)",
+    "url": "http://127.0.0.1:8765",
+    "db_path": "/home/zeyad/work/agent-systems-demo/.runtime/gem-suite/20261021-033615/step3-chat-two-weeks/memstate.lbug",
+    "commit": "5c5c9e6707b69c0d15f96c08691377a87ef92a73",
+    "engine": "MemState engine module: ladybug",
+    "source_dir": "/home/zeyad/work/agent-systems-demo/MemState-patched/src"
+  },
+  "llm": {
+    "provider": "ollama",
+    "model": "qwen3.5:2b",
+    "base_url": "http://127.0.0.1:11435 (think-off proxy, ADR 0003) -> Ollama :11434",
+    "left_unset": [
+      "`intent_override: ingest` on W1 only (W2's route is the router's)",
+      "no `model` in the request (the server's `MEMSTATE_OLLAMA_MODEL`)",
+      "no Groq",
+      "no judge"
+    ]
+  },
+  "state": {
+    "fresh_db": true,
+    "seeded_topics": 1,
+    "seed": {
+      "request": {
+        "placement": "new_topic",
+        "title": "Me",
+        "topic_kind": "person",
+        "summary": "The user's own profile",
+        "fields": [
+          {
+            "name": "job",
+            "value": "analyst at Acme",
+            "valid_from": "2025-01-01T00:00:00+00:00",
+            "provenance": "seed"
+          }
+        ]
+      },
+      "topic_id": "194fdade-45c3-4ec2-b590-7725b22ebed8"
+    },
+    "events_played": 0,
+    "setup_writes": [],
+    "first_intent_override": "ingest",
+    "dates": {
+      "run_day": "2026-10-21",
+      "first_reference_time": "2026-10-07",
+      "second_reference_time": "2026-10-21",
+      "start_date": "2026-09-23",
+      "shift_days": 1,
+      "story_first_day": "2026-10-06",
+      "story_run_day": "2026-10-20"
+    }
+  },
+  "turns": [
+    {
+      "question": "W1",
+      "ability": "temporal reasoning",
+      "text": "I started my new job two weeks ago",
+      "graded_on": "the stored start date",
+      "reference_time": "2026-10-07T00:00:00+00:00",
+      "ground_truth": "2026-09-23 (two weeks before the reference time 2026-10-07), +- 1 day",
+      "request": {
+        "messages": [
+          {
+            "role": "user",
+            "content": "I started my new job two weeks ago"
+          }
+        ],
+        "provider": "ollama",
+        "reference_time": "2026-10-07T00:00:00+00:00",
+        "intent_override": "ingest"
+      },
+      "answer": "I've added a field showing your job start date as September 22, 2026. This records when you started your new role at Acme based on your two-week notice from September 22, 2026. I didn't create a new topic - this fact has been stored within your existing profile topic since it's just one piece of personal information about yourself.\n\nIs there anything else you'd like to add about your new job or the work you started?",
+      "route": {
+        "intent": "ingest",
+        "intent_source": "override",
+        "tool_calls": [
+          "memory_list_topics",
+          "memory_get_topic",
+          "memory_append_field"
+        ]
+      },
+      "latency_ms": 7473.851,
+      "model": "qwen3.5:2b",
+      "provider": "ollama",
+      "tool_log": [
+        {
+          "tool": "memory_list_topics",
+          "args": {},
+          "result": {
+            "ok": true,
+            "topics": [
+              {
+                "id": "194fdade-45c3-4ec2-b590-7725b22ebed8",
+                "title": "Me",
+                "summary": "The user's own profile",
+                "topic_kind": "person",
+                "archived": false
+              }
+            ],
+            "topic_ids": [
+              "194fdade-45c3-4ec2-b590-7725b22ebed8"
+            ]
+          }
+        },
+        {
+          "tool": "memory_get_topic",
+          "args": {
+            "topic_id": "194fdade-45c3-4ec2-b590-7725b22ebed8"
+          },
+          "result": {
+            "ok": true,
+            "topic": {
+              "id": "194fdade-45c3-4ec2-b590-7725b22ebed8",
+              "title": "Me",
+              "summary": "The user's own profile",
+              "topic_kind": "person",
+              "salience": 1.0,
+              "failed_salience": 0.0,
+              "archived": false,
+              "fields": {
+                "job": {
+                  "field_type": "string",
+                  "ref_topic_id": null,
+                  "salience": 1.0,
+                  "value": "analyst at Acme",
+                  "history": [
+                    {
+                      "id": "3f46e998-ded9-4266-9ae3-1f04a21de11f",
+                      "valid_from": "2025-01-01T00:00:00+00:00",
+                      "value": "analyst at Acme",
+                      "why_changed": null,
+                      "impact_expected": null,
+                      "provenance": "seed",
+                      "operation": null,
+                      "invalid_at": null,
+                      "created_at": "2026-10-21T00:36:26.016922+00:00",
+                      "expired_at": null,
+                      "replaces_entry_id": null,
+                      "corrected_by_entry_id": null
+                    }
+                  ],
+                  "history_count": 1
+                }
+              },
+              "topic_history": [
+                {
+                  "ts": "2026-10-21T00:36:26.008361+00:00",
+                  "kind": "created",
+                  "detail": {
+                    "title": "Me"
+                  }
+                }
+              ],
+              "created_at": "2026-10-21T00:36:26.008361+00:00",
+              "updated_at": "2026-10-21T00:36:26.026256+00:00"
+            }
+          }
+        },
+        {
+          "tool": "memory_append_field",
+          "args": {
+            "topic_id": "194fdade-45c3-4ec2-b590-7725b22ebed8",
+            "field_name": "job_start_date",
+            "value": "2026-09-22",
+            "why_changed": "Started new job two weeks ago (September 22, 2026)",
+            "provenance": "User reported starting new job on September 22, 2026"
+          },
+          "result": {
+            "ok": true,
+            "version_id": "ae2a50f1-2de8-4520-b9de-94179648d5b2"
+          }
+        }
+      ],
+      "written": [
+        {
+          "topic_id": "194fdade-45c3-4ec2-b590-7725b22ebed8",
+          "title": "Me",
+          "field": "job_start_date",
+          "value": "2026-09-22",
+          "valid_from": "2026-10-07T00:00:00+00:00",
+          "invalid_at": null,
+          "provenance": "User reported starting new job on September 22, 2026 (reference_time 2026-10-07T00:00:00+00:00)",
+          "created_at": "2026-10-21T00:36:32.149256+00:00",
+          "why_changed": "Started new job two weeks ago (September 22, 2026)"
+        }
+      ],
+      "topics_created": [],
+      "stored_start_date": {
+        "truth": "2026-09-23",
+        "tolerance_days": 1,
+        "candidates": [
+          {
+            "source": "value",
+            "topic_id": "194fdade-45c3-4ec2-b590-7725b22ebed8",
+            "field": "job_start_date",
+            "date": "2026-09-22",
+            "from": "2026-09-22"
+          },
+          {
+            "source": "valid_from",
+            "topic_id": "194fdade-45c3-4ec2-b590-7725b22ebed8",
+            "field": "job_start_date",
+            "date": "2026-10-07",
+            "from": "2026-10-07T00:00:00+00:00"
+          }
+        ],
+        "within_tolerance": true
+      }
+    },
+    {
+      "question": "W2",
+      "ability": "temporal reasoning",
+      "text": "how long have I been there?",
+      "graded_on": "the answer",
+      "reference_time": "2026-10-21T00:00:00+00:00",
+      "ground_truth": "four weeks",
+      "request": {
+        "messages": [
+          {
+            "role": "user",
+            "content": "how long have I been there?"
+          }
+        ],
+        "provider": "ollama",
+        "reference_time": "2026-10-21T00:00:00+00:00"
+      },
+      "answer": "I've been a job seeker at my current role since September 22, 2026, but I don't have information about how long I was there before that date.",
+      "route": {
+        "intent": "query",
+        "intent_source": "classifier",
+        "tool_calls": [
+          "memory_list_topics",
+          "memory_get_topic"
+        ]
+      },
+      "latency_ms": 2813.654,
+      "model": "qwen3.5:2b",
+      "provider": "ollama",
+      "tool_log": [
+        {
+          "tool": "memory_list_topics",
+          "args": {
+            "include_archived": false
+          },
+          "result": {
+            "ok": true,
+            "topics": [
+              {
+                "id": "194fdade-45c3-4ec2-b590-7725b22ebed8",
+                "title": "Me",
+                "summary": "The user's own profile",
+                "topic_kind": "person",
+                "archived": false
+              }
+            ],
+            "topic_ids": [
+              "194fdade-45c3-4ec2-b590-7725b22ebed8"
+            ]
+          }
+        },
+        {
+          "tool": "memory_get_topic",
+          "args": {
+            "topic_id": "194fdade-45c3-4ec2-b590-7725b22ebed8"
+          },
+          "result": {
+            "ok": true,
+            "topic": {
+              "id": "194fdade-45c3-4ec2-b590-7725b22ebed8",
+              "title": "Me",
+              "summary": "The user's own profile",
+              "topic_kind": "person",
+              "salience": 1.1,
+              "failed_salience": 0.0,
+              "archived": false,
+              "fields": {
+                "job": {
+                  "field_type": "string",
+                  "ref_topic_id": null,
+                  "salience": 1.1,
+                  "value": "analyst at Acme",
+                  "history": [
+                    {
+                      "id": "3f46e998-ded9-4266-9ae3-1f04a21de11f",
+                      "valid_from": "2025-01-01T00:00:00+00:00",
+                      "value": "analyst at Acme",
+                      "why_changed": null,
+                      "impact_expected": null,
+                      "provenance": "seed",
+                      "operation": null,
+                      "invalid_at": null,
+                      "created_at": "2026-10-21T00:36:26.016922+00:00",
+                      "expired_at": null,
+                      "replaces_entry_id": null,
+                      "corrected_by_entry_id": null
+                    }
+                  ],
+                  "history_count": 1
+                },
+                "job_start_date": {
+                  "field_type": "string",
+                  "ref_topic_id": null,
+                  "salience": 1.1,
+                  "value": "2026-09-22",
+                  "history": [
+                    {
+                      "id": "ae2a50f1-2de8-4520-b9de-94179648d5b2",
+                      "valid_from": "2026-10-07T00:00:00+00:00",
+                      "value": "2026-09-22",
+                      "why_changed": "Started new job two weeks ago (September 22, 2026)",
+                      "impact_expected": null,
+                      "provenance": "User reported starting new job on September 22, 2026 (reference_time 2026-10-07T00:00:00+00:00)",
+                      "operation": null,
+                      "invalid_at": null,
+                      "created_at": "2026-10-21T00:36:32.149256+00:00",
+                      "expired_at": null,
+                      "replaces_entry_id": null,
+                      "corrected_by_entry_id": null
+                    }
+                  ],
+                  "history_count": 1
+                }
+              },
+              "topic_history": [
+                {
+                  "ts": "2026-10-21T00:36:26.008361+00:00",
+                  "kind": "created",
+                  "detail": {
+                    "title": "Me"
+                  }
+                }
+              ],
+              "created_at": "2026-10-21T00:36:26.008361+00:00",
+              "updated_at": "2026-10-21T00:36:35.657852+00:00"
+            }
+          }
+        }
+      ],
+      "written": [],
+      "topics_created": [],
+      "answer_contains_ground_truth": false,
+      "hint_rule": "the answer says four weeks (\"four weeks\", \"4 weeks\" or \"28 days\")"
+    }
+  ],
+  "environment": {
+    "model_warmed_up_s": 7.06,
+    "ollama_started_by_run": true,
+    "ollama_model_setting": "qwen3.5:2b"
+  }
+}

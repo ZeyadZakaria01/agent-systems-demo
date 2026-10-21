@@ -16,7 +16,7 @@ What differs from recorded mode (`demo/run.py`):
   Enter instead. State reads for the snapshot are not paced.
 - Everything is labelled live: verdicts carry system `live`, `results.json` has `"mode": "live"`, the scorecard file
   is `scorecard-live.md` headed "LIVE", every printed line starts with `[LIVE]`.
-- Output goes to `demo/results-live/<run id>/`, never to the recorded results; the runner refuses a results root
+- Output goes to `runs/results-live/<run id>/`, never to the recorded results; the runner refuses a results root
   inside the recorded one. A live run is never part of the scorecard of record.
 - `--as` says which system the server is, for the checks' `systems=` filter (default `upstream`; a patch server is
   `step1`, ...). Nothing is verified against it: the server decides.
@@ -32,20 +32,19 @@ from pathlib import Path
 
 import httpx
 
-from demo.adapter import System, utc_now
 from demo.checks import Check, natural_key
-from demo.deviations import DEVIATIONS
 from demo.evidence import RunDir, new_run_dir, slug, write_results
 from demo.failures import run_check
-from demo.latency_tables import with_latency
-from demo.memstate_system import MemStateSystem
-from demo.paths import REPO_ROOT, RESULTS_ROOT
-from demo.scorecard import Column, claimed_by_p1, counts, render_probes, render_scorecard
-from demo.storyline_tables import render_storyline
+from demo.paths import RESULTS_ROOT
+from demo.reporting.deviations import DEVIATIONS
+from demo.reporting.latency import with_latency
+from demo.reporting.scorecard import Column, claimed_by_p1, counts, render_probes, render_scorecard
+from demo.reporting.storyline import render_storyline
+from demo.systems.adapter import System, utc_now
+from demo.systems.memstate import MemStateSystem
 from demo.verdict import Verdict
 
 LIVE = "live"
-RESULTS_ROOT_LIVE = REPO_ROOT / "demo" / "results-live"
 BANNER = "LIVE RUN - not a result of record; one shared database, titles suffixed per check."
 
 

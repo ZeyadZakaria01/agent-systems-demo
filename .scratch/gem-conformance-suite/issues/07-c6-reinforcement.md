@@ -15,6 +15,6 @@
 
 ## Comments
 
-Merged as `4344039`; reviewed and fixed in `16f2bd5` (C6-2 gives `partial`, not not-scored, when the control is not archived; user's question on this verdict was cancelled, `partial` is the default taken). Smoke F15, C6-2 re-recorded.
+Merged as `5cd5c71`; reviewed and fixed in `467de6a` (C6-2 gives `partial`, not not-scored, when the control is not archived; user's question on this verdict was cancelled, `partial` is the default taken). Smoke F15, C6-2 re-recorded.
 
 - 2026-10-21, spec revision (this ticket stays resolved), ratified by the user: C6 clause 2 stops at the first forgetting pass; when the control is not archived the row is `not-scored` ("forgetting was not shown to run"), not `partial`. Clause 1 gains an as-of salience case. Both are ticket 22. Upstream's recorded `pass` is unaffected (F15).

@@ -16,6 +16,6 @@
 
 ## Comments
 
-Merged to `gem-suite` as `dea21ff`. Generator: `demo/ramp.py`. Checks: `demo/checks/c5_topic_ramp.py` (C5-1, C5-2). Latency table: `demo/latency_tables.py`. `--ramp-repeats` (default 1). Smoke F22: C5-1 **pass** on upstream and step 1 (0.01 canary archived at 501 topics); C5-2 **fail** (0 archived through 2,000); baseline both **absent**; step 1 vs upstream no change; LadybugDB ingest/query faster than Kuzu.
+Merged to `gem-suite` as `5cd5c71`. Generator: `demo/workloads/ramp.py`. Checks: `demo/checks/c5_topic_ramp.py` (C5-1, C5-2). Latency table: `demo/reporting/latency.py`. `--ramp-repeats` (default 1). Smoke F22: C5-1 **pass** on upstream and step 1 (0.01 canary archived at 501 topics); C5-2 **fail** (0 archived through 2,000); baseline both **absent**; step 1 vs upstream no change; LadybugDB ingest/query faster than Kuzu.
 
 - 2026-10-21, spec revision (this ticket stays resolved): the "Reasoner wait" box no longer holds (the table prints a settle time, F11/F22); a ramp run once is labelled provisional and never prints "no measurable difference", and the ×3 run is "if time allows" (ticket 31); C5's verdict text states the declared bound beside the active count (ticket 22). The baseline's C5 rows are now the versioned row's (ticket 20).

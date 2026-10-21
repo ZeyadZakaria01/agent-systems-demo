@@ -6,7 +6,7 @@ log), the take's reference time and its user message, on a throwaway store; the 
 recording beside what the given source would store now. It checks resolver changes on real model output before any
 live take is spent.
 
-    PYTHONPATH=MemState-patched/src .venv/bin/python scripts/replay_two_weeks_writes.py demo/chat-series/qwen3.5-4b-think/two-weeks
+    PYTHONPATH=MemState-patched/src .venv/bin/python scripts/replay_two_weeks_writes.py runs/chat-series/qwen3.5-4b-think/two-weeks
 """
 
 from __future__ import annotations

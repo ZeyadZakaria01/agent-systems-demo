@@ -16,4 +16,4 @@
 
 ## Comments
 
-Merged as `bed6162` (`bitemporal` @ `089b823`); reviewed and fixed in `16f2bd5` (`--patched` argument loop, README patched-copy section); the patched-server smoke (/health, one ingest + query) is recorded in the journal.
+Merged as `5b2bb08` (`bitemporal` @ `089b823`); reviewed and fixed in `467de6a` (`--patched` argument loop, README patched-copy section); the patched-server smoke (/health, one ingest + query) is recorded in the journal.

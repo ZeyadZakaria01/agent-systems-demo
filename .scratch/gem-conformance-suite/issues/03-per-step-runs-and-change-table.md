@@ -14,6 +14,6 @@
 
 ## Comments
 
-Merged as `48eda0d`; reviewed and fixed in `16f2bd5` (teardown returns to `bitemporal` whenever setup completed the checkout; step names derive from the registry). Smoke F16.
+Merged as `5cd5c71`; reviewed and fixed in `467de6a` (teardown returns to `bitemporal` whenever setup completed the checkout; step names derive from the registry). Smoke F16.
 
 - 2026-10-21, spec revision (this ticket stays resolved): the change table gains case-level lines and a second chain (phase 1 → phase 2) in ticket 23; its random-ID counts and the merge existence line reach `scorecard.md` in ticket 31 (suite audit F2, F5). The patch column becomes the MemState group of four columns (upstream, steps 1–3) in ticket 31.

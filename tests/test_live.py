@@ -5,10 +5,10 @@ import json
 
 import pytest
 
-from demo.baseline import Baseline
 from demo.checks import check, discover
 from demo.live import LiveError, preflight, run_live
 from demo.paths import RESULTS_ROOT
+from demo.systems.baseline import Baseline
 from demo.verdict import Verdict
 
 

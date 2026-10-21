@@ -1,4 +1,4 @@
-<!-- Adversarial review, 2026-10-20, read-only except this file. Sources: main checkout (report, papers, tickets, ADRs, spec) and the `gem-suite` worktree `/home/zeyad/work/agent-systems-demo-wt/integration` @ 1ba8d31 (demo/, docs/findings.md F13-F22). Offline tests re-run: `pytest -q` -> 151 passed in 20.4 s. No server started. Graphiti read at commit 6e3e3cb via raw.githubusercontent.com (scratch copies deleted). Ids C/B/S/T are challenge ids; "F13-F22" are docs/findings.md entries; audit ids (suite-audit-vs-spec F1-F21, suite-audit-vs-report A1-A19) are cited as "audit F#" / "audit A#" and not repeated here. -->
+<!-- Adversarial review, 2026-10-20, read-only except this file. Sources: main checkout (report, papers, tickets, ADRs, spec) and the `gem-suite` worktree `/home/zeyad/work/agent-systems-demo-wt/integration` @ 467de6a (demo/, docs/findings.md F13-F22). Offline tests re-run: `pytest -q` -> 151 passed in 20.4 s. No server started. Graphiti read at commit 6e3e3cb via raw.githubusercontent.com (scratch copies deleted). Ids C/B/S/T are challenge ids; "F13-F22" are docs/findings.md entries; audit ids (suite-audit-vs-spec F1-F21, suite-audit-vs-report A1-A19) are cited as "audit F#" / "audit A#" and not repeated here. -->
 
 # Challenge list: conditions change, baseline, conformance suite, time probes
 
@@ -39,7 +39,7 @@ The challenges below are what is left after those.
 - **Evidence.**
   - Verified, paper:206-208: `V_i = ⟨(v_1,t_1,π_1)…(v_k,t_k,π_k)⟩`, "a timestamp t", C1 returns "the most recent non-archived value v_k as current". `v_k` is the last element of a sequence, so C1 presupposes a total order and a point timestamp.
   - Verified, report:537: the report itself needs two reinterpretations ("reading `t` as valid time" and "'most recent' as most recent up to the query time"), then adds "valid time covers the query time and … has not expired" (an interval), "as of on both axes" (a second timestamp), and (report:699) "shorter validity wins" among overlapping values (a priority rule; with layering `V_i` is no longer a sequence with a unique last element).
-  - Verified by computation (hand-coded rules over the suite's own stories, `demo/time_stories.py` shifted to 2026-10-20; not a system run). What each reading returns on the asked dates:
+  - Verified by computation (hand-coded rules over the suite's own stories, `demo/workloads/time_stories.py` shifted to 2026-10-20; not a system run). What each reading returns on the asked dates:
 
     | story, asked date | correct | `t` = recording time (upstream) | `t` = valid time, C1 literal | + "up to query time", point timestamps |
     |---|---|---|---|---|
@@ -85,8 +85,8 @@ The challenges below are what is left after those.
 ### C4. C1′ layering vs C2's "superseded value returned as current"
 - **Objection.** "After October your system returns $50 as current although $80 was written later and superseded it in the record. That is literally my C2 violation."
 - **Evidence.**
-  - Verified: paper:210 "no revision produces a state in which a superseded value is returned as current"; T4 story 1 expects $50 on Nov 5 (`demo/time_stories.py` `LAPSED_OVERRIDE_1`); report:699 hard-codes layering and claims "it costs no condition".
-  - Verified: the suite's own C2(a) defines the violation by write order: `OLDER`/`NEWER` in `demo/merge.py` and "the superseded value March 15 being current" (`checks/c2a_merge.py` docstring). On the patch, a dated merge (spec story 37) needs "superseded" defined by valid time; an undated one by recording time; the suite uses both without saying which C2 means.
+  - Verified: paper:210 "no revision produces a state in which a superseded value is returned as current"; T4 story 1 expects $50 on Nov 5 (`demo/workloads/time_stories.py` `LAPSED_OVERRIDE_1`); report:699 hard-codes layering and claims "it costs no condition".
+  - Verified: the suite's own C2(a) defines the violation by write order: `OLDER`/`NEWER` in `demo/workloads/merge.py` and "the superseded value March 15 being current" (`checks/c2a_merge.py` docstring). On the patch, a dated merge (spec story 37) needs "superseded" defined by valid time; an undated one by recording time; the suite uses both without saying which C2 means.
   - `[INFERENCE]`: a C2 checker that reads "superseded" as "older write" flags the patch's T4 answer. The report says "a bitemporal system can satisfy all six conditions" (report:537), but no check combines time rules with C2.
 - **Severity.** Serious (the report claims "costs no condition" for the one rule it adds).
 - **Defuse.** Define in C1′/C2: a value is *superseded* only when a later statement closes its validity (valid interval ended or replaced); an override that lapses does not supersede the base. Say so explicitly as a C2 clarification and run a combined check (the lapsed-override story is one: $50 returned after $80 lapsed, with C2(a)'s definition of supersession pointed at valid intervals).
@@ -139,7 +139,7 @@ The challenges below are what is left after those.
 - **Objection.** "MAFBench called for versioned fact stores with MVCC, write-ahead logging and conflict resolution. Your 'database' baseline has no versions, no transactions, no log. Of course it fails history. That does not show database guarantees are insufficient."
 - **Evidence.**
   - Verified: report:37, :649 and :677 state the claim "database guarantees are necessary but not sufficient" and say the baseline "tests this directly". MAFBench's call, report §8 (line 645): "versioned fact stores with multi-version concurrency control, write-ahead logging … conflict resolution".
-  - Verified: `demo/baseline.py:1-12` docstring and F21: the baseline "keeps no history, salience, archived flag, edges or dates"; C4 `fail`: "No history (update, merge, cap)".
+  - Verified: `demo/systems/baseline.py:1-12` docstring and F21: the baseline "keeps no history, salience, archived flag, edges or dates"; C4 `fail`: "No history (update, merge, cap)".
   - Verified: paper Table 1 lists "Temporal DB: Versioned histories" as a database-paradigm strength (paper:100) and paper:118 cites temporal databases; paper:230 (Observation 3a) is about *append-only* storage without semantic units. A last-write-wins upsert is neither of those.
 - **Severity.** Serious (the sentence "database guarantees are necessary but not sufficient" is a headline of §8 and §1 item 10; the comparator does not support it). Fatal only if the claim stays in the headline.
 - **Defuse.** Either add a **versioned-row baseline** (append-only history table with recording time, per-field transaction; a day of work, in-process like the baseline; it should pass C1, C4, and C1′ if given valid time, and fail C3, C5, C6) so the claim "versioning supplies C1/C2/C4, not C5/C6" is measured, or weaken the claim to "a plain row lacks history, salience and attenuation", which is what the baseline shows.
@@ -175,7 +175,7 @@ The challenges below are what is left after those.
 
 ### B5. Baseline retrieval parameters differ from MemState's
 - **Objection.** "Top-10 over a brute-force MiniLM scan versus MemState's top-8; the latency and reinforcement numbers are not comparable."
-- **Evidence.** Verified: `demo/baseline.py` `TOP_K = 10`; `demo/triage.py` default `top_k` 8; F22: baseline query 0.5 s at 100 topics to 4.2 s at 2,000 (whole-store scan), baseline omitted from the latency table; deviations table row "Baseline retrieval settings" declares top-10. Baseline write validation copies MemState's rejection rules `[INFERENCE]` from reading the API code (`demo/baseline.py` docstring).
+- **Evidence.** Verified: `demo/systems/baseline.py` `TOP_K = 10`; `demo/workloads/triage.py` default `top_k` 8; F22: baseline query 0.5 s at 100 topics to 4.2 s at 2,000 (whole-store scan), baseline omitted from the latency table; deviations table row "Baseline retrieval settings" declares top-10. Baseline write validation copies MemState's rejection rules `[INFERENCE]` from reading the API code (`demo/systems/baseline.py` docstring).
 - **Severity.** Minor (declared).
 - **Defuse.** Keep it declared; do not quote baseline latency.
 - **Ticket.** none (already in deviations table, listed again under "already answered").
@@ -219,7 +219,7 @@ The challenges below are what is left after those.
 ### S4. Setup writes bias C2(a) and C4's merge case; ×20 is one deterministic scenario repeated
 - **Objection.** "You retitled two topics through an editor endpoint so that the merge always drops the newer value, then report 20/20. That is an engineered state, and twenty repetitions of one deterministic scenario is n = 1."
 - **Evidence.**
-  - Verified: F18 and `demo/deviations.py:37-40`: the pair is arranged with a labelled setup `PATCH title`, so `dropped_held_newer` held 20/20 by construction; F9 on random ids gave stale-current 10/20 (8/20 on LadybugDB, F11). The merge keeps the lower id in 20/20 (F9), i.e. deterministic.
+  - Verified: F18 and `demo/reporting/deviations.py:37-40`: the pair is arranged with a labelled setup `PATCH title`, so `dropped_held_newer` held 20/20 by construction; F9 on random ids gave stale-current 10/20 (8/20 on LadybugDB, F11). The merge keeps the lower id in 20/20 (F9), i.e. deterministic.
   - Verified: the paper's own duplicate (paper:67, Figure 1, "stored twice") carries the *same* value; two conflicting duplicates are what ingestion's host selection (Algorithm 1 line 4, paper:304) is meant to avoid by versioning, and `/v1 new_topic` bypasses that LLM step. "Acquisition perfect by construction" (report:669) is the reason the state exists at all.
   - Verified: report:731 still reports the 10/20 figure beside F18's 20/20; audit A5 notes stale wording remains in §9.2/§9.4/§9.5.
 - **Severity.** Serious for the wording "violation rate 20/20"; minor for the existence claim (one reachable violating state refutes a universal "no revision produces…").
@@ -275,7 +275,7 @@ The challenges below are what is left after those.
 
 ### S11. The scored storyline avoids the one place where answer level and state level diverge
 - **Objection.** "Your storyline forbids duplicate titles, so the merge never happens there; the only contrast is one chat run."
-- **Evidence.** Verified: `demo/storyline.py:35-36` (no re-explained duplicate "because a same-title topic would be merged and C2 tests that"); F20 15/15 on both; ticket 11 still open.
+- **Evidence.** Verified: `demo/workloads/storyline.py:35-36` (no re-explained duplicate "because a same-title topic would be merged and C2 tests that"); F20 15/15 on both; ticket 11 still open.
 - **Severity.** Minor.
 - **Defuse.** Say the claim "stored state catches what answers do not" is demonstrated by C4/C5/C6 rows plus the chat case, not by the storyline.
 - **Ticket.** 11, 17.
@@ -287,8 +287,8 @@ The challenges below are what is left after those.
 ### T1. The probes fail upstream by construction: upstream receives no dates, the patch receives oracle dates
 - **Objection.** "You send upstream the writes with the dates stripped and ask it the same plain question on every date. Of course it answers with the last value. You do not test whether it orders by time; you test whether its API accepts a date."
 - **Evidence.**
-  - Verified: `demo/time_stories.py` docstring and `checks/time_probes.py` docstring: "Writes carry `valid_from` / `invalid_at` only for a system that accepts dates … the others get the same writes in the same order without dates", and every asked date is "the same plain read". Spec story 33: "so that the comparison isolates the time model".
-  - Verified: dates reach the patch as structured API fields (`ingest_request`); the capability test is `{"valid_from","invalid_at"} ⊆ properties` in the OpenAPI schema (`demo/memstate_system.py:97-102`; audit F8), so which path a system takes depends on the names in its schema.
+  - Verified: `demo/workloads/time_stories.py` docstring and `checks/time_probes.py` docstring: "Writes carry `valid_from` / `invalid_at` only for a system that accepts dates … the others get the same writes in the same order without dates", and every asked date is "the same plain read". Spec story 33: "so that the comparison isolates the time model".
+  - Verified: dates reach the patch as structured API fields (`ingest_request`); the capability test is `{"valid_from","invalid_at"} ⊆ properties` in the OpenAPI schema (`demo/systems/memstate.py:97-102`; audit F8), so which path a system takes depends on the names in its schema.
   - Verified: the controls ("recency expected") are right for upstream by definition (`Ask.recency`), so on upstream they cannot detect over-blocking (audit A10); over-blocking is only a patch risk.
   - Verified: T1's patch write invents a start for March 1 (Dec 1 of the previous year) that the story does not give (audit A16).
   - Consequence: any single-timestamp system (upstream, the baseline, the phase-1 reference GEM) fails T1-T4 and T6 whatever its logic. The scorecard cells say nothing about GEM's design intent, only about whether a dated API exists.
@@ -395,7 +395,7 @@ Next in line: C1 (amendment, not reading), C4 (C1′ layering vs C2's "supersede
 - Layering is beyond Zep; departures from Zep listed with the condition each serves: report:695-702.
 - C3 claimed by §4 opening but not §4.3: ticket 25 resolution, report §5 framing.
 - Absent kept separate from fail: ADR 0002 (the rationale is the issue, S3).
-- Setup-write arrangement for C2(a) and C4 merge: declared in `demo/deviations.py:37-40` and F18 (the wording of the rate is the issue, S4).
+- Setup-write arrangement for C2(a) and C4 merge: declared in `demo/reporting/deviations.py:37-40` and F18 (the wording of the rate is the issue, S4).
 - MemState's slots avoid Zep's LLM contradiction gate but a mismatched slot defeats it: report §5.7 "MemState's advantage, and its blind spot".
 - Extraction stays LLM-dependent: report:542 and §9.5 (the missing measurement is the issue, T8).
 - Reinforcement precision = Precision@k, no verdict: report:673, :688, F20.

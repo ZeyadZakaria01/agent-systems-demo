@@ -2,7 +2,7 @@
 `version_field`; the default read returns only April 20, a temporal read returns the full history."""
 
 from demo.checks import Ctx, check
-from demo.reads import current_value, field_in_response, history_values, read_request
+from demo.systems.reads import current_value, field_in_response, history_values, read_request
 from demo.verdict import Case, Verdict
 
 CLAIM = (

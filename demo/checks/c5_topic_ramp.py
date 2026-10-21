@@ -1,4 +1,4 @@
-"""C5 (bounded active state): the forgetting mechanism and the natural trajectory, driven by `demo/ramp.py`.
+"""C5 (bounded active state): the forgetting mechanism and the natural trajectory, driven by `demo/workloads/ramp.py`.
 
 Two rows, one check each (so each row links its own snapshots and databases), matching C6:
 
@@ -25,11 +25,19 @@ MemState verdicts come only from a recorded run. Tests pin the baseline (both ab
 
 from __future__ import annotations
 
-from demo import ramp
-from demo.adapter import System
 from demo.checks import Ctx, Row, check
-from demo.ramp import archive_stats, as_of_read, filler, ingest_undated, median_ms, plain_read, scored_latencies
+from demo.systems.adapter import System
 from demo.verdict import Case, Verdict
+from demo.workloads import ramp
+from demo.workloads.ramp import (
+    archive_stats,
+    as_of_read,
+    filler,
+    ingest_undated,
+    median_ms,
+    plain_read,
+    scored_latencies,
+)
 
 CLAUSE = (
     "C5 (Bounded active state). For every interaction count n, the active memory satisfies "

@@ -7,7 +7,7 @@ from datetime import date
 
 from demo.checks import Check
 from demo.evidence import RunDir, capture, write_snapshots
-from demo.session import OpenSystem, Session
+from demo.systems.session import OpenSystem, Session
 from demo.verdict import Verdict
 
 

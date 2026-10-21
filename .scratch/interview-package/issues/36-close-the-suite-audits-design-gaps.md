@@ -6,14 +6,14 @@ Blocked by: —
 
 ## Question
 
-The audits of `gem-suite` @ 1ba8d31 ([vs. spec](../assets/suite-audit-vs-spec.md), [vs. report](../assets/suite-audit-vs-report.md)) found design questions that the spec and report §9.5 leave open. Build tickets 12, 15, 17 and 19 cannot be scored as the report describes until they are decided:
+The audits of `gem-suite` @ 467de6a ([vs. spec](../assets/suite-audit-vs-spec.md), [vs. report](../assets/suite-audit-vs-report.md)) found design questions that the spec and report §9.5 leave open. Build tickets 12, 15, 17 and 19 cannot be scored as the report describes until they are decided:
 
 1. **Keep-and-copy on an ordinary close** (A2 / spec-audit F1). Does closing an open entry (setting `invalid_at`) expire and copy it? If it does, C1's exact history check and upstream's `history_count == 2` test break. If it does not, T5's "believed on Feb 10" loses the pre-close entry. Do default history views hide expired entries?
 2. **Per-step change table granularity** (A1 / F2). C4 on upstream is `partial` from four cases. Step 3 fixes only the merge case, so the row-level table shows no change, while §9.5 says "the merge tests flip". Options: a case-level diff, splitting C4 into rows, or rewording §9.5.
 3. **The stored current value on the patch** (A3 / F6). The adapter reads `current` from `/api/ui/topics/{id}` or falls back to `history[0]`. Must the patch expose `current`, or order history newest-first by valid time?
 4. **"A plain statement ends overrides" is unmeasured** (A4). Add an Oct 15 → $100 ask to the lapsed-override probe's story 2.
 5. **C4 "survives archiving" uses an editor write** (A7), while the spec says no verdict rests on a setup write. Options: archive through the forgetting transition (as C5-1 does), or accept the editor write and declare it as a deviation.
-6. **Where the run of record lives** (A13, A14). `demo/results/` is git-ignored, but §9.2 and §9.8 promise snapshot links. The "39 upstream tests at every commit" claim has no run-of-record step.
+6. **Where the run of record lives** (A13, A14). `runs/results/` is git-ignored, but §9.2 and §9.8 promise snapshot links. The "39 upstream tests at every commit" claim has no run-of-record step.
 
 The bad-merge chat run's arrangement (F4) is decided in the storyline review (build ticket "Review the storyline content").
 
@@ -37,7 +37,7 @@ Resolved 2026-10-21 with the user. The answers were checked against the document
    - On upstream the case is **n/a**, because a topic with fields is never forgotten (F24, measured on `gem-suite`). F24 also becomes an observation on C5.
    - The reference GEM runs the case through its own decay.
 6. **Run of record:**
-   - It is copied into a tracked `demo/record/<run-id>/` (scorecard, `results.json`, snapshots; databases stay in `.runtime/`, with their paths cited).
+   - It is copied into a tracked `runs/record/<run-id>/` (scorecard, `results.json`, snapshots; databases stay in `.runtime/`, with their paths cited).
    - The run-of-record command also runs MemState's 39 upstream tests at upstream and at each patch step, and records the counts.
 
 All six land in "Revise the spec and build tickets for the reference GEM and the suite audit", affecting build tickets 12, 15, 06, 09, 03 and 19 and report §9.2, §9.5 and §9.8.

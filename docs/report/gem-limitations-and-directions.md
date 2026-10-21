@@ -749,7 +749,7 @@ The probes are ours, motivated by Zep's time model and by StateMemBench's status
 
 ### 9.7 Results of record
 
-One recorded command ran every check, time probe, storyline question and ramp on all seven systems, recorded both chat cases, and copied the results to the tracked [`demo/record/20261021-194912/`](../../demo/record/20261021-194912/scorecard.md) (2026-10-21, 57 min 7 s, ramps repeated three times; F41) on the final commits `089b823`, `4272a07` and `9bd471e`. Every MemState server ran alone on a fresh database, upstream on Kuzu 0.11.3 at `945d7c4` and the patch on LadybugDB 0.21.2 at the final commits; each verdict links its raw-state snapshot. Every verdict matched the expected verdicts written in the suite's spec before the build; the departures are in counts and case-level detail, listed at the end of this section. Earlier smoke runs (F7–F31) found the same behaviour; their finding numbers are kept below where they add detail.
+One recorded command ran every check, time probe, storyline question and ramp on all seven systems, recorded both chat cases, and copied the results to the tracked [`runs/record/20261021-194912/`](../../demo/record/20261021-194912/scorecard.md) (2026-10-21, 57 min 7 s, ramps repeated three times; F41) on the final commits `089b823`, `4272a07` and `9bd471e`. Every MemState server ran alone on a fresh database, upstream on Kuzu 0.11.3 at `945d7c4` and the patch on LadybugDB 0.21.2 at the final commits; each verdict links its raw-state snapshot. Every verdict matched the expected verdicts written in the suite's spec before the build; the departures are in counts and case-level detail, listed at the end of this section. Earlier smoke runs (F7–F31) found the same behaviour; their finding numbers are kept below where they add detail.
 
 **MemState, upstream to step 3 (F41).**
 - **C1:** the control passes on all four.
@@ -797,7 +797,7 @@ One recorded command ran every check, time probe, storyline question and ramp on
 
 ### 9.8 Scorecard
 
-The full scorecard, with a raw-state snapshot behind every cell, is [`demo/record/20261021-194912/scorecard.md`](../../demo/record/20261021-194912/scorecard.md) (F41). The verdicts:
+The full scorecard, with a raw-state snapshot behind every cell, is [`runs/record/20261021-194912/scorecard.md`](../../demo/record/20261021-194912/scorecard.md) (F41). The verdicts:
 
 | Row | Claimed by [P1]? | Upstream | Step 1 | Step 2 | Step 3 | Ref. phase 1 | Ref. phase 2 | Versioned row |
 |---|---|---|---|---|---|---|---|---|

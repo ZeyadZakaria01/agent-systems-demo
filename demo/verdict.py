@@ -22,7 +22,6 @@ from typing import Any
 
 PASS, PARTIAL, FAIL, ABSENT, NOT_SCORED = "pass", "partial", "fail", "absent", "not-scored"
 ERROR = "error"
-SCALE = (PASS, PARTIAL, FAIL, ABSENT, NOT_SCORED)
 
 
 @dataclass

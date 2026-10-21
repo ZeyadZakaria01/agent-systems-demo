@@ -20,9 +20,9 @@ import uuid
 
 import httpx
 
-from demo.adapter import Rejected
 from demo.checks import Ctx, check
-from demo.reads import NO_VALUE, current_value
+from demo.systems.adapter import Rejected
+from demo.systems.reads import NO_VALUE, current_value
 from demo.verdict import Case, Verdict
 
 CLAIM = (

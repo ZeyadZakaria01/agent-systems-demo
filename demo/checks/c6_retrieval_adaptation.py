@@ -30,11 +30,11 @@ minimum rise of a topic is `BUMP` times the retrievals that returned it. A syste
 
 from __future__ import annotations
 
-from demo import ramp
-from demo.adapter import Rejected, System, Waited, utc_now
 from demo.checks import Ctx, check
-from demo.reads import read_request
+from demo.systems.adapter import Rejected, System, Waited, utc_now
+from demo.systems.reads import read_request
 from demo.verdict import Case, Verdict
+from demo.workloads import ramp
 
 CLAUSE_1 = (
     "C6 (Retrieval-induced adaptation), clause 1: Every retrieval that accesses u_i induces a transition "

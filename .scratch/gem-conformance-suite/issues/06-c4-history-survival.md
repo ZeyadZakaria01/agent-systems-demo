@@ -15,7 +15,7 @@
 
 ## Comments
 
-Merged to `gem-suite` as `76082e6`. Check: `demo/checks/c4_history.py`. Smoke F21: upstream **partial** (update and archive hold; merge drops the dropped value; empty and null writes become current; 501 updates leave 500 entries, `v000` gone). Baseline **fail**.
+Merged to `gem-suite` as `5cd5c71`. Check: `demo/checks/c4_history.py`. Smoke F21: upstream **partial** (update and archive hold; merge drops the dropped value; empty and null writes become current; 501 updates leave 500 entries, `v000` gone). Baseline **fail**.
 
 - 2026-10-21, spec revision (this ticket stays resolved): C4's "survives archiving" case, which used an editor archive write, is replaced by "survives real forgetting", n/a on upstream (F24); the cap case counts archived overflow readable by id as holding; the verdict rests on the cases that could run (ticket 22). The cases are given stable ids so the change table can show "merge keeps history: broken → fixed" at step 3 (ticket 23).
 - 2026-10-21: The baseline described here is the old last-write-wins row; ticket 20 (versioned row) supersedes it.

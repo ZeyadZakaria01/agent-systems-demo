@@ -1,15 +1,15 @@
 """Over-flagging measurement (ticket 28): one chain A <- B <- C <- D over extension edges, D the anti-trap. Runs the
 scenario with one-hop propagation (the system as opened) and with the transitive walk (the system's `"transitive"`
 variant, a mode of the reference GEM used only here), and reports flags raised, needed, missed and not needed for each. No
-verdict (`not-scored`), not on the scorecard: its table sits beside the C3 row (`demo/over_flagging_tables.py`). The
+verdict (`not-scored`), not on the scorecard: its table sits beside the C3 row (`demo/reporting/over_flagging.py`). The
 reference GEM runs it once, on phase 1 (the phases differ in time handling, not in propagation); no MemState system
 propagates (F17), so none is measured.
 """
 
 from demo.checks import Ctx, Row, check
-from demo.over_flagging import load_scenario, measure
-from demo.reference_gem import reference_gem_id
+from demo.systems.reference_gem import reference_gem_id
 from demo.verdict import Verdict
+from demo.workloads.over_flagging import load_scenario, measure
 
 ROW = "Over-flagging"
 CLAIM = (

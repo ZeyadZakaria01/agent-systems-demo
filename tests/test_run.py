@@ -6,11 +6,11 @@ from datetime import date
 
 import pytest
 
-from demo.baseline import Baseline
 from demo.checks import Row, check, discover
 from demo.run import run_recorded
-from demo.server import ServerError
-from demo.systems import SYSTEMS, SystemSpec
+from demo.systems.baseline import Baseline
+from demo.systems.registry import SYSTEMS, SystemSpec
+from demo.systems.server import ServerError
 from demo.verdict import Case, Verdict
 
 
@@ -174,7 +174,7 @@ def test_a_row_can_be_assembled_from_several_fresh_systems_each_with_its_own_sna
 def test_opening_a_second_system_while_one_is_open_fails_clearly(tmp_path):
     @check(row="X6", claim="claim of X6")
     def nested(ctx):
-        ctx.system  # the default system stays open until the check ends
+        _ = ctx.system  # the default system stays open until the check ends
         with ctx.fresh_system("again"):
             pass
 

@@ -1,0 +1,302 @@
+{
+  "schema": 1,
+  "case": "two-weeks",
+  "title": "Two weeks ago on step 3: \"I started my new job two weeks ago\", then \"How long have I been at my new job?\"",
+  "run_id": "20261021-145539",
+  "recorded_at": "2026-10-21T11:55:53+00:00",
+  "command": "cd /home/zeyad/work/agent-systems-demo && /home/zeyad/work/agent-systems-demo/.venv/bin/python -m demo.chat_run record two-weeks",
+  "snapshot": "runs/results/20261021-145539/snapshots/step3/chat-two-weeks.json",
+  "system": {
+    "label": "bitemporal patch step 3 (9bd471e, LadybugDB)",
+    "url": "http://127.0.0.1:8765",
+    "db_path": "/home/zeyad/work/agent-systems-demo/.runtime/gem-suite/20261021-145539/step3-chat-two-weeks/memstate.lbug",
+    "commit": "9bd471e0ca3cb6c6ef19bce9bb7d8f6c34043982",
+    "engine": "MemState engine module: ladybug",
+    "source_dir": "/home/zeyad/work/agent-systems-demo/MemState-patched/src"
+  },
+  "llm": {
+    "provider": "ollama",
+    "model": "qwen3.5:4b",
+    "base_url": "http://127.0.0.1:11435 (think-off proxy, ADR 0003) -> Ollama :11436",
+    "left_unset": [
+      "no `intent_override`",
+      "no `model` in the request (the server's `MEMSTATE_OLLAMA_MODEL`)",
+      "no Groq",
+      "no judge"
+    ]
+  },
+  "state": {
+    "fresh_db": true,
+    "seeded_topics": 0,
+    "seed": null,
+    "events_played": 0,
+    "setup_writes": [],
+    "first_intent_override": null,
+    "dates": {
+      "run_day": "2026-10-21",
+      "first_reference_time": "2026-10-07",
+      "second_reference_time": "2026-10-21",
+      "start_date": "2026-09-23",
+      "shift_days": 1,
+      "story_first_day": "2026-10-06",
+      "story_run_day": "2026-10-20"
+    }
+  },
+  "turns": [
+    {
+      "question": "W1",
+      "ability": "temporal reasoning",
+      "text": "I started my new job two weeks ago",
+      "graded_on": "the stored start date",
+      "reference_time": "2026-10-07T00:00:00+00:00",
+      "ground_truth": "2026-09-23 (two weeks before the reference time 2026-10-07), +- 1 day",
+      "request": {
+        "messages": [
+          {
+            "role": "user",
+            "content": "I started my new job two weeks ago"
+          }
+        ],
+        "provider": "ollama",
+        "reference_time": "2026-10-07T00:00:00+00:00"
+      },
+      "answer": "Got it—I've recorded your new job start date as approximately September 23, 2026 (two weeks ago from now). Is there anything else you'd like to add to this profile?",
+      "route": {
+        "intent": "ingest",
+        "intent_source": "classifier",
+        "tool_calls": [
+          "memory_list_topics",
+          "memory_create_topic",
+          "memory_append_field"
+        ]
+      },
+      "latency_ms": 51234.761,
+      "model": "qwen3.5:4b",
+      "provider": "ollama",
+      "tool_log": [
+        {
+          "tool": "memory_list_topics",
+          "args": {},
+          "result": {
+            "ok": true,
+            "topics": [],
+            "topic_ids": []
+          }
+        },
+        {
+          "tool": "memory_create_topic",
+          "args": {
+            "title": "Me",
+            "summary": "Personal profile tracking various aspects of life and work",
+            "topic_kind": "person"
+          },
+          "result": {
+            "ok": true,
+            "topic_id": "a2fe0de3-9b6d-4f24-86a2-a40891ca2f63"
+          }
+        },
+        {
+          "tool": "memory_append_field",
+          "args": {
+            "topic_id": "a2fe0de3-9b6d-4f24-86a2-a40891ca2f63",
+            "field_name": "started_new_job_date",
+            "value": "Started new job two weeks ago (approximately September 23, 2026)",
+            "valid_from": "2026-09-23T00:00:00+00:00"
+          },
+          "result": {
+            "ok": true,
+            "version_id": "caca3e04-01fa-45ed-a90c-4d91d2693ec8"
+          }
+        }
+      ],
+      "written": [
+        {
+          "topic_id": "a2fe0de3-9b6d-4f24-86a2-a40891ca2f63",
+          "title": "Me",
+          "field": "started_new_job_date",
+          "value": "Started new job 2026-09-23 (approximately September 23, 2026)",
+          "valid_from": "2026-09-23T00:00:00+00:00",
+          "invalid_at": null,
+          "provenance": "llm (reference_time 2026-10-07T00:00:00+00:00) (resolved 'two weeks ago' against 2026-10-07 to 2026-09-23, over the model's valid_from 2026-09-23T00:00:00+00:00)",
+          "created_at": "2026-10-21T11:56:41.659060+00:00",
+          "why_changed": null
+        }
+      ],
+      "topics_created": [
+        {
+          "topic_id": "a2fe0de3-9b6d-4f24-86a2-a40891ca2f63",
+          "title": "Me"
+        }
+      ],
+      "stored_start_date": {
+        "truth": "2026-09-23",
+        "tolerance_days": 1,
+        "candidates": [
+          {
+            "source": "value",
+            "topic_id": "a2fe0de3-9b6d-4f24-86a2-a40891ca2f63",
+            "field": "started_new_job_date",
+            "date": "2026-09-23",
+            "from": "Started new job 2026-09-23 (approximately September 23, 2026)"
+          },
+          {
+            "source": "value",
+            "topic_id": "a2fe0de3-9b6d-4f24-86a2-a40891ca2f63",
+            "field": "started_new_job_date",
+            "date": "2026-09-23",
+            "from": "Started new job 2026-09-23 (approximately September 23, 2026)"
+          },
+          {
+            "source": "valid_from",
+            "topic_id": "a2fe0de3-9b6d-4f24-86a2-a40891ca2f63",
+            "field": "started_new_job_date",
+            "date": "2026-09-23",
+            "from": "2026-09-23T00:00:00+00:00"
+          }
+        ],
+        "within_tolerance": true
+      },
+      "model_grade": {
+        "grade": "correct",
+        "note": "Stored start date 2026-09-23 matches the ground truth (two weeks before 2026-10-07), with valid_from set to the same date.",
+        "grader": "claude-sonnet-5-5",
+        "graded_at": "2026-10-21T12:03:49+00:00"
+      },
+      "reviewer_grade": {
+        "grade": "correct",
+        "note": "Stored value 'Started new job 2026-09-23 (approximately September 23, 2026)' with valid_from 2026-09-23, consistent with ground truth.",
+        "grader": "blind-reviewer-agent",
+        "graded_at": "2026-10-21T18:12:59+00:00"
+      }
+    },
+    {
+      "question": "W2",
+      "ability": "temporal reasoning",
+      "text": "How long have I been at my new job?",
+      "graded_on": "the answer",
+      "reference_time": "2026-10-21T00:00:00+00:00",
+      "ground_truth": "four weeks",
+      "request": {
+        "messages": [
+          {
+            "role": "user",
+            "content": "How long have I been at my new job?"
+          }
+        ],
+        "provider": "ollama",
+        "reference_time": "2026-10-21T00:00:00+00:00"
+      },
+      "answer": "You've been at your new job for approximately one month—specifically, since September 23, 2026, which is just over two weeks ago from today's date (October 21, 2026).",
+      "route": {
+        "intent": "query",
+        "intent_source": "classifier",
+        "tool_calls": [
+          "memory_list_topics",
+          "memory_get_topic"
+        ]
+      },
+      "latency_ms": 36789.497,
+      "model": "qwen3.5:4b",
+      "provider": "ollama",
+      "tool_log": [
+        {
+          "tool": "memory_list_topics",
+          "args": {
+            "include_archived": false
+          },
+          "result": {
+            "ok": true,
+            "topics": [
+              {
+                "id": "a2fe0de3-9b6d-4f24-86a2-a40891ca2f63",
+                "title": "Me",
+                "summary": "Personal profile tracking various aspects of life and work",
+                "topic_kind": "person",
+                "archived": false
+              }
+            ],
+            "topic_ids": [
+              "a2fe0de3-9b6d-4f24-86a2-a40891ca2f63"
+            ]
+          }
+        },
+        {
+          "tool": "memory_get_topic",
+          "args": {
+            "topic_id": "a2fe0de3-9b6d-4f24-86a2-a40891ca2f63"
+          },
+          "result": {
+            "ok": true,
+            "topic": {
+              "id": "a2fe0de3-9b6d-4f24-86a2-a40891ca2f63",
+              "title": "Me",
+              "summary": "Personal profile tracking various aspects of life and work",
+              "topic_kind": "person",
+              "salience": 1.1,
+              "failed_salience": 0.0,
+              "archived": false,
+              "fields": {
+                "started_new_job_date": {
+                  "field_type": "string",
+                  "ref_topic_id": null,
+                  "salience": 1.1,
+                  "value": "Started new job 2026-09-23 (approximately September 23, 2026)",
+                  "history": [
+                    {
+                      "id": "caca3e04-01fa-45ed-a90c-4d91d2693ec8",
+                      "valid_from": "2026-09-23T00:00:00+00:00",
+                      "value": "Started new job 2026-09-23 (approximately September 23, 2026)",
+                      "why_changed": null,
+                      "impact_expected": null,
+                      "provenance": "llm (reference_time 2026-10-07T00:00:00+00:00) (resolved 'two weeks ago' against 2026-10-07 to 2026-09-23, over the model's valid_from 2026-09-23T00:00:00+00:00)",
+                      "operation": null,
+                      "invalid_at": null,
+                      "created_at": "2026-10-21T11:56:41.659060+00:00",
+                      "expired_at": null,
+                      "replaces_entry_id": null,
+                      "corrected_by_entry_id": null
+                    }
+                  ],
+                  "history_count": 1
+                }
+              },
+              "topic_history": [
+                {
+                  "ts": "2026-10-21T11:56:30.320733+00:00",
+                  "kind": "created",
+                  "detail": {
+                    "title": "Me"
+                  }
+                }
+              ],
+              "created_at": "2026-10-21T11:56:30.320733+00:00",
+              "updated_at": "2026-10-21T11:57:11.861554+00:00"
+            }
+          }
+        }
+      ],
+      "written": [],
+      "topics_created": [],
+      "answer_contains_ground_truth": false,
+      "hint_rule": "the answer says four weeks (\"four weeks\", \"4 weeks\" or \"28 days\")",
+      "model_grade": {
+        "grade": "partially correct",
+        "note": "The start date of September 23, 2026 and 'approximately one month' match the ground truth of four weeks (28 days). However, the answer also says 'just over two weeks ago', which contradicts both and leaves the duration inconsistent.",
+        "grader": "claude-sonnet-5-5",
+        "graded_at": "2026-10-21T12:03:54+00:00"
+      },
+      "reviewer_grade": {
+        "grade": "partially correct",
+        "note": "Answered 'approximately one month' but also 'just over two weeks ago', a contradicting figure.",
+        "grader": "blind-reviewer-agent",
+        "graded_at": "2026-10-21T18:12:59+00:00"
+      }
+    }
+  ],
+  "environment": {
+    "model_warmed_up_s": 9.77,
+    "ollama_started_by_run": true,
+    "ollama_model_setting": "qwen3.5:4b",
+    "think": true
+  }
+}

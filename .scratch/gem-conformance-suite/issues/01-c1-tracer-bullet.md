@@ -21,7 +21,7 @@
 
 ## Comments
 
-Merged as `fc5215b`; reviewed on both axes and fixed in `16f2bd5` (adapter split into `demo/adapter.py` + `demo/memstate_system.py`, echo tests removed). Smoke F13.
+Merged as `5cd5c71`; reviewed on both axes and fixed in `467de6a` (adapter split into `demo/systems/adapter.py` + `demo/systems/memstate.py`, echo tests removed). Smoke F13.
 
 - 2026-10-21, spec revision (this ticket stays resolved): the baseline built here, a last-write-wins row with a top-10 query, is replaced by a versioned row with MiniLM top 8 (ticket 20). The adapter gains `accepts` per date, `resolve_source`, `add_policy` and the refusal of the newest-entry fallback for dated systems (tickets 21, 24, 25).
 - 2026-10-21: The baseline described here is the old last-write-wins row; ticket 20 (versioned row) supersedes it.

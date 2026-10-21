@@ -12,8 +12,8 @@ The row sits in the probes section, outside [P1]'s claims; it is not a scorecard
 
 from __future__ import annotations
 
-from demo.adapter import Rejected
 from demo.checks import Ctx, Row, check
+from demo.systems.adapter import Rejected
 from demo.verdict import Case, Verdict
 
 SOURCE_MESSAGE = "Kickoff call, Mar 3: Dana said the deadline is March 15."

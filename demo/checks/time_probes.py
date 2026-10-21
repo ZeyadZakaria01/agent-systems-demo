@@ -1,4 +1,4 @@
-"""The six time-probe rows (report §9.6; story table in `demo/time_stories.py`), read as C1' (the value valid on a date).
+"""The six time-probe rows (report §9.6; story table in `demo/workloads/time_stories.py`), read as C1' (the value valid on a date).
 
 Seven stories, each on its own topic in its own fresh system (`ctx.fresh_system`); the lapsed-override row is stories
 4 and 5 together. Each probe has two cells, kept in the verdict: "accepts dates" (`measurements["accepts_dates"]`: yes,
@@ -25,10 +25,11 @@ import time
 from dataclasses import dataclass, field
 from typing import Any
 
-from demo.adapter import DATES, Rejected, System, utc_now
 from demo.checks import Ctx, Row, check
-from demo.reads import current_value, field_in_response
-from demo.time_stories import (
+from demo.systems.adapter import DATES, Rejected, System, utc_now
+from demo.systems.reads import current_value, field_in_response
+from demo.verdict import FAIL, PASS, Case, Verdict
+from demo.workloads.time_stories import (
     AS_OF,
     FUTURE_DATED,
     FUTURE_ONLY,
@@ -43,7 +44,6 @@ from demo.time_stories import (
     query_request,
     shift_story,
 )
-from demo.verdict import FAIL, PASS, Case, Verdict
 
 AS_OF_GAP_S = 1.0  # between noting the moment after the first write and the second write
 

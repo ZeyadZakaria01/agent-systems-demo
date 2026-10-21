@@ -5,7 +5,7 @@ Arranged case, twenty repetitions in one fresh database, random topic ids, disti
 topic to be dropped hold the newer value: two topics are written through `/v1` under distinct titles, the lower id gets
 `Deadline: March 15` and the higher id `Deadline: April 20` (MemState keeps the lower id, F9), both are given one title
 by a labelled setup write (`PATCH title`; values are never written by an editor endpoint), and a `/v1 extend_topic`
-with no fields triggers the merge (`demo/merge.py`). A system that cannot retitle falls back to two same-title
+with no fields triggers the merge (`demo/workloads/merge.py`). A system that cannot retitle falls back to two same-title
 `new_topic` writes; a system that appends the second write to the first topic (the versioned row) creates no
 duplicate, so no merge occurs and the repetition is not a case. The row has one case: the merge never makes the
 superseded value current (nor loses the value) in any arranged repetition that was a case. It holds (pass) when no
@@ -19,10 +19,10 @@ only when the arranged repetitions saw a merge of two topics.
 
 The arrangement is enforced: a repetition in which the dropped topic did not hold the newer value is not a case
 (counted under `arrangement_not_met`), because it would not test the claim. The merge is awaited by polling
-(`demo/merge.py`); the window per repetition is the wait logged by the adapter. A repetition whose merge is not seen
+(`demo/workloads/merge.py`); the window per repetition is the wait logged by the adapter. A repetition whose merge is not seen
 within the timeout is not a case either; if no repetition saw a merge the row is `absent` with those waits as the
 probe evidence. Beside the verdict: the window median and range, the observation "topic deleted on merge", and the
-extras of `demo/merge_extras.py`. `measure_merges` takes the repetition count and the merge timeout so a test can
+extras of `demo/workloads/merge_extras.py`. `measure_merges` takes the repetition count and the merge timeout so a test can
 shorten them through the same path the check runs.
 """
 
@@ -30,10 +30,12 @@ from __future__ import annotations
 
 import statistics
 
-from demo import merge
-from demo.adapter import System
 from demo.checks import Ctx, check
-from demo.merge import (
+from demo.systems.adapter import System
+from demo.systems.reads import NO_VALUE
+from demo.verdict import Case, Verdict
+from demo.workloads import merge
+from demo.workloads.merge import (
     DEADLINE,
     DEFAULT_TIMEOUT_S,
     NEWER,
@@ -46,9 +48,7 @@ from demo.merge import (
     trigger_and_await_merge,
     unique_title,
 )
-from demo.merge_extras import active_into_archived, three_same_title
-from demo.reads import NO_VALUE
-from demo.verdict import Case, Verdict
+from demo.workloads.merge_extras import active_into_archived, three_same_title
 
 CLAIM = (
     "C2 (transition soundness): every transition respects the policy, and no revision produces a state in "

@@ -17,6 +17,7 @@ from __future__ import annotations
 import argparse
 import json
 import time
+from pathlib import Path
 
 import httpx
 
@@ -89,7 +90,7 @@ def main() -> None:
     text = json.dumps(out, indent=2)
     print(text)
     if a.out:
-        open(a.out, "w").write(text + "\n")
+        Path(a.out).write_text(text + "\n")
 
 
 if __name__ == "__main__":

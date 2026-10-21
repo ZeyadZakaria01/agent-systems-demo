@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Pilot for the "two weeks ago" chat case: where does a take break, the router or the model?
 
-Records N takes per (model, route setting) with `demo.chat_run record two-weeks` into a scratch folder (never
-`demo/recordings/`), then prints one row per take and a per-setting summary: W1's route, whether W1 wrote a field, the
+Records N takes per (model, route setting) with `demo.chat.run record two-weeks` into a scratch folder (never
+`runs/recordings/`), then prints one row per take and a per-setting summary: W1's route, whether W1 wrote a field, the
 stored start date's match (within ±1 day of the truth, from the value or `valid_from`), and whether W2 says four weeks.
 The matches are the recorder's hints, not grades. Each take starts and stops MemState (step 3) and Ollama under the
 machine-wide lock.
@@ -33,7 +33,7 @@ def record(model: str, setting: str, takes: int, out: Path) -> None:
             [
                 sys.executable,
                 "-m",
-                "demo.chat_run",
+                "demo.chat.run",
                 "record",
                 "two-weeks",
                 "--recordings",
@@ -96,8 +96,8 @@ def main() -> int:
     if args.summarise:
         summarise(args.summarise)
         return 0
-    if not args.out or str(args.out.resolve()).startswith(str(REPO / "demo" / "recordings")):
-        ap.error("--out is a scratch folder outside demo/recordings/")
+    if not args.out or str(args.out.resolve()).startswith(str(REPO / "runs" / "recordings")):
+        ap.error("--out is a scratch folder outside runs/recordings/")
     for model in args.models.split(","):
         for setting in args.settings.split(","):
             record(model, setting, args.takes, args.out)

@@ -5,8 +5,8 @@
 .runtime/
 __pycache__/
 MemState-patched/
-demo/results/
-demo/results-live/
+runs/results/
+runs/results-live/
 
 # API keys (never committed; see AGENTS.md)
 .secrets/

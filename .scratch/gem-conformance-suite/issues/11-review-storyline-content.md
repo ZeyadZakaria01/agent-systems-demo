@@ -16,6 +16,6 @@
   - E20's reason is now "promoted after the homepage prototype".
   - No abstention question: it has no answer topic, so triage cannot sort it. The report says so (§9.2).
   - The bad-merge chat run shows the "looks right" outcome (see ticket 17).
-  - Applied in `demo/storyline.py` and `demo/storyline_draft.py`; draft regenerated; `pytest -q` 151 passed.
+  - Applied in `demo/workloads/storyline.py` and `demo/reporting/storyline_draft.py`; draft regenerated; `pytest -q` 151 passed.
   - **Still open:** whether the scored storyline itself contains the re-explained duplicate, or stays duplicate-free (upstream and the baseline both 15/15, F20). Approval waits on that answer.
 - 2026-10-20, user review, part 2 (**approved**): the scored storyline stays **duplicate-free**, so the code is unchanged. The merge damage is shown by the C4 check and the bad-merge chat run (ticket 17); it is a prototype bug, not a gap in the conditions. With a clean storyline, "every system 15/15, yet their stored state differs" is visible at a glance. Decided in the wayfinder ticket "Answer the challenge list" (S11).

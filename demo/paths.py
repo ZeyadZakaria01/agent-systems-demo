@@ -18,8 +18,11 @@ def _shared_root() -> Path:
 
 # The main checkout; equals REPO_ROOT outside a linked worktree (same resolution as scripts/run_memstate.sh).
 SHARED_ROOT = _shared_root()
-RESULTS_ROOT = REPO_ROOT / "demo" / "results"
-RECORD_ROOT = REPO_ROOT / "demo" / "record"  # tracked: the run of record, copied from RESULTS_ROOT
+RUNS_ROOT = REPO_ROOT / "runs"  # every run's output; results/ and results-live/ are git-ignored, the rest is tracked
+RESULTS_ROOT = RUNS_ROOT / "results"
+RESULTS_ROOT_LIVE = RUNS_ROOT / "results-live"
+RECORD_ROOT = RUNS_ROOT / "record"  # the run of record, copied from RESULTS_ROOT
+RECORDINGS_ROOT = RUNS_ROOT / "recordings"  # chat recordings of record
 RUN_SCRIPT = REPO_ROOT / "scripts" / "run_memstate.sh"
-# The machine-wide one-server lock, held by every run and script that starts a server (demo/server_lock.py).
+# The machine-wide one-server lock, held by every run and script that starts a server (demo/systems/server_lock.py).
 SERVER_LOCK = SHARED_ROOT.parent / f"{SHARED_ROOT.name}-wt" / "server.lock"

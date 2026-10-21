@@ -1,7 +1,7 @@
 """C2(d), the superseded read on the lapsed-override story (spec story 66; "Stricter check pass criteria").
 
 C2 reads "superseded" as "validity ended by a later statement": the value current today must not be one that a later
-statement ended. The check runs the T4 stories (`demo/time_stories.py`, shifted so "today" is the run day, each in its
+statement ended. The check runs the T4 stories (`demo/workloads/time_stories.py`, shifted so "today" is the run day, each in its
 own fresh system) with the dates the system itself accepts (`describe()["accepts"]`: `valid_from` and `invalid_at` are
 sent only when accepted; a system that accepts none gets the same writes undated), asks the plain "today" read, and
 classifies the value current today:
@@ -18,11 +18,11 @@ is no read to classify; the T4 row counts it as over-blocking). The row never re
 
 from __future__ import annotations
 
-from demo.adapter import Rejected, System
 from demo.checks import Ctx, check
-from demo.reads import NO_VALUE, current_value, field_in_response
-from demo.time_stories import LAPSED_OVERRIDE_1, LAPSED_OVERRIDE_2, ingest_request, query_request, shift_story
+from demo.systems.adapter import Rejected, System
+from demo.systems.reads import NO_VALUE, current_value, field_in_response
 from demo.verdict import Case, Verdict
+from demo.workloads.time_stories import LAPSED_OVERRIDE_1, LAPSED_OVERRIDE_2, ingest_request, query_request, shift_story
 
 CLAIM = (
     "C2 (transition soundness): no revision produces a state in which a superseded value is returned as "

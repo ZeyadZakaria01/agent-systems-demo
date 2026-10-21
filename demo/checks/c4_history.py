@@ -27,10 +27,12 @@ from __future__ import annotations
 
 from datetime import date
 
-from demo import ramp
-from demo.adapter import Rejected, System
 from demo.checks import Ctx, check
-from demo.merge import (
+from demo.systems.adapter import Rejected, System
+from demo.systems.reads import current_value
+from demo.verdict import Case, Verdict
+from demo.workloads import ramp
+from demo.workloads.merge import (
     DEADLINE,
     FIELD,
     NEWER,
@@ -40,9 +42,7 @@ from demo.merge import (
     PairSpec,
     trigger_and_await_merge,
 )
-from demo.reads import current_value
-from demo.time_stories import YEAR, iso
-from demo.verdict import Case, Verdict
+from demo.workloads.time_stories import YEAR, iso
 
 CLAIM = "C4 (provenance preservation): revision and forgetting preserve the provenance chain of reachable units."
 CAP_WRITES = 501  # 1 new_topic + 500 version_field

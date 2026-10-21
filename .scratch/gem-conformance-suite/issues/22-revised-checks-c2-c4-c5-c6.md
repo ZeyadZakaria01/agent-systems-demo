@@ -19,7 +19,7 @@
 ## Comments
 
 - 2026-10-21 (T22RevisedChecks, branch `gs-22-revised-checks`): built test-first at the adapter seam; all boxes met.
-  - C2(b): new input (`ref_topic_id` to a missing topic on the second field) in `demo/checks/c2b_atomicity.py`; refusal with nothing stored = pass, error with topic/first field stored = fail, accepted = not-scored; the edge ingest is a separate observation "edge reported applied but not stored". The versioned row (`demo/baseline.py`) now rejects a missing `ref_topic_id` inside its one transaction, so its C2(b) reads `pass`.
+  - C2(b): new input (`ref_topic_id` to a missing topic on the second field) in `demo/checks/c2b_atomicity.py`; refusal with nothing stored = pass, error with topic/first field stored = fail, accepted = not-scored; the edge ingest is a separate observation "edge reported applied but not stored". The versioned row (`demo/systems/baseline.py`) now rejects a missing `ref_topic_id` inside its one transaction, so its C2(b) reads `pass`.
   - C2(a): one existence case over the 20 arranged repetitions (per-repetition rows in `measurements.per_repetition`), natural count ×20 beside it (`measurements.natural_count`, observation "natural merge count"), skipped when no merge of two topics occurred (versioned row: not-scored).
   - C2(d): new `demo/checks/c2d_lapsed_override.py`, T4 stories 1 and 2 with the system's own accepted write dates; the "C2 violation" observation names $80/$50 on story 2.
   - C4: editor archive case replaced by real forgetting (field-less control at 0.01 shows the pass ran; fillers drive the gate); cap case counts `archived_history` (new adapter contract key, for the reference GEM ticket) as readable overflow.
