@@ -29,7 +29,7 @@ hold_server_lock
 # The venv's editable install points at MemState/src; PYTHONPATH wins over that .pth entry.
 if [[ "$PATCHED" == 1 ]]; then
   SRC="$SHARED/MemState-patched/src"
-  [[ -d "$SRC/memstate" ]] || { echo "ERROR: $SRC missing; rebuild MemState-patched/ (README, Run MemState)" >&2; exit 1; }
+  [[ -d "$SRC/memstate" ]] || { echo "ERROR: $SRC missing; rebuild MemState-patched/ (docs/suite.md, The patched copy)" >&2; exit 1; }
   export PYTHONPATH="$SRC${PYTHONPATH:+:$PYTHONPATH}"
   DEFAULT_DB="$SHARED/.runtime/memstate-ladybug-$(date +%Y%m%d-%H%M%S)/memstate.lbug"
   ABSOLUTE_MSG="DB path must be absolute"

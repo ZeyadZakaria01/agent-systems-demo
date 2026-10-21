@@ -15,7 +15,7 @@ Interview package for Prof. Essam Mansour: a demo of MemState (the GEM paper's s
 
 ## Running
 
-Before starting MemState or Ollama, read the README section "Run MemState"; the scripts in `scripts/` encode the workarounds. Every MemState DB path is absolute and fresh; `MemState/memstate.kuzu` is upstream data and stays closed. This is a laptop with a 6 GB GPU and little free RAM: stop servers when a run ends. The one machine-wide lock is `../agent-systems-demo-wt/server.lock`; the runner and the server scripts hold it themselves.
+Before starting MemState or Ollama, read `docs/suite.md` ("Run MemState"); the scripts in `scripts/` encode the workarounds. Every MemState DB path is absolute and fresh; `MemState/memstate.kuzu` is upstream data and stays closed. This is a laptop with a 6 GB GPU and little free RAM: stop servers when a run ends. The one machine-wide lock is `../agent-systems-demo-wt/server.lock`; the runner and the server scripts hold it themselves.
 
 ## Docs
 

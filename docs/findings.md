@@ -2,7 +2,7 @@
 
 Each entry is a fact about upstream MemState (`945d7c4`, unmodified) backed by a run on a fresh database. Claims from reading code alone stay in [`papers/2605.26252v1-alignment.md`](papers/2605.26252v1-alignment.md) until a run reproduces them.
 
-Environment for all runs: root `.venv`, `kuzu==0.11.3`, fastembed MiniLM, `scripts/run_memstate.sh <fresh absolute DB>`; see the README "Run MemState".
+Environment for all runs: root `.venv`, `kuzu==0.11.3`, fastembed MiniLM, `scripts/run_memstate.sh <fresh absolute DB>`; see `docs/suite.md` "Run MemState".
 
 ## F1. Default read returns the newest value; temporal read returns the full history (C1 holds on `/v1`)
 

@@ -417,7 +417,7 @@ def ollama_running():
     """Ollama and the think-off proxy (`scripts/run_ollama.sh --bg`, ADR 0003) for the length of the block; yields
     whether this call started them. Both are stopped on exit, errors included, also when they were already running:
     the caller holds the machine-wide lock, so a running one is a leftover or the user's own, and the run owns the
-    machine until it ends (README, "Chat runs and replay"; ticket 19: Ollama and the proxy are stopped at the end).
+    machine until it ends (docs/suite.md, "Run of record"; ticket 19: Ollama and the proxy are stopped at the end).
     One running without the other is a leftover too: it is stopped and both are started fresh."""
     up = (_port_open(OLLAMA_PORT), _port_open(PROXY_PORT))
     started = not all(up)
