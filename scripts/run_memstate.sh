@@ -41,7 +41,9 @@ fi
 export MEMSTATE_KUZU_PATH="${DB_ARG:-$DEFAULT_DB}"
 [[ "$MEMSTATE_KUZU_PATH" = /* ]] || { echo "$ABSOLUTE_MSG" >&2; exit 1; }
 export FASTEMBED_CACHE_PATH="$SHARED/.cache/fastembed"
-export MEMSTATE_GROQ_MODEL=openai/gpt-oss-120b
+export MEMSTATE_GROQ_MODEL="${MEMSTATE_GROQ_MODEL:-openai/gpt-oss-120b}"
+# Free tier: a rate-limited Groq call is retried 3 times (upstream default 20), so a spent daily quota fails fast.
+export MEMSTATE_GROQ_RATE_LIMIT_MAX_RETRIES="${MEMSTATE_GROQ_RATE_LIMIT_MAX_RETRIES:-3}"
 export MEMSTATE_API_HOST=127.0.0.1 MEMSTATE_API_PORT=8765
 # Ollama via the think-off proxy started by scripts/run_ollama.sh (qwen3.5 thinks by default and
 # MemState sends no `think`). Override with http://127.0.0.1:11434 to run with thinking on.

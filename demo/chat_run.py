@@ -39,7 +39,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 
 from demo.adapter import System
-from demo.chat_recording import (EMPTY_GRADE, LEFT_UNSET, RECORDINGS_ROOT, is_variant, load_recording, new_recording,
+from demo.chat_recording import (EMPTY_GRADE, chat_provider, LEFT_UNSET, RECORDINGS_ROOT, is_variant, load_recording, new_recording,
                                  recording_files, render_recording, save_recording)
 from demo.chat_two_weeks import CASE as TWO_WEEKS_CASE, FIRST_INTENT_OVERRIDE, record_two_weeks
 from demo.merge import DEFAULT_INTERVAL_S, DEFAULT_TIMEOUT_S, MergeOutcome, Pair, await_merge, unique_title
@@ -205,7 +205,7 @@ def state_violation(built: BuiltState, question) -> dict:
 
 def ask(system: System, built: BuiltState, question) -> dict:
     """One storyline question as one chat request; the turn keeps everything the replay prints."""
-    request = {"messages": [{"role": "user", "content": question.text}], "provider": "ollama"}
+    request = {"messages": [{"role": "user", "content": question.text}], "provider": chat_provider()}
     before = trim(system.read_topic(built.reexplanation_id))
     response = system.chat(request)
     after = trim(system.read_topic(built.reexplanation_id))
@@ -258,7 +258,9 @@ def record_bad_merge(system: System, *, run_id: str, recorded_at: str, command: 
 
 # -- command line: replay (JSON only) and record (needs the machine: MemState, Ollama, the GPU)
 
-OLLAMA_PORT, PROXY_PORT = 11434, 11435
+# The demo's own Ollama (scripts/run_ollama.sh) listens on 11436, not Ollama's default 11434, which a system-wide
+# Ollama service (the snap) may hold; MemState reaches it only through the think-off proxy on 11435.
+OLLAMA_PORT, PROXY_PORT = 11436, 11435
 PROXY_URL = f"http://127.0.0.1:{PROXY_PORT}"
 DEFAULT_MODEL = "qwen3.5:2b"
 
@@ -422,23 +424,31 @@ def record_chats(run: "RunDir", recordings: Path, link_root: Path, command: str,
     by `python -m demo.run --chat` (both cases, in the suite's run folder); both hold the machine-wide lock around it."""
     import os
 
+    result = Recorded()
+    if chat_provider() == "groq":  # hosted: no Ollama, no warm-up; MemState calls Groq with MEMSTATE_GROQ_MODEL
+        environment = {"provider": "groq", "groq_model_setting": os.environ.get("MEMSTATE_GROQ_MODEL")}
+        return _record_cases(cases, run, recordings, link_root, flags, environment, command,
+                             "https://api.groq.com (Groq)", result, log)
     base = os.environ.get("MEMSTATE_OLLAMA_BASE_URL")
     if base and base.rstrip("/") != PROXY_URL:
         raise OllamaError(f"MEMSTATE_OLLAMA_BASE_URL={base} bypasses the think-off proxy (ADR 0003); unset it")
     model = os.environ.get("MEMSTATE_OLLAMA_MODEL") or DEFAULT_MODEL
     ollama_url = f"{PROXY_URL} (think-off proxy, ADR 0003) -> Ollama :{OLLAMA_PORT}"
-    result = Recorded()
     with ollama_running() as started:
         warm = warm_up(model)
-        environment = {"model_warmed_up_s": warm, "ollama_started_by_run": started, "ollama_model_setting": model}
-        for case in cases:
-            log(f"[chat] {case}: recording")
-            try:
-                result.saved.append(_record_case(case, run, recordings, link_root, flags, environment,
-                                                 command, ollama_url))
-            except Exception as e:
-                result.errors.append(f"{case}: {type(e).__name__}: {e}")
-                log(f"[chat] {case}: failed: {e}")
+        environment = {"model_warmed_up_s": warm, "ollama_started_by_run": started, "ollama_model_setting": model,
+                       "think": os.environ.get("GEM_THINK", "0") == "1"}
+        return _record_cases(cases, run, recordings, link_root, flags, environment, command, ollama_url, result, log)
+
+
+def _record_cases(cases, run, recordings, link_root, flags, environment, command, base_url, result, log) -> Recorded:
+    for case in cases:
+        log(f"[chat] {case}: recording")
+        try:
+            result.saved.append(_record_case(case, run, recordings, link_root, flags, environment, command, base_url))
+        except Exception as e:
+            result.errors.append(f"{case}: {type(e).__name__}: {e}")
+            log(f"[chat] {case}: failed: {e}")
     return result
 
 
@@ -471,6 +481,8 @@ def main(argv: list[str] | None = None) -> int:
     sub = ap.add_subparsers(dest="mode", required=True)
     rec = sub.add_parser("record", help="record a chat run (starts MemState and Ollama; run under the lock)")
     rec.add_argument("case", choices=[CASE, TWO_WEEKS_CASE])
+    rec.add_argument("--provider", choices=["ollama", "groq"], default=None,
+                     help="LLM provider for the chat turns (default ollama, or GEM_CHAT_PROVIDER); groq uses MEMSTATE_GROQ_MODEL")
     rec.add_argument("--recordings", type=Path, default=RECORDINGS_ROOT, help="where the recording is written (a variant take goes to its attempts/ folder)")
     rec.add_argument("--router-decides", action=argparse.BooleanOptionalAction, default=True,
                      help="two-weeks only, default on: W1 carries no `intent_override`; --no-router-decides forces the "
@@ -484,6 +496,9 @@ def main(argv: list[str] | None = None) -> int:
     args = ap.parse_args(argv)
     if args.mode == "replay":
         return replay(args.paths or [RECORDINGS_ROOT])
+    if args.provider:
+        import os
+        os.environ["GEM_CHAT_PROVIDER"] = args.provider
     flags = tuple(f for f in TWO_WEEKS_VARIANTS if (not args.router_decides if f == "--no-router-decides" else args.seed_profile))
     if flags and args.case != TWO_WEEKS_CASE:
         ap.error(f"{', '.join(flags)} apply to the two-weeks case only")

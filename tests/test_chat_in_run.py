@@ -67,7 +67,7 @@ def test_both_cases_are_recorded_in_one_ollama_session_with_their_snapshots_in_t
     for rec in cases.values():
         assert rec["run_id"] == run.id and rec["command"] == "the command"
         assert rec["environment"] == {"model_warmed_up_s": 0.5, "ollama_started_by_run": True,
-                                      "ollama_model_setting": chat_run.DEFAULT_MODEL}
+                                      "ollama_model_setting": chat_run.DEFAULT_MODEL, "think": False}
         assert Path(rec["snapshot"]).is_file() and run.dir.as_posix() in rec["snapshot"]  # the link resolves
 
 
@@ -148,7 +148,7 @@ def test_a_run_that_could_not_start_the_chats_keeps_its_suite_results_and_says_s
 
 @pytest.fixture
 def ports(monkeypatch):
-    """Ports 11434 and 11435 as a dict of open/closed; `kill` closes the port its pid listens on."""
+    """The demo Ollama's port and the proxy's as a dict of open/closed; `kill` closes the port its pid listens on."""
     state = {chat_run.OLLAMA_PORT: False, chat_run.PROXY_PORT: False}
     killed = []
     monkeypatch.setattr(chat_run, "_port_open", lambda port: state[port])
@@ -183,7 +183,7 @@ def test_ollama_and_the_proxy_are_stopped_at_the_end_also_when_they_were_already
     state[chat_run.OLLAMA_PORT] = state[chat_run.PROXY_PORT] = True  # a leftover or the user's own
     with chat_run.ollama_running() as started_by_run:
         assert started_by_run is False and started == []
-    assert sorted(killed) == [1000 + chat_run.OLLAMA_PORT, 1000 + chat_run.PROXY_PORT]
+    assert sorted(killed) == sorted([1000 + chat_run.OLLAMA_PORT, 1000 + chat_run.PROXY_PORT])
     assert not any(state.values())
 
 
@@ -202,3 +202,4 @@ def test_a_half_running_pair_is_a_leftover_it_is_stopped_and_both_are_started_fr
     with chat_run.ollama_running() as started_by_run:
         assert started_by_run is True and len(started) == 1 and killed == [1000 + chat_run.PROXY_PORT]
     assert not any(state.values())
+

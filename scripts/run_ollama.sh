@@ -17,8 +17,9 @@ mkdir -p "$LOG_DIR"
 source "$REPO_ROOT/scripts/server_lock.sh"
 hold_server_lock
 
-# Loopback only; MemState's default base URL is http://127.0.0.1:11434.
-export OLLAMA_HOST="${OLLAMA_HOST:-127.0.0.1:11434}"
+# Loopback only, on 11436: Ollama's default 11434 may be held by a system-wide Ollama service (the snap), which this
+# script neither uses nor stops. MemState reaches this server only through the proxy on 11435.
+export OLLAMA_HOST="${OLLAMA_HOST:-127.0.0.1:11436}"
 # MemState sends no options.num_ctx, so the server-side default context must be 16k.
 export OLLAMA_CONTEXT_LENGTH="${OLLAMA_CONTEXT_LENGTH:-16384}"
 # 6 GiB laptop GPU: keep a single model resident, one request at a time.

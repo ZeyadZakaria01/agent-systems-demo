@@ -774,6 +774,12 @@
       "hand_grade": {
         "grade": null,
         "note": null
+      },
+      "model_grade": {
+        "grade": "correct",
+        "note": "The answer states the deadline is April 20th, matching the ground truth; the extra detail about the storage format does not contradict it.",
+        "grader": "claude-sonnet-5-5",
+        "graded_at": "2026-10-21T08:02:37+00:00"
       }
     },
     {
@@ -979,6 +985,12 @@
       "hand_grade": {
         "grade": null,
         "note": null
+      },
+      "model_grade": {
+        "grade": "correct",
+        "note": "The answer lists Alice (frontend lead), Bob (backend), and Erin (QA), matching the ground truth exactly.",
+        "grader": "claude-sonnet-5-5",
+        "graded_at": "2026-10-21T08:02:40+00:00"
       }
     },
     {
@@ -1259,6 +1271,12 @@
       "hand_grade": {
         "grade": null,
         "note": null
+      },
+      "model_grade": {
+        "grade": "correct",
+        "note": "The answer states the Website Redesign project's status is Complete, matching the ground truth. The extra details about the deadline, team and earlier phases are muddled but don't contradict it.",
+        "grader": "claude-sonnet-5-5",
+        "graded_at": "2026-10-21T08:02:44+00:00"
       }
     }
   ],

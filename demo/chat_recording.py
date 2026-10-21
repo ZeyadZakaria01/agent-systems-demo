@@ -9,7 +9,8 @@ Shape (schema 1): `case` ("bad-merge", "two-weeks"), `title`, `run_id`, `recorde
 (how the state was built; for the bad merge what the merge lost, for the two-weeks run the dates), `turns` (one per
 question: `question`, `ability`, `text`, `ground_truth`, `answer`, `answer_contains_ground_truth` (a hint, not a
 grade: every word of the ground truth in the answer, or the rule named in `hint_rule`), `route`, `latency_ms`,
-`model`, `provider`, `tool_log`, and the empty `hand_grade` slot the grader fills in by hand). A case adds its own
+`model`, `provider`, `tool_log`, the empty `hand_grade` slot the grader fills in by hand, and `model_grade` once
+`python -m demo.model_grade` has graded the turn, `demo/model_grade.py`). A case adds its own
 per-turn evidence under its own key, which the renderer prints only when a turn carries it: `state_violation` and
 `topic_changed_by_turn` (bad merge); `reference_time`, `graded_on`, `written`, `topics_created` and
 `stored_start_date` (two weeks).
@@ -30,6 +31,18 @@ LEFT_UNSET = ("no `intent_override`", "no `model` in the request (the server's `
               "no judge")  # what every chat run leaves to MemState's defaults
 
 
+PROVIDERS = ("ollama", "groq")
+
+
+def chat_provider() -> str:
+    """The LLM provider chat turns ask for (`GEM_CHAT_PROVIDER`, set by `--provider`): ollama (local) or groq."""
+    import os
+    provider = os.environ.get("GEM_CHAT_PROVIDER") or "ollama"
+    if provider not in PROVIDERS:
+        raise ValueError(f"GEM_CHAT_PROVIDER={provider!r}: use one of {PROVIDERS}")
+    return provider
+
+
 def new_recording(described: dict, *, case: str, title: str, run_id: str, recorded_at: str, command: str,
                   snapshot: str | None, ollama_base_url: str | None, left_unset: list[str], state: dict,
                   turns: list[dict], extra: dict | None = None) -> dict:
@@ -41,7 +54,7 @@ def new_recording(described: dict, *, case: str, title: str, run_id: str, record
         "system": {"label": described.get("system"), "url": described.get("url"), "db_path": described.get("db_path"),
                    "commit": described.get("commit"), "engine": described.get("engine"),
                    "source_dir": described.get("source_dir")},
-        "llm": {"provider": "ollama", "model": next((t["model"] for t in turns if t["model"]), None),
+        "llm": {"provider": next((t["provider"] for t in turns if t.get("provider")), chat_provider()), "model": next((t["model"] for t in turns if t["model"]), None),
                 "base_url": ollama_base_url or "(not stated)", "left_unset": list(left_unset)},
         "state": state, "turns": turns, **(extra or {})}
 
@@ -162,6 +175,9 @@ def render_turn(turn: dict, loss: dict | None) -> list[str]:
     graded_on = f" (graded on: {turn['graded_on']})" if turn.get("graded_on") else ""
     lines.append(f"  - hand grade{graded_on}: [ ] {_shown(grade['grade']) if grade['grade'] is not None else '(empty)'}; "
                  f"note: {grade['note'] or '(empty)'}")
+    if "model_grade" in turn:
+        model = turn["model_grade"]
+        lines.append(f"  - model grade ({model['grader']}): {model['grade']}; note: {model['note'] or '(empty)'}")
     return lines
 
 

@@ -101,7 +101,7 @@ def test_the_story_shifts_with_the_run_day_and_keeps_its_gaps():
 def test_the_run_sends_two_separate_requests_one_message_each_with_the_shifted_reference_times():
     system, _ = recorded()
     assert [c["messages"] for c in system.chats] == [[{"role": "user", "content": "I started my new job two weeks ago"}],
-                                                      [{"role": "user", "content": "how long have I been there?"}]]
+                                                      [{"role": "user", "content": "How long have I been at my new job?"}]]
     assert [c["reference_time"] for c in system.chats] == ["2026-10-06T00:00:00+00:00", "2026-10-20T00:00:00+00:00"]
 
 
@@ -262,7 +262,7 @@ def test_a_recording_survives_save_and_load_unchanged(tmp_path):
 def test_replay_shows_both_turns_the_reference_times_the_stored_entry_the_truth_and_two_empty_grade_slots():
     _, rec = recorded()
     text = render_recording(rec)
-    for needle in ("I started my new job two weeks ago", "how long have I been there?", "2026-10-06", "2026-10-20",
+    for needle in ("I started my new job two weeks ago", "How long have I been at my new job?", "2026-10-06", "2026-10-20",
                    "2026-09-22", "four weeks", "About four weeks.", "start_date", "Sep 22", "stored start date",
                    "within 1 day"):
         assert needle in text
@@ -278,7 +278,7 @@ def test_replay_runs_with_no_server_and_loads_neither_http_nor_the_server_launch
     done = subprocess.run([sys.executable, "-c", code, str(tmp_path)], capture_output=True, text=True,
                           cwd=str(__import__("demo.paths").paths.REPO_ROOT))
     assert done.returncode == 0, done.stderr
-    assert "how long have I been there?" in done.stdout and "About four weeks." in done.stdout
+    assert "How long have I been at my new job?" in done.stdout and "About four weeks." in done.stdout
 
 
 def test_the_scorecard_prints_the_two_weeks_case_beside_the_bad_merge(tmp_path):
@@ -290,6 +290,6 @@ def test_the_scorecard_prints_the_two_weeks_case_beside_the_bad_merge(tmp_path):
     run = run_recorded(systems=["baseline"], checks=[c1], results_root=tmp_path / "results", command="python -m demo.run t",
                        run_day=RUN_DAY, runtime_root=tmp_path / "runtime", recordings_dir=tmp_path / "rec")
     card = (run.dir / "scorecard.md").read_text()
-    assert "### Chat cases" in card and "how long have I been there?" in card and "About four weeks." in card
+    assert "### Chat cases" in card and "How long have I been at my new job?" in card and "About four weeks." in card
     (case,) = json.loads((run.dir / "results.json").read_text())["chat_cases"]
     assert case["case"] == "two-weeks" and all("tool_log" not in t for t in case["turns"])

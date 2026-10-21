@@ -105,6 +105,12 @@
         "tolerance_days": 1,
         "candidates": [],
         "within_tolerance": false
+      },
+      "model_grade": {
+        "grade": "incorrect",
+        "note": "No entry was stored, so no start date was recorded. The assistant only mentioned 2026-09-24 in a clarifying question and never saved it.",
+        "grader": "claude-sonnet-5-5",
+        "graded_at": "2026-10-21T08:02:48+00:00"
       }
     },
     {
@@ -155,7 +161,13 @@
         "note": null
       },
       "answer_contains_ground_truth": false,
-      "hint_rule": "the answer says four weeks (\"four weeks\", \"4 weeks\" or \"28 days\")"
+      "hint_rule": "the answer says four weeks (\"four weeks\", \"4 weeks\" or \"28 days\")",
+      "model_grade": {
+        "grade": "incorrect",
+        "note": "The assistant did not state 'four weeks'; it said it found no topics and asked the user for clarification instead of answering.",
+        "grader": "claude-sonnet-5-5",
+        "graded_at": "2026-10-21T08:02:51+00:00"
+      }
     }
   ],
   "environment": {

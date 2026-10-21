@@ -97,6 +97,13 @@ class MemStateSystem(System):
             except ValueError:
                 detail = r.text
             raise Rejected(r.status_code, detail)
+        if r.status_code >= 500:  # MemState puts the upstream (LLM) error in `detail`; keep it in the message
+            try:
+                detail = r.json().get("detail", r.text)
+            except ValueError:
+                detail = r.text
+            raise httpx.HTTPStatusError(f"{r.status_code} from {method} {path}: {str(detail)[:500]}",
+                                        request=r.request, response=r)
         r.raise_for_status()
         return r
 

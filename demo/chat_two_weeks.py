@@ -6,7 +6,7 @@ none (spec "Further Notes"). The story is told around Oct 20 and shifted so that
 time-probe stories are (`demo.time_stories`, spec "Time-probe stories"):
 
 1. `reference_time` Oct 6: "I started my new job two weeks ago". Ground truth: the start date Sep 22, +- 1 day.
-2. `reference_time` Oct 20: "how long have I been there?" in a request of its own. Ground truth: four weeks.
+2. `reference_time` Oct 20: "How long have I been at my new job?" in a request of its own. Ground truth: four weeks.
 
 Nothing else is written by default: no `/v1` events, no seeded topic, no setup write. Each request is `provider: ollama`
 with no `intent_override`, no `model`, no Groq and no judge: MemState's router decides each route. Two opt-in variants
@@ -27,13 +27,13 @@ from datetime import date, datetime, timedelta
 from typing import Any
 
 from demo.adapter import System
-from demo.chat_recording import EMPTY_GRADE, LEFT_UNSET, new_recording
+from demo.chat_recording import EMPTY_GRADE, LEFT_UNSET, chat_provider, new_recording
 from demo.time_stories import iso
 
 CASE = "two-weeks"
-CASE_TITLE = 'Two weeks ago on step 3: "I started my new job two weeks ago", then "how long have I been there?"'
+CASE_TITLE = 'Two weeks ago on step 3: "I started my new job two weeks ago", then "How long have I been at my new job?"'
 FIRST_MESSAGE = "I started my new job two weeks ago"
-SECOND_MESSAGE = "how long have I been there?"
+SECOND_MESSAGE = "How long have I been at my new job?"
 ABILITY = "temporal reasoning"
 FIRST_INTENT_OVERRIDE = "ingest"  # the opt-in variant that forces W1's route
 TOLERANCE_DAYS = 1
@@ -187,7 +187,7 @@ def left_unset(first_intent_override: str | None) -> list[str]:
 def take_turn(system: System, *, question: str, text: str, reference_day: date, ground_truth: str,
               graded_on: str, intent_override: str | None = None) -> dict:
     """One chat request; the turn keeps what the replay prints."""
-    request = {"messages": [{"role": "user", "content": text}], "provider": "ollama", "reference_time": iso(reference_day)}
+    request = {"messages": [{"role": "user", "content": text}], "provider": chat_provider(), "reference_time": iso(reference_day)}
     if intent_override:
         request["intent_override"] = intent_override
     before = system.read_state()

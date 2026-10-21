@@ -565,3 +565,35 @@ One entry per difficulty, newest last. Fields: expected, observed, evidence, res
 - Evidence: `git log --format=%ae 92099d8..backup/gem-suite-pre-author-rewrite`; the implementer reports quoted in the session.
 - Resolution: the suite fails if it changes the real config or HEAD (`tests/repo_guard.py`, `tests/conftest.py`); the pre-commit hook refuses an `@example.com` author or committer; the runner, the chat recorder and both server scripts hold `server.lock` themselves (`demo/server_lock.py`, `scripts/server_lock.sh`), so there is one lock and forgetting the wrapper is safe. The first smoke of the wrapped form read C1 `error`: an inherited lock was used but not announced to the server script, which then refused; the test now checks what children see.
 - Lesson: a guardrail the agent must remember is a guardrail the agent forgets; put the lock in the scripts and the identity check in the hook, and test a lock from the child's side as well as the holder's.
+
+### The "two weeks ago" chat measured the router and a dangling "there", not the reference time `report:`
+- Date: 2026-10-21
+- Expected: the case tests whether a relative date is resolved against the message's reference time (C1′, as Zep's `t_ref`).
+- Observed: with `qwen3.5:2b` the classifier sent the statement to the read-only `query` route in 7 of 7 takes (F31), so nothing could be stored; with `qwen3.5:4b` it routed to `ingest` 10 of 10. The spec's W2 "how long have I been there?" arrives with no history, so "there" refers to nothing: 4b called no memory tool in 6 of 6 takes. Separately, a snap Ollama service now holds port 11434, so `scripts/run_ollama.sh` could no longer start the demo's own server there.
+- Evidence: F37; `scripts/pilot_two_weeks.py --summarise demo/chat-series`; `/tmp/pilot` pilot logs (not kept).
+- Resolution: the demo's Ollama moved to port 11436 (the proxy stays on 11435); the chat series uses `qwen3.5:4b`, the largest qwen3.5 that loads on the GPU; W2 names the job. With both, the case measures what it was meant to: the date resolution, which succeeds 1 time in 10 (F37).
+- Lesson: pilot a chat case for where it breaks before scoring it; an n = 1 run of record cannot tell a model limit from a test that cannot pass.
+
+### The relative-date resolver fixed the stored date and exposed answer-time arithmetic
+- Date: 2026-10-21
+- Expected: resolving "two weeks ago" by rule when a chat write is stored fixes the two-weeks case.
+- Observed: the stored start date went from 1 of 10 to 6 of 10 (every write correct), but the follow-up answer computed the duration wrong in all 10 takes, including takes that quoted both dates (F38). A first version rewrote "two weeks ago (2026-09-23)" to "2026-09-23 (2026-09-23)"; a value that already states the date now keeps its wording.
+- Evidence: F38; `MemState-patched/tests/test_relative_dates.py`.
+- Resolution: the resolver is in patch commit 2 (amended twice; the superseded commits are pinned under `refs/superseded/`); the answer-time arithmetic is left to the model and reported.
+- Lesson: fix one stage, then re-measure the next: the resolver moved the failure from the write to the answer, which the earlier runs could not show.
+
+### Reasoning off was the main cause of the small model's chat failures; two resolver rules cost W2
+- Date: 2026-10-21
+- Expected: a 4B model is too weak for the two-weeks case, and a hosted model (Groq `gpt-oss-20b`, MAFBench's model) is needed.
+- Observed: Groq's free tier caps every chat model at 8,000 tokens per minute, and one MemState chat request is 8,515 (its system prompt and tool list are ~3.1k on the query route, ~6.5k on ingest/both), so no free Groq take can run; Grok (xAI) inference is prepaid only. Locally, turning the model's reasoning back on (`GEM_THINK=1`) took W1 writes from 6 to 10 of 10 and W2 from 0 to 3–4 of 10 (F39). Two of the remaining failures come from the resolver's own rules: a model-computed `valid_from` wins when the value has no phrase, and a phrase is left in a value that already states the date.
+- Evidence: F39; Groq's 413 detail kept by `demo/memstate_system.py` (`Requested 8515`); `scripts/chat_series.py` quota checks.
+- Resolution: reasoning on is recorded per take (`environment.think`); the rule changes are proposed, to be measured on a fresh series rather than tuned on these takes.
+- Lesson: before reaching for a bigger model, undo the settings that made the small one fast; a pilot of 3 overstates (3/3 became 3–4/10).
+
+### Rewriting the model's free text fixed some takes and broke others; the structured start date was the stable fix
+- Date: 2026-10-21
+- Expected: removing "two weeks ago" from values that already state the date would stop the answer repeating it.
+- Observed: a 3-take pilot turned the model's correct "Two weeks ago from 2026-10-07, which is 2026-09-23" into "from 2026-10-07, which is 2026-09-23", and the answer read Oct 7 as the start. Replaying the model's recorded tool calls offline (`scripts/replay_two_weeks_writes.py`) showed each candidate rule's effect on 13 real writes in a second, before any live take.
+- Evidence: F39, F40; `/tmp/pilot-b` (not kept).
+- Resolution: values that already state the date are kept as written; `valid_from` is set by rule; only a single differing ISO date is replaced. The final series is fresh takes, not the ones the rules were tuned on (F40).
+- Lesson: check a rule change offline on recorded model output, then on a small live pilot, before a series; prefer fixing structured fields over editing model text.

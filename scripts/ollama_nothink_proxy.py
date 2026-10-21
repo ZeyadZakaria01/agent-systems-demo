@@ -6,17 +6,20 @@ qwen3.5 thinks by default; Ollama's Modelfile has no `think` parameter and qwen3
 `/no_think`. Pointing MEMSTATE_OLLAMA_BASE_URL at this proxy turns thinking off without
 modifying MemState. Requests that set `think` explicitly are passed through unchanged.
 
-Usage: ollama_nothink_proxy.py [LISTEN_PORT] [UPSTREAM_URL]   (defaults: 11435, http://127.0.0.1:11434)
+Usage: ollama_nothink_proxy.py [LISTEN_PORT] [UPSTREAM_URL]   (defaults: 11435, http://127.0.0.1:11436, the demo's own Ollama)
 """
 import json
+import os
 import sys
 import urllib.error
 import urllib.request
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
 PORT = int(sys.argv[1]) if len(sys.argv) > 1 else 11435
-UPSTREAM = (sys.argv[2] if len(sys.argv) > 2 else "http://127.0.0.1:11434").rstrip("/")
+UPSTREAM = (sys.argv[2] if len(sys.argv) > 2 else "http://127.0.0.1:11436").rstrip("/")
 THINK_PATHS = ("/api/chat", "/api/generate")
+# GEM_THINK=1 leaves the model's reasoning on (a run that measures it); the default turns it off (ADR 0003).
+THINK = os.environ.get("GEM_THINK", "0") == "1"
 
 
 class Proxy(BaseHTTPRequestHandler):
@@ -24,7 +27,7 @@ class Proxy(BaseHTTPRequestHandler):
         body = self.rfile.read(int(self.headers.get("Content-Length") or 0)) or None
         if body and self.command == "POST" and self.path in THINK_PATHS:
             payload = json.loads(body)
-            payload.setdefault("think", False)
+            payload.setdefault("think", THINK)
             body = json.dumps(payload).encode()
         req = urllib.request.Request(UPSTREAM + self.path, data=body, method=self.command)
         req.add_header("Content-Type", self.headers.get("Content-Type", "application/json"))
@@ -46,5 +49,5 @@ class Proxy(BaseHTTPRequestHandler):
 
 
 if __name__ == "__main__":
-    print(f"nothink-proxy 127.0.0.1:{PORT} -> {UPSTREAM}", flush=True)
+    print(f"nothink-proxy 127.0.0.1:{PORT} -> {UPSTREAM}, think default {THINK}", flush=True)
     ThreadingHTTPServer(("127.0.0.1", PORT), Proxy).serve_forever()

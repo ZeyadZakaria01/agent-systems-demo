@@ -359,3 +359,66 @@ Runs (recorded mode, under `flock /tmp/gem-suite-live.lock`; `/home/zeyad/work/a
 - **C4** partial on both: update held; merge broken (survivor keeps March 15 only); **real forgetting n/a**: the pass ran (the never-read 0.01 control was archived) but a topic with a field ingested at 0.01 read salience 1.0 and was not archived (F24, confirmed by the run); `""` and `null` writes accepted and current (broken); the cap case result is in the snapshot (F21).
 - **C5-1** pass on both, with the F24 observation: a topic with a field at 0.01 reads salience 1.0, archived false. The gate case text states the declared bound (500 topics, `topic_count_soft_limit`) beside 501 topics.
 - **C6-1** pass with the as-of case n/a (neither `valid_at` nor `recorded_at` accepted); **C6-2** pass on both (the control is archived at the forced pass, the read topic is not).
+
+## F37. Chat series on `qwen3.5:4b` (10 takes per case, graded by Sonnet): the bad merge looks right in 30 of 30 answers; "two weeks ago" is routed to a write 10 of 10 times but resolved to the right date once
+
+Runs (2026-10-21): pilot `scripts/pilot_two_weeks.py --models qwen3.5:4b --takes 3 --out /tmp/pilot` (and `--settings router` after the rewording), then for each case 10 times `MEMSTATE_OLLAMA_MODEL=qwen3.5:4b .venv/bin/python -m demo.chat_run record <case> --recordings demo/chat-series/qwen3.5-4b/<case>` (each take a fresh DB under `/home/zeyad/work/agent-systems-demo/.runtime/gem-suite/<run id>/`, cited in each recording; bad merge on upstream `945d7c4`, two weeks on patch step 3 `cb5d48c`); grades `.venv/bin/python -m demo.model_grade demo/chat-series/qwen3.5-4b/*/*.json` (`claude-sonnet-5-5`, no tools, empty folder), counts `.venv/bin/python -m demo.model_grade --tally demo/chat-series` and `scripts/pilot_two_weeks.py --summarise demo/chat-series`. Ollama is the demo's own (v0.35.1, port 11436), the model 3.1 of 3.9 GB on the 6 GB GPU at 16k context.
+
+Key output:
+- Bad merge: every take had the C4 violation on Q02 (the deadline history and its "vendor delay" provenance lost). Sonnet graded Q02, Q06 and Q11 correct in 10 of 10 takes each: the answer looks right in 30 of 30 while the state is broken.
+- Two weeks, router: the classifier routed "I started my new job two weeks ago" to `ingest` in 10 of 10 takes (2b: `query` in 7 of 7 spec-faithful takes, F31), so the router is not the blocker with 4b.
+- Two weeks, the question: with the spec's W2 "how long have I been there?" the second turn called no memory tool in 6 of 6 pilot takes ("there" has no referent in a request with no history); reworded to "How long have I been at my new job?", it read memory in 13 of 13 takes. The rewording is in the deviations table.
+- Two weeks, the date: W1 wrote a field in 6 of 10 takes: the literal phrase "two weeks ago" with `valid_from` defaulting to the reference time (Oct 7) in 4, a wrong date in 2 (Sep 14; Sep 19 in `valid_from`); 4 wrote nothing. One take stored 2026-09-23 and answered "since September 23 … about a month ago": Sonnet graded W1 and W2 correct in that take only (1 of 10 each). Every take that stored the phrase answered "two weeks".
+
+Limits: 10 takes per case, one 4B model, one laptop; Sonnet's grades are checked against the raw recordings (all 50 agree with the stored values and answers), and the hand grades are still empty. What fails is resolving a relative date into `valid_from`: the patch passes the reference time to the model and defaults `valid_from` to it (F28), but leaves the arithmetic to the model, where Zep runs a dedicated date-extraction step [INFERENCE: from Zep's paper, not run].
+
+## F38. With relative dates resolved by rule in chat writes, the "two weeks" start date is right in 6 of 10 takes (every write); the duration answer is still wrong in 10 of 10
+
+Patch: commit 2 now resolves a relative date phrase ("two weeks ago", "yesterday", "in three days", "last month") against the message's reference time when a chat write is stored (`memstate/llm/relative_dates.py`, used by `memory_append_field`): a phrase in the value sets `valid_from` and becomes the date in the value (over a date the model computed), else the message's one phrase sets `valid_from` when the model passed none; the phrase and what it replaced go into the provenance; two phrases, or none, resolve nothing. Final commits: step 1 `089b823`, step 2 `9cec507`, step 3 `22fc89a` (the run of record measured `2cfabee` and `cb5d48c`, kept under `refs/superseded/` in the submodule). Developer tests: `tests/test_relative_dates.py` (25) with upstream's 39 unedited, 110 passed (`cd MemState-patched && PYTHONPATH=$PWD/src ../.venv/bin/python -m pytest -q`). Suite smoke on the new steps: `.venv/bin/python -m demo.run --systems step2,step3 --checks C1,T1,T2,T3,T4,T5,T6 --results-root /tmp/rsmoke`: C1 and T1–T6 pass on both, as in F32 (the resolver touches only chat writes).
+
+Run (2026-10-21): 10 times `MEMSTATE_OLLAMA_MODEL=qwen3.5:4b .venv/bin/python -m demo.chat_run record two-weeks --recordings demo/chat-series/qwen3.5-4b-resolver/two-weeks` (step 3 `22fc89a`, each take a fresh DB cited in its recording), graded by `.venv/bin/python -m demo.model_grade demo/chat-series/qwen3.5-4b-resolver/two-weeks/*.json`; counts `.venv/bin/python -m demo.model_grade --tally demo/chat-series/qwen3.5-4b-resolver` and `scripts/pilot_two_weeks.py --summarise demo/chat-series`.
+
+Key output (against F37's 10 takes without the resolver):
+- W1 routed to `ingest` 10 of 10 (F37: 10 of 10); wrote a field 6 of 10 (F37: 6 of 10); the stored start date is 2026-09-23 in all 6 writes, value and `valid_from` (F37: 1 of 10). Sonnet: W1 correct 6 of 10, exactly the takes that wrote.
+- W2 read memory in every take, and in every take that stored 2026-09-23 the answer gave a wrong duration: "two weeks" (three takes), "about three weeks", "about 4 days (roughly one week)", or "about two weeks" while stating both dates (Sep 23 and Oct 21) itself. Sonnet: W2 incorrect 10 of 10; checked against the answers.
+
+Limits: 10 takes, one 4B model. The stored state is now right whenever the model writes; what remains is the model not writing (4 of 10) and the duration arithmetic at answer time, which no stored state fixes.
+
+## F39. With the model's reasoning on, local `qwen3.5:4b` writes the start date 10 of 10 times and answers "four weeks" 3–4 of 10; the bad merge still looks right in 30 of 30
+
+Runs (2026-10-21): pilot `GEM_THINK=1 .venv/bin/python scripts/pilot_two_weeks.py --models qwen3.5:4b --settings router --takes 3 --out /tmp/pilot-think` (3 of 3 takes wrote 2026-09-23 and answered 28 days / about 4 weeks), then per case `GEM_THINK=1 .venv/bin/python scripts/chat_series.py <case> --takes 10 --provider ollama --model qwen3.5:4b --out demo/chat-series/qwen3.5-4b-think/<case>` (bad merge on upstream `945d7c4`, two weeks on step 3 `22fc89a` with the relative-date resolver, F38; each take a fresh DB cited in its recording; every recording's `environment.think` is true). `GEM_THINK=1` makes the think-off proxy leave the model's reasoning on instead of off (ADR 0003); turns took 16–37 s instead of 2–5 s. Grades: `.venv/bin/python -m demo.model_grade demo/chat-series/qwen3.5-4b-think/*/*.json` (Sonnet), counts `--tally demo/chat-series/qwen3.5-4b-think`; a read-only reviewer subagent graded the 50 turns independently first and agreed on 49.
+
+Key output (two weeks, against F37 and F38):
+
+| qwen3.5:4b | W1 wrote | start date within ±1 day (hint) | W1 correct (Sonnet) | W2 correct (Sonnet / reviewer) |
+|---|---|---|---|---|
+| reasoning off (F37) | 6/10 | 1/10 | 1/10 | 1/10 |
+| reasoning off + resolver (F38) | 6/10 | 6/10 | 6/10 | 0/10 |
+| reasoning on + resolver | 10/10 | 8/10 | 6/10 (2 partial) | 4/10 / 3/10 (1 partial) |
+
+- Bad merge: Q02, Q06, Q11 correct 10 of 10 each (both graders); every take lost the deadline history.
+- Where two weeks still fails: the model computed a wrong date itself and passed it as `valid_from` (2026-09-13, 2026-09-14: 2 takes), which the resolver keeps because the value carries no phrase; the value stored "two weeks ago (approximately 2026-09-23)" and W2 repeated "two weeks ago" (2 takes), because the resolver leaves a phrase in place when the value already states the date; the value carried the right date and a second, wrong one (2 takes, W1 partial); one take stored Sep 23 and answered "about two and a half weeks".
+
+Limits: 10 takes per case, one 4B model on one laptop. The pilot's 3 of 3 did not hold at 10 takes.
+
+## F40. Final resolver rules with reasoning on: the "two weeks" start date is right in every take (Sonnet 10 of 10, reviewer 9 + 1 partial) and the answer says four weeks in 6 of 10 (3 partial, 1 wrong)
+
+Patch: commit 2 amended once more (final commits: step 1 `089b823`, step 2 `4272a07`, step 3 `9bd471e`; the superseded ones are pinned under `refs/superseded/` in the submodule). Rules for a chat write, measured in F39 and replayed offline on 13 real model writes before any live take (`PYTHONPATH=MemState-patched/src .venv/bin/python scripts/replay_two_weeks_writes.py <folder>`: `valid_from` 2026-09-23 in 13 of 13): a relative phrase in the value is replaced by its date unless the value already states that date (then the value is kept as written: cutting the phrase out of "Two weeks ago from 2026-10-07, which is 2026-09-23" made a 3-take pilot read Oct 7 as the start); else the message's one phrase sets `valid_from`, over a different date the model computed, and a single ISO date in the value that differs from it is replaced; the model's dates go into the provenance. 121 tests in the patched copy pass with upstream's 39 unedited; the suite's C1 and T1–T6 pass on the new steps 2 and 3 (`.venv/bin/python -m demo.run --systems step2,step3 --checks C1,T1,T2,T3,T4,T5,T6 --results-root /tmp/rsmoke3`: 14 of 14 pass).
+
+Run (2026-10-21): `GEM_THINK=1 .venv/bin/python scripts/chat_series.py two-weeks --takes 10 --provider ollama --model qwen3.5:4b --out demo/chat-series/qwen3.5-4b-think-final/two-weeks` (fresh takes, not the ones the rules were tuned on; step 3 `9bd471e`; each take a fresh DB cited in its recording), graded by `.venv/bin/python -m demo.model_grade` (Sonnet) and independently by a read-only reviewer subagent (agrees on 19 of 20).
+
+Key output:
+
+| qwen3.5:4b, two weeks | W1 wrote | W1 correct (Sonnet / reviewer) | W2 correct (both graders) |
+|---|---|---|---|
+| reasoning off (F37) | 6/10 | 1/10 | 1/10 |
+| reasoning off + resolver (F38) | 6/10 | 6/10 | 0/10 |
+| reasoning on + first resolver (F39) | 10/10 | 6/10 + 2 partial | 3–4/10 |
+| reasoning on + final resolver | 10/10 | 10/10 / 9/10 + 1 partial | 6/10 + 3 partial + 1 wrong |
+
+- `valid_from` is 2026-09-23 in 10 of 10 takes.
+- The three partial W2 answers give Sep 23 and 28 days or a month but also "a week and a half", "just under three weeks" or "just over two weeks": arithmetic slips, nothing in the stored data behind them.
+- The wrong W2 read a second date the model had put in its own value ("Started new job 2026-09-23 (2026-09-15)", two dates, so no rule applied) and answered 36 days from Sep 15.
+- One take stored an employer the user never named ("Amazon Web Services").
+
+Limits: 10 takes, one 4B model on one laptop, reasoning on (turns 16–37 s). Memory now stores the right start date whenever the model writes; what remains is the model's arithmetic and the dates it writes into free text.
