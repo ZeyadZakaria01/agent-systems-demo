@@ -4,20 +4,21 @@
 **Prepared by:** Zeyad Zakaria Mohamed, for the interview with Prof. Essam Mansour
 **Date:** October 2026
 
-> **Scope.** This report focuses on the MemState / GEM paper. The MAFBench paper (*Architectural Design, Not Only Model Intelligence, Governs Multi-Agent LLM Performance*, arXiv:2602.03128) is covered in a short section on its memory results and how they connect to GEM (Section 8). The released MemState code is a proof-of-concept, so the analysis argues from the paper. Statements about MemState's runtime behaviour enter this report only after a recorded run reproduces them (Section 9). Section 4 of [P1] states which guarantees the prototype provides (its opening and Section 4.3 differ on C3; see Section 5), and Section 4.3 names several items as native-engine research directions; the prototype is tested against those stated guarantees, and points that fall within the paper's own agenda are presented as extending it, not as gaps.
+> **Scope.** This report focuses on the MemState / GEM paper. The MAFBench paper (*Architectural Design, Not Only Model Intelligence, Governs Multi-Agent LLM Performance*, arXiv:2602.03128) is covered in Section 8: its memory results, its limitations, and how it connects to GEM. The released MemState code is a proof-of-concept, so the analysis argues from the paper. Statements about MemState's runtime behaviour enter this report only after a recorded run reproduces them (Section 9). Section 4 of [P1] states which guarantees the prototype provides (its opening and Section 4.3 differ on C3; see Section 5), and Section 4.3 names several items as native-engine research directions; the prototype is tested against those stated guarantees, and points that fall within the paper's own agenda are presented as extending it, not as gaps.
 
 ---
 
 ## Contents
 
 1. [Summary of findings](#1-summary-of-findings)
+   - [Demo at a glance](#demo-at-a-glance)
 2. [Sources](#2-sources)
 3. [The paper in brief](#3-the-paper-in-brief)
 4. [Positioning MemState in the two surveys](#4-positioning-memstate-in-the-two-surveys)
 5. [Limitations and gaps of the paper](#5-limitations-and-gaps-of-the-paper)
 6. [Evaluation gaps](#6-evaluation-gaps)
 7. [Ideas to develop](#7-ideas-to-develop)
-8. [Link to the MAFBench paper](#8-link-to-the-mafbench-paper)
+8. [MAFBench: limitations and link to GEM](#8-mafbench-limitations-and-link-to-gem)
 9. [Demo: time-correct governed memory](#9-demo-time-correct-governed-memory)
 10. [References](#10-references)
 
@@ -35,10 +36,57 @@
 8. **Two measures GEM implies are missing from every benchmark:** *write-to-visible latency* and the *staleness window*. Both belong on an accuracy–latency–tokens Pareto plot rather than a single accuracy score.
 9. **Related systems omitted.** Hindsight and Supermemory implement parts of GEM's revision machinery without formal correctness conditions. StateMem, which does not cite [P1], independently converges on GEM's core ideas (state over recall, non-destructive supersession, typed dependency propagation) but lacks forgetting, salience, and formal conditions. MemTX evaluates a reimplementation of MemState, cross-checked against the official code (Sections 5.11 and 6.2).
 10. **MAFBench motivates GEM from the framework side.** It finds that multi-hop selective forgetting stays below 5.0 (out of 100) in every memory architecture it evaluates and that all of them treat memory as append-only, and it calls for versioned fact stores with multi-version concurrency control, write-ahead logging and conflict resolution, plus dependency tracking across stored facts. The demo's baseline is that concrete solution: a versioned row (append-only history with recorded time, one transaction per write, empty and null values rejected). Our claim, which the baseline tests, is that database guarantees are **necessary but not sufficient** for agent memory. Measured in the run of record: the versioned row passes C1, C2(b) (atomic commit), C2 on the lapsed override and C4, and is absent on declarative policies (C2(c)), dependency tracking (C3), forgetting (C5) and reinforcement (C6), each confirmed by a probe; it answers all 15 storyline questions, as MemState does, so the difference shows in stored state, not in answers (F34, Section 9.7).
+
+    MAFBench has limits of its own (Section 8.2):
+    - one run per configuration and no seed;
+    - an unnamed, unvalidated judge;
+    - one model-sensitivity row whose stable averages hide large subtask swings;
+    - no full-context baseline, though its selective-forgetting contexts exceed its largest window;
+    - answer-level metrics only;
+    - three places where its prose contradicts its own Table 10.
+
+    It measures memory with MemoryAgentBench, the benchmark GEM itself says "exercise[s] C1 only partially" ([16] in `2605.26252v1.md:351`); none of GEM's conditions is observed at the level of stored state (Section 8.3).
 11. **Demo: conformance testing, a reference GEM and a bitemporal amendment.** A conformance suite checks MemState's *stored state* against the guarantees Section 4 of [P1] claims, beside the versioned-row baseline and a **reference GEM**: our own small system built to the paper's definitions of C1–C6, with its simplifications declared. Its result is worded "passes the suite's checks, with declared simplifications", never "satisfies C1–C6". The reference GEM is scored in two phases. Phase 1 reads Definition 4's timestamp as kindly as its words allow (when the value became true); it passes every conformance row and is absent on two of the six time probes (T4 needs an end date, T5 a recorded time). Phase 2 adds C1′ and passes all six; no other row moves (F34). C1′ is the standard bitemporal model in the form Zep uses; our contribution is the read rule and its tests. The same fix is applied to MemState's field histories, on LadybugDB, in three commits: the port changes no verdict, the bitemporal histories flip all six time probes from absent to pass, and merging by valid time flips the superseded-value merge (C2(a)) from fail to pass, with no regressions on the rows the suite checks and MemState's 39 upstream tests passing at every step (F41, Sections 9.7 and 9.8). Commit 2 also resolves relative dates in chat writes by rule against the message's reference time; on a 4B model with reasoning on, the stored start date for "two weeks ago" was right in 10 of 10 takes, against 1 of 10 without the rule and with reasoning off (F37, F40), and the model's own arithmetic in its answer remains the failure (F40).
 12. **The field has moved since May 2026.** Transactional and belief-revision memory papers (MemTX, MemTxn, TOKI) now cover much of C2–C4, and MemTX cites [P1]. GEM's distinctive contributions remain C5 (relevance-driven forgetting), C6 (retrieval-induced adaptation), and the native-engine agenda (Section 6.2).
 13. **Refinements to GEM's conditions: one amendment, one strengthening, one extension, no new conditions.** C1′ amends C1 (one clarification: `t` is when a value became true and "current" is judged at the asked date among non-archived entries; two additions: an end date per value and a recorded time). C3′ strengthens C3 (bounded, visible dependency consistency, with a testable core: a read of a dependent before it is re-checked carries a flag naming the update). C4′ extends C4 (evidence-backed provenance, which adds a state component: the retained source). Each is built from the paper's own machinery (Section 7.5).
 14. **Three levels of evaluation.** Answer accuracy, labeled behaviour, and stored state each catch failures the previous level cannot. MAFBench and StateMemBench apply the same principle of isolating causes on different axes (Section 6.9).
+15. **A unified evaluation suite.** Following MAFBench's shape (existing benchmarks behind one pipeline, one thing varied at a time), we propose a competency × condition grid: MemoryAgentBench's four competencies plus time, against C1–C6 and the three refinements, each cell graded at the three levels. The suite adds:
+    - a state-level adapter, which our conformance suite already has;
+    - a grading order of state read, then closed pool, then a validated judge;
+    - memory semantics measured apart from per-model acquisition reliability;
+    - [P2]'s saturation axes as workload knobs;
+    - LLM time split from store time.
+
+    It is proposed, not run (Section 7.7). On our recorded chat turns, the judges and token F1 all miss the state masking that the stored-state check finds (F43, Section 9.7).
+
+---
+
+## Demo at a glance
+
+The demo tests the stored state of a memory system against the guarantees [P1]'s Section 4 claims. One recorded command ran it on seven systems (run of record, F41):
+- upstream MemState, unmodified, on Kuzu;
+- three patch steps on LadybugDB: step 1 ports the engine, steps 2 and 3 add C1′;
+- our reference GEM, built to the paper's definitions, in two phases (phase 2 adds C1′);
+- a versioned-row baseline, MAFBench's own proposed remedy.
+
+Selected verdicts (full scorecard in Section 9.8):
+
+| Row | Upstream | Step 3 (C1′) | Ref. phase 1 | Ref. phase 2 | Versioned row |
+|---|---|---|---|---|---|
+| C2(a) merge keeps the newer value | fail (20 of 20) | pass (0 of 20) | pass | pass | not-scored |
+| C2(b) atomic commit | fail | fail | pass | pass | pass |
+| C3 dependency consistency | absent | absent | pass | pass | absent |
+| C5 natural trajectory | fail (2,000 active vs. 500) | fail | pass | pass | absent |
+| Time probes T1, T2, T3, T6 | absent | pass | pass | pass | absent |
+| T4 lapsed override, T5 as-of query | absent | pass | **absent** | pass | absent |
+| C4′ provenance resolves to a source | absent | absent | pass | pass | absent |
+
+What it shows:
+- **The prototype as published** fails or lacks C2(a), C2(b), C3 and C5 under the paper's own claims. Its README calls it a proof of concept, so these mark stated gaps, not defects (Section 9.7).
+- **The gap in time sits in the conditions, not only in the prototype.** The reference GEM satisfies C1–C6 in every check, yet without C1′ it still answers T4 and T5 wrong: a lapsed override and an as-of question. With C1′ it passes all six time probes, and no other row moves (Sections 9.5, 9.6).
+- **C1′ on MemState** turns every time probe from absent to pass, and the merge from losing the newer value in 20 of 20 runs to 0 of 20. The rows the suite checks show no regressions, and MemState's 39 upstream tests pass unedited at every step (Sections 9.5, 9.7).
+- **Database guarantees are necessary but not sufficient.** The versioned row passes C1, atomic commit and C4, and has no C3, C5 or C6 (Sections 8.3, 9.3).
+- **Answers hide state failures.** After a bad merge the chat model's answers are judged correct in 30 of 30 while the deadline's history is gone from storage (F37, F39). Across all 69 bad-merge turns, both the judge and token F1 miss it (F43, Section 9.7).
 
 ---
 
@@ -51,7 +99,7 @@
 | **[P3]** | Yang et al., *Graph-based Agent Memory: Taxonomy, Techniques, and Applications* (2026) | Lifecycle taxonomy; graph memory; open challenges |
 | **[P4]** | Rasmussen et al., *Zep: A Temporal Knowledge Graph Architecture for Agent Memory* (2025) | Bi-temporal graph memory; DMR vs LongMemEval; latency reporting |
 | **[P5]** | Latimer et al., *Hindsight is 20/20: Building Agent Memory that Retains, Recalls, and Reflects* (2025) | Four-network memory; rule- and LLM-driven (non-RL) updates |
-| **[P6]** | Orogat, Rostam & Mansour, *Architectural Design, Not Only Model Intelligence, Governs Multi-Agent LLM Performance* (MAFBench, 2026) | Framework-level memory results; call for versioned fact stores (Section 8) |
+| **[P6]** | Orogat, Rostam & Mansour, *Architectural Design, Not Only Model Intelligence, Governs Multi-Agent LLM Performance* (MAFBench, 2026) | Framework-level memory results, limitations and link to GEM; call for versioned fact stores (Section 8); model for the unified evaluation suite (Section 7.7) |
 
 Additional sources (benchmarks, documentation, system reports) are listed in [Section 10](#10-references).
 
@@ -111,6 +159,34 @@ Four **state-level operators** replace CRUD: ingestion, revision, forgetting, an
 
 **Is MemState graph-based? Is Hindsight?** Both are, at different grains. MemState is a graph of *topics*, not of entities or triples; inside a topic, fields form a key-value record. Hindsight is a graph `G = (V, E)` of narrative facts connected by entity, temporal, semantic, and causal links; graph retrieval, one of four parallel retrieval channels, uses spreading activation.
 
+**Graph structure: where MemState sits in [P3]'s taxonomy.** [P3] gives a formal model, `G_t = (V_t, E_t, X_t)`, with three operations: Construct, Retrieve `(q, G_t) → S_t ⊆ V_t`, and Update `(G_t, Δ_t) → G_{t+1}` (`2602.05665.md:1265-1293`). MemState fits it:
+- V is the set of topics.
+- X holds title, summary, embedding and fields with value histories.
+- E holds typed extension and association edges (`2605.26252v1.md:246`, `:275`).
+
+GEM adds four things the general form lacks:
+- value histories inside X;
+- propagation semantics on E (C3);
+- the policy set `P_t` as part of the state;
+- retrieval as a write (C6), where [P3]'s Retrieve is a pure function.
+
+[P3] Section III-E notes that "a vector memory can be interpreted as a fully-connected graph with similarity-weighted edges" (`2602.05665.md:211`). On `/v1`, MemState's search is that graph: an exact similarity scan returning the top 8. Its explicit edges are returned as neighbours for context expansion, not used for search ([INFERENCE] from code). Upstream propagates nothing along them (C3 absent, F7, F17).
+
+MemState is not a hypergraph: its edges are pairwise and typed (`2605.26252v1.md:275`), whereas a hypergraph has `E ⊆ 2^V` (`2602.05665.md:1113`). A topic does the job of an n-ary relation, since one node groups all fields of one concept (`2605.26252v1.md:273`).
+
+The limitation "Rigid structure struggles to represent overlapped or non-hierarchical relationships" (`2602.05665.md:324`) is printed in the Hypergraph row of [P3]'s Figure 6. The converter notes that the Temporal, Hypergraph and Hierarchical rows are shifted (`:318`); by content the limitation belongs to trees. It touches MemState through the host topic: "LLM picks host topic τ" (`2605.26252v1.md:304`). Each fact has one host topic ([INFERENCE] from the `H_{τ,f}` indexing), so a fact shared by two concepts must be duplicated or promoted to its own topic.
+
+Three further mappings:
+- **Associative memory** ("latent links", `2602.05665.md:182`) corresponds to association edges (Section 5.4).
+- **Episodic memory** ("the chronological sequence of past sessions", `2602.05665.md:184`) is not what the bitemporal patch adds. Valid and recorded times on field histories ground facts in time; they record no sessions. C4′ (provenance resolves to a retained source) would add that tier. C4′ is absent on upstream and on every patch step (F32, F41).
+- **Provenance tracking** (`2602.05665.md:673`) is C4 stated as a correctness condition, strengthened by C4′. [P3]'s other half, "interactive visualization interfaces", matches MemState's Graph Explorer (Section 9.2).
+
+[P3] asks for "multidimensional quality criteria, including structural, semantic, temporal, and operational aspects" and notes "a scarcity of metrics designed to explicitly evaluate the intrinsic quality of the memory graph" (`2602.05665.md:665`). [P5] measures none of them: its evaluation is a binary answer-correctness judge (`2512.12818.md:572-574`). The conformance suite is one instance of such metrics:
+- structural: C3 flagging, C5 footprint;
+- semantic: C1 and C2 current values;
+- temporal: the time probes, C1′;
+- operational: latency, staleness windows, reinforcement precision.
+
 **"No single paradigm fits all."** [P3] concludes that different memory types need different graph constructions. MemState does not contradict this, because the two address different problems: [P3]'s claim concerns representation choice, while GEM concerns correctness of state evolution, and [P1] states that the realization of `D`, `S`, and `P` varies by backend. The tension is in the prototype, which uses one granularity (topics) for everything. Topics suit stateful entities and projects; they suit event sequences, trajectories, and procedural skills less well. A natural extension gives each topic kind (event, skill, knowledge) its own structure and policies, with GEM acting as a governance layer over heterogeneous substrates.
 
 **Internal self-evolving vs. external self-exploration ([P3] Section VII).**
@@ -145,6 +221,8 @@ Four **state-level operators** replace CRUD: ingestion, revision, forgetting, an
 **Effect on write cost.** Deferring revision removes the most expensive LLM work from the user's path, but two costs remain on it: LLM routing at ingestion, and a write on every read. Write-on-read also rules out cheap read replicas and caching, and creates contention under concurrency. The paper itself lists "the consistency cost of retrieval-induced salience updates under concurrent access" as an open target.
 
 **Comparison with measured systems.** [P2]'s efficiency profiling ("the Agency Tax") shows how large these costs can be: per-turn latency ranges from about 0.3 s (MemSkill) to 32.4 s (MemoryOS), and index construction ranges up to 15 hours (A-Mem) and 7.04M tokens (Nemori). [P2] also omits maintenance cost from its measurements because it is "often handled asynchronously," which is exactly where GEM's revision and forgetting live.
+
+**Measured latency split.** On the store path (`/v1`, no LLM in the loop), the run of record gives ingest 21–63 ms and query 86–393 ms across both engines, from 100 to 2,000 topics (F41). A chat turn with the LLM in it took 2–5 s with thinking off and 16–37 s with it on, on local `qwen3.5:4b` (F39). The latter approaches the 32.4 s [P2] measures for MemoryOS. The store is interactive-fast; a chat turn with the LLM in it is not. No turn has yet been split into LLM time and store time; that split (MAFBench's *Residual*, "framework time outside the model call") is part of Section 7.7. Revision is already asynchronous and cheap upstream: the rule-based Reasoner's merge window is about 5 ms (F41).
 
 > **Practitioner note.** In building real-time voice agents with long-term memory, I found that any memory write on the live turn was a direct latency cost the user could hear. We moved writes after the conversation and kept only operations whose result the reply depends on, such as confirming a deletion the user requested. This suggests a general rule: **a memory operation should be synchronous only if the current reply depends on its result.** GEM makes ingestion synchronous in all cases.
 
@@ -197,6 +275,12 @@ It then uses spreading activation for multi-hop retrieval. Supermemory's "derive
 
 **How many hops?** [P1] gives no number. It argues that topic granularity keeps the propagation frontier small, so the walk "terminates in few hops," halting where a policy condition does not fire. In the worst case propagation is the transitive closure over extension edges, which requires cycle detection and a depth or cost budget. In practice, one hop covers direct entailment (deadline → milestone) and two cover knock-on effects (milestone → meetings). The real distribution of propagation depth is an empirical question a trajectory benchmark could answer.
 
+**Granularity bounds hops, not units scanned.** Two operations scale with topic count, whatever the hop count.
+- **Retrieval** on `/v1` is a full scan that scores every active topic (`MemState/src/memstate/store/graph_store.py:348-351`; no vector index is created, `schema.py:13`; [INFERENCE] from code). Query latency grows from 151 to 393 ms on Kuzu and from 86 to 375 ms on LadybugDB between 100 and 2,000 topics (F41).
+- **Duplicate detection** is written as a self-join over topic pairs, `MATCH (a:Topic), (b:Topic) WHERE a.id < b.id AND a.title = b.title` (`graph_store.py:1240-1241`). It runs after every ingest (`MemState/src/memstate/reasoner/engine.py:36-37`, [INFERENCE] from code). Whether that is quadratic depends on the engine's join plan [INFERENCE]; it was not measured at scale.
+
+[P2] has a precedent: A-Mem needs about 15 hours to build its index, "suggesting super-linear update complexity (e.g., pairwise consolidation)" (`2602.19320.md:259`). [P3] names "graph operations exhibiting quadratic or worse complexity" as an open problem (`2602.05665.md:667`). The number of units scanned is what C5's β(n) is meant to bound, and upstream does not enforce it: 2,000 active topics against a soft limit of 500 (F10, F22).
+
 **Propagation has a precision cost.** StateMem, which implements deterministic propagation over a dependency graph, reports that propagation helps the failure modes it targets but over-propagates on "anti-trap" cases (−12.5 points on StateMemBench Set B); removing propagation entirely left its DeepSeek result slightly *better* overall (0.373 vs. 0.363); the authors read these margins as an upper bound. C3 is therefore only as good as the edges it walks: wrong or overly broad extension edges trigger false revisions. This strengthens the case for confidence-weighted extension edges and for flagging dependents for review rather than auto-revising them when edge confidence is low (Section 5.4). More generally, C3 requires dependents to be *evaluated*, not changed, so it says nothing against **spurious revision**; StateMemBench's anti-trap cases (an over-eager invalidation changes a value that should have stayed) show this failure is real. Precision currently rests entirely on how `P_t` is written, so C3 needs a precision counterpart, or `P_t` needs an explicit no-spurious-revision requirement.
 
 **Relation to Zep.** Zep propagates zero hops: when an LLM finds that a new edge contradicts an existing one, only the contradicted edges are invalidated, and dependent edges are not re-evaluated. Zep's breadth-first search within *n* hops is used for retrieval, not propagation. Because Zep stores knowledge at entity grain, one concept is spread across many nodes, which is [P1]'s argument that topic granularity compresses the hop count. This can be tested on equal footing because Graphiti (Zep's open-source engine) still ships a Kuzu backend, now marked deprecated (Section 5.10).
@@ -237,6 +321,12 @@ Section 7.2 proposes a hybrid that keeps the advantages.
 [P1]'s retrieval routes queries to topic-based, temporal, or structural modes, and association edges support context expansion. Multi-hop retrieval is possible through traversal along these edges, or agentically by chaining reads. Additional hops raise recall but bring in distractors ([P3] notes noise grows with memory size), and at topic granularity each hop pulls in a whole topic. Mitigations: field-level reads (which the paper's topic mode already uses), per-hop activation decay as in Hindsight, edge-type weights, and reranking.
 
 There is also an interaction with forgetting: under C6, every topic visited during traversal gets a salience increase, so multi-hop retrieval protects intermediate topics from forgetting even when they were not useful. Salience should increase only for units that contributed to the answer.
+
+**Approximate retrieval under C6.** [P3] recommends "approximate retrieval methods that trade precision for substantial efficiency gains" (`2602.05665.md:667`). [P1]'s design already approximates in two ways:
+- the LLM routes over titles and summaries (`2605.26252v1.md:325`);
+- the forgetting ladder compresses a history below θ_summary (`:323`).
+
+The prototype's `/v1` path is exact top 8 with no approximate index ([INFERENCE] from code). Under C6 the trade is not free: "Every read updates the salience of accessed units" (`2605.26252v1.md:200`). A retrieval miss therefore changes state: the wrong topics are reinforced, and the right one decays toward archiving under C5. In a read-only memory an approximate-retrieval error costs one answer; in GEM it compounds over the trajectory. The effect is already visible with exact retrieval: reinforcement precision is 0.125 = 1/8, so 7 of 8 increments go to topics that did not hold the answer (F20, Section 9.7). Attributed salience (Section 7.4) is the fix this report proposes.
 
 ### 5.10 Substrate risk: Kuzu is archived
 
@@ -299,7 +389,7 @@ StateMem is close to a minimal, measured implementation of C1–C3 plus visible 
 
 | [P2] limitation | Implication for the 500-turn workload |
 |---|---|
-| **Benchmark saturation:** many benchmarks fit inside modern context windows, so external memory is not needed to solve them. [P2] proposes reporting the Context Saturation Gap `Δ = Score_MAG − Score_FullContext`. | 500 turns at roughly 100–200 tokens each is 50–100k tokens, which fits in a 128k window: high saturation risk by [P2]'s criteria. Report Δ against full context, and/or use longer turns. State-tracking metrics remain meaningful even when the history fits, since full context fails at state tracking (Section 6.3). |
+| **Benchmark saturation:** many benchmarks fit inside modern context windows, so external memory is not needed to solve them. [P2] proposes reporting the Context Saturation Gap `Δ = Score_MAG − Score_FullContext` as "a diagnostic rather than a strict pass/fail criterion"; it rates benchmarks by structural risk and does not measure Δ itself. | 500 turns at roughly 100–200 tokens each is 50–100k tokens, which fits in a 128k window: high saturation risk by [P2]'s criteria. Report Δ against full context, and/or use longer turns. State-tracking metrics remain meaningful even when the history fits, since full context fails at state tracking (Section 6.3). |
 | **Metric validity:** lexical metrics (F1) diverge from semantic correctness and rank systems differently. Across three judge-prompt protocols, absolute LLM-judge scores fluctuate, but the *ranking* of systems stays highly consistent. | Use closed-pool or deterministic state-snapshot grading where possible; where a judge is needed, report rankings under several judge prompts rather than one absolute score, and avoid F1 for free-form answers. |
 | **Backbone sensitivity:** structured memory operations fail silently on weaker models (Nemori's format-error rate: 17.9% with gpt-4o-mini vs. 30.4% with Qwen-2.5-3B). | Run at least one API model and one small open model, and log the format-error rate per operation. MemState's LLM routing is exposed to the same silent corruption. |
 | **System cost ("Agency Tax"):** [P2] measures per-turn latency and construction cost, but excludes maintenance cost, which it calls "often-overlooked." | Report read, generation, and write latency, construction tokens, and maintenance backlog, which is where GEM's revision and forgetting live. |
@@ -360,7 +450,7 @@ A defensible baseline set for a GEM evaluation:
 **Why Zep prefers LongMemEval to DMR [P4].** DMR has 500 conversations, each with 5 sessions of at most 12 messages (about 60 messages), which fits easily in context; full-context baselines score 94.4–98%. Its questions are single-turn fact retrieval, some are ambiguous, and they poorly represent enterprise use. LongMemEval-S averages about 115k tokens, has six question types including knowledge-update, temporal-reasoning, and multi-session, and uses question-specific judge prompts that correlate with human judgment.
 
 **Versions.**
-- **LongMemEval-S** (~115k tokens, ~40–50 sessions), **-M** (~1.5M tokens, ~500 sessions), and **Oracle** (evidence sessions only). The official repository notes that S and Oracle fit in a 128k context while M does not.
+- **LongMemEval-S** (~115k tokens, ~40–50 sessions), **-M** (~1.5M tokens, ~500 sessions), and **Oracle** (evidence sessions only). The official repository notes that S and Oracle fit in a 128k context while M does not. ([P2]'s Table 2 gives S as 103k tokens and M as >1M.)
 - A **cleaned release** is now the standard split: 500 questions, of which 78 are knowledge-update questions (StateMemBench, Table 11).
 - **LongMemEval-V2** (2026) targets web agents: 451 curated questions over histories of 25M–115M tokens, including a dynamic state-tracking category, and it reports query latency. Frontier LLMs score at most 14.1% without trajectory evidence.
 
@@ -483,7 +573,7 @@ In its current product documentation (v1.0), rather than its paper [P5], Hindsig
 
 1. **Delta refresh ≈ field-level revision (C2).** Refresh emits typed operations (add section, append bullet, replace block, remove stale paragraph), and untargeted sections are copied byte-identical: update the targeted unit without rewriting the rest.
 2. **Never overwrite with empty ≈ a transition postcondition.** If the LLM call fails or returns empty, the existing content is preserved. MemState's abort-on-postcondition-violation also protects the prior value, but aborts the whole transition; Hindsight's guard leaves only the failed item untouched (Section 7.5, notes on C2 and C4).
-3. **Drift from incremental revision is acknowledged.** Hindsight recommends periodic clear-and-rebuild because many small delta refreshes accumulate inaccuracies. GEM has no notion of drift accumulated across many revisions; the trajectory benchmark should test whether field state after *N* revisions still matches a fresh rebuild.
+3. **Drift from incremental revision is acknowledged.** Hindsight recommends periodic clear-and-rebuild because many small delta refreshes accumulate inaccuracies. GEM has no notion of drift accumulated across many revisions; the evaluation suite (Section 7.7) should test whether field state after *N* revisions still matches a fresh rebuild.
 4. **Scoped, asynchronous propagation.** Consolidation refreshes only mental models whose tags overlap with the memories it processed, both for performance and as a tenant boundary; refreshes run asynchronously. This is an analogous mitigation, for a related side channel (refresh signals rather than salience, which Hindsight lacks), to [P1]'s concern about salience leaking across tenants, at the cost of a wider staleness window.
 5. **Versioned history and provenance** per document (prior versions plus the accumulated facts and observations each version was built on) cover C4.
 
@@ -604,19 +694,98 @@ Two words are kept apart. A value is **ended** when its valid time is over; memo
 
 Graphiti is therefore a good reference for how bitemporal history should look, and a natural baseline (Graphiti-on-Kuzu vs. MemState-on-Kuzu isolates the data model, while Graphiti's deprecated Kuzu driver lasts, Section 5.10). It is not a candidate for the native engine itself: what [P1] asks for has to live inside the database, below a library like Graphiti. Candidate database engines are compared in Section 5.10.
 
-### 7.7 A GEM trajectory benchmark
+### 7.7 A unified GEM evaluation suite
 
-Rather than starting from scratch, build on existing work:
+**What the paper asks for.** [P1] lists "Standardized trajectory-level benchmarks measure C2–C6 violations across long interaction histories" as its second success criterion (`2605.26252v1.md:371`). Its trajectory-benchmark sub-problem names three ground-truth levels (`2605.26252v1.md:351`; Section 6.2):
+- the current value of each unit over time (C2);
+- the dependent units that change after each update (C3);
+- the active footprint at each interaction count (C5).
 
-- **Reuse** StateMemBench's closed-pool grading (reduces judge sensitivity: a judge only maps answers onto a fixed pool) and AOEP-v0's event-stream-plus-snapshot schema.
+Sections 6.1, 6.2, 6.3 and 6.9 say what today's benchmarks miss, and Section 9.1 describes our small state-level version. This section proposes how to turn them into one suite instead of writing a new benchmark from scratch.
+
+**The model.** MAFBench [P6] is "a unified evaluation suite that integrates existing benchmarks within a standardized execution pipeline" (`2602.03128v2.md:40`). It supplies four pieces of infrastructure (`2602.03128v2.md:217`), and its adapter interface "holds the framework fixed while varying the memory backend" (`2602.03128v2.md:227`). A GEM suite can follow the same shape: integrate, standardize, vary one thing at a time. What MAFBench lacks is a way to read stored state (Section 8).
+
+**What exists and what is proposed.** Our conformance suite exists. It has one system adapter per system, reads stored state, and has a run of record (F41; Sections 9.1 and 9.7). Everything else below is **proposed** and has not been run.
+
+#### Component 1: a competency × condition grid
+
+Rows are MemoryAgentBench's four competencies, which MAFBench adopts (`2602.03128v2.md:223`): Accurate Retrieval (AR), Test-Time Learning (TTL), Long-Range Understanding (LRU) and Selective Forgetting (SF), plus a time row. Columns are C1–C6 and the three refinements C1′, C3′ and C4′ (Section 7.5). Each cell is graded at the three levels of Section 6.9: answer, labelled behaviour, stored state. LME(S\*) is MemoryAgentBench's AR subtask; FC-SH and FC-MH are its single-hop and multi-hop SF subtasks (`2602.03128v2.md:366`).
+
+| | C1 | C2 | C3 | C4 | C5 | C6 | C1′ | C3′ | C4′ |
+|---|---|---|---|---|---|---|---|---|---|
+| **AR** | LME(S\*) | | | | | | | | |
+| **TTL** | TTL, new value | | | TTL, new value | | | | | |
+| **LRU** | | | | | LRU, summary | | | | LRU, summary |
+| **SF** | FC-SH; LongMemEval knowledge-update | FC-SH; StateMemBench closed pool | FC-MH; StateMemBench sequence, compound | provenance probes | footprint vs. interaction count | repeated-access survival | | | provenance probes |
+| **Time** | LongMemEval temporal-reasoning | | | | | | time probes | | |
+| **State level (ours)** | suite | suite | suite | suite | suite | suite | suite | suite (reference GEM) | suite |
+
+Cell assignments are our mapping; no paper places these benchmarks in these cells.
+- Named cells give the existing benchmark, or the probe to be written, for the answer and labelled levels. Empty cells are not claimed.
+- The last row marks where our conformance suite already has a state-level case (F41; Sections 9.4 to 9.6).
+- In TTL × C4 and in LRU × C5 and C4′, the benchmark only supplies the workload: its answers cannot show the condition (Section 8.3), so only the state level grades these cells.
+- Placing C5 and C6 under SF is our reading, since forgetting and reinforcement are what the footprint and survival probes exercise.
+
+**Carried over from the earlier plan.** Each item below is still part of the proposal.
+- **Reuse** StateMemBench's closed pool, which distinguishes current-state, superseded-state and other answers so a wrong answer carries a failure label (Section 6.9), and AOEP-v0's event-stream-plus-snapshot schema (Section 6.2).
 - **Probe throughout the trajectory**, not only at the final turn.
-- **Two length tracks:** a short track (state tracking is hard even in context, Section 6.3) and a long track that exceeds the context window, reporting Δ in both.
-- **Implicit dependencies** that must be discovered, alongside explicit ones.
-- **Ground truth at three levels:** current value per unit over time (C2), dependents that should change after each update (C3), and active footprint per interaction count (C5), as specified by [P1], Section 5.
-- **New measures:** C6 effects (does repeated access protect a unit, and does it protect the *right* units?), propagation depth, write-to-visible latency, staleness window, and cost per operation.
-- **Revision drift:** compare field state after *N* revisions against a fresh rebuild.
-- **At least one real-transcript track**, since synthetic traps tend to mirror the method designed to beat them (a caveat StateMemBench's own authors raise).
+- **Two length tracks:** a short track (state tracking is hard even in context, Section 6.3) and a long track beyond the context window, with Δ reported on both.
+- **Latent-link probes**, where a dependency must be discovered rather than declared, scored on link precision and recall.
+- **Revision drift:** field state after *N* revisions compared with a fresh rebuild (Section 7.3).
+- **At least one real-transcript track**, since synthetic traps tend to mirror the method built to beat them, a caveat StateMemBench's own authors raise.
 - **Systems:** the baseline set of Section 6.3, reported on the Pareto plot of Section 6.8.
+
+#### Component 2: pipeline
+
+Use MAFBench's answer-level pipeline for the answer and labelled levels, and add a **state-level system adapter**: an interface that exposes current values, field histories, salience, archived flags and edges (Section 9.1). Our suite already has one per system. MemState then enters MAFBench as one memory backend behind MAFBench's own adapter, so a framework result and a state-level verdict can be read side by side.
+
+#### Component 3: grading order
+
+1. **State read, exact match**, wherever the truth is a stored value. No judge is needed (our verdicts).
+2. **Closed pool, deterministic matcher.** StateMemBench's matcher decides 28% of answers and "agrees with the judge on 94.1% of those" (`2608.19652v1.md:548`).
+3. **LLM judge last**, for free text only, validated twice:
+   - across prompts: [P2] used three protocols and found the ranking stable while absolute scores shifted (`2602.19320.md:187-189`);
+   - across judges: a blind reviewer agrees with Sonnet on 151 of 155 chat turns (F42).
+
+MAFBench's judge is unnamed, and no agreement check is reported (Section 8.2). Lexical metrics are no substitute: on our recorded chat turns, token F1 misses every masked state and scores 60 of 80 correct answers below 0.5 (F43, Section 9.7).
+
+#### Component 4: model dependence, in two parts
+
+**Memory semantics, no LLM in the loop.** Our `/v1` path decides placement, so a failure belongs to the store (Section 9.2).
+
+**Acquisition reliability, per backbone.** Measure route accuracy, write-commit rate and format-error rate, as [P2]'s Table 4 reports format errors (`2602.19320.md:216-228`).
+
+MAFBench's control, "Observed differences reflect memory execution semantics rather than model capability" (`2602.03128v2.md:360`), does not carry over when an LLM writes memory. [P1]'s ingestion has an LLM select the host topic and place the value (`2605.26252v1.md:319`), and our chat runs show that step failing with the model:
+- on `qwen3.5:2b` the router sent "two weeks ago" to `query` in all 7 router-decided takes run as specified (F31);
+- on `qwen3.5:4b` it routed the statement to `ingest` in 10 of 10 takes, but only 6 wrote, and one resolved the right date (F37).
+
+**Design controls (proposed).**
+- A 2×2 of strong and weak writer × reader, with the judge fixed, shows which side breaks.
+- StateMem's length- and cost-matched control (`2608.19652v1.md:346`) separates structure from extra context.
+- A sensitivity row, reported per subtask. MAFBench's single Claude-Haiku-4.5 row moves LangGraph (Vector DB only) on AR from 33.2 to 33.7 on average, while MH-QA falls from 24.0 to 8.0 and EventQA rises from 63.3 to 82.5 (`2602.03128v2.md:372`, `:389`), so the average alone hides it. Report rank stability (Kendall τ) across backbones.
+- Three to five repeats on a subset. MAFBench repeats its planning experiment five times, with accuracy varying "by at most 4.1 points" (`2602.03128v2.md:544`), and lists "multi-run statistical reporting" as future work (`2602.03128v2.md:566`).
+
+#### Component 5: saturation
+
+Use [P2]'s three axes as workload knobs: volume, interaction depth, entity diversity (`2602.19320.md:145-149`). Report Δ (`2602.19320.md:167-171`) as a diagnostic, since [P2] describes it that way and never measures it.
+- **Volume** comes from LongMemEval-M, which [P2] gives as ">1M tokens" (`2602.19320.md:145`).
+- **Interaction depth** comes from StateMemBench, which is not a volume probe: its Set B is about 7–15k tokens (`2608.19652v1.md:194`).
+
+**State-level verdicts are immune to saturation**, since a full-context baseline has no state to read. The 500-turn workload at 100–200 tokens per turn fits in 128k (Section 6.1), so it needs a full-context row to carry any answer-level claim.
+
+#### Component 6: latency and cost per operation
+
+Port MAFBench's Residual, "framework time outside the model call" (`2602.03128v2.md:42`, decomposition at `:330`), as **LLM time vs. store time per turn**. The store half measures what [P1] calls a "compatibility layer" (`2605.26252v1.md:331`). We have both halves measured apart: store time on `/v1` and whole chat-turn time, side by side in Section 5.2 (F41, F39). No single turn has been split into the two halves yet.
+
+Alongside the split, report the measures the earlier plan named:
+- write-to-visible latency and the staleness window (Section 6.8);
+- propagation depth (Section 5.5);
+- cost per operation;
+- whether repeated access protects the *right* units (C6), not only whether it protects some.
+
+#### Cost
+
+MAFBench's suite "costs roughly \$300 at gpt-oss-20b pricing", and frontier pricing "raises this by one to two orders of magnitude" (`2602.03128v2.md:665`). Repeats multiply the cost of whatever subset is repeated [INFERENCE], so start with a subset.
 
 ### 7.8 Topic granularity: why dependencies stop at the topic boundary
 
@@ -633,30 +802,97 @@ Rather than starting from scratch, build on existing work:
 
 ### 7.9 Ranked future directions
 
-1. **Implement C3′.** Listing 1's `propagate-on-change` plus surfaced, bounded flags; measure the staleness window, and pair it with the precision requirement of Section 5.5.
-2. **An RL-free retention score** (Section 7.4): attributed salience, corroboration counted from bitemporal histories, proof count, dependency centrality, and an importance prior, as the baseline for the paper's constrained learned controllers.
-3. **A GEM trajectory benchmark** (Section 7.7), adding StateMemBench's closed-pool grading and failure labeling, and latent-link probes scored on link precision and recall rather than answers.
-4. **Link MAFBench and GEM:** apply StateMemBench's drift labeling to MAFBench's selective-forgetting failures, to determine whether frameworks fail to retrieve updates or fail to maintain state, which tells whether the remedy is better retrieval or GEM-style governance.
-5. **Further ideas:** TOKI's isolation and keyed-logging analysis applied to MemState's LLM-driven revision and to concurrent retrieval-induced salience updates; hybrid conflict resolution with termination and confluence analysis (Section 7.2); link discovery with confidence-gated promotion to extension edges (Section 5.4); Zep's directions applied to MemState (Section 7.1); engine candidates for the native engine (Section 5.10).
+C1′ is built and measured (Section 9.5); the directions below remain open. [P1]'s Section 5 names three research directions: a native engine, correctness and evaluation, and privacy and multi-tenancy. Each item below names the direction it serves.
+
+1. **Implement C3′** (correctness and evaluation). Listing 1's `propagate-on-change` plus surfaced, bounded flags; measure the staleness window, and pair it with the precision requirement of Section 5.5.
+2. **An RL-free retention score** (correctness and evaluation; [P1]'s constrained learned controllers) (Section 7.4): attributed salience, corroboration counted from bitemporal histories, proof count, dependency centrality, and an importance prior, as the baseline for the paper's constrained learned controllers.
+3. **A unified GEM evaluation suite** (correctness and evaluation; [P1]'s trajectory benchmark) (Section 7.7): a competency × condition grid graded at three levels, with StateMemBench's closed-pool grading and failure labeling, and latent-link probes scored on link precision and recall rather than answers.
+4. **Link MAFBench and GEM** (correctness and evaluation): apply StateMemBench's drift labeling to MAFBench's selective-forgetting failures, to determine whether frameworks fail to retrieve updates or fail to maintain state, which tells whether the remedy is better retrieval or GEM-style governance. Concretely, run MemState as a memory backend through MAFBench's adapter interface (Section 7.7), which has not yet been run with a plugin memory.
+5. **GEM-governed memory shared by agents** (privacy and multi-tenancy; native engine). MAFBench evaluates memory per agent and keeps shared state out of its topology study (`2602.03128v2.md:505`), yet asks for "conflict resolution for concurrent agent writes" (`:568`). [P3] lists memory coordination in multi-agent systems as open (`2602.05665.md:677`). [P1] treats shared memory only across tenants (`2605.26252v1.md:359-361`) and names "the consistency cost of retrieval-induced salience updates under concurrent access" as a target (`:347`). MAFBench's agent-based simulation frameworks coordinate through a shared environment updated by a transition function $T : \mathcal{E} \times \{a_i\} \to \mathcal{E}$ (`2602.03128v2.md:173`), the same shape as a GEM transition, so a GEM store can serve as that environment with $P_t$ as its transition rules. The experiment: agents in a MAFBench topology share one MemState instance, and the suite measures C1–C6 and the cross-agent salience effect that [P1] describes for tenants.
+6. **Further ideas:** TOKI's isolation and keyed-logging analysis applied to MemState's LLM-driven revision and to concurrent retrieval-induced salience updates; hybrid conflict resolution with termination and confluence analysis (Section 7.2); link discovery with confidence-gated promotion to extension edges (Section 5.4); Zep's directions applied to MemState (Section 7.1); engine candidates for the native engine (Section 5.10).
 
 ---
 
-## 8. Link to the MAFBench paper
+## 8. MAFBench: limitations and link to GEM
 
-MAFBench [P6], from the same lab, evaluates multi-agent *frameworks* (LangGraph, CrewAI, AutoGen, Agno, the OpenAI Agents SDK and others) across five architectural dimensions. Its memory dimension adopts MemoryAgentBench's four competencies: Accurate Retrieval, Test-Time Learning, Long-Range Understanding, and **Selective Forgetting** (controlled revision through counterfactual updates, the FactConsolidation tasks).
+MAFBench [P6], from the same lab as GEM, evaluates multi-agent *frameworks* (LangGraph, CrewAI, AutoGen, Agno, the OpenAI Agents SDK and others) along five architectural dimensions. Line references below are to `docs/papers/2602.03128v2.md`.
 
-**Memory results relevant to GEM.**
-- Frameworks fall into three memory designs: retrieval-centric (CrewAI), accumulation-based (Agno, OpenAI SDK), and hybrid (LangGraph, evaluated in retrieval-only and hybrid modes across context windows).
-- **Selective forgetting is largely unsupported.** Retrieval-centric designs partially support single-hop forgetting (retrieval-only LangGraph reaches the best Selective Forgetting average, 20.2, with single-hop FC-SH 36.0 and multi-hop 4.5; Table 10), but **multi-hop forgetting stays below 5.0 across all architectures**. Accumulation-based designs perform worse even with large context windows, and hybrid designs collapse because outdated information persists in both the retrieval store and the accumulated context.
-- **Every evaluated framework treats memory as append-only.** None provides explicit revise or remove operations.
+### 8.1 What MAFBench measures about memory
 
-**MAFBench's future direction (Section 6).** Memory architectures should support explicit revise, remove, and invalidate operations with dependency tracking across stored facts. MAFBench proposes versioned fact stores with multi-version concurrency control, write-ahead logging for reversible updates, and conflict resolution for concurrent writes, i.e., the transactional, versioning, and consistency guarantees databases already provide.
+**The dimension.** Memory is "Storage Architecture" over the types {LTM, STM, EM, WM, EK}. Each type has four properties: lifetime, structure, access mode ("retrieval, context accumulation, or state update") and ownership ("agent-local vs. environment-level") (`2602.03128v2.md:183`).
 
-**How this connects to GEM.**
-- MAFBench's failures are GEM's failure modes ① (unregulated growth) and ② (missing semantic revision), measured at the framework level. Multi-hop forgetting below 5 is consistent with a C3 (dependency consistency) failure, though answer-level scores cannot confirm it.
-- MAFBench calls for database guarantees; GEM answers its title question with a flat "no": agent memory is a new data-management workload, not a database problem. The two are compatible under **our claim (not GEM's wording): database guarantees are necessary but not sufficient.** A versioned row (MAFBench's concrete solution: versioned fact stores with multi-version concurrency control, write-ahead logging and conflict resolution, `2602.03128v2.md:568`) gives C1, C2's atomic commit and current-value rule, and C4. It lacks declarative policies (C2(c)), dependency tracking (C3, which MAFBench itself also asks for: "dependency tracking across stored facts"), forgetting (C5) and reinforcement (C6), scored absent. The demo's versioned-row baseline (Section 9.3) tests this directly, and the run of record bears it out: pass on C1, C2(b), C2 on the lapsed override and C4; absent on C2(c), C3, C5 and C6 (F34).
-- MAFBench's memory metrics are accuracy, F1 and Recall@5 (its Table 8), with answers graded by "LLM-based semantic scoring" (its Section 3). They grade answers and retrieved evidence; none reads the stored state, so they cannot see whether a correct answer comes from a correct stored state. The demo therefore inspects MemState's stored state.
-- MAFBench attributes the collapse of hybrid memory designs to outdated information persisting in both stores, but its answer-level scoring cannot separate a failure to *retrieve* the update (acquisition) from a failure to *use* it (maintenance), the distinction StateMemBench draws (Section 6.9). Applying that labeling to MAFBench's selective-forgetting failures is future direction 4 (Section 7.9).
+**The design.** The study is controlled: "We fix the underlying LLM and vary only architectural design choices, so observed differences follow from architecture and not from model capability" (:99). The model is fixed per dimension, not globally: planning is swept over ten LLMs, and all other dimensions hold the model constant (:99). Documents are ingested with "fixed-size text chunking with controlled overlap, consistent ordering, and identical session initialization" (:225).
+
+**The benchmark.** MAFBench adopts MemoryAgentBench because prior benchmarks "evaluate isolated capabilities" and none "captures how agents retain, integrate, generalize, and revise information across multi-turn interactions" (:221). Its four competencies (:223) are Accurate Retrieval (AR), Test-Time Learning (TTL), Long-Range Understanding (LRU) and Selective Forgetting (SF, "controlled memory revision through counterfactual updates"). The metrics are accuracy, F1 and Recall@5 (:314).
+
+**Results relevant to GEM (Table 10).**
+- Frameworks fall into three memory designs: retrieval-centric (CrewAI), accumulation-based (Agno, OpenAI SDK) and hybrid (LangGraph, in retrieval-only and hybrid modes across context windows).
+- **Selective forgetting is largely unsupported.** Retrieval-only LangGraph has the best SF average, 20.2, with FC-SH 36.0 and FC-MH 4.5 (:372). **Multi-hop forgetting stays below 5.0 across all architectures** (:397). Accumulation-based designs do worse even at large windows; hybrid designs collapse because outdated information persists in the retrieval store and in the accumulated context (:397).
+- **Every evaluated framework-native architecture is append-only** (:397, :568). None provides revise or remove (:397).
+
+**MAFBench's future direction.** Memory should support "revise, remove, and invalidate, with dependency tracking across stored facts". The paper proposes "versioned fact stores with multi-version concurrency control, write-ahead logging for reversible updates, and conflict resolution for concurrent agent writes", i.e. "the transactional semantics, versioning, and consistency guarantees" that databases already provide (:568).
+
+### 8.2 Limitations
+
+Each item was re-checked against the paper text. Items 1–9 are limits of the design or scope; items 10–12 are places where the paper's prose disagrees with its own Table 10.
+
+| # | Limitation | Evidence |
+|---|---|---|
+| 1 | **One run per configuration.** "To manage cost, each configuration runs once" (:308). The paper defends this with five repeats of the planning experiment on four models: accuracy varies by at most 4.1 points, schema violations by at most 3.3 (:544). For memory it argues that aggregation absorbs noise (each score is a mean over 100 questions, averaged over subtasks; :544); no memory repeat is reported. | :308, :544 |
+| 2 | **No seed.** "no seed is set" under configuration parity (:217). | :217 |
+| 3 | **Judge unnamed and unvalidated.** Scoring is "LLM-based semantic scoring" (:217). No judge model, prompt or agreement check appears in the paper. | :217 |
+| 4 | **One sensitivity row.** The model-capability check is one Haiku run on one framework (Table 10, last row, :389). The text reads it as "AR stays stable (33.2 vs. 33.7)" (:399), but the subtasks move sharply: AR single-hop 14.0 to 9.0, AR multi-hop 24.0 to 8.0, EventQA 63.3 to 82.5; TTL's MCC 22.8 to 0.8 while Recom. rises 0.0 to 51.6; SF average 20.2 to 16.5 (:372, :389). Category averages hide opposite moves. | :372, :389, :399 |
+| 5 | **No full-context baseline; contexts exceed the window.** SF contexts run 4–183k words, average 63k (:236). The largest accumulation window, W = 8,192 tokens (Fig. 4, :405), cannot hold an average SF context; the paper's footnote gives tokens-per-minute limits as the reason larger windows were not run (:664). A search of the paper finds no full-context run. | :236, :405, :664 |
+| 6 | **Tool invocation not measured.** "We do not report quantitative tool-use results, because current frameworks delegate tool invocation entirely to the LLM without architectural control over selection" (:276). Invocation "depends on wording, agent loop, and model at once" (:185). | :185, :276 |
+| 7 | **Shared state excluded.** The topology study allows no globally readable shared state, because it "would make every structure equally dense and remove the variable under study" (:505). | :505 |
+| 8 | **Plugin memories excluded.** Mem0, Letta, Zep, MIRIX and EverMemOS "do not differentiate frameworks along the dimension we study" (:227). The paper adds that its adapter interface "enables their in-depth evaluation" (:227) but reports no such run. | :227 |
+| 9 | **Answer-level metrics only.** Accuracy, F1 and Recall@5 (:314). Nothing reads a stored state, a history or an edge. | :314 |
+| 10 | **Text: "single-hop forgetting" 20.2.** The prose says retrieval-only LangGraph reaches 20.2 on single-hop forgetting (:397). 20.2 is the SF average; FC-SH is 36.0 (:372). | :372, :397 |
+| 11 | **Text: accumulation beats retrieval-only on TTL.** The prose says "accumulation with a weaker LLM still outperforms retrieval-only with a stronger one" (:399). Retrieval-only with Haiku scores 26.2 (:389). Pure accumulation peaks at 20.7 (OpenAI SDK, W = 8,192, :380). Only two hybrid LangGraph rows score above 26.2: 28.9 at W = 1,024 (:384) and 27.0 at W = 2,048 (:385). | :380, :384, :385, :389, :399 |
+| 12 | **Text: "retrieval dominates multi-hop retrieval and in-session learning".** Section 4.3 says so (:544). Section 4.1.2 has the hybrid LangGraph (W = 512) best on AR with 44.9, above retrieval-only 33.2 (:383, :391), and says "Retrieval-only memory performs poorly" on TTL (:395). | :383, :391, :395, :544 |
+
+Item 4 matters for how the headline claim reads. "Model capability affects absolute scores but does not alter architectural rankings" (:399) rests on one row, and the subtask numbers show large model effects that the averages cancel.
+
+### 8.3 Link to GEM
+
+**Failure modes.** MAFBench's failures are GEM's failure modes ① (unregulated growth) and ② (missing semantic revision), measured at the framework level. Multi-hop forgetting below 5.0 is consistent with a C3 (dependency consistency) failure, though answer-level scores cannot confirm it.
+
+**Necessary but not sufficient.** MAFBench calls for database guarantees; GEM answers its title question with a flat "no": agent memory is a new data-management workload, not a database problem. The two are compatible under **our claim (not GEM's wording): database guarantees are necessary but not sufficient.**
+- A versioned row, MAFBench's concrete solution (:568), gives C1, C2's atomic commit and current-value rule, and C4.
+- It lacks declarative policies (C2(c)), dependency tracking (C3, which MAFBench also asks for), forgetting (C5) and reinforcement (C6).
+- The demo's versioned-row baseline (Section 9.3) tests this, and the run of record bears it out: pass on C1, C2(b), C2 on the lapsed override and C4; absent on C2(c), C3, C5 and C6 (F34, F41).
+
+**Answer-level metrics cannot see state.** MAFBench's memory metrics grade answers and retrieved evidence (:314). None reads the stored state, so they cannot show whether a correct answer comes from a correct stored state. The demo therefore inspects MemState's stored state.
+
+**Acquisition versus maintenance.** MAFBench attributes the collapse of hybrid designs to outdated information persisting in both stores (:397). Answer-level scoring cannot separate a failure to *retrieve* the update (acquisition) from a failure to *use* it (maintenance), the distinction StateMemBench draws (Section 6.9). Applying that labeling to MAFBench's selective-forgetting failures is future direction 4 (Section 7.9).
+
+**The MemoryAgentBench bridge.** The lab's two papers treat one benchmark differently.
+- MAFBench adopts MemoryAgentBench because it captures revision (:221).
+- GEM's Section 5 says "Current benchmarks measure answer-level recall and exercise C1 only partially [16, 21, 37, 42]" (`2605.26252v1.md:351`), and [16] is MemoryAgentBench (Hu, Wang and McAuley, `2605.26252v1.md:404`).
+- GEM adds that a trajectory benchmark needs ground truth at three levels: current value over time (C2), dependents after each update (C3), and active footprint (C5) (`2605.26252v1.md:351`).
+
+The conformance suite is a step toward that benchmark.
+
+**What each competency can observe.** The mapping is our reading; the definitions are at :223 and all four are graded on answers only (:314).
+
+| Competency | Nearest GEM element | Can observe | Cannot observe |
+|---|---|---|---|
+| AR: "factual recall and multi-hop reasoning over long contexts" | Retrieval operator; C1 on facts that never change | Whether the right content reaches the answer (acquisition) | C6 (salience is never read); C1 under updates; the historical branch of C1 (time probes) |
+| TTL: "in-session learning of concepts and preferences" | Ingestion integrating into a unit; C1 for a newly learned value | Whether a new preference is used | Where it was stored; whether its history is kept (C4) |
+| LRU: "long-range abstraction and cross-document reasoning" | Consolidation or promotion; C5's compression rung; C4′'s "compressed" provenance | Whether the summary answers | Whether the summary replaced its sources recoverably (C5, C4) |
+| SF: "controlled memory revision through counterfactual updates" | FC-SH → C1/C2 (superseded value not returned); FC-MH → C3 (dependents) | Whether the post-update answer is given | Whether the stale value is still current in storage (C2); whether dependents were flagged (C3) |
+
+Absent from all four: C4 (provenance), C5 (bounded footprint), C6 (retrieval-induced adaptation), C2(c) (policy compliance), atomicity, and time. A term search of the paper finds none of provenance, salience, footprint, atomic, decay or evict; dependency tracking and transactions appear only as future work (:568). **Conclusion: no condition is observed at state level; C1 is covered partially; C2 and C3 only indirectly; C4–C6 not at all.** C1's partial coverage is GEM's own verdict on [16] (`2605.26252v1.md:351`); the reading of C2–C6 is ours.
+
+**Tool invocation and our runs.** MAFBench shows the dependence on the LLM qualitatively and declines to measure it. For the same LangGraph configuration, two instructions give opposite outcomes under *gpt-4o-mini*: "a permissive one offering the tool as optional never calls it and yields no valid plan. A directive one naming it as the way to obtain prices invokes it and completes" (:185).
+
+MemState's chat layer is partly the architectural control :276 says frameworks lack: an intent router decides which tools the model is offered (`tools_for_intent_route`, `MemState/src/memstate/llm/tools_schema.py:674`; [INFERENCE] from code). The control covers what is offered, not what runs: a turn routed `query` executed write tools it was not offered (F31; the missing check is [INFERENCE] from the runner code, `MemState/src/memstate/llm/tool_runner.py`). Our runs, detailed in Section 9.7:
+- with `qwen3.5:2b` the router was where writes failed: it sent "I started my new job two weeks ago" to `query` in 7 of 7 spec-faithful takes (F31);
+- with `qwen3.5:4b` the router chose `ingest` in 10 of 10 takes, so it was not the blocker, yet the model wrote a field in only 6 of 10 (F37).
+
+So the failure point was the routing decision with the smaller model and the model's own write decision with the larger one. C6 then depends on a read actually happening: on the chat path, salience is bumped only after read tools and only when the router classified the turn as `query` or `both` (`2605.26252v1-alignment.md:71`; `MemState/src/memstate/llm/tool_runner.py:273-282`; [INFERENCE] from code, not from a run).
+
+**What follows.** Section 7.7 proposes the evaluation that joins the two papers, with MAFBench's answer-level pipeline and our state-level adapter behind one interface.
 
 ---
 
@@ -749,7 +985,7 @@ The probes are ours, motivated by Zep's time model and by StateMemBench's status
 
 ### 9.7 Results of record
 
-One recorded command ran every check, time probe, storyline question and ramp on all seven systems, recorded both chat cases, and copied the results to the tracked [`runs/record/20261021-194912/`](../../demo/record/20261021-194912/scorecard.md) (2026-10-21, 57 min 7 s, ramps repeated three times; F41) on the final commits `089b823`, `4272a07` and `9bd471e`. Every MemState server ran alone on a fresh database, upstream on Kuzu 0.11.3 at `945d7c4` and the patch on LadybugDB 0.21.2 at the final commits; each verdict links its raw-state snapshot. Every verdict matched the expected verdicts written in the suite's spec before the build; the departures are in counts and case-level detail, listed at the end of this section. Earlier smoke runs (F7–F31) found the same behaviour; their finding numbers are kept below where they add detail.
+One recorded command ran every check, time probe, storyline question and ramp on all seven systems, recorded both chat cases, and copied the results to the tracked [`runs/record/20261021-194912/`](../../runs/record/20261021-194912/scorecard.md) (2026-10-21, 57 min 7 s, ramps repeated three times; F41) on the final commits `089b823`, `4272a07` and `9bd471e`. Every MemState server ran alone on a fresh database, upstream on Kuzu 0.11.3 at `945d7c4` and the patch on LadybugDB 0.21.2 at the final commits; each verdict links its raw-state snapshot. Every verdict matched the expected verdicts written in the suite's spec before the build; the departures are in counts and case-level detail, listed at the end of this section. Earlier smoke runs (F7–F31) found the same behaviour; their finding numbers are kept below where they add detail.
 
 **MemState, upstream to step 3 (F41).**
 - **C1:** the control passes on all four.
@@ -789,6 +1025,23 @@ One recorded command ran every check, time probe, storyline question and ramp on
 
   `valid_from` is 2026-09-23 in 10 of 10 final takes. The three partial W2 answers give Sep 23 and 28 days or a month but also a wrong figure ("a week and a half", "just under three weeks"): arithmetic slips with nothing in the stored data behind them. The wrong W2 read a second date the model had written into its own value, so two dates and no rule applied. One take stored an employer the user never named (F40). Memory now stores the right start date whenever the model writes; what remains is the model's arithmetic and the dates it writes into free text. Across all 155 chat turns of these series and the recordings of record, the blind reviewer agrees with Sonnet on 151; each of the four disagreements is the reviewer's stricter "partially correct" (F42). Turns took 16–37 s with reasoning on, against 2–5 s off (F39). One 4B model on one laptop; the pilot's 3 of 3 in F39 did not hold at 10 takes.
 
+*State masking: a lexical metric and the judges beside the stored state (F43; offline, no LLM call).* [P2]'s Table 9 sets lexical F1 against an LLM judge on answers (`2602.19320.md:670-679`). Adding the stored state as a third column shows a failure neither answer-level metric can see. Over the same 155 recorded turns, using SQuAD token F1 against each turn's ground truth:
+
+| Case | Turns | Sonnet correct | Mean token F1 | Takes whose stored state is wrong | Masked turns (judged correct, state wrong) |
+|---|---|---|---|---|---|
+| Bad merge | 69 | 69 | 0.33 | 23 of 23 (deadline history lost) | 69 |
+| Two weeks | 86 | 35 (+5 partial) | 0.06 (W2 turns) | 19 of 43 (start date missing or wrong by `valid_from`) | 3 |
+
+- **The judges miss the state, and F1 does too.** All 69 bad-merge answers are judged correct while every take lost the deadline's history. Of these turns, 49 score F1 below 0.5 and 20 above, so F1 follows phrasing, not state.
+- **F1 also misgrades correct answers.** 60 of the 80 answer-graded turns Sonnet marks correct score below 0.5: "April 20th" answers score 0.06–0.25, and "28 days" against "four weeks" scores 0.00. This is [P2]'s Paraphrase Penalty. No recorded answer negates the truth, so its Negation Trap does not occur in this data.
+- **A constructed illustration** (not recorded), gold "April 20", F1 and a deterministic closed-pool label:
+  - "April 20": 1.00, April 20;
+  - "20/04": 0.00, other;
+  - "The deadline moved to April 20, no longer March 15": 0.36, ambiguous;
+  - "March 15" and "The deadline is March 15": 0.00, March 15.
+
+  The wrong answer and the right paraphrase "20/04" get the same F1; the closed pool separates them (Section 7.7, component 3).
+
 **Departures from the expected verdicts.** Every verdict cell matched. Four details did not, and each is reported here as measured, not rewritten in the spec:
 - C4's not-applicable count is 2 on upstream and step 1, and 3 on the versioned row, against 1 and 2 expected: the dated merge case needs `valid_from`, which those systems do not accept.
 - The natural merge counts are 11, 11 and 11 of 20 on upstream, step 1 and step 2, against the 10 of 20 the design quoted from F9 (the earlier run drew 11, 10 and 9): they are random draws, not rates.
@@ -797,7 +1050,7 @@ One recorded command ran every check, time probe, storyline question and ramp on
 
 ### 9.8 Scorecard
 
-The full scorecard, with a raw-state snapshot behind every cell, is [`runs/record/20261021-194912/scorecard.md`](../../demo/record/20261021-194912/scorecard.md) (F41). The verdicts:
+The full scorecard, with a raw-state snapshot behind every cell, is [`runs/record/20261021-194912/scorecard.md`](../../runs/record/20261021-194912/scorecard.md) (F41). The verdicts:
 
 | Row | Claimed by [P1]? | Upstream | Step 1 | Step 2 | Step 3 | Ref. phase 1 | Ref. phase 2 | Versioned row |
 |---|---|---|---|---|---|---|---|---|
