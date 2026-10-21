@@ -1,10 +1,29 @@
 #!/bin/sh
-# Strip AI-tool attribution from commit messages (Claude Code, Cursor, omp, Copilot, ...).
-# Human co-authors are kept. Tool settings alone do not reliably suppress these lines,
-# so this hook is the enforcement point. Enable once per clone: git config core.hooksPath .githooks
+# Enable once per clone: git config core.hooksPath .githooks
+# 1. Strip AI-tool attribution (Claude Code, Cursor, omp, Copilot, ...); human co-authors are kept. Tool settings alone
+#    do not reliably suppress these lines, so this hook is the enforcement point.
+# 2. Refuse a subject that is not a Conventional Commit, `<type>(<scope>)!: <description>`, of at most 72 characters.
+#    Merge commits are refused with it: a branch lands on main squashed (`git merge --squash`) or rebased.
 msg="$1"
 tmp="$(mktemp)"
 grep -viE '^co-authored-by:.*(claude|anthropic|cursor|copilot|openai|chatgpt|gemini|omp)|^claude-session:|made with cursor|generated with \[?(claude|omp)' "$msg" \
   | sed -e :a -e '/^\n*$/{$d;N;ba' -e '}' >"$tmp"
 cat "$tmp" >"$msg"
 rm -f "$tmp"
+
+subject="$(grep -v '^#' "$msg" | sed -n '/[^[:space:]]/{p;q;}')"
+types='feat|fix|docs|style|refactor|perf|test|build|ci|chore|revert'
+if printf '%s\n' "$subject" | grep -qE '^(fixup|squash|amend)! '; then
+  exit 0  # interim commits for `git rebase --autosquash`; they never reach main
+fi
+if ! printf '%s\n' "$subject" | grep -qE "^($types)(\([^()]+\))?!?: [^ ]"; then
+  echo "commit-msg: '$subject' is not a Conventional Commit." >&2
+  echo "  Write <type>(<scope>): <description>, type one of: $(echo "$types" | tr '|' ' ')." >&2
+  echo "  A branch lands on main squashed (git merge --squash) or rebased, never as a merge commit." >&2
+  exit 1
+fi
+length="$(printf '%s' "$subject" | wc -m)"
+if [ "$length" -gt 72 ]; then
+  echo "commit-msg: the subject has $length characters; keep it at most 72 and put detail in the body." >&2
+  exit 1
+fi

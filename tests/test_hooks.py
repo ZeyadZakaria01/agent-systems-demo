@@ -1,5 +1,7 @@
-"""The pre-commit hook refuses a commit whose author or committer is a test identity (`@example.com`): 85 commits
-once went in as `t <t@example.com>` after a test wrote its identity into the real config."""
+"""The git hooks. pre-commit refuses a commit whose author or committer is a test identity (`@example.com`; 85 commits
+once went in as `t <t@example.com>` after a test wrote its identity into the real config) or that adds an API key;
+commit-msg strips AI attribution and refuses a subject that is not a Conventional Commit (198 unsquashed commits,
+merge commits and free-form subjects once landed on main)."""
 
 import os
 import subprocess
@@ -9,6 +11,7 @@ import pytest
 from demo.paths import REPO_ROOT
 
 HOOK = REPO_ROOT / ".githooks" / "pre-commit"
+COMMIT_MSG = REPO_ROOT / ".githooks" / "commit-msg"
 
 
 @pytest.fixture
@@ -92,3 +95,49 @@ def test_text_that_only_resembles_a_key_passes(staged_repo):
     (staged_repo / "notes.txt").write_text("the task-runner and sk-learn; gsk_ prefix; AIza is Google's\n")
     subprocess.run(["git", "-C", str(staged_repo), "add", "notes.txt"], check=True)
     assert run_hook(staged_repo, "Zeyad Zakaria <zeyad.zakaria01@gmail.com>").returncode == 0
+
+
+def run_commit_msg(tmp_path, message: str):
+    path = tmp_path / "COMMIT_EDITMSG"
+    path.write_text(message)
+    result = subprocess.run(["sh", str(COMMIT_MSG), str(path)], capture_output=True, text=True)
+    return result, path.read_text()
+
+
+@pytest.mark.parametrize(
+    "subject",
+    [
+        "feat(checks): add the C2(a) merge check",
+        "fix: repair the lock path",
+        "refactor!: move run data to runs/",
+        "fixup! feat(checks): add the C2(a) merge check",
+    ],
+)
+def test_a_conventional_subject_passes(tmp_path, subject):
+    assert run_commit_msg(tmp_path, f"{subject}\n\nbody\n")[0].returncode == 0
+
+
+@pytest.mark.parametrize(
+    "subject",
+    [
+        "Merge ticket 02: patch-step-1",
+        "Resolve ticket 10",
+        "Add C4: history survival",
+        "feat:missing space",
+        "feat(checks): " + "x" * 60,
+    ],
+)
+def test_a_merge_free_form_or_long_subject_is_refused(tmp_path, subject):
+    result, _ = run_commit_msg(tmp_path, f"{subject}\n")
+    assert result.returncode == 1 and "commit-msg:" in result.stderr
+
+
+def test_ai_attribution_is_stripped_and_a_human_co_author_kept(tmp_path):
+    message = (
+        "docs: add the journal\n\nbody\n\n"
+        "Co-authored-by: Claude <noreply@anthropic.com>\n"
+        "Co-authored-by: Essam Mansour <essam@example.org>\n"
+    )
+    result, kept = run_commit_msg(tmp_path, message)
+    assert result.returncode == 0
+    assert "anthropic" not in kept and "Co-authored-by: Essam Mansour" in kept
