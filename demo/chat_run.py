@@ -419,7 +419,7 @@ def record_chats(run: "RunDir", recordings: Path, link_root: Path, command: str,
                  flags: tuple[str, ...] = (), log=print) -> Recorded:
     """Record `cases` in `run`, with Ollama and the proxy up for the whole block and stopped after it. A case that fails
     is reported in `errors` and the next one still runs. Used by `record_cli` (one case, a run folder of its own) and
-    by `python -m demo.run --chat` (both cases, in the suite's run folder). Run it under the machine-wide lock."""
+    by `python -m demo.run --chat` (both cases, in the suite's run folder); both hold the machine-wide lock around it."""
     import os
 
     base = os.environ.get("MEMSTATE_OLLAMA_BASE_URL")
@@ -445,15 +445,17 @@ def record_chats(run: "RunDir", recordings: Path, link_root: Path, command: str,
 def record_cli(recordings: Path, case: str = CASE, flags: tuple[str, ...] = ()) -> int:
     """Record one chat run on its own: a fresh DB, a server started and stopped here, Ollama likewise. `bad-merge` runs
     on upstream; `two-weeks` on patch step 3 (its commit checked out in `MemState-patched` for the run, then back on
-    `bitemporal`). Run it under the machine-wide lock (README, "Chat runs and replay"). The run of record records both
-    in its own run folder instead: `python -m demo.run --record --chat`."""
+    `bitemporal`). It holds the machine-wide lock for the whole recording (`demo/server_lock.py`). The run of record
+    records both in its own run folder instead: `python -m demo.run --record --chat`."""
     from demo import evidence
     from demo.paths import RESULTS_ROOT, SHARED_ROOT
+    from demo.server_lock import server_lock
 
     run = evidence.new_run_dir(RESULTS_ROOT, SHARED_ROOT / ".runtime" / "gem-suite")
     command = f"cd {REPO_ROOT} && {sys.executable} -m demo.chat_run record {case}" + "".join(f" {f}" for f in flags)
     try:
-        result = record_chats(run, recordings, RESULTS_ROOT, command, (case,), flags)
+        with server_lock():
+            result = record_chats(run, recordings, RESULTS_ROOT, command, (case,), flags)
     except OllamaError as e:
         print(e, file=sys.stderr)
         return 2

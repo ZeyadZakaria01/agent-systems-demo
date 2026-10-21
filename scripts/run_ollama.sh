@@ -14,6 +14,9 @@ mkdir -p "$LOG_DIR"
 
 [ -x "$OLLAMA_BIN" ] || { echo "ollama binary not found at $OLLAMA_BIN" >&2; exit 1; }
 
+source "$REPO_ROOT/scripts/server_lock.sh"
+hold_server_lock
+
 # Loopback only; MemState's default base URL is http://127.0.0.1:11434.
 export OLLAMA_HOST="${OLLAMA_HOST:-127.0.0.1:11434}"
 # MemState sends no options.num_ctx, so the server-side default context must be 16k.

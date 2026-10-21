@@ -1,8 +1,7 @@
 """Start and stop one MemState server through `scripts/run_memstate.sh`.
 
-One server at a time, port 8765 (fixed by the script). The runner does NOT take the machine-wide lock: callers wrap
-it (`flock /home/zeyad/work/agent-systems-demo-wt/server.lock .venv/bin/python -m demo.run ...`). If the port is busy
-at start, that is the symptom of a missing wrap and the error says so. Every start gets a fresh absolute DB path;
+One server at a time, port 8765 (fixed by the script). The run that calls this holds the machine-wide lock
+(`demo/server_lock.py`); a busy port at start means a server outside the lock, and the error says so. Every start gets a fresh absolute DB path;
 `MemState/memstate.kuzu` is never passed or opened.
 """
 
@@ -108,8 +107,7 @@ def start(db_path: Path, patched: bool, log_path: Path, timeout: float = 240) ->
     if db_path.exists():
         raise ServerError(f"DB path is not fresh: {db_path}")
     if not port_free():
-        raise ServerError(f"port {PORT} is busy: stop the other server, and wrap the run in "
-                          "`flock /home/zeyad/work/agent-systems-demo-wt/server.lock <command>`")
+        raise ServerError(f"port {PORT} is busy: a server is running outside the machine-wide lock; stop it")
     log_path.parent.mkdir(parents=True, exist_ok=True)
     cmd = ["bash", str(RUN_SCRIPT), *(["--patched"] if patched else []), str(db_path)]
     with open(log_path, "wb") as log:

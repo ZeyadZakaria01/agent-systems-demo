@@ -415,7 +415,7 @@ One entry per difficulty, newest last. Fields: expected, observed, evidence, res
 - Date: 2026-10-21
 - Expected: apply the spec's revised checks to C2(a)/(b), C4, C5, C6 and add C2(d); smoke on upstream and step 1 reproduces the "Expected verdicts" (C2(b) fail, C2(d) pass, C4 partial with one n/a, C6 clause 2 pass).
 - Observed: all five matched. Departures: (1) the versioned row needed a foreign-key check (`ref_topic_id` must name a stored topic) to read C2(b) `pass`; it is the same all-or-nothing rule ticket 20 gave it. (2) C2(a) is now one case (existence) instead of twenty; the per-repetition rows stay in `measurements.per_repetition`. (3) C4's real-forgetting case drives the forgetting pass with field-less fillers and a field-less control at 0.01 (the control shows the pass ran), so "n/a, confirmed by the run" needs no editor write; the cap case reads archived overflow from a field's `archived_history` key, which is a new adapter contract for the reference GEM. (4) `describe()` gained `declared_bound` (upstream: 500, `topic_count_soft_limit`; other systems must declare theirs for C5's text). (5) C6 clause 2 looks for a forgetting pass after each read and only forces one if none was seen; the filler ingests themselves are not observed one by one.
-- Evidence: `docs/findings.md` "Revised checks on upstream and step 1"; tests in `tests/test_c2a.py`, `test_c2b_c2c_c3.py`, `test_c2d.py`, `test_c4.py`, `test_c5.py`, `test_c6.py`.
+- Evidence: `docs/findings.md` F36 ("Revised checks on upstream and step 1"); tests in `tests/test_c2a.py`, `test_c2b_c2c_c3.py`, `test_c2d.py`, `test_c4.py`, `test_c5.py`, `test_c6.py`.
 - Resolution: as built.
 - Lesson: a check's n/a on one system needs the run to show the pass happened (the control), otherwise "cannot be forgotten" and "forgetting never ran" read the same.
 
@@ -557,3 +557,11 @@ One entry per difficulty, newest last. Fields: expected, observed, evidence, res
 - Evidence: `/tmp/t19/log` (run log), `demo/record/20261021-085949/results.json`.
 - Resolution: none needed.
 - Lesson: the recorded command is not the whole wrapper; the journal states the live lock.
+
+### Retro: a test leak rewrote the real repo's identity, and the session ran two machine locks
+- Date: 2026-10-21
+- Expected: the offline suite touches only throwaway repositories; one lock keeps one server on the laptop.
+- Observed: before ticket 21's `tests/conftest.py` fix, the pre-commit hook's git locators leaked into test fixtures, which set `core.bare = true` and `user.email = t@example.com` in the real `.git/config`; 85 `gem-suite` commits were authored as `t`, found only at cleanup (authors rewritten, trees identical, backup branch `backup/gem-suite-pre-author-rewrite`). The orchestrating session also added `/tmp/gem-suite-live.lock` beside the repo's `server.lock`, so "held the lock" meant two different things.
+- Evidence: `git log --format=%ae 92099d8..backup/gem-suite-pre-author-rewrite`; the implementer reports quoted in the session.
+- Resolution: the suite fails if it changes the real config or HEAD (`tests/repo_guard.py`, `tests/conftest.py`); the pre-commit hook refuses an `@example.com` author or committer; the runner, the chat recorder and both server scripts hold `server.lock` themselves (`demo/server_lock.py`, `scripts/server_lock.sh`), so there is one lock and forgetting the wrapper is safe. The first smoke of the wrapped form read C1 `error`: an inherited lock was used but not announced to the server script, which then refused; the test now checks what children see.
+- Lesson: a guardrail the agent must remember is a guardrail the agent forgets; put the lock in the scripts and the identity check in the hook, and test a lock from the child's side as well as the holder's.

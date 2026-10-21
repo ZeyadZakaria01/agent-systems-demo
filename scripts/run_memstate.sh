@@ -23,6 +23,9 @@ for arg in "$@"; do
   fi
 done
 
+source "$ROOT/scripts/server_lock.sh"
+hold_server_lock
+
 # The venv's editable install points at MemState/src; PYTHONPATH wins over that .pth entry.
 if [[ "$PATCHED" == 1 ]]; then
   SRC="$SHARED/MemState-patched/src"

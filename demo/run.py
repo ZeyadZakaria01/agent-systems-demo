@@ -3,7 +3,8 @@
 
 Recorded mode: per system, per check, a fresh database (a server started with `scripts/run_memstate.sh` for MemState
 systems, stopped when the check ends; the baseline in-process); results go to `demo/results/<run id>/`.
-The runner does not take the machine-wide lock; wrap it:
+A run that starts a server (a MemState system, or `--chat`) holds the machine-wide lock for its whole length
+(`demo/server_lock.py`), also when started under `flock .../server.lock`, which the commands below keep:
 
     flock /home/zeyad/work/agent-systems-demo-wt/server.lock .venv/bin/python -m demo.run --systems upstream,baseline
 
@@ -30,6 +31,7 @@ import argparse
 import json
 import shlex
 import sys
+from contextlib import nullcontext
 from dataclasses import dataclass, field
 from datetime import date
 from pathlib import Path
@@ -50,6 +52,7 @@ from demo.scorecard import (COLUMNS, SCOPE_NOTE, Column, claimed_by_p1, counts, 
 from demo.over_flagging_tables import render_over_flagging
 from demo.storyline_tables import render_storyline
 from demo.record import record_run
+from demo.server_lock import server_lock
 from demo.systems import SYSTEMS, SystemSpec
 from demo.upstream_tests import render_upstream_tests
 from demo.verdict import Verdict, measured
@@ -185,6 +188,11 @@ def _run_one(run: RunDir, spec: SystemSpec, check: Check, run_day: date) -> list
     return run_check(run, check, spec.id, open_system, run_day)
 
 
+def needs_server_lock(systems: list[str], chat: bool) -> bool:
+    """A MemState system (its upstream tests are counted) or a chat run starts a server; in-process systems do not."""
+    return chat or any(SYSTEMS[s].unit_tests is not None for s in systems)
+
+
 def pasteable_command(argv: list[str]) -> str:
     """The command that reproduces this run: working directory, lock and interpreter included."""
     return f"cd {REPO_ROOT} && flock {SERVER_LOCK} {sys.executable} -m demo.run {shlex.join(argv)}".rstrip()
@@ -306,7 +314,9 @@ def main(argv: list[str] | None = None) -> int:
     # the recordings cite their snapshots by the folder the run ends in: demo/record/ when it is recorded, else here
     link_root = RECORD_ROOT if args.record else results_root
     chats = (lambda run, recordings: chat_run.record_chats(run, recordings, link_root, command)) if args.chat else None
-    result = run_recorded(systems, checks, results_root, command, recordings_dir=args.recordings, record_chats=chats)
+    with server_lock() if needs_server_lock(systems, args.chat) else nullcontext():
+        result = run_recorded(systems, checks, results_root, command, recordings_dir=args.recordings,
+                              record_chats=chats)
     print("\n## Scorecard\n")
     print(result.scorecard)
     print(f"\nResults: {result.dir}/results.json\n")
