@@ -29,11 +29,17 @@ def stand_ins(monkeypatch):
         def open_system(tag, run):
             made[system_id] = factory()
             return nullcontext(made[system_id])
+
         monkeypatch.setitem(SYSTEMS, system_id, SystemSpec(system_id, system_id, open_system))
 
     register("upstream", lambda: MergingStandIn(replies=REPLIES))
-    register("step3", lambda: JobStandIn(effects={FIRST_MESSAGE: [("start_date", "Sep 22", None)]},
-                                         replies={FIRST_MESSAGE: "Noted.", SECOND_MESSAGE: "About four weeks."}))
+    register(
+        "step3",
+        lambda: JobStandIn(
+            effects={FIRST_MESSAGE: [("start_date", "Sep 22", None)]},
+            replies={FIRST_MESSAGE: "Noted.", SECOND_MESSAGE: "About four weeks."},
+        ),
+    )
     events = []
 
     @contextmanager
@@ -58,7 +64,10 @@ def test_both_cases_are_recorded_in_one_ollama_session_with_their_snapshots_in_t
     _, events = stand_ins
     run = new_run(tmp_path)
     result = chat_run.record_chats(run, tmp_path / "recordings", tmp_path / "results", "the command")
-    assert result.errors == [] and [p.name for p in result.saved] == [f"bad-merge-{run.id}.json", f"two-weeks-{run.id}.json"]
+    assert result.errors == [] and [p.name for p in result.saved] == [
+        f"bad-merge-{run.id}.json",
+        f"two-weeks-{run.id}.json",
+    ]
     assert events == ["up", "stopped"]  # one session for both cases
     assert (run.dir / "snapshots" / "upstream" / "chat-bad-merge.json").is_file()
     assert (run.dir / "snapshots" / "step3" / "chat-two-weeks.json").is_file()
@@ -66,8 +75,12 @@ def test_both_cases_are_recorded_in_one_ollama_session_with_their_snapshots_in_t
     assert set(cases) == {"bad-merge", "two-weeks"}
     for rec in cases.values():
         assert rec["run_id"] == run.id and rec["command"] == "the command"
-        assert rec["environment"] == {"model_warmed_up_s": 0.5, "ollama_started_by_run": True,
-                                      "ollama_model_setting": chat_run.DEFAULT_MODEL, "think": False}
+        assert rec["environment"] == {
+            "model_warmed_up_s": 0.5,
+            "ollama_started_by_run": True,
+            "ollama_model_setting": chat_run.DEFAULT_MODEL,
+            "think": False,
+        }
         assert Path(rec["snapshot"]).is_file() and run.dir.as_posix() in rec["snapshot"]  # the link resolves
 
 
@@ -83,8 +96,13 @@ def test_the_recorded_run_folder_resolves_the_chat_snapshot_links(tmp_path, stan
 
 
 def test_a_case_that_fails_is_reported_and_the_other_is_still_recorded(tmp_path, stand_ins, monkeypatch):
-    monkeypatch.setitem(SYSTEMS, "upstream", SystemSpec("upstream", "upstream", lambda tag, run: nullcontext(
-        MergingStandIn(replies=REPLIES, can_retitle=False))))  # the arrangement cannot be made: the scenario refuses
+    monkeypatch.setitem(
+        SYSTEMS,
+        "upstream",
+        SystemSpec(
+            "upstream", "upstream", lambda tag, run: nullcontext(MergingStandIn(replies=REPLIES, can_retitle=False))
+        ),
+    )  # the arrangement cannot be made: the scenario refuses
     run = new_run(tmp_path)
     result = chat_run.record_chats(run, tmp_path / "recordings", tmp_path / "results", "c")
     assert len(result.errors) == 1 and result.errors[0].startswith("bad-merge: ScenarioError")
@@ -105,23 +123,39 @@ def test_a_variant_take_is_saved_under_attempts_and_is_never_the_scored_case(tmp
 
 def test_a_variant_recorded_into_the_scored_folder_by_hand_is_still_skipped(tmp_path, stand_ins):
     from demo.chat_recording import save_recording
+
     base = chat_run.record_chats(new_run(tmp_path), tmp_path / "rec", tmp_path / "results", "c", ("two-weeks",))
     older = load_recording(base.saved[0])
-    newer_variant = {**older, "run_id": "z-newer", "recorded_at": "2999-01-01T00:00:00+00:00",
-                     "state": {**older["state"], "first_intent_override": "ingest"}}
+    newer_variant = {
+        **older,
+        "run_id": "z-newer",
+        "recorded_at": "2999-01-01T00:00:00+00:00",
+        "state": {**older["state"], "first_intent_override": "ingest"},
+    }
     save_recording(newer_variant, tmp_path / "rec")
     (scored,) = latest_per_case(tmp_path / "rec")
-    assert scored["run_id"] == older["run_id"]  # the newest take is the scored one only among takes run as the spec states
+    assert (
+        scored["run_id"] == older["run_id"]
+    )  # the newest take is the scored one only among takes run as the spec states
 
 
 # -- demo.run --chat: the suite and both chat cases in one run folder
+
 
 def test_run_recorded_records_both_chat_cases_after_the_systems_and_prints_the_new_takes(tmp_path, stand_ins):
     c1 = next(c for c in discover() if c.id == "C1")
     old = tmp_path / "rec"
     chat = lambda run, recordings: chat_run.record_chats(run, recordings, tmp_path / "results", "cmd")  # noqa: E731
-    run = run_recorded(["baseline"], [c1], tmp_path / "results", "cmd", run_day=date(2026, 10, 20),
-                       runtime_root=tmp_path / "runtime", recordings_dir=old, record_chats=chat)
+    run = run_recorded(
+        ["baseline"],
+        [c1],
+        tmp_path / "results",
+        "cmd",
+        run_day=date(2026, 10, 20),
+        runtime_root=tmp_path / "runtime",
+        recordings_dir=old,
+        record_chats=chat,
+    )
     assert run.chat_errors == []
     results = json.loads((run.dir / "results.json").read_text())
     assert {c["case"] for c in results["chat_cases"]} == {"bad-merge", "two-weeks"}
@@ -138,13 +172,22 @@ def test_a_run_that_could_not_start_the_chats_keeps_its_suite_results_and_says_s
     def broken(run, recordings):
         raise chat_run.OllamaError("Ollama is half running")
 
-    run = run_recorded(["baseline"], [c1], tmp_path / "results", "cmd", run_day=date(2026, 10, 20),
-                       runtime_root=tmp_path / "runtime", recordings_dir=tmp_path / "rec", record_chats=broken)
+    run = run_recorded(
+        ["baseline"],
+        [c1],
+        tmp_path / "results",
+        "cmd",
+        run_day=date(2026, 10, 20),
+        runtime_root=tmp_path / "runtime",
+        recordings_dir=tmp_path / "rec",
+        record_chats=broken,
+    )
     assert any("half running" in e for e in run.chat_errors)
     assert json.loads((run.dir / "results.json").read_text())["complete"] is True and run.verdicts
 
 
 # -- the processes the run owns
+
 
 @pytest.fixture
 def ports(monkeypatch):
@@ -189,10 +232,9 @@ def test_ollama_and_the_proxy_are_stopped_at_the_end_also_when_they_were_already
 
 def test_ollama_the_run_started_is_stopped_after_an_error_in_the_block(ports):
     state, killed, started = ports
-    with pytest.raises(RuntimeError, match="boom"):
-        with chat_run.ollama_running() as started_by_run:
-            assert started_by_run is True and len(started) == 1
-            raise RuntimeError("boom")
+    with pytest.raises(RuntimeError, match="boom"), chat_run.ollama_running() as started_by_run:
+        assert started_by_run is True and len(started) == 1
+        raise RuntimeError("boom")
     assert not any(state.values()) and len(killed) == 2
 
 
@@ -202,4 +244,3 @@ def test_a_half_running_pair_is_a_leftover_it_is_stopped_and_both_are_started_fr
     with chat_run.ollama_running() as started_by_run:
         assert started_by_run is True and len(started) == 1 and killed == [1000 + chat_run.PROXY_PORT]
     assert not any(state.values())
-

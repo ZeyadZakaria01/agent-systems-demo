@@ -13,7 +13,7 @@ from demo import ramp
 from demo.adapter import Rejected, System
 from demo.baseline import Baseline
 from demo.checks import discover
-from demo.verdict import FAIL, PASS
+from demo.verdict import PASS
 
 
 @pytest.fixture(autouse=True)
@@ -150,6 +150,7 @@ def test_accepting_an_empty_write_that_becomes_current_breaks_the_empty_cases():
 
 # -- real forgetting and the cap
 
+
 class Forgetter(AppendOnlyStore):
     """AppendOnlyStore plus salience and forgetting, for the real-forgetting case: salience starts at the request's
     value (default 1.0); once `ramp.FORGET_GATE` topics exist an ingest archives every topic below 0.05; a field write
@@ -242,7 +243,9 @@ class Capped(AppendOnlyStore):
 def test_the_cap_case_holds_when_the_first_value_is_archived_overflow_readable_by_id():
     v = run(Capped(archive=True))
     cap = v.measurements["history_cap"]
-    assert cap["first_present"] is True and cap["first_in_history"] is False and cap["first_in_archived_overflow"] is True
+    assert (
+        cap["first_present"] is True and cap["first_in_history"] is False and cap["first_in_archived_overflow"] is True
+    )
     assert cap["length"] == 500
 
 
@@ -282,7 +285,9 @@ class DatedStore(AppendOnlyStore):
         out = super()._ingest(request)
         tid = out["topic_id"]
         for n, h in self.topics[tid]["fields"].items():  # the base class stored value and provenance only
-            h[0].setdefault("valid_from", next((f["valid_from"] for f in request.get("fields") or [] if f["name"] == n), None))
+            h[0].setdefault(
+                "valid_from", next((f["valid_from"] for f in request.get("fields") or [] if f["name"] == n), None)
+            )
         return out
 
     def _merge_pass(self):

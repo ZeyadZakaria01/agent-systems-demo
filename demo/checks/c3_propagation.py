@@ -31,13 +31,15 @@ from dataclasses import asdict, dataclass
 from statistics import median
 
 from demo.checks import Ctx, check
-from demo.reads import current_value, field_in_response, read_request
 from demo.merge import DEFAULT_TIMEOUT_S
+from demo.reads import current_value, field_in_response, read_request
 from demo.verdict import Case, Verdict
 from demo.windows import interactions
 
-CLAIM = ("C3 (dependency consistency): updating a unit triggers evaluation of units linked by propagation-bearing "
-         "edges. Claimed by §4's opening ('by construction'); not listed in §4.3.")
+CLAIM = (
+    "C3 (dependency consistency): updating a unit triggers evaluation of units linked by propagation-bearing "
+    "edges. Claimed by §4's opening ('by construction'); not listed in §4.3."
+)
 REVISION_WAIT_S = DEFAULT_TIMEOUT_S  # bounded wait for the background revision (F7 used a fixed 2 s)
 EDGE_KIND = "extension"
 WINDOW = "Dependent-topic staleness window"
@@ -50,13 +52,24 @@ def _signature(topic: dict | None) -> str | None:
     histories. Not salience or topic events (our own reads bump them)."""
     if topic is None:
         return None
-    fields = {name: {"current": repr(current_value(f)),
-                     "history": [[e.get("value"), e.get("provenance"), e.get("operation")]
-                                 for e in f.get("history") or []]}
-              for name, f in sorted(topic["fields"].items())}
-    return json.dumps({"title": topic.get("title"), "summary": topic.get("summary"),
-                       "topic_kind": topic.get("topic_kind"), "archived": topic.get("archived"),
-                       "fields": fields}, sort_keys=True, default=repr)
+    fields = {
+        name: {
+            "current": repr(current_value(f)),
+            "history": [[e.get("value"), e.get("provenance"), e.get("operation")] for e in f.get("history") or []],
+        }
+        for name, f in sorted(topic["fields"].items())
+    }
+    return json.dumps(
+        {
+            "title": topic.get("title"),
+            "summary": topic.get("summary"),
+            "topic_kind": topic.get("topic_kind"),
+            "archived": topic.get("archived"),
+            "fields": fields,
+        },
+        sort_keys=True,
+        default=repr,
+    )
 
 
 def _edge_linked(state: dict, src: str, dst: str, kind: str = EDGE_KIND) -> bool | None:
@@ -73,8 +86,13 @@ def _flag(topic: dict | None) -> dict | None:
 def _names_the_update(flag: dict | None, a_id: str) -> bool:
     """Flagged, and the evidence names the update: A's topic, the updated field, a timestamp."""
     evidence = (flag or {}).get("evidence") or {}
-    return bool(flag and flag.get("flagged") and evidence.get("source_topic_id") == a_id
-                and evidence.get("updated_field") == "Deadline" and evidence.get("timestamp"))
+    return bool(
+        flag
+        and flag.get("flagged")
+        and evidence.get("source_topic_id") == a_id
+        and evidence.get("updated_field") == "Deadline"
+        and evidence.get("timestamp")
+    )
 
 
 def _stale_read(s, b_id: str):
@@ -117,26 +135,58 @@ class Pair:
     @property
     def control_scored(self) -> bool:
         """The control is evidence only on a system that flags: it has a flag surface and flagged B or the control."""
-        return self.control_flagged is not None and (self.control_flagged or bool((self.b_flag_after or {}).get("flagged")))
+        return self.control_flagged is not None and (
+            self.control_flagged or bool((self.b_flag_after or {}).get("flagged"))
+        )
 
 
 def _probe_pair(s, direction: str, n: int) -> Pair:
-    a_id = s.ingest({"placement": "new_topic", "title": f"Website Redesign {n}", "topic_kind": "project",
-                     "fields": [{"name": "Deadline", "value": "March 15", "provenance": "kickoff-notes"}]})["topic_id"]
+    a_id = s.ingest(
+        {
+            "placement": "new_topic",
+            "title": f"Website Redesign {n}",
+            "topic_kind": "project",
+            "fields": [{"name": "Deadline", "value": "March 15", "provenance": "kickoff-notes"}],
+        }
+    )["topic_id"]
     b_edges = [{"to_topic_id": a_id, "kind": EDGE_KIND}] if direction == "B->A" else []
-    b_id = s.ingest({"placement": "new_topic", "title": f"Launch Milestone {n}", "topic_kind": "milestone",
-                     "fields": [{"name": "Date", "value": "March 20", "provenance": "kickoff-notes"}],
-                     "edges": b_edges})["topic_id"]
+    b_id = s.ingest(
+        {
+            "placement": "new_topic",
+            "title": f"Launch Milestone {n}",
+            "topic_kind": "milestone",
+            "fields": [{"name": "Date", "value": "March 20", "provenance": "kickoff-notes"}],
+            "edges": b_edges,
+        }
+    )["topic_id"]
     if direction == "A->B":
-        s.ingest({"placement": "extend_topic", "topic_id": a_id, "fields": [],
-                  "edges": [{"to_topic_id": b_id, "kind": EDGE_KIND}]})
+        s.ingest(
+            {
+                "placement": "extend_topic",
+                "topic_id": a_id,
+                "fields": [],
+                "edges": [{"to_topic_id": b_id, "kind": EDGE_KIND}],
+            }
+        )
     c_edges = [{"to_topic_id": a_id, "kind": CONTROL_EDGE_KIND}] if direction == "B->A" else []
-    c_id = s.ingest({"placement": "new_topic", "title": f"Style Guide {n}", "topic_kind": "document",
-                     "fields": [{"name": "Version", "value": "1", "provenance": "kickoff-notes"}],
-                     "edges": c_edges})["topic_id"]
+    c_id = s.ingest(
+        {
+            "placement": "new_topic",
+            "title": f"Style Guide {n}",
+            "topic_kind": "document",
+            "fields": [{"name": "Version", "value": "1", "provenance": "kickoff-notes"}],
+            "edges": c_edges,
+        }
+    )["topic_id"]
     if direction == "A->B":
-        s.ingest({"placement": "extend_topic", "topic_id": a_id, "fields": [],
-                  "edges": [{"to_topic_id": c_id, "kind": CONTROL_EDGE_KIND}]})
+        s.ingest(
+            {
+                "placement": "extend_topic",
+                "topic_id": a_id,
+                "fields": [],
+                "edges": [{"to_topic_id": c_id, "kind": CONTROL_EDGE_KIND}],
+            }
+        )
     src, dst = (b_id, a_id) if direction == "B->A" else (a_id, b_id)
     csrc, cdst = (c_id, a_id) if direction == "B->A" else (a_id, c_id)
     state = s.read_state()
@@ -148,12 +198,19 @@ def _probe_pair(s, direction: str, n: int) -> Pair:
 
     b_before = s.read_topic(b_id)
     before = _signature(b_before)
-    update = s.ingest({"placement": "version_field", "topic_id": a_id,
-                       "fields": [{"name": "Deadline", "value": "April 20", "provenance": "pm-email",
-                                   "why_changed": "vendor delay"}]})
+    update = s.ingest(
+        {
+            "placement": "version_field",
+            "topic_id": a_id,
+            "fields": [
+                {"name": "Deadline", "value": "April 20", "provenance": "pm-email", "why_changed": "vendor delay"}
+            ],
+        }
+    )
     t_update = time.perf_counter()  # the window starts when the update's response is back
     n_update = interactions(s)
     in_window = _stale_read(s, b_id)  # one read interaction of our own, not part of the window
+
     def reflects() -> bool:
         topic = s.read_topic(b_id)
         return bool((_flag(topic) or {}).get("flagged")) or _signature(topic) != before
@@ -170,25 +227,50 @@ def _probe_pair(s, direction: str, n: int) -> Pair:
     cleared = None
     flag_after_write = None
     if flagged:  # the next write of B: a re-check of its date
-        s.ingest({"placement": "version_field", "topic_id": b_id,
-                  "fields": [{"name": "Date", "value": "April 25", "provenance": "pm-email",
-                              "why_changed": "re-checked after A moved"}]})
+        s.ingest(
+            {
+                "placement": "version_field",
+                "topic_id": b_id,
+                "fields": [
+                    {
+                        "name": "Date",
+                        "value": "April 25",
+                        "provenance": "pm-email",
+                        "why_changed": "re-checked after A moved",
+                    }
+                ],
+            }
+        )
         flag_after_write = _flag(s.read_topic(b_id))
         cleared = not (flag_after_write or {}).get("flagged")
     f_before, f_after = b_before["fields"].get("Date") or {}, b_after["fields"].get("Date") or {}
     return Pair(
-        direction=direction, a_id=a_id, b_id=b_id, edge_linked=linked, control_id=c_id,
-        control_edge_linked=control_linked, update_applied=update["applied"],
+        direction=direction,
+        a_id=a_id,
+        b_id=b_id,
+        edge_linked=linked,
+        control_id=c_id,
+        control_edge_linked=control_linked,
+        update_applied=update["applied"],
         a_deadline_now=current_value(s.read_topic(a_id)["fields"].get("Deadline")),
-        b_date_before=current_value(f_before or None), b_date_read_right_after_update=in_window,
-        b_date_after_wait=current_value(f_after or None), b_date_read_after_wait=_stale_read(s, b_id),
+        b_date_before=current_value(f_before or None),
+        b_date_read_right_after_update=in_window,
+        b_date_after_wait=current_value(f_after or None),
+        b_date_read_after_wait=_stale_read(s, b_id),
         b_history_after=[e.get("value") for e in f_after.get("history") or []],
         b_topic_events_after=[h.get("kind") for h in b_after.get("topic_history") or []],
-        b_topic_keys_after=sorted(b_after), wait_s=wait_s, reflected=not waited.timed_out,
-        flag_surface=surface, b_flag_after=b_flag, flag_names_update=_names_the_update(b_flag, a_id),
-        control_flag_after=c_flag, control_flagged=None if c_flag is None else bool(c_flag.get("flagged")),
-        b_flag_after_write=flag_after_write, flag_cleared=cleared,
-        window_interactions=window_interactions)
+        b_topic_keys_after=sorted(b_after),
+        wait_s=wait_s,
+        reflected=not waited.timed_out,
+        flag_surface=surface,
+        b_flag_after=b_flag,
+        flag_names_update=_names_the_update(b_flag, a_id),
+        control_flag_after=c_flag,
+        control_flagged=None if c_flag is None else bool(c_flag.get("flagged")),
+        b_flag_after_write=flag_after_write,
+        flag_cleared=cleared,
+        window_interactions=window_interactions,
+    )
 
 
 def _control_held(p: Pair) -> bool | None:
@@ -219,26 +301,45 @@ def c3(ctx: Ctx) -> Verdict:
     cases = []
     for p in pairs:
         cases += [
-            Case(f"B is flagged by A's update, the flag naming the updated field and timestamp, via the extension "
-                 f"edge ({p.direction})", held=p.flag_names_update,
-                 observation=f"B Date {p.b_date_before!r} before; {p.b_date_after_wait!r} after {p.wait_s:.1f} s"
-                             f"{'' if p.reflected else ' (wait ran out)'}; A is {p.a_deadline_now!r}; B's flag: "
-                             f"{'no flag surface' if not p.flag_surface else p.b_flag_after}; edge stored: "
-                             f"{'no edges in this system' if p.edge_linked is None else p.edge_linked}"),
-            Case(f"control: a topic linked to A only by an association edge is not flagged ({p.direction})",
-                 held=_control_held(p), control=True,
-                 observation=f"control flag: {'no flag surface' if p.control_flagged is None else p.control_flag_after}; "
-                             f"{'' if p.control_scored else 'nothing was flagged in this pair, so not being flagged shows nothing; '}"
-                             f"association edge stored: "
-                             f"{'no edges in this system' if p.control_edge_linked is None else p.control_edge_linked}"),
-            Case(f"the flag clears when B is next written ({p.direction})", held=p.flag_cleared,
-                 observation="B was never flagged, so there was nothing to clear" if p.flag_cleared is None
-                 else f"B's flag after its next write: {p.b_flag_after_write}")]
+            Case(
+                f"B is flagged by A's update, the flag naming the updated field and timestamp, via the extension "
+                f"edge ({p.direction})",
+                held=p.flag_names_update,
+                observation=f"B Date {p.b_date_before!r} before; {p.b_date_after_wait!r} after {p.wait_s:.1f} s"
+                f"{'' if p.reflected else ' (wait ran out)'}; A is {p.a_deadline_now!r}; B's flag: "
+                f"{'no flag surface' if not p.flag_surface else p.b_flag_after}; edge stored: "
+                f"{'no edges in this system' if p.edge_linked is None else p.edge_linked}",
+            ),
+            Case(
+                f"control: a topic linked to A only by an association edge is not flagged ({p.direction})",
+                held=_control_held(p),
+                control=True,
+                observation=f"control flag: {'no flag surface' if p.control_flagged is None else p.control_flag_after}; "
+                f"{'' if p.control_scored else 'nothing was flagged in this pair, so not being flagged shows nothing; '}"
+                f"association edge stored: "
+                f"{'no edges in this system' if p.control_edge_linked is None else p.control_edge_linked}",
+            ),
+            Case(
+                f"the flag clears when B is next written ({p.direction})",
+                held=p.flag_cleared,
+                observation="B was never flagged, so there was nothing to clear"
+                if p.flag_cleared is None
+                else f"B's flag after its next write: {p.b_flag_after_write}",
+            ),
+        ]
     window = [{"name": WINDOW, "value": _window_value(pairs)}]
     measurements = {"windows": window, "revision_wait_s": REVISION_WAIT_S}
     if not any(p.reflected for p in pairs):
-        return Verdict.absent("C3", {"probe": "F7: update A, read B before and after revision, both pairs",
-                                     "pairs": [asdict(p) for p in pairs], "wait_s": REVISION_WAIT_S}, cases=cases,
-                              measurements=measurements)
-    return Verdict.from_cases("C3", cases, measurements=measurements,
-                              observations=[{"name": "pairs", "pairs": [asdict(p) for p in pairs]}])
+        return Verdict.absent(
+            "C3",
+            {
+                "probe": "F7: update A, read B before and after revision, both pairs",
+                "pairs": [asdict(p) for p in pairs],
+                "wait_s": REVISION_WAIT_S,
+            },
+            cases=cases,
+            measurements=measurements,
+        )
+    return Verdict.from_cases(
+        "C3", cases, measurements=measurements, observations=[{"name": "pairs", "pairs": [asdict(p) for p in pairs]}]
+    )

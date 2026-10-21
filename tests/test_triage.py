@@ -10,20 +10,40 @@ from demo.triage import CORRECT, MEMORY_FAILURE, SEARCH_FAILURE, QuestionOutcome
 
 
 def topic(n: int, key: str, title: str, summary: str, name: str, value: str) -> Event:
-    return Event(f"E{n:02d}", "t", f"said {key}", "new_topic", key, title=title, summary=summary,
-                 writes=(Write(name, value, "test"),))
+    return Event(
+        f"E{n:02d}",
+        "t",
+        f"said {key}",
+        "new_topic",
+        key,
+        title=title,
+        summary=summary,
+        writes=(Write(name, value, "test"),),
+    )
 
 
 def crowded_storyline() -> Storyline:
     """Twelve topics that look like the question and one that does not: the labelled one falls outside the top 8."""
-    distractors = tuple(topic(i, f"d{i}", f"Budget review meeting agenda item {i}",
-                              "Agenda for the quarterly budget review meeting", "Owner", f"person {i}")
-                        for i in range(1, 13))
+    distractors = tuple(
+        topic(
+            i,
+            f"d{i}",
+            f"Budget review meeting agenda item {i}",
+            "Agenda for the quarterly budget review meeting",
+            "Owner",
+            f"person {i}",
+        )
+        for i in range(1, 13)
+    )
     garden = topic(13, "garden", "Garden irrigation valves", "Watering schedule for the back garden", "Valve", "north")
     return Storyline(
         events=(*distractors, garden),
-        questions=(Question("Q1", "What is on the budget review meeting agenda?", KNOWLEDGE_UPDATE, "garden", "Valve",
-                            "north"),))
+        questions=(
+            Question(
+                "Q1", "What is on the budget review meeting agenda?", KNOWLEDGE_UPDATE, "garden", "Valve", "north"
+            ),
+        ),
+    )
 
 
 def test_a_baseline_wrong_answer_is_a_search_failure_when_the_labelled_topic_falls_outside_the_top_8():
@@ -56,9 +76,19 @@ def test_a_returned_labelled_topic_with_the_wrong_stored_value_is_a_memory_failu
         topic(1, "redesign", "Website Redesign", "Project to redesign the company website", "Deadline", "March 15"),
         Event("E02", "t", "moved", "version_field", "redesign", writes=(Write("Deadline", "April 20", "test"),)),
     )
-    story = Storyline(events=events, questions=(
-        Question("Q1", "What is the deadline of the Website Redesign?", KNOWLEDGE_UPDATE, "redesign", "Deadline",
-                 "April 20"),))
+    story = Storyline(
+        events=events,
+        questions=(
+            Question(
+                "Q1",
+                "What is the deadline of the Website Redesign?",
+                KNOWLEDGE_UPDATE,
+                "redesign",
+                "Deadline",
+                "April 20",
+            ),
+        ),
+    )
     run = run_storyline(LosesUpdates(), story)
     (outcome,) = run.outcomes
     assert (outcome.outcome, outcome.returned, outcome.stored) == (MEMORY_FAILURE, True, "March 15")
@@ -94,9 +124,15 @@ def three_topics_two_questions() -> Storyline:
         topic(2, "b", "Weekly Sync Meeting", "Recurring weekly team meeting", "Time", "11:30"),
         topic(3, "c", "Lunch Preferences", "What the team eats for lunch", "Cuisine", "Thai"),
     )
-    return Storyline(events=events, questions=(
-        Question("Q1", "What is the deadline of the Website Redesign?", KNOWLEDGE_UPDATE, "a", "Deadline", "April 20"),
-        Question("Q2", "What time is the weekly sync meeting?", KNOWLEDGE_UPDATE, "b", "Time", "11:30")))
+    return Storyline(
+        events=events,
+        questions=(
+            Question(
+                "Q1", "What is the deadline of the Website Redesign?", KNOWLEDGE_UPDATE, "a", "Deadline", "April 20"
+            ),
+            Question("Q2", "What time is the weekly sync meeting?", KNOWLEDGE_UPDATE, "b", "Time", "11:30"),
+        ),
+    )
 
 
 def test_reinforcement_precision_is_labelled_increments_over_all_increments_and_equals_precision_at_k():
@@ -123,8 +159,21 @@ def test_reinforcement_precision_is_not_applicable_on_the_baseline():
 
 
 def outcome(question, labelled, every, returned):
-    return QuestionOutcome(question, "knowledge update", "q", "t", "a", "id-a", CORRECT, returned, 1 if returned else None,
-                           ["id-a", "id-b"], "t", labelled, every)
+    return QuestionOutcome(
+        question,
+        "knowledge update",
+        "q",
+        "t",
+        "a",
+        "id-a",
+        CORRECT,
+        returned,
+        1 if returned else None,
+        ["id-a", "id-b"],
+        "t",
+        labelled,
+        every,
+    )
 
 
 def test_reinforcement_precision_is_the_summed_labelled_over_the_summed_all_increments():
@@ -138,9 +187,17 @@ def test_reinforcement_precision_is_the_summed_labelled_over_the_summed_all_incr
 
 def linked_storyline() -> Storyline:
     a = topic(1, "a", "Website Redesign", "Project to redesign the company website", "Deadline", "April 20")
-    b = Event("E02", "t", "said b", "new_topic", "b", title="Redesign Milestones",
-              summary="Dated milestones that depend on the deadline", writes=(Write("Launch", "April 20", "test"),),
-              edges=(Edge("a", "extension"),))
+    b = Event(
+        "E02",
+        "t",
+        "said b",
+        "new_topic",
+        "b",
+        title="Redesign Milestones",
+        summary="Dated milestones that depend on the deadline",
+        writes=(Write("Launch", "April 20", "test"),),
+        edges=(Edge("a", "extension"),),
+    )
     return Storyline(events=(a, b), questions=())
 
 
@@ -155,8 +212,9 @@ class ListsEdges(Baseline):
     def _ingest(self, request):
         response = super()._ingest(request)
         for e in request.get("edges") or []:
-            self.edges.append({"from": response["topic_id"], "to": e["to_topic_id"], "kind": e["kind"],
-                               "edge_type": "related"})
+            self.edges.append(
+                {"from": response["topic_id"], "to": e["to_topic_id"], "kind": e["kind"], "edge_type": "related"}
+            )
         return response
 
     def _read_state(self):
@@ -165,16 +223,20 @@ class ListsEdges(Baseline):
 
 def test_edges_are_compared_where_the_system_reports_them_and_a_missing_edge_is_a_write_path_finding():
     kept = run_storyline(ListsEdges(keep=True), linked_storyline())
-    assert [(e.edges_declared, e.edges_compared, e.matched) for e in kept.events] == [(False, False, True),
-                                                                                    (True, True, True)]
+    assert [(e.edges_declared, e.edges_compared, e.matched) for e in kept.events] == [
+        (False, False, True),
+        (True, True, True),
+    ]
     lost = run_storyline(ListsEdges(keep=False), linked_storyline())
     assert lost.events[1].matched is False and "edges" in lost.events[1].observation
 
 
 def test_edges_are_not_applicable_on_the_baseline_and_do_not_count_as_a_mismatch():
     run = run_storyline(Baseline(), linked_storyline())
-    assert [(e.edges_declared, e.edges_compared, e.matched) for e in run.events] == [(False, False, True),
-                                                                                   (True, False, True)]
+    assert [(e.edges_declared, e.edges_compared, e.matched) for e in run.events] == [
+        (False, False, True),
+        (True, False, True),
+    ]
     assert run.to_measurements()["storyline"]["events"]["edges_compared"] == 0
 
 

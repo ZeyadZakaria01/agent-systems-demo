@@ -63,12 +63,20 @@ def capture(system_id: str, check_id: str, system: System, tag: str | None, star
         state, state_error = None, f"{type(e).__name__}: {e}"
     log = system.log
     return {
-        "system": system_id, "label": system.label, "check": check_id, "tag": tag,
-        "describe": describe, "describe_error": describe_error,
-        "started_at": started_at, "finished_at": finished_at,
-        "scored_transitions": log.of_kind("scored"), "setup_writes": log.of_kind("setup"),
-        "reads": log.of_kind("read"), "waits": log.of_kind("wait"),
-        "state": state, "state_error": state_error,
+        "system": system_id,
+        "label": system.label,
+        "check": check_id,
+        "tag": tag,
+        "describe": describe,
+        "describe_error": describe_error,
+        "started_at": started_at,
+        "finished_at": finished_at,
+        "scored_transitions": log.of_kind("scored"),
+        "setup_writes": log.of_kind("setup"),
+        "reads": log.of_kind("read"),
+        "waits": log.of_kind("wait"),
+        "state": state,
+        "state_error": state_error,
     }
 
 
@@ -79,8 +87,13 @@ def write_snapshots(run: RunDir, captured: list[dict], verdicts: list[Verdict]) 
         rel = snapshot_path(evidence["system"], evidence["check"], evidence["tag"])
         path = run.dir / rel
         path.parent.mkdir(parents=True, exist_ok=True)
-        path.write_text(json.dumps({**evidence, "rows": [v.row for v in verdicts],
-                                    "verdicts": [v.to_dict() for v in verdicts]}, indent=2, default=str))
+        path.write_text(
+            json.dumps(
+                {**evidence, "rows": [v.row for v in verdicts], "verdicts": [v.to_dict() for v in verdicts]},
+                indent=2,
+                default=str,
+            )
+        )
         paths.append(rel)
     for v in verdicts:
         v.snapshots = list(paths)

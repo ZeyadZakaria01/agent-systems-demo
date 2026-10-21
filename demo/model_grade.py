@@ -16,9 +16,9 @@ import re
 import subprocess
 import sys
 import tempfile
-from datetime import datetime, timezone
+from collections.abc import Callable
+from datetime import UTC, datetime
 from pathlib import Path
-from typing import Callable
 
 GRADES = ("correct", "partially correct", "incorrect")
 
@@ -63,12 +63,30 @@ def parse_grade(reply: str) -> dict:
 
 def claude(model: str = "sonnet") -> Ask:
     """The Claude Code CLI as a grader: an empty working folder, no tools, no MCP servers, our system prompt."""
+
     def ask(system: str, prompt: str) -> tuple[str, str]:
         with tempfile.TemporaryDirectory() as empty:
             out = subprocess.run(
-                ["claude", "-p", "--model", model, "--tools", "", "--strict-mcp-config", "--no-session-persistence",
-                 "--system-prompt", system, "--output-format", "json", prompt],
-                cwd=empty, capture_output=True, text=True, timeout=300)
+                [
+                    "claude",
+                    "-p",
+                    "--model",
+                    model,
+                    "--tools",
+                    "",
+                    "--strict-mcp-config",
+                    "--no-session-persistence",
+                    "--system-prompt",
+                    system,
+                    "--output-format",
+                    "json",
+                    prompt,
+                ],
+                cwd=empty,
+                capture_output=True,
+                text=True,
+                timeout=300,
+            )
         try:
             data = json.loads(out.stdout)
         except json.JSONDecodeError:
@@ -77,6 +95,7 @@ def claude(model: str = "sonnet") -> Ask:
             raise GradeError(f"claude CLI error: {data.get('result')}")
         models = list(data.get("modelUsage") or {})
         return data["result"], models[0] if models else model
+
     return ask
 
 
@@ -86,8 +105,11 @@ def grade_recording(path: Path, ask: Ask, force: bool = False) -> list[dict]:
         raise GradeError(f"{path} is already model-graded; pass force=True (--force) to grade it again")
     for turn in rec["turns"]:
         reply, grader = ask(SYSTEM_PROMPT, grading_prompt(turn))
-        turn["model_grade"] = {**parse_grade(reply), "grader": grader,
-                               "graded_at": datetime.now(timezone.utc).isoformat(timespec="seconds")}
+        turn["model_grade"] = {
+            **parse_grade(reply),
+            "grader": grader,
+            "graded_at": datetime.now(UTC).isoformat(timespec="seconds"),
+        }
     Path(path).write_text(json.dumps(rec, indent=2, ensure_ascii=False) + "\n")
     return [t["model_grade"] for t in rec["turns"]]
 
@@ -110,7 +132,9 @@ def tally(root: Path) -> dict[tuple[str, str], dict[str, int]]:
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(prog="python -m demo.model_grade", description=__doc__.split("\n\n")[0])
     ap.add_argument("recordings", nargs="*", type=Path)
-    ap.add_argument("--tally", type=Path, help="print the model grades counted per case and turn under a folder, then exit")
+    ap.add_argument(
+        "--tally", type=Path, help="print the model grades counted per case and turn under a folder, then exit"
+    )
     ap.add_argument("--model", default="sonnet", help="Claude Code model alias or full name (default sonnet)")
     ap.add_argument("--force", action="store_true", help="grade again a recording that already has model grades")
     args = ap.parse_args(argv)

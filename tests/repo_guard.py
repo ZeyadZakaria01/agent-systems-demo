@@ -6,8 +6,12 @@ from pathlib import Path
 
 
 def _git_path(repo: Path, flag: str) -> Path:
-    out = subprocess.run(["git", "-C", str(repo), "rev-parse", "--path-format=absolute", flag],
-                         check=True, capture_output=True, text=True).stdout.strip()
+    out = subprocess.run(
+        ["git", "-C", str(repo), "rev-parse", "--path-format=absolute", flag],
+        check=True,
+        capture_output=True,
+        text=True,
+    ).stdout.strip()
     return Path(out)
 
 

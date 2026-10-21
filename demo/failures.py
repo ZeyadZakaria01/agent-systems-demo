@@ -22,8 +22,14 @@ def errored(check: Check, system_id: str, text: str) -> list[Verdict]:
     return out
 
 
-def run_check(run: RunDir, check: Check, system_id: str, open_system: OpenSystem, run_day: date | None = None,
-              observations: tuple[dict, ...] = ()) -> list[Verdict]:
+def run_check(
+    run: RunDir,
+    check: Check,
+    system_id: str,
+    open_system: OpenSystem,
+    run_day: date | None = None,
+    observations: tuple[dict, ...] = (),
+) -> list[Verdict]:
     """One check on the systems `open_system` yields: a crash becomes `error` verdicts, the open system is closed
     (and its evidence captured) in every case, snapshots are written, the verdicts are labelled `system_id`."""
     session = Session(open_system, lambda system, tag, t0, t1: capture(system_id, check.id, system, tag, t0, t1))
@@ -37,8 +43,9 @@ def run_check(run: RunDir, check: Check, system_id: str, open_system: OpenSystem
         try:
             session.close()
         except Exception as e:  # e.g. the server would not stop; its port stays busy and the next open will say so
-            notes.append({"name": "cleanup failed",
-                          "summary": f"cleanup after the check failed: {type(e).__name__}: {e}"})
+            notes.append(
+                {"name": "cleanup failed", "summary": f"cleanup after the check failed: {type(e).__name__}: {e}"}
+            )
     for v in verdicts:
         v.system = system_id
         v.observations.extend([*observations, *notes])

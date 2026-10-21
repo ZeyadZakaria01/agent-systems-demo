@@ -60,7 +60,9 @@ class PairSpec:
     field: str = FIELD
     older_provenance: str = OLDER_PROVENANCE
     newer_provenance: str = NEWER_PROVENANCE
-    older_valid_from: str | None = None  # sent as `valid_from` with the write, only by a caller that checked the system accepts it
+    older_valid_from: str | None = (
+        None  # sent as `valid_from` with the write, only by a caller that checked the system accepts it
+    )
     newer_valid_from: str | None = None
 
 
@@ -73,13 +75,23 @@ def unique_title(stem: str) -> str:
 
 
 def field_write(name: str, value: object, provenance: str, valid_from: str | None = None) -> dict:
-    return {"name": name, "value": value, "provenance": provenance, **({"valid_from": valid_from} if valid_from else {})}
+    return {
+        "name": name,
+        "value": value,
+        "provenance": provenance,
+        **({"valid_from": valid_from} if valid_from else {}),
+    }
 
 
-def new_topic(title: str, field: str, value: object, provenance: str, topic_kind: str = "contract",
-              valid_from: str | None = None) -> dict:
-    return {"placement": "new_topic", "title": title, "topic_kind": topic_kind,
-            "fields": [field_write(field, value, provenance, valid_from)]}
+def new_topic(
+    title: str, field: str, value: object, provenance: str, topic_kind: str = "contract", valid_from: str | None = None
+) -> dict:
+    return {
+        "placement": "new_topic",
+        "title": title,
+        "topic_kind": topic_kind,
+        "fields": [field_write(field, value, provenance, valid_from)],
+    }
 
 
 @dataclass(frozen=True)
@@ -106,7 +118,9 @@ class MergeOutcome:
     survivor_id: str | None
     dropped_id: str | None
     dropped_state: DroppedState | None
-    window_interactions: int | None = None  # interactions between the trigger's response and the merge seen; None: not counted
+    window_interactions: int | None = (
+        None  # interactions between the trigger's response and the merge seen; None: not counted
+    )
 
     @property
     def window_s(self) -> float | None:
@@ -127,10 +141,12 @@ class MergeOutcome:
 
 def create_duplicate_pair(system: System, title: str, spec: PairSpec = DEADLINE) -> Pair:
     """Write `title` twice through `/v1/ingest new_topic`; the second response ends the call (the merge trigger)."""
-    older = system.ingest(new_topic(title, spec.field, spec.older_value, spec.older_provenance,
-                                    valid_from=spec.older_valid_from))["topic_id"]
-    newer = system.ingest(new_topic(title, spec.field, spec.newer_value, spec.newer_provenance,
-                                    valid_from=spec.newer_valid_from))["topic_id"]
+    older = system.ingest(
+        new_topic(title, spec.field, spec.older_value, spec.older_provenance, valid_from=spec.older_valid_from)
+    )["topic_id"]
+    newer = system.ingest(
+        new_topic(title, spec.field, spec.newer_value, spec.newer_provenance, valid_from=spec.newer_valid_from)
+    )["topic_id"]
     return Pair(title, spec.field, older, newer, spec.older_value, spec.newer_value)
 
 
@@ -141,14 +157,16 @@ def topic_gone_or_archived(system: System, topic_id: str) -> DroppedState | None
     return DroppedState.ARCHIVED if topic.get("archived") else None
 
 
-def await_merge(system: System, pair: Pair, timeout: float = DEFAULT_TIMEOUT_S,
-                interval: float = DEFAULT_INTERVAL_S) -> MergeOutcome:
+def await_merge(
+    system: System, pair: Pair, timeout: float = DEFAULT_TIMEOUT_S, interval: float = DEFAULT_INTERVAL_S
+) -> MergeOutcome:
     """Poll until one of the pair is deleted or archived, or `timeout` seconds pass (a timeout is an outcome)."""
     if pair.upserted:
         return MergeOutcome(pair, True, None, pair.older_id, None, None)
     start = interactions(system)
     waited = system.wait_until(
-        lambda: any(topic_gone_or_archived(system, t) for t in (pair.older_id, pair.newer_id)), timeout, interval)
+        lambda: any(topic_gone_or_archived(system, t) for t in (pair.older_id, pair.newer_id)), timeout, interval
+    )
     window = None if start is None else interactions(system) - start
     for survivor, dropped in ((pair.older_id, pair.newer_id), (pair.newer_id, pair.older_id)):
         state = topic_gone_or_archived(system, dropped)
@@ -161,24 +179,43 @@ def create_retitled_pair(system: System, stem: str, spec: PairSpec = DEADLINE) -
     """Arrange a duplicate pair whose higher-id (to be dropped) topic holds the newer value; `None` when the system
     cannot retitle a topic (the two topics written so far stay, under distinct titles)."""
     tag = unique_title(stem)
-    ids = [system.ingest({"placement": "new_topic", "title": f"{tag} {n}", "topic_kind": "contract",
-                          "fields": []})["topic_id"] for n in ("first", "second")]
+    ids = [
+        system.ingest({"placement": "new_topic", "title": f"{tag} {n}", "topic_kind": "contract", "fields": []})[
+            "topic_id"
+        ]
+        for n in ("first", "second")
+    ]
     lower, higher = sorted(ids)
-    system.ingest({"placement": "extend_topic", "topic_id": lower,
-                   "fields": [field_write(spec.field, spec.older_value, spec.older_provenance, spec.older_valid_from)]})
-    system.ingest({"placement": "extend_topic", "topic_id": higher,
-                   "fields": [field_write(spec.field, spec.newer_value, spec.newer_provenance, spec.newer_valid_from)]})
+    system.ingest(
+        {
+            "placement": "extend_topic",
+            "topic_id": lower,
+            "fields": [field_write(spec.field, spec.older_value, spec.older_provenance, spec.older_valid_from)],
+        }
+    )
+    system.ingest(
+        {
+            "placement": "extend_topic",
+            "topic_id": higher,
+            "fields": [field_write(spec.field, spec.newer_value, spec.newer_provenance, spec.newer_valid_from)],
+        }
+    )
     for topic_id in (lower, higher):
-        done = system.setup_write("patch_topic", label="give the pair one title (the editor never writes a value)",
-                                  topic_id=topic_id, title=tag)
+        done = system.setup_write(
+            "patch_topic",
+            label="give the pair one title (the editor never writes a value)",
+            topic_id=topic_id,
+            title=tag,
+        )
         if done is None:
             return None
     system.ingest({"placement": "extend_topic", "topic_id": lower, "fields": []})  # the merge trigger
     return Pair(tag, spec.field, lower, higher, spec.older_value, spec.newer_value)
 
 
-def trigger_and_await_merge(system: System, title: str, spec: PairSpec = DEADLINE,
-                            timeout: float = DEFAULT_TIMEOUT_S) -> MergeOutcome:
+def trigger_and_await_merge(
+    system: System, title: str, spec: PairSpec = DEADLINE, timeout: float = DEFAULT_TIMEOUT_S
+) -> MergeOutcome:
     """The dropped-holds-newer pair when the system can retitle, else the plain same-title pair; then the wait."""
     pair = create_retitled_pair(system, title, spec) or create_duplicate_pair(system, unique_title(title), spec)
     return await_merge(system, pair, timeout)

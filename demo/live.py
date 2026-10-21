@@ -26,16 +26,16 @@ from __future__ import annotations
 
 import sys
 import time
+from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Callable
 
 import httpx
 
 from demo.adapter import System, utc_now
 from demo.checks import Check, natural_key
 from demo.deviations import DEVIATIONS
-from demo.evidence import new_run_dir, RunDir, slug, write_results
+from demo.evidence import RunDir, new_run_dir, slug, write_results
 from demo.failures import run_check
 from demo.latency_tables import with_latency
 from demo.memstate_system import MemStateSystem
@@ -82,14 +82,18 @@ class LiveSystem(MemStateSystem):
     def ingest(self, request: dict) -> dict:
         response = super().ingest(request)
         target = self._scoped_ingest(request).get("title") or str(request.get("topic_id", ""))[:8]
-        self.pace(f"ingest {request.get('placement')} {target!r} "
-                  f"fields {[f'{f.get('name')}={f.get('value')!r}' for f in request.get('fields') or []]}")
+        self.pace(
+            f"ingest {request.get('placement')} {target!r} "
+            f"fields {[f'{f.get("name")}={f.get("value")!r}' for f in request.get('fields') or []]}"
+        )
         return response
 
     def query(self, request: dict) -> dict:
         response = super().query(request)
-        self.pace(f"query {request.get('q')!r} stages {request.get('stages')} -> "
-                  f"{[c['title'] for c in response['candidates']]}")
+        self.pace(
+            f"query {request.get('q')!r} stages {request.get('stages')} -> "
+            f"{[c['title'] for c in response['candidates']]}"
+        )
         return response
 
     def setup_write(self, action: str, *, label: str, **params) -> dict | None:
@@ -124,19 +128,27 @@ def preflight(url: str) -> dict:
         topics = httpx.get(f"{url}/api/ui/topics", params={"include_archived": True}, timeout=30)
         topics.raise_for_status()
     except httpx.HTTPError as e:
-        raise LiveError(f"no MemState server answering at {url} ({type(e).__name__}: {e}); live mode never starts "
-                        "one: start it with scripts/run_memstate.sh on a fresh DB, then pass --url") from e
+        raise LiveError(
+            f"no MemState server answering at {url} ({type(e).__name__}: {e}); live mode never starts "
+            "one: start it with scripts/run_memstate.sh on a fresh DB, then pass --url"
+        ) from e
     return {"url": url, "db_path": health.json().get("path"), "topics_before": len(topics.json()["topic_ids"])}
 
 
-def make_pace(delay: float, step: bool, log: Callable[[str], None], wait: Callable[[str], None] | None = None,
-              sleep: Callable[[float], None] = time.sleep) -> Callable[[str], None]:
+def make_pace(
+    delay: float,
+    step: bool,
+    log: Callable[[str], None],
+    wait: Callable[[str], None] | None = None,
+    sleep: Callable[[float], None] = time.sleep,
+) -> Callable[[str], None]:
     def pace(what: str) -> None:
         log(f"  {what}")
         if step:
             (wait or _wait_for_enter)("  [LIVE] step done; press Enter for the next step (Ctrl-D: run on) ")
         elif delay > 0:
             sleep(delay)
+
     return pace
 
 
@@ -145,17 +157,30 @@ def _wait_for_enter(prompt: str) -> None:
     sys.stdin.readline()
 
 
-def run_live(url: str, checks: list[Check], results_root: Path, command: str, as_system: str = "upstream",
-             delay: float = 0, step: bool = False, log: Callable[[str], None] = lambda m: print(m, flush=True),
-             wait: Callable[[str], None] | None = None, sleep: Callable[[float], None] = time.sleep,
-             connect: Callable[[str, Callable[[str], None]], System] | None = None) -> LiveResult:
+def run_live(
+    url: str,
+    checks: list[Check],
+    results_root: Path,
+    command: str,
+    as_system: str = "upstream",
+    delay: float = 0,
+    step: bool = False,
+    log: Callable[[str], None] = lambda m: print(m, flush=True),
+    wait: Callable[[str], None] | None = None,
+    sleep: Callable[[float], None] = time.sleep,
+    connect: Callable[[str, Callable[[str], None]], System] | None = None,
+) -> LiveResult:
     """`connect(scope, pace)` builds the system a check works on (default: a `LiveSystem` on `url`; tests pass others)."""
     url = url.rstrip("/")
     if RESULTS_ROOT.resolve() in (results_root.resolve(), *results_root.resolve().parents):
-        raise LiveError(f"live results must not go under the recorded results ({RESULTS_ROOT}); use another --results-root")
+        raise LiveError(
+            f"live results must not go under the recorded results ({RESULTS_ROOT}); use another --results-root"
+        )
     server = preflight(url) if connect is None else {"url": url, "db_path": None, "topics_before": 0}
     log(f"[LIVE] {BANNER}")
-    log(f"[LIVE] server {url} (DB {server['db_path']}, {server['topics_before']} topics before); never started or stopped here")
+    log(
+        f"[LIVE] server {url} (DB {server['db_path']}, {server['topics_before']} topics before); never started or stopped here"
+    )
     run = new_run_dir(results_root, results_root)
     started = utc_now()
     verdicts: list[Verdict] = []
@@ -172,21 +197,43 @@ def run_live(url: str, checks: list[Check], results_root: Path, command: str, as
             scorecard += "\n\n" + storyline
         scorecard = with_latency(scorecard, verdicts)
         (run.dir / "scorecard-live.md").write_text(scorecard + "\n")
-        write_results(run, {
-            "run_id": run.id, "mode": "live", "label": BANNER, "complete": complete, "command": command,
-            "started_at": started, "finished_at": utc_now(), "server": server, "as_system": as_system,
-            "delay_s": delay, "step": step, "checks": [c.id for c in applicable],
-            "rows": [{"id": r.id, "claim": r.claim, "control": r.control, "probe": r.probe,
-                      "claimed_by_p1": claimed_by_p1(r)} for r in rows],
-            "verdicts": [{**v.to_dict(), "mode": "live"} for v in verdicts],
-            "counts": {column.header: counts(column, [r for r in rows if not r.probe], verdicts)},
-            "deviations": [d.__dict__ for d in DEVIATIONS],
-        })
+        write_results(
+            run,
+            {
+                "run_id": run.id,
+                "mode": "live",
+                "label": BANNER,
+                "complete": complete,
+                "command": command,
+                "started_at": started,
+                "finished_at": utc_now(),
+                "server": server,
+                "as_system": as_system,
+                "delay_s": delay,
+                "step": step,
+                "checks": [c.id for c in applicable],
+                "rows": [
+                    {
+                        "id": r.id,
+                        "claim": r.claim,
+                        "control": r.control,
+                        "probe": r.probe,
+                        "claimed_by_p1": claimed_by_p1(r),
+                    }
+                    for r in rows
+                ],
+                "verdicts": [{**v.to_dict(), "mode": "live"} for v in verdicts],
+                "counts": {column.header: counts(column, [r for r in rows if not r.probe], verdicts)},
+                "deviations": [d.__dict__ for d in DEVIATIONS],
+            },
+        )
         return scorecard
 
     for check in applicable:
         log(f"[LIVE] {check.id}: running")
-        verdicts += _run_check(run, check, connect or (lambda scope, pace: LiveSystem(f"live {url}", url, scope, pace)), pace)
+        verdicts += _run_check(
+            run, check, connect or (lambda scope, pace: LiveSystem(f"live {url}", url, scope, pace)), pace
+        )
         save(False)
     scorecard = save(True)
     return LiveResult(dir=run.dir, verdicts=verdicts, scorecard=scorecard)
@@ -197,8 +244,13 @@ def _run_check(run: RunDir, check: Check, connect: Callable, pace: Callable[[str
         scope = check.id if tag is None else f"{check.id}--{slug(tag)}"
         return CloseOnly(connect(f"{scope} {time_of(run.id)}", pace))
 
-    return run_check(run, check, LIVE, open_system, observations=({"name": "live run",
-                                                                  "summary": "one shared database, titles suffixed per check"},))
+    return run_check(
+        run,
+        check,
+        LIVE,
+        open_system,
+        observations=({"name": "live run", "summary": "one shared database, titles suffixed per check"},),
+    )
 
 
 def time_of(run_id: str) -> str:

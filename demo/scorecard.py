@@ -49,14 +49,26 @@ COLUMNS = (
 _BY_CONSTRUCTION = "yes: by construction (§4.3)"
 _UNDER_TRANSITIONS = "yes: under transitions (§4.3)"
 P1_CLAIMS = {
-    "C1": _BY_CONSTRUCTION, "C2(a)": _BY_CONSTRUCTION, "C2(b)": _BY_CONSTRUCTION, "C2(c)": _BY_CONSTRUCTION,
-    "C2(d)": _BY_CONSTRUCTION, "C4": _BY_CONSTRUCTION,
-    "C3": "yes: §4's opening, \"by construction\"; not in §4.3",
-    "C5-1": _UNDER_TRANSITIONS, "C5-2": _UNDER_TRANSITIONS, "C6-1": _UNDER_TRANSITIONS, "C6-2": _UNDER_TRANSITIONS,
+    "C1": _BY_CONSTRUCTION,
+    "C2(a)": _BY_CONSTRUCTION,
+    "C2(b)": _BY_CONSTRUCTION,
+    "C2(c)": _BY_CONSTRUCTION,
+    "C2(d)": _BY_CONSTRUCTION,
+    "C4": _BY_CONSTRUCTION,
+    "C3": 'yes: §4\'s opening, "by construction"; not in §4.3',
+    "C5-1": _UNDER_TRANSITIONS,
+    "C5-2": _UNDER_TRANSITIONS,
+    "C6-1": _UNDER_TRANSITIONS,
+    "C6-2": _UNDER_TRANSITIONS,
 }
 PROBE_CLAIM = "no: probe of a proposed condition"
-ROW_LABELS = {"C2(d)": "C2(d) lapsed override", "C5-1": "C5-1 mechanism", "C5-2": "C5-2 natural trajectory",
-              "C6-1": "C6-1 clause 1", "C6-2": "C6-2 clause 2"}
+ROW_LABELS = {
+    "C2(d)": "C2(d) lapsed override",
+    "C5-1": "C5-1 mechanism",
+    "C5-2": "C5-2 natural trajectory",
+    "C6-1": "C6-1 clause 1",
+    "C6-2": "C6-2 clause 2",
+}
 
 
 def claimed_by_p1(row: Row) -> str:
@@ -86,16 +98,21 @@ def _bound_note(v: Verdict) -> str:
     else:
         return ""
     bound = m["declared_bound"]
-    return f"({count}, " + (f"declared bound {bound['topics']} topics ({bound['name']}))" if bound
-                            else "no declared bound)")
+    return f"({count}, " + (
+        f"declared bound {bound['topics']} topics ({bound['name']}))" if bound else "no declared bound)"
+    )
 
 
 def _cell(v: Verdict | None) -> str:
     if v is None:
         return "—"
     n_a = sum(c.held is None for c in v.cases)  # cases that did not apply: the verdict rests on the others
-    text = f"{v.verdict} ({n_a} case{'s' * (n_a != 1)} n/a)" if n_a and v.verdict in (PASS, PARTIAL, FAIL) else v.verdict
-    links = [f"[snapshot]({p})" if len(v.snapshots) == 1 else f"[snapshot {i}]({p})" for i, p in enumerate(v.snapshots, 1)]
+    text = (
+        f"{v.verdict} ({n_a} case{'s' * (n_a != 1)} n/a)" if n_a and v.verdict in (PASS, PARTIAL, FAIL) else v.verdict
+    )
+    links = [
+        f"[snapshot]({p})" if len(v.snapshots) == 1 else f"[snapshot {i}]({p})" for i, p in enumerate(v.snapshots, 1)
+    ]
     return " ".join(filter(None, [text, _bound_note(v), *links]))
 
 
@@ -104,7 +121,7 @@ def cell_verdict(column: Column, row_id: str, verdicts: list[Verdict]) -> Verdic
 
 
 def counts(column: Column, rows: list[Row], verdicts: list[Verdict]) -> dict[str, int]:
-    tally = {k: 0 for k in COUNT_ORDER}
+    tally = dict.fromkeys(COUNT_ORDER, 0)
     for r in rows:
         v = cell_verdict(column, r.id, verdicts)
         if v is not None:
@@ -115,8 +132,10 @@ def counts(column: Column, rows: list[Row], verdicts: list[Verdict]) -> dict[str
 def render_scorecard(rows: list[Row], columns: tuple[Column, ...], verdicts: list[Verdict]) -> str:
     """The main table: the rows that are [P1]'s claims (probes are in `render_probes`), one column per system."""
     rows = [r for r in rows if not r.probe]
-    lines = ["| Row | Claimed by [P1]? | " + " | ".join(esc(c.title) for c in columns) + " |",
-             "|---|---|" + "---|" * len(columns)]
+    lines = [
+        "| Row | Claimed by [P1]? | " + " | ".join(esc(c.title) for c in columns) + " |",
+        "|---|---|" + "---|" * len(columns),
+    ]
     for r in rows:
         cells = " | ".join(esc(_cell(cell_verdict(c, r.id, verdicts))) for c in columns)
         lines.append(f"| {esc(row_label(r))} | {esc(claimed_by_p1(r))} | {cells} |")
@@ -145,33 +164,50 @@ def render_probes(rows: list[Row], columns: tuple[Column, ...], verdicts: list[V
     probes = [r for r in rows if r.probe]
     head = "| Probe | " + " | ".join(esc(c.title) for c in columns) + " |"
     rule = "|---|" + "---|" * len(columns)
-    lines = ["### Probes of the proposed C1′ and C4′, outside [P1]'s claims", "",
-             "Not claimed by [P1]: each time probe reads C1 as C1′ (the value valid on a date) and has two cells, "
-             "whether the system accepts the dates the probe needs and whether it answers correctly given them; "
-             "C4′ is C4 plus the retained source message.", "", head, rule]
+    lines = [
+        "### Probes of the proposed C1′ and C4′, outside [P1]'s claims",
+        "",
+        "Not claimed by [P1]: each time probe reads C1 as C1′ (the value valid on a date) and has two cells, "
+        "whether the system accepts the dates the probe needs and whether it answers correctly given them; "
+        "C4′ is C4 plus the retained source message.",
+        "",
+        head,
+        rule,
+    ]
     found_by_row = {r.id: {c.system: cell_verdict(c, r.id, verdicts) for c in columns} for r in probes}
     timed = lambda r: any("accepts_dates" in v.measurements for v in found_by_row[r.id].values() if v)  # noqa: E731
     for r in sorted(probes, key=lambda r: not timed(r)):  # the time probes first, then the others (C4')
         found = found_by_row[r.id]
         if timed(r):
-            lines.append(f"| {esc(r.id)} accepts dates | "
-                         + " | ".join(esc(_accepts_cell(v)) for v in found.values()) + " |")
-            lines.append(f"| {esc(r.id)} answers correctly given dates | "
-                         + " | ".join(esc(_cell(v)) for v in found.values()) + " |")
+            lines.append(
+                f"| {esc(r.id)} accepts dates | " + " | ".join(esc(_accepts_cell(v)) for v in found.values()) + " |"
+            )
+            lines.append(
+                f"| {esc(r.id)} answers correctly given dates | "
+                + " | ".join(esc(_cell(v)) for v in found.values())
+                + " |"
+            )
         else:
-            lines.append(f"| {esc(r.id)} provenance resolves to the stored source | "
-                         + " | ".join(esc(_cell(v)) for v in found.values()) + " |")
+            lines.append(
+                f"| {esc(r.id)} provenance resolves to the stored source | "
+                + " | ".join(esc(_cell(v)) for v in found.values())
+                + " |"
+            )
     lines += ["", render_controls(rows, columns, verdicts)]
     return "\n".join(lines)
 
 
 def render_controls(rows: list[Row], columns: tuple[Column, ...], verdicts: list[Verdict]) -> str:
     """Case-level controls (cases flagged `control`) of every row, per system: held, broke or n/a."""
-    lines = ["### Case-level controls", "",
-             "A control case is the ordinary path beside the case under test (C4's update, a probe's control date): "
-             "a system that breaks it is blocking what it should allow.", "",
-             "| Row: control case | " + " | ".join(esc(c.title) for c in columns) + " |",
-             "|---|" + "---|" * len(columns)]
+    lines = [
+        "### Case-level controls",
+        "",
+        "A control case is the ordinary path beside the case under test (C4's update, a probe's control date): "
+        "a system that breaks it is blocking what it should allow.",
+        "",
+        "| Row: control case | " + " | ".join(esc(c.title) for c in columns) + " |",
+        "|---|" + "---|" * len(columns),
+    ]
     seen: dict[tuple[str, str], str] = {}
     for r in rows:
         for v in verdicts:
@@ -190,11 +226,16 @@ def render_controls(rows: list[Row], columns: tuple[Column, ...], verdicts: list
 def render_merge_existence(rows: list[Row], columns: tuple[Column, ...], verdicts: list[Verdict]) -> str:
     """C2(a)'s merge as existence: in the arranged case, does the merge make the superseded value current? The natural
     random-ID count (two same-title writes, no setup) is shown beside it and never compared between systems."""
-    lines = ["### The merge (C2(a)) as existence", "",
-             "Existence, not a rate: in the arranged case the dropped topic holds the newer value, so one repetition "
-             "that makes the superseded value current decides it. Beside it, the natural count on random IDs "
-             "(shown, not compared between systems, never part of the verdict).", "",
-             "| System | Arranged case (existence) | Natural random-ID count |", "|---|---|---|"]
+    lines = [
+        "### The merge (C2(a)) as existence",
+        "",
+        "Existence, not a rate: in the arranged case the dropped topic holds the newer value, so one repetition "
+        "that makes the superseded value current decides it. Beside it, the natural count on random IDs "
+        "(shown, not compared between systems, never part of the verdict).",
+        "",
+        "| System | Arranged case (existence) | Natural random-ID count |",
+        "|---|---|---|",
+    ]
     n = 0
     for c in columns:
         v = cell_verdict(c, "C2(a)", verdicts)
@@ -203,7 +244,9 @@ def render_merge_existence(rows: list[Row], columns: tuple[Column, ...], verdict
         n += 1
         arranged = next((f"{k.name}: {k.observation}" for k in v.cases if k.observation), "")
         natural = v.measurements.get("natural_count") or "n/a (no merge seen)"
-        lines.append(f"| {esc(c.title)} | {esc(_cell(v))}{esc(' — ' + arranged) if arranged else ''} | {esc(natural)} |")
+        lines.append(
+            f"| {esc(c.title)} | {esc(_cell(v))}{esc(' — ' + arranged) if arranged else ''} | {esc(natural)} |"
+        )
     return "\n".join(lines) if n else ""
 
 
@@ -224,8 +267,10 @@ def render_limits() -> str:
     return "\n".join(LIMITS)
 
 
-SCOPE_NOTE = ("Verdicts measure the published proof of concept against the paper's conditions; fail and absent mark "
-              "gaps its authors state (its README: \"Proof-of-Concept, NOT Full Implementation\"), not defects.")
+SCOPE_NOTE = (
+    "Verdicts measure the published proof of concept against the paper's conditions; fail and absent mark "
+    'gaps its authors state (its README: "Proof-of-Concept, NOT Full Implementation"), not defects.'
+)
 
 
 def render_deviations(deviations: tuple[Deviation, ...] = DEVIATIONS) -> str:

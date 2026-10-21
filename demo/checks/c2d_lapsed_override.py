@@ -24,8 +24,10 @@ from demo.reads import NO_VALUE, current_value, field_in_response
 from demo.time_stories import LAPSED_OVERRIDE_1, LAPSED_OVERRIDE_2, ingest_request, query_request, shift_story
 from demo.verdict import Case, Verdict
 
-CLAIM = ("C2 (transition soundness): no revision produces a state in which a superseded value is returned as "
-         "current. Read on the lapsed-override story: the value current today is never one a later statement ended.")
+CLAIM = (
+    "C2 (transition soundness): no revision produces a state in which a superseded value is returned as "
+    "current. Read on the lapsed-override story: the value current today is never one a later statement ended."
+)
 
 BASE, OVERRIDE, PLAIN = "$50", "$80", "$100"
 _WRITE_DATES = ("valid_from", "invalid_at")
@@ -60,8 +62,10 @@ def _today(ctx: Ctx, story, tag: str) -> tuple[dict, object]:
 @check(row="C2(d)", claim=CLAIM)
 def c2d(ctx: Ctx) -> Verdict:
     cases, records, observations = [], [], []
-    for story, accepted, violations, tag in ((LAPSED_OVERRIDE_1, {BASE, OVERRIDE}, set(), "story-1"),
-                                             (LAPSED_OVERRIDE_2, {PLAIN}, {OVERRIDE, BASE}, "story-2")):
+    for story, accepted, violations, tag in (
+        (LAPSED_OVERRIDE_1, {BASE, OVERRIDE}, set(), "story-1"),
+        (LAPSED_OVERRIDE_2, {PLAIN}, {OVERRIDE, BASE}, "story-2"),
+    ):
         record, value = _today(ctx, story, tag)
         records.append(record)
         name = f"story {tag[-1]}: the value current today is one of {sorted(accepted)}"
@@ -70,10 +74,20 @@ def c2d(ctx: Ctx) -> Verdict:
             continue
         shown = "NO_VALUE" if value is NO_VALUE else value
         if value in accepted:
-            cases.append(Case(name, True, f"current today={shown!r}; writes sent with {record['write_dates'] or 'no dates'}"))
+            cases.append(
+                Case(name, True, f"current today={shown!r}; writes sent with {record['write_dates'] or 'no dates'}")
+            )
             continue
-        cases.append(Case(name, False, f"current today={shown!r}; writes sent with {record['write_dates'] or 'no dates'}"))
+        cases.append(
+            Case(name, False, f"current today={shown!r}; writes sent with {record['write_dates'] or 'no dates'}")
+        )
         if value in violations:
-            observations.append({"name": "C2 violation", "story": story.id, "current": value,
-                                 "summary": f"{story.id}: {value} is current today although a later statement ended it"})
+            observations.append(
+                {
+                    "name": "C2 violation",
+                    "story": story.id,
+                    "current": value,
+                    "summary": f"{story.id}: {value} is current today although a later statement ended it",
+                }
+            )
     return Verdict.from_cases("C2(d)", cases, observations=observations, measurements={"stories": records})

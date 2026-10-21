@@ -25,16 +25,20 @@ MemState verdicts come only from a recorded run. Tests pin the baseline (both ab
 
 from __future__ import annotations
 
-from demo.checks import Ctx, Row, check
-from demo.adapter import System
 from demo import ramp
+from demo.adapter import System
+from demo.checks import Ctx, Row, check
 from demo.ramp import archive_stats, as_of_read, filler, ingest_undated, median_ms, plain_read, scored_latencies
 from demo.verdict import Case, Verdict
 
-CLAUSE = ("C5 (Bounded active state). For every interaction count n, the active memory satisfies "
-          "|D_t^active| ≤ β(n) for a policy-defined bound β; archived content remains recoverable.")
+CLAUSE = (
+    "C5 (Bounded active state). For every interaction count n, the active memory satisfies "
+    "|D_t^active| ≤ β(n) for a policy-defined bound β; archived content remains recoverable."
+)
 ROWS = [
-    Row("C5-1", CLAUSE + " Mechanism: a field-less topic at salience 0.01 is archived once the 500-topic trigger fires."),
+    Row(
+        "C5-1", CLAUSE + " Mechanism: a field-less topic at salience 0.01 is archived once the 500-topic trigger fires."
+    ),
     Row("C5-2", CLAUSE + " Natural trajectory: archived topics counted at each ramp step with no setup."),
 ]
 MECH_SALIENCE = 0.01
@@ -46,61 +50,111 @@ def _bound_text(bound: dict | None) -> str:
 
 def _field_topic_observation(s: System) -> dict:
     """F24: a topic with fields, ingested at 0.01 after the pass ran, is it reset and never forgotten?"""
-    topic_id = s.ingest({"placement": "new_topic", "title": "Low Salience With Fields", "salience": MECH_SALIENCE,
-                         "summary": "Ingested at 0.01 with a field: can the system forget it?",
-                         "fields": [{"name": "Contact", "value": "Bob", "provenance": "email"}]})["topic_id"]
+    topic_id = s.ingest(
+        {
+            "placement": "new_topic",
+            "title": "Low Salience With Fields",
+            "salience": MECH_SALIENCE,
+            "summary": "Ingested at 0.01 with a field: can the system forget it?",
+            "fields": [{"name": "Contact", "value": "Bob", "provenance": "email"}],
+        }
+    )["topic_id"]
     waited = s.wait_until(lambda: (s.read_topic(topic_id) or {}).get("archived") is True, ramp.ARCHIVE_WAIT_S / 4)
     topic = s.read_topic(topic_id) or {}
     reset = topic.get("salience") is not None and topic["salience"] > MECH_SALIENCE + 1e-9
     forgotten = topic.get("archived") is True
-    return {"name": "topic with fields not forgotten", "topic_id": topic_id, "requested_salience": MECH_SALIENCE,
-            "stored_salience": topic.get("salience"), "archived": topic.get("archived"), "reset": reset,
-            "forgotten": forgotten, "waited_s": waited.elapsed,
-            "summary": (f"a topic with a field ingested at salience {MECH_SALIENCE} reads salience "
-                        f"{topic.get('salience')!r}, archived={topic.get('archived')!r}"
-                        + (" (reset; never forgotten through /v1, F24)" if reset and not forgotten else ""))}
+    return {
+        "name": "topic with fields not forgotten",
+        "topic_id": topic_id,
+        "requested_salience": MECH_SALIENCE,
+        "stored_salience": topic.get("salience"),
+        "archived": topic.get("archived"),
+        "reset": reset,
+        "forgotten": forgotten,
+        "waited_s": waited.elapsed,
+        "summary": (
+            f"a topic with a field ingested at salience {MECH_SALIENCE} reads salience "
+            f"{topic.get('salience')!r}, archived={topic.get('archived')!r}"
+            + (" (reset; never forgotten through /v1, F24)" if reset and not forgotten else "")
+        ),
+    }
 
 
 def _probe_no_archive(system: System, stats: dict) -> dict:
     sample = system.read_topic(next(iter(system.read_state()["topics"]))) if stats["total"] else None
-    return {"probe": "archived flag is a nothing-value (the system does not archive)",
-            "archived": None if sample is None else sample.get("archived"),
-            "total": stats["total"]}
+    return {
+        "probe": "archived flag is a nothing-value (the system does not archive)",
+        "archived": None if sample is None else sample.get("archived"),
+        "total": stats["total"],
+    }
 
 
 @check(row="C5-1", claim=ROWS[0].claim)
 def c5_mechanism(ctx: Ctx) -> Verdict:
     with ctx.fresh_system("c5-mech") as s:
-        target_id = s.ingest({"placement": "new_topic", "title": "Low Salience Canary",
-                              "summary": "Field-less; ingested at 0.01 so the forgetting pass can take it",
-                              "salience": MECH_SALIENCE})["topic_id"]
+        target_id = s.ingest(
+            {
+                "placement": "new_topic",
+                "title": "Low Salience Canary",
+                "summary": "Field-less; ingested at 0.01 so the forgetting pass can take it",
+                "salience": MECH_SALIENCE,
+            }
+        )["topic_id"]
         for i in range(ramp.FORGET_GATE - 1):
             filler(s, i)
-        s.ingest({"placement": "new_topic", "title": "Filler trigger",
-                  "summary": "Ingested after the topic count reached the gate; its response schedules the pass"})
+        s.ingest(
+            {
+                "placement": "new_topic",
+                "title": "Filler trigger",
+                "summary": "Ingested after the topic count reached the gate; its response schedules the pass",
+            }
+        )
         waited = s.wait_until(lambda: (s.read_topic(target_id) or {}).get("archived") is True, ramp.ARCHIVE_WAIT_S)
         target = s.read_topic(target_id) or {}
         stats = archive_stats(s)
         if stats["archived"] is None:
-            return Verdict.absent("C5-1", _probe_no_archive(s, stats),
-                                  cases=[Case("the 0.01 topic is archived after the 500-topic trigger", None,
-                                              "the system has no archived flag")])
+            return Verdict.absent(
+                "C5-1",
+                _probe_no_archive(s, stats),
+                cases=[
+                    Case(
+                        "the 0.01 topic is archived after the 500-topic trigger",
+                        None,
+                        "the system has no archived flag",
+                    )
+                ],
+            )
         archived = target.get("archived") is True
         gate = stats["total"] >= ramp.FORGET_GATE
         bound = s.describe()["declared_bound"]
         cases = [
-            Case("the count gate fires (n ≥ 500)", gate,
-                 f"topics after the ramp={stats['total']}, gate={ramp.FORGET_GATE}; {_bound_text(bound)}"),
-            Case("the 0.01 topic is archived after the 500-topic trigger", archived,
-                 f"archived={target.get('archived')!r}, salience={target.get('salience')!r}, "
-                 f"waited {waited.elapsed:.3f}s (timeout={waited.timed_out})"),
+            Case(
+                "the count gate fires (n ≥ 500)",
+                gate,
+                f"topics after the ramp={stats['total']}, gate={ramp.FORGET_GATE}; {_bound_text(bound)}",
+            ),
+            Case(
+                "the 0.01 topic is archived after the 500-topic trigger",
+                archived,
+                f"archived={target.get('archived')!r}, salience={target.get('salience')!r}, "
+                f"waited {waited.elapsed:.3f}s (timeout={waited.timed_out})",
+            ),
         ]
         field_topic = _field_topic_observation(s)
-        return Verdict.from_cases("C5-1", cases, observations=[field_topic], measurements={
-            "declared_bound": bound, "topics": stats["total"], "archived_total": stats["archived"],
-            "target_archived": archived,
-            "waited_s": waited.elapsed, "gate": ramp.FORGET_GATE, "start_salience": MECH_SALIENCE,
-        })
+        return Verdict.from_cases(
+            "C5-1",
+            cases,
+            observations=[field_topic],
+            measurements={
+                "declared_bound": bound,
+                "topics": stats["total"],
+                "archived_total": stats["archived"],
+                "target_archived": archived,
+                "waited_s": waited.elapsed,
+                "gate": ramp.FORGET_GATE,
+                "start_salience": MECH_SALIENCE,
+            },
+        )
 
 
 def _settle(system: System):
@@ -136,10 +190,15 @@ def _one_ramp(system: System, n: int, repeat: int, timed: bool) -> dict:
     if n == max(ramp.STEPS) and system.describe()["accepts"]["valid_at"]:
         for _ in range(ramp.ASOF_SAMPLES):
             as_of_read(system)
-        asof = scored_latencies(system, "query")[len(query):]
+        asof = scored_latencies(system, "query")[len(query) :]
     return {
-        **counts, "ingest_median_ms": median_ms(ingest), "ingest_samples": len(ingest),
-        "query_samples_ms": query, "as_of_samples_ms": asof, "settle_s": settled.elapsed, "settle_timed_out": settled.timed_out,
+        **counts,
+        "ingest_median_ms": median_ms(ingest),
+        "ingest_samples": len(ingest),
+        "query_samples_ms": query,
+        "as_of_samples_ms": asof,
+        "settle_s": settled.elapsed,
+        "settle_timed_out": settled.timed_out,
     }
 
 
@@ -160,12 +219,16 @@ def c5_natural(ctx: Ctx) -> Verdict:
     repeats = max(r["repeat"] for r in ramps)
     archived_values = [r["archived"] for r in ramps]
     if all(a is None for a in archived_values):
-        return Verdict.absent("C5-2", {"probe": "archived flag is a nothing-value at every ramp step",
-                                       "steps": list(ramp.STEPS), "repeats": repeats},
-                              cases=[Case("archived topics counted at each ramp step", None,
-                                          "the system has no archived flag")],
-                              measurements={"ramps": ramps, "steps": list(ramp.STEPS), "repeats": repeats,
-                                            "declared_bound": bound})
+        return Verdict.absent(
+            "C5-2",
+            {
+                "probe": "archived flag is a nothing-value at every ramp step",
+                "steps": list(ramp.STEPS),
+                "repeats": repeats,
+            },
+            cases=[Case("archived topics counted at each ramp step", None, "the system has no archived flag")],
+            measurements={"ramps": ramps, "steps": list(ramp.STEPS), "repeats": repeats, "declared_bound": bound},
+        )
     any_archived = any((a or 0) > 0 for a in archived_values)
     counts = ", ".join(f"n={r['n']} r{r['repeat']}: {r['archived']}" for r in ramps)
     largest = max(ramps, key=lambda r: r["n"])
@@ -173,10 +236,20 @@ def c5_natural(ctx: Ctx) -> Verdict:
     against = f"{active} active topics at n={largest['n']} against {_bound_text(bound)}"
     return Verdict.from_cases(
         "C5-2",
-        [Case("archived topics counted at each ramp step", any_archived,
-              f"archived at each (n, repeat): {counts}" + ("" if any_archived else "; none archived")
-              + f"; {against}")],
-        measurements={"ramps": ramps, "steps": list(ramp.STEPS), "repeats": repeats, "declared_bound": bound,
-                      "active_at_largest_n": {"n": largest["n"], "active": active}},
+        [
+            Case(
+                "archived topics counted at each ramp step",
+                any_archived,
+                f"archived at each (n, repeat): {counts}"
+                + ("" if any_archived else "; none archived")
+                + f"; {against}",
+            )
+        ],
+        measurements={
+            "ramps": ramps,
+            "steps": list(ramp.STEPS),
+            "repeats": repeats,
+            "declared_bound": bound,
+            "active_at_largest_n": {"n": largest["n"], "active": active},
+        },
     )
-

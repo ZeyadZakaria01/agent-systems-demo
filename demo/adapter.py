@@ -66,11 +66,10 @@ from __future__ import annotations
 
 import time
 from abc import ABC, abstractmethod
+from collections.abc import Callable
 from dataclasses import dataclass
-from datetime import datetime, timezone
-from typing import Any, Callable
-
-
+from datetime import UTC, datetime
+from typing import Any
 
 DATES = ("valid_from", "invalid_at", "valid_at", "recorded_at")  # the dates `describe()["accepts"]` reports
 
@@ -84,7 +83,7 @@ class Waited:
 
 
 def utc_now() -> str:
-    return datetime.now(timezone.utc).isoformat()
+    return datetime.now(UTC).isoformat()
 
 
 class Rejected(Exception):
@@ -103,8 +102,16 @@ class ExchangeLog:
         self.entries: list[dict] = []
 
     def record(self, kind: str, op: str, request: Any, run: Callable[[], Any]) -> Any:
-        entry: dict = {"seq": len(self.entries), "kind": kind, "op": op, "request": request,
-                       "started_at": utc_now(), "response": None, "rejected": None, "error": None}
+        entry: dict = {
+            "seq": len(self.entries),
+            "kind": kind,
+            "op": op,
+            "request": request,
+            "started_at": utc_now(),
+            "response": None,
+            "rejected": None,
+            "error": None,
+        }
         self.entries.append(entry)
         t0 = time.perf_counter()
         try:
@@ -169,8 +176,12 @@ class System(ABC):
 
     def list_topic_ids(self, include_archived: bool = True) -> list[str] | None:
         """Cheap topic listing; `None` when the system has no listing separate from `read_state` (the baseline)."""
-        return self.log.record("read", "list_topic_ids", {"include_archived": include_archived},
-                               lambda: self._list_topic_ids(include_archived))
+        return self.log.record(
+            "read",
+            "list_topic_ids",
+            {"include_archived": include_archived},
+            lambda: self._list_topic_ids(include_archived),
+        )
 
     def probe(self, method: str, path: str) -> dict | None:
         return self.log.record("read", "probe", {"method": method, "path": path}, lambda: self._probe(method, path))
@@ -185,8 +196,9 @@ class System(ABC):
 
     def add_policy(self, rule: dict) -> dict | None:
         """Add a declarative policy at runtime; `None` where the system has no surface for it."""
-        return self.log.record("setup", "add_policy", {"label": "add_policy", "rule": rule},
-                               lambda: self._add_policy(rule))
+        return self.log.record(
+            "setup", "add_policy", {"label": "add_policy", "rule": rule}, lambda: self._add_policy(rule)
+        )
 
     # -- waiting
     def wait_until(self, predicate: Callable[[], bool], timeout: float, interval: float = 0.1) -> Waited:
@@ -209,30 +221,46 @@ class System(ABC):
 
     def describe(self) -> dict:
         described = self._describe()
-        accepts = {**{d: False for d in DATES}, **described.pop("accepts", {})}
-        return {"system": self.label, "url": None, "db_path": None, "commit": None, "engine": None,
-                "keeps_history": None, "accepts_error": None, "declared_bound": None, "accepts_source": False,
-                "latency_comparable": True,
-                "source_surface": None, "c6_clause_2_seeds": None, **described, "accepts": accepts}
+        accepts = {**dict.fromkeys(DATES, False), **described.pop("accepts", {})}
+        return {
+            "system": self.label,
+            "url": None,
+            "db_path": None,
+            "commit": None,
+            "engine": None,
+            "keeps_history": None,
+            "accepts_error": None,
+            "declared_bound": None,
+            "accepts_source": False,
+            "latency_comparable": True,
+            "source_surface": None,
+            "c6_clause_2_seeds": None,
+            **described,
+            "accepts": accepts,
+        }
 
     def dates_accepted(self, *names: str) -> dict[str, bool]:
         """Which of the dates `names` the system accepts, from `describe()["accepts"]`. A flag the system could not state
         (`None`: its schema was unreadable) raises: a check never scores a system on a capability it guessed."""
         described = self.describe()
         if any(described["accepts"][n] is None for n in names):
-            raise RuntimeError(f"{self.label}: could not tell which dates the system accepts "
-                               f"({described['accepts_error']}); refusing to guess")
+            raise RuntimeError(
+                f"{self.label}: could not tell which dates the system accepts "
+                f"({described['accepts_error']}); refusing to guess"
+            )
         return {n: described["accepts"][n] for n in names}
 
     def source_accepted(self) -> bool:
         """Whether a field write may carry a `source_message` (`describe()["accepts_source"]`); raises when unknown."""
         described = self.describe()
         if described["accepts_source"] is None:
-            raise RuntimeError(f"{self.label}: could not tell whether the system accepts a source message "
-                               f"({described['accepts_error']}); refusing to guess")
+            raise RuntimeError(
+                f"{self.label}: could not tell whether the system accepts a source message "
+                f"({described['accepts_error']}); refusing to guess"
+            )
         return described["accepts_source"]
 
-    def variant(self, name: str) -> "System | None":
+    def variant(self, name: str) -> System | None:
         """A fresh instance of this system in the alternate mode `name` (a labelled deviation one measurement needs, e.g.
         the reference GEM's "transitive" propagation), or `None` when the system has no such mode."""
         return None

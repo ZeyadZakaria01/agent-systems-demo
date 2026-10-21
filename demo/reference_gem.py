@@ -57,9 +57,10 @@ with `revise_after_ingest=False` shows both copies until `revise()` runs.
 from __future__ import annotations
 
 import uuid
+from collections.abc import Callable
 from dataclasses import dataclass, field, replace
-from datetime import datetime, timezone
-from typing import Any, Callable
+from datetime import UTC, datetime
+from typing import Any
 
 from demo.adapter import Rejected, System
 from demo.embedding import MODEL, unit_vector, unit_vectors
@@ -86,13 +87,20 @@ EPS = 1e-9
 EDGE_KINDS = ("extension", "association")
 EVENTS = ("write", "field_updated")
 ACTIONS = ("reject", "flag")
-PROPAGATIONS = ("one_hop", "transitive")  # `transitive` (a walk with a visited set) exists only for the over-flagging measurement
+PROPAGATIONS = (
+    "one_hop",
+    "transitive",
+)  # `transitive` (a walk with a visited set) exists only for the over-flagging measurement
 OPS = ("<", "<=", ">", ">=", "==", "!=", "empty")
 
 DEFAULT_POLICIES = (
     {"name": "reject-empty-values", "event": "write", "condition": {"field": "*", "op": "empty"}, "action": "reject"},
-    {"name": "propagate-on-change", "event": "field_updated", "condition": {"neighbour": "extension"},
-     "action": "flag"},  # the paper's Listing 1
+    {
+        "name": "propagate-on-change",
+        "event": "field_updated",
+        "condition": {"neighbour": "extension"},
+        "action": "flag",
+    },  # the paper's Listing 1
 )
 
 
@@ -115,13 +123,24 @@ class Entry:
     corrected_by_entry_id: str | None = None  # on an expired original: its corrected copy
 
     def view(self, phase: int = 1) -> dict:
-        out = {"id": self.id, "value": self.value, "provenance": self.provenance, "why_changed": self.why_changed,
-               "impact_expected": self.impact_expected, "valid_from": self.valid_from.isoformat(),
-               "expired_at": None, "source_id": self.source_id}
+        out = {
+            "id": self.id,
+            "value": self.value,
+            "provenance": self.provenance,
+            "why_changed": self.why_changed,
+            "impact_expected": self.impact_expected,
+            "valid_from": self.valid_from.isoformat(),
+            "expired_at": None,
+            "source_id": self.source_id,
+        }
         if phase >= 2:
-            out.update(invalid_at=_iso(self.invalid_at), created_at=_iso(self.created_at),
-                       expired_at=_iso(self.expired_at), replaces_entry_id=self.replaces_entry_id,
-                       corrected_by_entry_id=self.corrected_by_entry_id)
+            out.update(
+                invalid_at=_iso(self.invalid_at),
+                created_at=_iso(self.created_at),
+                expired_at=_iso(self.expired_at),
+                replaces_entry_id=self.replaces_entry_id,
+                corrected_by_entry_id=self.corrected_by_entry_id,
+            )
         if self.operation:
             out.update(operation=self.operation, merged_from_topic_id=self.merged_from_topic_id)
         return out
@@ -138,7 +157,7 @@ class Field:
     entries: list[Entry] = field(default_factory=list)  # active, in insertion order
     archived: list[Entry] = field(default_factory=list)  # overflow of the cap, in insertion order
 
-    def copy(self) -> "Field":
+    def copy(self) -> Field:
         return Field(self.field_type, self.ref_topic_id, list(self.entries), list(self.archived))
 
 
@@ -157,7 +176,7 @@ class Topic:
     events: list[dict] = field(default_factory=list)
     flag: dict | None = None  # the evidence of the pending revision flag, None when not flagged
 
-    def copy(self) -> "Topic":
+    def copy(self) -> Topic:
         return replace(self, fields={n: f.copy() for n, f in self.fields.items()}, events=list(self.events))
 
 
@@ -188,7 +207,7 @@ def _utc(text: Any, what: str) -> datetime:
         moment = datetime.fromisoformat(text)
     except ValueError:
         raise Rejected(422, f"{what} is not an ISO date or timestamp: {text!r}") from None
-    return moment if moment.tzinfo else moment.replace(tzinfo=timezone.utc)
+    return moment if moment.tzinfo else moment.replace(tzinfo=UTC)
 
 
 def _compare(left: Any, op: str, right: Any) -> bool:
@@ -196,13 +215,25 @@ def _compare(left: Any, op: str, right: Any) -> bool:
         left, right = float(left), float(right)  # numbers compare as numbers, everything else as ISO strings
     except (TypeError, ValueError):
         left, right = str(left), str(right)
-    return {"<": left < right, "<=": left <= right, ">": left > right, ">=": left >= right,
-            "==": left == right, "!=": left != right}[op]
+    return {
+        "<": left < right,
+        "<=": left <= right,
+        ">": left > right,
+        ">=": left >= right,
+        "==": left == right,
+        "!=": left != right,
+    }[op]
 
 
 class ReferenceGem(System):
-    def __init__(self, label: str | None = None, clock: Callable[[], datetime] | None = None,
-                 revise_after_ingest: bool = True, propagation: str = "one_hop", phase: int = 1) -> None:
+    def __init__(
+        self,
+        label: str | None = None,
+        clock: Callable[[], datetime] | None = None,
+        revise_after_ingest: bool = True,
+        propagation: str = "one_hop",
+        phase: int = 1,
+    ) -> None:
         if phase not in PHASES:
             raise ValueError(f"phase is one of {PHASES}, got {phase!r}")
         super().__init__(label or f"reference GEM (phase {phase})")
@@ -211,7 +242,7 @@ class ReferenceGem(System):
         if propagation not in PROPAGATIONS:
             raise ValueError(f"propagation is one of {PROPAGATIONS}, got {propagation!r}")
         self.propagation = propagation
-        self._clock = clock or (lambda: datetime.now(timezone.utc))
+        self._clock = clock or (lambda: datetime.now(UTC))
         self.revise_after_ingest = revise_after_ingest
         self._topics: dict[str, Topic] = {}
         self._active: set[str] = set()
@@ -249,8 +280,13 @@ class ReferenceGem(System):
             if salience < THETA_ARCHIVE - EPS:
                 topic.salience, topic.touch = salience * ARCHIVE_FACTOR, at
                 self._set_archived(topic, True)
-                topic.events.append({"ts": self._clock().isoformat(), "kind": "archived",
-                                     "detail": {"salience_before": salience, "salience_after": topic.salience}})
+                topic.events.append(
+                    {
+                        "ts": self._clock().isoformat(),
+                        "kind": "archived",
+                        "detail": {"salience_before": salience, "salience_after": topic.salience},
+                    }
+                )
 
     # -- field values
     def _live(self, f: Field, recorded: datetime | None) -> list[Entry]:
@@ -269,8 +305,9 @@ class ReferenceGem(System):
         an entry with its own end is valid until that end and layers over the others. Of several valid at `asked`,
         the shorter validity wins, then the later recorded."""
         plain = sorted((e for e in live if e.invalid_at is None), key=lambda e: e.order)
-        ends: dict[str, datetime | None] = {e.id: plain[i + 1].valid_from if i + 1 < len(plain) else None
-                                            for i, e in enumerate(plain)}
+        ends: dict[str, datetime | None] = {
+            e.id: plain[i + 1].valid_from if i + 1 < len(plain) else None for i, e in enumerate(plain)
+        }
         ends.update({e.id: e.invalid_at for e in live if e.invalid_at is not None})
         best: tuple[float, int] | None = None
         found: Entry | None = None
@@ -283,8 +320,9 @@ class ReferenceGem(System):
                 best, found = key, e
         return found
 
-    def _valid_entry(self, f: Field, asked: datetime,
-                     recorded: datetime | None = None) -> tuple[Entry | None, str | None]:
+    def _valid_entry(
+        self, f: Field, asked: datetime, recorded: datetime | None = None
+    ) -> tuple[Entry | None, str | None]:
         """The entry valid at `asked`, among all entries memory holds (phase 1: the latest timestamp not after it;
         phase 2: `_resolve`). When that entry was archived as overflow there is no current value and a note says so."""
         live = self._live(f, recorded)
@@ -299,8 +337,17 @@ class ReferenceGem(System):
     def _corrected_copy(self, f: Field, old: Entry, invalid_at: datetime, now: datetime, seq: int) -> Entry:
         """Keep and copy (ADR 0005): `old` is kept with `expired_at` = now, and a corrected copy with the original
         provenance and the new stored end is appended. `f` is replaced in place (a proposed copy, or the merge)."""
-        copy = replace(old, id=str(uuid.uuid4()), invalid_at=invalid_at, created_at=now, expired_at=None, seq=seq,
-                       operation="interval_corrected", replaces_entry_id=old.id, corrected_by_entry_id=None)
+        copy = replace(
+            old,
+            id=str(uuid.uuid4()),
+            invalid_at=invalid_at,
+            created_at=now,
+            expired_at=None,
+            seq=seq,
+            operation="interval_corrected",
+            replaces_entry_id=old.id,
+            corrected_by_entry_id=None,
+        )
         f.entries[f.entries.index(old)] = replace(old, expired_at=now, corrected_by_entry_id=copy.id)
         f.entries.append(copy)
         return copy
@@ -322,13 +369,18 @@ class ReferenceGem(System):
 
     def _field_view(self, f: Field, asked: datetime, history: bool, recorded: datetime | None = None) -> dict:
         current, note = self._valid_entry(f, asked, recorded)
-        out = {"field_type": f.field_type, "ref_topic_id": f.ref_topic_id,
-               "current": None if current is None else current.view(self.phase),
-               "history": [e.view(self.phase) for e in sorted(f.entries, key=lambda e: e.order, reverse=True)]
-               if history else None}
+        out = {
+            "field_type": f.field_type,
+            "ref_topic_id": f.ref_topic_id,
+            "current": None if current is None else current.view(self.phase),
+            "history": [e.view(self.phase) for e in sorted(f.entries, key=lambda e: e.order, reverse=True)]
+            if history
+            else None,
+        }
         if history:
-            out["archived_history"] = [e.view(self.phase)
-                                       for e in sorted(f.archived, key=lambda e: e.order, reverse=True)]
+            out["archived_history"] = [
+                e.view(self.phase) for e in sorted(f.archived, key=lambda e: e.order, reverse=True)
+            ]
         if note:
             out["note"] = note
         return out
@@ -338,11 +390,20 @@ class ReferenceGem(System):
 
     def _topic_view(self, topic: Topic, asked: datetime | None = None) -> dict:
         asked = asked or self._clock()
-        return {"id": topic.id, "title": topic.title, "summary": topic.summary, "topic_kind": topic.topic_kind,
-                "salience": self._effective(topic, self._interactions), "failed_salience": None,
-                "archived": topic.archived, "revision_flag": self._flag_view(topic),
-                "fields": {n: self._field_view(f, asked, history=True) for n, f in topic.fields.items()},
-                "topic_history": list(topic.events), "created_at": topic.created_at, "updated_at": topic.updated_at}
+        return {
+            "id": topic.id,
+            "title": topic.title,
+            "summary": topic.summary,
+            "topic_kind": topic.topic_kind,
+            "salience": self._effective(topic, self._interactions),
+            "failed_salience": None,
+            "archived": topic.archived,
+            "revision_flag": self._flag_view(topic),
+            "fields": {n: self._field_view(f, asked, history=True) for n, f in topic.fields.items()},
+            "topic_history": list(topic.events),
+            "created_at": topic.created_at,
+            "updated_at": topic.updated_at,
+        }
 
     # -- policies
     def _add_policy(self, rule: dict) -> dict:
@@ -352,19 +413,27 @@ class ReferenceGem(System):
         if "neighbour" in condition:
             valid = condition["neighbour"] in EDGE_KINDS
         else:
-            valid = (condition.get("op") in OPS and isinstance(condition.get("field"), str)
-                     and (condition["op"] == "empty" or "other_field" in condition or "value" in condition))
+            valid = (
+                condition.get("op") in OPS
+                and isinstance(condition.get("field"), str)
+                and (condition["op"] == "empty" or "other_field" in condition or "value" in condition)
+            )
         if not valid or not rule.get("name"):
-            raise ValueError(f"unsupported policy condition (the fixed vocabulary is field comparisons and a "
-                             f"neighbour via an extension or association edge): {rule!r}")
+            raise ValueError(
+                f"unsupported policy condition (the fixed vocabulary is field comparisons and a "
+                f"neighbour via an extension or association edge): {rule!r}"
+            )
         stored = {"name": rule["name"], "event": rule["event"], "condition": dict(condition), "action": rule["action"]}
         self._policies = [p for p in self._policies if p["name"] != stored["name"]] + [stored]
         return dict(stored, condition=dict(condition))
 
     def _neighbours(self, topic_id: str, kind: str, extra: list[tuple[str, str, str]]) -> list[str]:
         """Topics linked to `topic_id` by an edge of `kind`, whatever its direction."""
-        found = {(b if a == topic_id else a) for a, b, k in (*self._edges, *extra)
-                 if k == kind and topic_id in (a, b) and a != b}
+        found = {
+            (b if a == topic_id else a)
+            for a, b, k in (*self._edges, *extra)
+            if k == kind and topic_id in (a, b) and a != b
+        }
         return sorted(found)
 
     def _flag_targets(self, topic_id: str, kind: str, extra: list[tuple[str, str, str]]) -> list[str]:
@@ -384,8 +453,9 @@ class ReferenceGem(System):
             return bool(self._neighbours(proposal.topic.id, condition["neighbour"], proposal.edges))
         name, op = condition["field"], condition["op"]
         if op == "empty":
-            return any(v is None or (isinstance(v, str) and not v.strip())
-                       for n, v in proposal.written if name in ("*", n))
+            return any(
+                v is None or (isinstance(v, str) and not v.strip()) for n, v in proposal.written if name in ("*", n)
+            )
         f = proposal.topic.fields.get(name)
         entry = None if f is None else self._valid_entry(f, self._clock())[0]
         if entry is None:
@@ -410,10 +480,18 @@ class ReferenceGem(System):
             names = [n for n, _ in proposal.written]
             if not names:
                 continue  # a flag names the updated field: a write of no fields has none
-            evidence = {"source_topic_id": proposal.topic.id, "updated_field": names[0], "updated_fields": names,
-                        "timestamp": now.isoformat(), "policy": policy["name"]}
-            targets = (self._flag_targets(proposal.topic.id, condition["neighbour"], proposal.edges)
-                       if "neighbour" in condition else [proposal.topic.id])
+            evidence = {
+                "source_topic_id": proposal.topic.id,
+                "updated_field": names[0],
+                "updated_fields": names,
+                "timestamp": now.isoformat(),
+                "policy": policy["name"],
+            }
+            targets = (
+                self._flag_targets(proposal.topic.id, condition["neighbour"], proposal.edges)
+                if "neighbour" in condition
+                else [proposal.topic.id]
+            )
             for target in targets:
                 proposal.flags[target] = evidence
 
@@ -438,8 +516,16 @@ class ReferenceGem(System):
         now = self._clock()
         stamp = now.isoformat()
         if placement == "new_topic":
-            topic = Topic(str(uuid.uuid4()), request.get("title") or "untitled", request.get("summary"),
-                          request.get("topic_kind"), float(request.get("salience", 1.0)), at, stamp, stamp)
+            topic = Topic(
+                str(uuid.uuid4()),
+                request.get("title") or "untitled",
+                request.get("summary"),
+                request.get("topic_kind"),
+                float(request.get("salience", 1.0)),
+                at,
+                stamp,
+                stamp,
+            )
             created = True
         elif placement in ("extend_topic", "version_field"):
             base = self._topics.get(request.get("topic_id"))
@@ -472,12 +558,24 @@ class ReferenceGem(System):
             if self.bitemporal and ends is None:
                 # a plain statement ends every value whose stored validity contains its start, overrides included:
                 # a changed stored end, so each is kept, expired and copied
-                for old in [e for e in f.entries if e.invalid_at is not None and e.expired_at is None
-                            and e.valid_from <= moment < e.invalid_at]:
+                for old in [
+                    e
+                    for e in f.entries
+                    if e.invalid_at is not None and e.expired_at is None and e.valid_from <= moment < e.invalid_at
+                ]:
                     self._corrected_copy(f, old, moment, now, self._take_seq(proposal))
-            entry = Entry(str(uuid.uuid4()), w.get("value", ""), w.get("provenance") or "api", w.get("why_changed"),
-                          w.get("impact_expected"), moment, self._take_seq(proposal), source, invalid_at=ends,
-                          created_at=now)
+            entry = Entry(
+                str(uuid.uuid4()),
+                w.get("value", ""),
+                w.get("provenance") or "api",
+                w.get("why_changed"),
+                w.get("impact_expected"),
+                moment,
+                self._take_seq(proposal),
+                source,
+                invalid_at=ends,
+                created_at=now,
+            )
             f.entries.append(entry)
             self._cap(f)
             proposal.written.append((name, entry.value))
@@ -531,8 +629,12 @@ class ReferenceGem(System):
                 target = self._topics[tid]
                 target.flag = evidence
                 target.events.append({"ts": now.isoformat(), "kind": "flagged", "detail": evidence})
-        return {"topic_id": topic.id, "applied": proposal.applied, "version_ids": proposal.version_ids,
-                "similar_topic_ids": []}
+        return {
+            "topic_id": topic.id,
+            "applied": proposal.applied,
+            "version_ids": proposal.version_ids,
+            "similar_topic_ids": [],
+        }
 
     # -- revision (merge)
     def revise(self) -> list[str]:
@@ -560,8 +662,11 @@ class ReferenceGem(System):
         for o in live:
             if o.invalid_at is None:
                 continue
-            starts = [p.valid_from for p in plains
-                      if (p.id in moved_ids) != (o.id in moved_ids) and o.valid_from <= p.valid_from < o.invalid_at]
+            starts = [
+                p.valid_from
+                for p in plains
+                if (p.id in moved_ids) != (o.id in moved_ids) and o.valid_from <= p.valid_from < o.invalid_at
+            ]
             if starts:
                 self._seq += 1
                 self._corrected_copy(kf, o, min(starts), now, self._seq)
@@ -614,8 +719,11 @@ class ReferenceGem(System):
             ids = allowed if allowed is not None else sorted(self._active)
             sims = {t: None for t in ids[:top_k] if t in self._topics}
         asked = _utc(request["valid_at"], "valid_at") if request.get("valid_at") is not None else self._clock()
-        recorded = (_utc(request["recorded_at"], "recorded_at")
-                    if self.bitemporal and request.get("recorded_at") is not None else None)
+        recorded = (
+            _utc(request["recorded_at"], "recorded_at")
+            if self.bitemporal and request.get("recorded_at") is not None
+            else None
+        )
         as_of = self.bitemporal and (request.get("valid_at") is not None or recorded is not None)
         names = request.get("field_names")
         explain = bool(request.get("explain"))
@@ -626,14 +734,34 @@ class ReferenceGem(System):
                 continue
             fields = []
             if "structural" in stages or "temporal" in stages:
-                fields = [{"name": n, **self._field_view(f, asked, explain or as_of, recorded)}
-                          for n, f in sorted(topic.fields.items()) if names is None or n in names]
-            neighbours = ([{"topic_id": b if a == tid else a, "kind": k, "direction": "out" if a == tid else "in"}
-                           for a, b, k in self._edges if tid in (a, b)] if "structural" in stages else [])
-            candidates.append({"topic_id": tid, "title": topic.title, "summary": topic.summary,
-                               "topic_kind": topic.topic_kind, "salience": self._effective(topic, at - 1),
-                               "failed_salience": None, "neighbors": neighbours, "fields": fields,
-                               "revision_flag": self._flag_view(topic), "similarity": sim})
+                fields = [
+                    {"name": n, **self._field_view(f, asked, explain or as_of, recorded)}
+                    for n, f in sorted(topic.fields.items())
+                    if names is None or n in names
+                ]
+            neighbours = (
+                [
+                    {"topic_id": b if a == tid else a, "kind": k, "direction": "out" if a == tid else "in"}
+                    for a, b, k in self._edges
+                    if tid in (a, b)
+                ]
+                if "structural" in stages
+                else []
+            )
+            candidates.append(
+                {
+                    "topic_id": tid,
+                    "title": topic.title,
+                    "summary": topic.summary,
+                    "topic_kind": topic.topic_kind,
+                    "salience": self._effective(topic, at - 1),
+                    "failed_salience": None,
+                    "neighbors": neighbours,
+                    "fields": fields,
+                    "revision_flag": self._flag_view(topic),
+                    "similarity": sim,
+                }
+            )
             self._bump(topic, at)
         return {"query": request["q"], "candidates": candidates, "summary_text": ""}
 
@@ -646,10 +774,12 @@ class ReferenceGem(System):
         return None if topic is None else self._topic_view(topic)
 
     def _read_state(self) -> dict:
-        return {"topics": {tid: self._topic_view(t) for tid, t in self._topics.items()},
-                "edges": [{"from": a, "to": b, "kind": k} for a, b, k in self._edges],
-                "policies": [dict(p, condition=dict(p["condition"])) for p in self._policies],
-                "interactions": self._interactions}
+        return {
+            "topics": {tid: self._topic_view(t) for tid, t in self._topics.items()},
+            "edges": [{"from": a, "to": b, "kind": k} for a, b, k in self._edges],
+            "policies": [dict(p, condition=dict(p["condition"])) for p in self._policies],
+            "interactions": self._interactions,
+        }
 
     def _list_topic_ids(self, include_archived: bool) -> list[str]:
         return [t for t, topic in self._topics.items() if include_archived or not topic.archived]
@@ -672,8 +802,16 @@ class ReferenceGem(System):
         if action == "create_topic":
             tid = params.get("topic_id") or str(uuid.uuid4())
             stamp = self._clock().isoformat()
-            self._topics[tid] = Topic(tid, params.get("title") or "untitled", params.get("summary"),
-                                      params.get("topic_kind"), float(params.get("salience", 1.0)), at, stamp, stamp)
+            self._topics[tid] = Topic(
+                tid,
+                params.get("title") or "untitled",
+                params.get("summary"),
+                params.get("topic_kind"),
+                float(params.get("salience", 1.0)),
+                at,
+                stamp,
+                stamp,
+            )
             self._active.add(tid)
             return {"topic_id": tid}
         if action == "patch_topic":
@@ -703,24 +841,45 @@ class ReferenceGem(System):
             return {"ok": "true"}
         raise ValueError(f"unknown setup action {action!r}")
 
-    def variant(self, name: str) -> "ReferenceGem | None":
+    def variant(self, name: str) -> ReferenceGem | None:
         if name != "transitive":
             return None
-        return ReferenceGem(f"{self.label}, transitive walk", clock=self._clock,
-                            revise_after_ingest=self.revise_after_ingest, propagation="transitive", phase=self.phase)
+        return ReferenceGem(
+            f"{self.label}, transitive walk",
+            clock=self._clock,
+            revise_after_ingest=self.revise_after_ingest,
+            propagation="transitive",
+            phase=self.phase,
+        )
 
     def _describe(self) -> dict:
-        return {"engine": f"in-process reference GEM, phase {self.phase}", "keeps_history": True, "embedder": MODEL,
-                "top_k": TOP_K, "latency_comparable": False,
-                "accepts": {"valid_from": True, "invalid_at": self.bitemporal, "valid_at": True,
-                            "recorded_at": self.bitemporal},
-                "declared_bound": {"topics": BETA, "name": "β"},
-                "accepts_source": True, "source_surface": {"request_properties": ["source_message"], "paths": []},
-                "c6_clause_2_seeds": C6_CLAUSE_2_SEEDS,
-                "parameters": {"theta_archive": THETA_ARCHIVE, "lambda": LAMBDA, "decay_horizon": DECAY_HORIZON,
-                               "beta": BETA, "bump": BUMP, "history_cap": HISTORY_CAP, "top_k": TOP_K,
-                               "salience_on_archive": ARCHIVE_FACTOR,
-                               "propagation": self.propagation.replace("_", " ") + ", extension edges, "
-                               "either direction",
-                               "revision": "after every ingest" if self.revise_after_ingest else "only on revise()",
-                               "phase": self.phase}}
+        return {
+            "engine": f"in-process reference GEM, phase {self.phase}",
+            "keeps_history": True,
+            "embedder": MODEL,
+            "top_k": TOP_K,
+            "latency_comparable": False,
+            "accepts": {
+                "valid_from": True,
+                "invalid_at": self.bitemporal,
+                "valid_at": True,
+                "recorded_at": self.bitemporal,
+            },
+            "declared_bound": {"topics": BETA, "name": "β"},
+            "accepts_source": True,
+            "source_surface": {"request_properties": ["source_message"], "paths": []},
+            "c6_clause_2_seeds": C6_CLAUSE_2_SEEDS,
+            "parameters": {
+                "theta_archive": THETA_ARCHIVE,
+                "lambda": LAMBDA,
+                "decay_horizon": DECAY_HORIZON,
+                "beta": BETA,
+                "bump": BUMP,
+                "history_cap": HISTORY_CAP,
+                "top_k": TOP_K,
+                "salience_on_archive": ARCHIVE_FACTOR,
+                "propagation": self.propagation.replace("_", " ") + ", extension edges, either direction",
+                "revision": "after every ingest" if self.revise_after_ingest else "only on revise()",
+                "phase": self.phase,
+            },
+        }

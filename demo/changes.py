@@ -24,8 +24,11 @@ from demo.verdict import ABSENT, ERROR, FAIL, NOT_SCORED, PARTIAL, PASS, Case, V
 CHAIN = ("upstream", *STEP_IDS)
 REFERENCE_CHAIN = tuple(map(reference_gem_id, PHASES))  # the reference GEM's phases: its own chain
 CHAINS = (CHAIN, REFERENCE_CHAIN)
-HEADERS = {"upstream": "upstream", **{i: f"step {SYSTEMS[i].step}" for i in STEP_IDS},
-           **{reference_gem_id(p): f"phase {p}" for p in PHASES}}
+HEADERS = {
+    "upstream": "upstream",
+    **{i: f"step {SYSTEMS[i].step}" for i in STEP_IDS},
+    **{reference_gem_id(p): f"phase {p}" for p in PHASES},
+}
 
 
 @dataclass
@@ -54,19 +57,25 @@ def change_cells(row_id: str, verdicts: list[Verdict], chain: tuple[str, ...] = 
     return cells
 
 
-def _all_cells(rows: list[Row], verdicts: list[Verdict], chain: tuple[str, ...]) -> dict[str, dict[str, ChangeCell | None]]:
+def _all_cells(
+    rows: list[Row], verdicts: list[Verdict], chain: tuple[str, ...]
+) -> dict[str, dict[str, ChangeCell | None]]:
     """`{row id: change_cells}`, each row's chain walked once."""
     return {r.id: change_cells(r.id, verdicts, chain) for r in rows}
 
 
-def changes_per_step(rows: list[Row], verdicts: list[Verdict],
-                     chain: tuple[str, ...] = CHAIN) -> dict[str, list[dict]]:
+def changes_per_step(rows: list[Row], verdicts: list[Verdict], chain: tuple[str, ...] = CHAIN) -> dict[str, list[dict]]:
     """For each measured system after the first of the chain: the rows whose verdict changed, with before/after and
     the system compared with."""
     cells = _all_cells(rows, verdicts, chain)
-    return {system_id: [{"row": r.id, "from": c.changed_from, "to": c.verdict, "vs": c.compared_with}
-                        for r in rows if (c := cells[r.id][system_id]) and c.changed_from]
-            for system_id in measured(verdicts, chain)[1:]}
+    return {
+        system_id: [
+            {"row": r.id, "from": c.changed_from, "to": c.verdict, "vs": c.compared_with}
+            for r in rows
+            if (c := cells[r.id][system_id]) and c.changed_from
+        ]
+        for system_id in measured(verdicts, chain)[1:]
+    }
 
 
 def _text(cell: ChangeCell | None) -> str:
@@ -77,8 +86,9 @@ def _text(cell: ChangeCell | None) -> str:
     return cell.verdict
 
 
-def _summary(system_id: str, rows: list[Row], cells: dict[str, dict[str, ChangeCell | None]],
-             chain: tuple[str, ...]) -> str:
+def _summary(
+    system_id: str, rows: list[Row], cells: dict[str, dict[str, ChangeCell | None]], chain: tuple[str, ...]
+) -> str:
     """One line for a measured step: per system it was compared with (rows can differ), what changed; rows with an
     `error` cell are named as not compared."""
     name = lambda s: HEADERS.get(s, s)  # noqa: E731
@@ -99,7 +109,9 @@ def _summary(system_id: str, rows: list[Row], cells: dict[str, dict[str, ChangeC
         compared = by_baseline[baseline]
         changed = [f"{row} ({c.changed_from} → {c.verdict})" for row, c in compared if c.changed_from]
         rows_note = f" ({', '.join(row for row, _ in compared)})" if len(by_baseline) > 1 else ""
-        parts.append(f"vs {name(baseline)}{rows_note}: " + ("changed: " + ", ".join(changed) if changed else "no change"))
+        parts.append(
+            f"vs {name(baseline)}{rows_note}: " + ("changed: " + ", ".join(changed) if changed else "no change")
+        )
     if errored:
         parts.append(f"not compared, error: {', '.join(errored)}")
     if no_baseline:
@@ -118,8 +130,10 @@ def render_change_table(rows: list[Row], verdicts: list[Verdict], chain: tuple[s
     lines.append("")
     lines += [_summary(s, rows, cells, chain) for s in measured(verdicts, chain)[1:]]
     lines += _case_lines(rows, verdicts, chain)
-    lines.append("- Changed cells are bold (`before → after`, naming the system compared with: the nearest earlier real "
-                 "verdict of the row, never an `error`).")
+    lines.append(
+        "- Changed cells are bold (`before → after`, naming the system compared with: the nearest earlier real "
+        "verdict of the row, never an `error`)."
+    )
     return "\n".join(lines)
 
 
@@ -130,8 +144,9 @@ def _outcome(case: Case | None) -> str:
 RANDOM_ID_COUNT = "natural_count"  # the measurement key of a count taken on random ids: shown, not compared
 
 
-def case_changes_per_step(rows: list[Row], verdicts: list[Verdict],
-                          chain: tuple[str, ...] = CHAIN) -> dict[str, list[dict]]:
+def case_changes_per_step(
+    rows: list[Row], verdicts: list[Verdict], chain: tuple[str, ...] = CHAIN
+) -> dict[str, list[dict]]:
     """For each measured system after the first of the chain: the rows with a case-level change against the system the
     row's verdict was compared with. An entry: the row, its verdict before and after, `vs`, `cases` (id, name, before,
     after; a broken case that now holds reads `fixed`) and `counts` when the row's random-id count differs. Rows without a case change are not listed."""
@@ -151,10 +166,21 @@ def case_changes_per_step(rows: list[Row], verdicts: list[Verdict],
             for case_id in [*new, *(i for i in old if i not in new)]:
                 a, b = _outcome(old.get(case_id)), _outcome(new.get(case_id))
                 if a != b:
-                    changed.append({"case": case_id, "name": (new.get(case_id) or old[case_id]).name,
-                                    "from": a, "to": "fixed" if (a, b) == ("broken", "held") else b})
-            entry = {"row": r.id, "from": before.verdict, "to": after.verdict, "vs": cell.compared_with,
-                     "cases": changed}
+                    changed.append(
+                        {
+                            "case": case_id,
+                            "name": (new.get(case_id) or old[case_id]).name,
+                            "from": a,
+                            "to": "fixed" if (a, b) == ("broken", "held") else b,
+                        }
+                    )
+            entry = {
+                "row": r.id,
+                "from": before.verdict,
+                "to": after.verdict,
+                "vs": cell.compared_with,
+                "cases": changed,
+            }
             counts = [v.measurements.get(RANDOM_ID_COUNT) for v in (before, after)]
             if counts[0] != counts[1]:
                 entry["counts"] = {"from": counts[0] or "n/a", "to": counts[1] or "n/a"}
@@ -172,24 +198,34 @@ def _case_lines(rows: list[Row], verdicts: list[Verdict], chain: tuple[str, ...]
             parts += [f"{c['name']}: {c['from']} → {c['to']}" for c in e["cases"]]
             if "counts" in e:
                 parts.append(f"random-ID count {e['counts']['from']} → {e['counts']['to']} (shown, not compared)")
-            lines.append(f"- {HEADERS.get(system_id, system_id)} cases: " + " · ".join(parts)
-                         + f" (vs {HEADERS.get(e['vs'], e['vs'])})")
+            lines.append(
+                f"- {HEADERS.get(system_id, system_id)} cases: "
+                + " · ".join(parts)
+                + f" (vs {HEADERS.get(e['vs'], e['vs'])})"
+            )
     return lines
 
 
 def render_change_tables(rows: list[Row], verdicts: list[Verdict]) -> str:
     """The change table of every chain that has a measured system (upstream → step 1 → step 2 → step 3; phase 1 →
     phase 2), each under its own heading; "" when no chain was measured."""
-    parts = [f"### Per-step change table: {' → '.join(HEADERS[s] for s in chain)}\n\n"
-             + render_change_table(rows, verdicts, chain)
-             for chain in CHAINS if measured(verdicts, chain)]
+    parts = [
+        f"### Per-step change table: {' → '.join(HEADERS[s] for s in chain)}\n\n"
+        + render_change_table(rows, verdicts, chain)
+        for chain in CHAINS
+        if measured(verdicts, chain)
+    ]
     return "\n\n".join(parts)
 
 
 def change_table_payload(rows: list[Row], verdicts: list[Verdict], chain: tuple[str, ...]) -> dict:
     """The machine-readable form of one chain's change table, for `results.json`."""
-    return {"chain": list(chain), "measured": measured(verdicts, chain), "changes": changes_per_step(rows, verdicts, chain),
-            "case_changes": case_changes_per_step(rows, verdicts, chain)}
+    return {
+        "chain": list(chain),
+        "measured": measured(verdicts, chain),
+        "changes": changes_per_step(rows, verdicts, chain),
+        "case_changes": case_changes_per_step(rows, verdicts, chain),
+    }
 
 
 _RANK = {PASS: 3, PARTIAL: 2, FAIL: 1, ABSENT: 0, NOT_SCORED: 0}  # a drop in rank is "worse"; ERROR has no rank
@@ -202,8 +238,10 @@ def regression_summary(rows: list[Row], verdicts: list[Verdict], before: str = "
     is an `error`. Otherwise the line names what blocks the claim."""
     name = HEADERS.get
     if not measured(verdicts, (before,)) or not measured(verdicts, (after,)):
-        return (f"**Regressions not assessed:** {name(before, before)} and {name(after, after)} were not both measured, "
-                "so the suite makes no claim about regressions.")
+        return (
+            f"**Regressions not assessed:** {name(before, before)} and {name(after, after)} were not both measured, "
+            "so the suite makes no claim about regressions."
+        )
     worse, broke, unknown, missing, compared = [], [], [], [], 0
     for r in rows:
         a, b = last_verdict(verdicts, before, r.id), last_verdict(verdicts, after, r.id)
@@ -231,6 +269,8 @@ def regression_summary(rows: list[Row], verdicts: list[Verdict], before: str = "
     if missing:
         blockers.append(f"not measured at {name(after, after)}: {', '.join(missing)}")
     if blockers:
-        return f"**Regressions not ruled out:** " + "; ".join(blockers) + "."
-    return (f"**No regressions on the rows the suite checks:** none of the {compared} rows measured at "
-            f"{name(before, before)} and {name(after, after)} is worse at {name(after, after)} (verdict and case level).")
+        return "**Regressions not ruled out:** " + "; ".join(blockers) + "."
+    return (
+        f"**No regressions on the rows the suite checks:** none of the {compared} rows measured at "
+        f"{name(before, before)} and {name(after, after)} is worse at {name(after, after)} (verdict and case level)."
+    )

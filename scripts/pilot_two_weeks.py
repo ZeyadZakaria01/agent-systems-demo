@@ -29,8 +29,20 @@ def record(model: str, setting: str, takes: int, out: Path) -> None:
     folder = out / model.replace(":", "_") / setting
     for n in range(1, takes + 1):
         print(f"[pilot] {model} {setting} take {n}/{takes}", flush=True)
-        rc = subprocess.run([sys.executable, "-m", "demo.chat_run", "record", "two-weeks", "--recordings", str(folder),
-                             *SETTINGS[setting]], cwd=REPO, env={**os.environ, "MEMSTATE_OLLAMA_MODEL": model}).returncode
+        rc = subprocess.run(
+            [
+                sys.executable,
+                "-m",
+                "demo.chat_run",
+                "record",
+                "two-weeks",
+                "--recordings",
+                str(folder),
+                *SETTINGS[setting],
+            ],
+            cwd=REPO,
+            env={**os.environ, "MEMSTATE_OLLAMA_MODEL": model},
+        ).returncode
         if rc:
             print(f"[pilot] take failed (exit {rc})", flush=True)
 
@@ -38,12 +50,15 @@ def record(model: str, setting: str, takes: int, out: Path) -> None:
 def row(rec: dict) -> dict:
     w1, w2 = rec["turns"]
     written = w1.get("written") or []
-    return {"route": w1["route"]["intent"], "wrote": bool(written),
-            "start": bool(w1["stored_start_date"]["within_tolerance"]),
-            "valid_from": [e.get("valid_from") for e in written],
-            "values": [e.get("value") for e in written],
-            "four_weeks": bool(w2.get("answer_contains_ground_truth")),
-            "w2": " ".join(str(w2["answer"]).split())[:160]}
+    return {
+        "route": w1["route"]["intent"],
+        "wrote": bool(written),
+        "start": bool(w1["stored_start_date"]["within_tolerance"]),
+        "valid_from": [e.get("valid_from") for e in written],
+        "values": [e.get("value") for e in written],
+        "four_weeks": bool(w2.get("answer_contains_ground_truth")),
+        "w2": " ".join(str(w2["answer"]).split())[:160],
+    }
 
 
 def summarise(out: Path) -> None:
@@ -51,17 +66,23 @@ def summarise(out: Path) -> None:
     for path in sorted(out.rglob("two-weeks-*.json")):
         model, setting = path.relative_to(out).parts[:2]
         groups[(model, setting)].append(row(json.loads(path.read_text())))
-    print("| model | W1 route | takes | routed ingest/both | W1 wrote | start date within ±1 day | W2 says four weeks |")
+    print(
+        "| model | W1 route | takes | routed ingest/both | W1 wrote | start date within ±1 day | W2 says four weeks |"
+    )
     print("|---|---|---|---|---|---|---|")
     for (model, setting), rows in sorted(groups.items()):
         n = len(rows)
-        print(f"| {model} | {setting} | {n} | {sum(r['route'] != 'query' for r in rows)}/{n} | "
-              f"{sum(r['wrote'] for r in rows)}/{n} | {sum(r['start'] for r in rows)}/{n} | "
-              f"{sum(r['four_weeks'] for r in rows)}/{n} |")
+        print(
+            f"| {model} | {setting} | {n} | {sum(r['route'] != 'query' for r in rows)}/{n} | "
+            f"{sum(r['wrote'] for r in rows)}/{n} | {sum(r['start'] for r in rows)}/{n} | "
+            f"{sum(r['four_weeks'] for r in rows)}/{n} |"
+        )
     for (model, setting), rows in sorted(groups.items()):
         for i, r in enumerate(rows, 1):
-            print(f"- {model} {setting} #{i}: route={r['route']} values={r['values']} valid_from={r['valid_from']} "
-                  f"W2: {r['w2']}")
+            print(
+                f"- {model} {setting} #{i}: route={r['route']} values={r['values']} valid_from={r['valid_from']} "
+                f"W2: {r['w2']}"
+            )
 
 
 def main() -> int:

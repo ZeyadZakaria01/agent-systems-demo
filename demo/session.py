@@ -12,12 +12,15 @@ not touch `ctx.system`. Tags are unique within a check.
 
 from __future__ import annotations
 
+from collections.abc import Callable, Iterator
 from contextlib import contextmanager, nullcontext
-from typing import Callable, ContextManager, Iterator
+from typing import ContextManager
 
 from demo.adapter import System, utc_now
 
-OpenSystem = Callable[[str | None], ContextManager[System]]  # tag (None = the default system) -> a system, cleaned on exit
+OpenSystem = Callable[
+    [str | None], ContextManager[System]
+]  # tag (None = the default system) -> a system, cleaned on exit
 Capture = Callable[[System, str | None, str, str], dict]  # (system, tag, started_at, finished_at) -> evidence
 
 
@@ -34,12 +37,12 @@ class Session:
         self.captured: list[dict] = []  # evidence of every system closed so far, in opening order
 
     @classmethod
-    def around(cls, system: System) -> "Session":
+    def around(cls, system: System) -> Session:
         """A session whose default system is `system` (tests and one-off runs); `fresh_system` is not available."""
         return cls(lambda tag: nullcontext(system) if tag is None else _no_fresh())
 
     @classmethod
-    def in_process(cls, factory: Callable[[], System]) -> "Session":
+    def in_process(cls, factory: Callable[[], System]) -> Session:
         """A session opening a new `factory()` system for every open (in-process systems need no cleanup)."""
         return cls(lambda tag: nullcontext(factory()))
 
@@ -72,8 +75,10 @@ class Session:
     def _enter(self, tag: str | None) -> System:
         if self._active is not None:
             held = self._active[0]
-            raise SystemBusy(f"system {held if held is not None else 'default (ctx.system)'!r} is still open: only one "
-                             f"system at a time; close it before opening {tag!r}")
+            raise SystemBusy(
+                f"system {held if held is not None else 'default (ctx.system)'!r} is still open: only one "
+                f"system at a time; close it before opening {tag!r}"
+            )
         if tag in self._tags:
             raise ValueError(f"system tag {tag!r} already used in this check")
         cm = self._open(tag)

@@ -12,8 +12,10 @@ from demo.reference_gem import reference_gem_id
 from demo.verdict import Verdict
 
 ROW = "Over-flagging"
-CLAIM = ("Not claimed by [P1]: flags raised against flags needed on one chain with one anti-trap, for one-hop and "
-         "transitive propagation. A measurement, no verdict.")
+CLAIM = (
+    "Not claimed by [P1]: flags raised against flags needed on one chain with one anti-trap, for one-hop and "
+    "transitive propagation. A measurement, no verdict."
+)
 HOP_MODES = ("one hop", "transitive walk")
 
 
@@ -25,7 +27,14 @@ def over_flagging(ctx: Ctx) -> Verdict:
     if walker is None:
         raise RuntimeError(f"{ctx.system.label} has no transitive variant to measure")
     transitive = measure(walker, HOP_MODES[1], scenario)
-    return Verdict.not_scored(ROW, measurements={
-        "over_flagging": {"scenario": scenario["name"], "chain": list(scenario["topics"]),
-                          "needs_revision": scenario["needs_revision"],
-                          "runs": [one_hop.to_dict(), transitive.to_dict()]}})
+    return Verdict.not_scored(
+        ROW,
+        measurements={
+            "over_flagging": {
+                "scenario": scenario["name"],
+                "chain": list(scenario["topics"]),
+                "needs_revision": scenario["needs_revision"],
+                "runs": [one_hop.to_dict(), transitive.to_dict()],
+            }
+        },
+    )

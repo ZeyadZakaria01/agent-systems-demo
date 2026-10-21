@@ -24,8 +24,15 @@ def window_entries(verdicts: list[Verdict]) -> list[dict]:
     out = []
     for v in verdicts:
         for w in v.measurements.get("windows") or []:
-            out.append({"system": v.system, "window": w["name"], "value": w["value"], "row": v.row,
-                        "snapshots": list(v.snapshots)})
+            out.append(
+                {
+                    "system": v.system,
+                    "window": w["name"],
+                    "value": w["value"],
+                    "row": v.row,
+                    "snapshots": list(v.snapshots),
+                }
+            )
     return out
 
 

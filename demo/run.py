@@ -28,31 +28,42 @@ interrupted run keeps what it collected. Each system's `setup`/`teardown` hooks 
 from __future__ import annotations
 
 import argparse
-import json
 import shlex
 import sys
+from collections.abc import Callable
 from contextlib import nullcontext
 from dataclasses import dataclass, field
 from datetime import date
 from pathlib import Path
-from typing import Callable
 
 from demo import chat_run, live
 from demo.adapter import utc_now
 from demo.changes import CHAIN, REFERENCE_CHAIN, change_table_payload, regression_summary, render_change_tables
+from demo.chat_recording import RECORDINGS_ROOT, latest_per_case, render_chat_cases, results_payload
 from demo.checks import Check, discover, natural_key
 from demo.deviations import DEVIATIONS
-from demo.chat_recording import RECORDINGS_ROOT, latest_per_case, render_chat_cases, results_payload
 from demo.evidence import RunDir, new_run_dir, write_results
-from demo.failures import detail as _detail, errored as _errored, run_check
+from demo.failures import detail as _detail
+from demo.failures import errored as _errored
+from demo.failures import run_check
 from demo.latency_tables import with_latency
-from demo.paths import RECORD_ROOT, REPO_ROOT, RESULTS_ROOT, SERVER_LOCK, SHARED_ROOT
-from demo.scorecard import (COLUMNS, SCOPE_NOTE, Column, claimed_by_p1, counts, render_deviations, render_limits,
-                            render_merge_existence, render_probes, render_scorecard)
 from demo.over_flagging_tables import render_over_flagging
-from demo.storyline_tables import render_storyline
+from demo.paths import RECORD_ROOT, REPO_ROOT, RESULTS_ROOT, SERVER_LOCK, SHARED_ROOT
 from demo.record import record_run
+from demo.scorecard import (
+    COLUMNS,
+    SCOPE_NOTE,
+    Column,
+    claimed_by_p1,
+    counts,
+    render_deviations,
+    render_limits,
+    render_merge_existence,
+    render_probes,
+    render_scorecard,
+)
 from demo.server_lock import server_lock
+from demo.storyline_tables import render_storyline
 from demo.systems import SYSTEMS, SystemSpec
 from demo.upstream_tests import render_upstream_tests
 from demo.verdict import Verdict, measured
@@ -68,14 +79,24 @@ class RunResult:
     chat_errors: list[str] = field(default_factory=list)  # chat cases the run asked for and could not record
 
 
-ChatRecorder = Callable[[RunDir, Path], "chat_run.Recorded"]  # (this run's folder, the recordings folder) -> what it recorded
+ChatRecorder = Callable[
+    [RunDir, Path], "chat_run.Recorded"
+]  # (this run's folder, the recordings folder) -> what it recorded
 
 
-def run_recorded(systems: list[str], checks: list[Check], results_root: Path, command: str,
-                 run_day: date | None = None, columns: tuple[Column, ...] = COLUMNS,
-                 runtime_root: Path | None = None, registry: dict[str, SystemSpec] | None = None,
-                 recordings_dir: Path | None = None, record_chats: ChatRecorder | None = None,
-                 log=print) -> RunResult:
+def run_recorded(
+    systems: list[str],
+    checks: list[Check],
+    results_root: Path,
+    command: str,
+    run_day: date | None = None,
+    columns: tuple[Column, ...] = COLUMNS,
+    runtime_root: Path | None = None,
+    registry: dict[str, SystemSpec] | None = None,
+    recordings_dir: Path | None = None,
+    record_chats: ChatRecorder | None = None,
+    log=print,
+) -> RunResult:
     registry = registry or SYSTEMS
     run_day = run_day or date.today()
     run = new_run_dir(results_root, runtime_root or SHARED_ROOT / ".runtime" / "gem-suite")
@@ -92,7 +113,9 @@ def run_recorded(systems: list[str], checks: list[Check], results_root: Path, co
         scored = [v for v in verdicts if any(r.id == v.row for r in rows)]
         windows = render_windows(verdicts)
         scorecard = render_scorecard(rows, columns, verdicts)
-        if measured(scored, CHAIN):  # the claim is about the patch steps; a run without them says nothing of regressions
+        if measured(
+            scored, CHAIN
+        ):  # the claim is about the patch steps; a run without them says nothing of regressions
             scorecard += "\n\n" + regression_summary(rows, scored)
         if any(r.probe for r in rows):
             scorecard += "\n\n" + render_probes(rows, columns, scored)
@@ -114,23 +137,43 @@ def run_recorded(systems: list[str], checks: list[Check], results_root: Path, co
         scorecard += "\n\n" + render_limits()
         scorecard += "\n\n" + SCOPE_NOTE + "\n\n### Deviations\n\n" + render_deviations()
         (run.dir / "scorecard.md").write_text(scorecard + "\n")
-        write_results(run, {
-            "run_id": run.id, "mode": "recorded", "complete": complete, "command": command,
-            "run_day": run_day.isoformat(), "started_at": started, "finished_at": utc_now(),
-            "systems": systems, "checks": [c.id for c in checks],
-            "columns": [{"header": c.title, "group": c.group, "system": c.system} for c in columns],
-            "rows": [{"id": r.id, "claim": r.claim, "control": r.control, "probe": r.probe,
-                      "claimed_by_p1": claimed_by_p1(r)} for r in rows],
-            "verdicts": [v.to_dict() for v in verdicts],
-            "counts": {c.system: counts(c, [r for r in rows if not r.probe], verdicts) for c in columns},
-            "change_tables": {"memstate": change_table_payload(rows, scored, CHAIN),
-                              "reference": change_table_payload(rows, scored, REFERENCE_CHAIN)},
-            "regression_summary": regression_summary(rows, scored) if measured(scored, CHAIN) else None,
-            "upstream_tests": test_counts,
-            "servers": run.events,
-            "deviations": [d.__dict__ for d in DEVIATIONS],
-            "chat_cases": results_payload(chats), "chat_errors": chat_errors,
-        })
+        write_results(
+            run,
+            {
+                "run_id": run.id,
+                "mode": "recorded",
+                "complete": complete,
+                "command": command,
+                "run_day": run_day.isoformat(),
+                "started_at": started,
+                "finished_at": utc_now(),
+                "systems": systems,
+                "checks": [c.id for c in checks],
+                "columns": [{"header": c.title, "group": c.group, "system": c.system} for c in columns],
+                "rows": [
+                    {
+                        "id": r.id,
+                        "claim": r.claim,
+                        "control": r.control,
+                        "probe": r.probe,
+                        "claimed_by_p1": claimed_by_p1(r),
+                    }
+                    for r in rows
+                ],
+                "verdicts": [v.to_dict() for v in verdicts],
+                "counts": {c.system: counts(c, [r for r in rows if not r.probe], verdicts) for c in columns},
+                "change_tables": {
+                    "memstate": change_table_payload(rows, scored, CHAIN),
+                    "reference": change_table_payload(rows, scored, REFERENCE_CHAIN),
+                },
+                "regression_summary": regression_summary(rows, scored) if measured(scored, CHAIN) else None,
+                "upstream_tests": test_counts,
+                "servers": run.events,
+                "deviations": [d.__dict__ for d in DEVIATIONS],
+                "chat_cases": results_payload(chats),
+                "chat_errors": chat_errors,
+            },
+        )
         return scorecard
 
     for system_id in systems:
@@ -177,8 +220,13 @@ def run_recorded(systems: list[str], checks: list[Check], results_root: Path, co
             chat_errors.append(_detail(e))
         chats = latest_per_case(recordings_dir)
     scorecard = save(True)
-    return RunResult(dir=run.dir, verdicts=verdicts, scorecard=scorecard,
-                     findings_block=findings_block(run, command, verdicts), chat_errors=chat_errors)
+    return RunResult(
+        dir=run.dir,
+        verdicts=verdicts,
+        scorecard=scorecard,
+        findings_block=findings_block(run, command, verdicts),
+        chat_errors=chat_errors,
+    )
 
 
 def _run_one(run: RunDir, spec: SystemSpec, check: Check, run_day: date) -> list[Verdict]:
@@ -205,12 +253,16 @@ def _observation_text(o) -> str:
 
 def _cases_text(cases) -> str:
     """Every case for short rows; for rows with 7+ cases a tally plus only the cases that did not hold."""
+
     def one(c) -> str:
         return f"{c.name}: {'n/a' if c.held is None else 'held' if c.held else 'BROKE'} ({c.observation})"
+
     if len(cases) <= 6:
         return "; ".join(one(c) for c in cases)
-    tally = (f"{len(cases)} cases: held {sum(c.held is True for c in cases)}, "
-             f"BROKE {sum(c.held is False for c in cases)}, n/a {sum(c.held is None for c in cases)}")
+    tally = (
+        f"{len(cases)} cases: held {sum(c.held is True for c in cases)}, "
+        f"BROKE {sum(c.held is False for c in cases)}, n/a {sum(c.held is None for c in cases)}"
+    )
     rest = [one(c) for c in cases if c.held is not True]
     return tally + (f"; not held: {'; '.join(rest)}" if rest else "")
 
@@ -218,16 +270,22 @@ def _cases_text(cases) -> str:
 def findings_block(run: RunDir, command: str, verdicts: list[Verdict]) -> str:
     """Markdown for `docs/findings.md`: command, DB paths, key output per verdict."""
     lines = [f"Run ({date.today().isoformat()}): `{command}` (recorded mode; results `{run.dir}`).", ""]
-    dbs = [f"`{e['db_path']}` ({e['system']}, {e['check']}; {e['engine_line']}; commit {e['commit']})"
-           for e in run.events if "db_path" in e]
+    dbs = [
+        f"`{e['db_path']}` ({e['system']}, {e['check']}; {e['engine_line']}; commit {e['commit']})"
+        for e in run.events
+        if "db_path" in e
+    ]
     lines.append("DB paths: " + ("; ".join(dbs) if dbs else "none (in-process systems only)") + ".")
     lines += ["", "Key output:", ""]
     for v in verdicts:
         held = _cases_text(v.cases)
         extra = f" error: {v.error.splitlines()[0]}" if v.error else ""
         links = " ".join(f"`{p}`" for p in v.snapshots) or "none"
-        lines.append(f"- {v.row} on {v.system}: **{v.verdict}**{extra}"
-                     + (f" - {held}" if held else "") + f" [snapshots {links}]")
+        lines.append(
+            f"- {v.row} on {v.system}: **{v.verdict}**{extra}"
+            + (f" - {held}" if held else "")
+            + f" [snapshots {links}]"
+        )
         scalars = ", ".join(f"{k}={val}" for k, val in v.measurements.items() if not isinstance(val, (list, dict)))
         if scalars:
             lines.append(f"  - measurements: {scalars}")
@@ -250,13 +308,21 @@ def _main_live(ap: argparse.ArgumentParser, args, available: list[Check], argv: 
     if not args.url:
         ap.error("--mode live needs --url (the server is started by you, never by the runner)")
     if args.systems:
-        ap.error("--systems is for recorded mode; live mode drives the one server at --url (--as picks the check filter)")
+        ap.error(
+            "--systems is for recorded mode; live mode drives the one server at --url (--as picks the check filter)"
+        )
     if args.as_system not in SYSTEMS or args.as_system == "baseline":
         ap.error(f"--as must be a MemState system id; known: {[s for s in SYSTEMS if s != 'baseline']}")
     try:
-        result = live.run_live(args.url, _select(ap, available, args.checks), args.results_root or live.RESULTS_ROOT_LIVE,
-                               shlex.join(["python", "-m", "demo.run", *argv]), as_system=args.as_system,
-                               delay=args.delay, step=args.step)
+        result = live.run_live(
+            args.url,
+            _select(ap, available, args.checks),
+            args.results_root or live.RESULTS_ROOT_LIVE,
+            shlex.join(["python", "-m", "demo.run", *argv]),
+            as_system=args.as_system,
+            delay=args.delay,
+            step=args.step,
+        )
     except live.LiveError as e:
         print(f"error: {e}", file=sys.stderr)
         return 2
@@ -270,27 +336,47 @@ def main(argv: list[str] | None = None) -> int:
     argv = sys.argv[1:] if argv is None else argv
     ap = argparse.ArgumentParser(prog="python -m demo.run", description=__doc__.split("\n\n")[0])
     ap.add_argument("--mode", choices=["recorded", "live"], default="recorded")
-    ap.add_argument("--systems", help=f"comma-separated system ids; known: {', '.join(SYSTEMS)} (default: all; a patch "
-                                         "step fails unless bitemporal holds exactly three commits)")
+    ap.add_argument(
+        "--systems",
+        help=f"comma-separated system ids; known: {', '.join(SYSTEMS)} (default: all; a patch "
+        "step fails unless bitemporal holds exactly three commits)",
+    )
     ap.add_argument("--checks", help="comma-separated row or check ids (default: all)")
     ap.add_argument("--results-root", type=Path, help="default demo/results (recorded) or demo/results-live (live)")
     live_group = ap.add_argument_group("live mode (--mode live; see demo/live.py)")
     live_group.add_argument("--url", help="the running MemState server to drive, e.g. http://127.0.0.1:8765 (required)")
-    live_group.add_argument("--as", dest="as_system", default="upstream", help="system id the server is, for the checks' filter")
+    live_group.add_argument(
+        "--as", dest="as_system", default="upstream", help="system id the server is, for the checks' filter"
+    )
     live_group.add_argument("--delay", type=float, default=0, help="seconds to pause after every write or query")
     live_group.add_argument("--step", action="store_true", help="wait for Enter after every write or query")
-    ap.add_argument("--ramp-repeats", type=int, default=1,
-                    help="times to run each C5 latency ramp (1 while building, 3 for the run of record)")
-    ap.add_argument("--chat", action="store_true",
-                    help="after the systems, record both chat runs (bad-merge on upstream, two-weeks on step 3) into "
-                         "this run's folder; starts Ollama and the proxy and stops them (needs the machine lock)")
-    ap.add_argument("--recordings", type=Path, default=RECORDINGS_ROOT,
-                    help="the chat recordings folder: read for the scorecard, written by --chat (default demo/recordings)")
-    ap.add_argument("--record", action="store_true",
-                    help="final step: copy scorecard.md, results.json and snapshots/ to the tracked demo/record/<run id>/")
+    ap.add_argument(
+        "--ramp-repeats",
+        type=int,
+        default=1,
+        help="times to run each C5 latency ramp (1 while building, 3 for the run of record)",
+    )
+    ap.add_argument(
+        "--chat",
+        action="store_true",
+        help="after the systems, record both chat runs (bad-merge on upstream, two-weeks on step 3) into "
+        "this run's folder; starts Ollama and the proxy and stops them (needs the machine lock)",
+    )
+    ap.add_argument(
+        "--recordings",
+        type=Path,
+        default=RECORDINGS_ROOT,
+        help="the chat recordings folder: read for the scorecard, written by --chat (default demo/recordings)",
+    )
+    ap.add_argument(
+        "--record",
+        action="store_true",
+        help="final step: copy scorecard.md, results.json and snapshots/ to the tracked demo/record/<run id>/",
+    )
     ap.add_argument("--list", action="store_true", help="list checks and systems, then exit")
     args = ap.parse_args(argv)
     import demo.ramp as ramp
+
     ramp.REPEATS = max(1, args.ramp_repeats)
 
     available = discover()
@@ -315,8 +401,9 @@ def main(argv: list[str] | None = None) -> int:
     link_root = RECORD_ROOT if args.record else results_root
     chats = (lambda run, recordings: chat_run.record_chats(run, recordings, link_root, command)) if args.chat else None
     with server_lock() if needs_server_lock(systems, args.chat) else nullcontext():
-        result = run_recorded(systems, checks, results_root, command, recordings_dir=args.recordings,
-                              record_chats=chats)
+        result = run_recorded(
+            systems, checks, results_root, command, recordings_dir=args.recordings, record_chats=chats
+        )
     print("\n## Scorecard\n")
     print(result.scorecard)
     print(f"\nResults: {result.dir}/results.json\n")

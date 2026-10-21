@@ -40,8 +40,11 @@ def repo(tmp_path):
 def test_steps_are_the_commits_above_upstream_oldest_first(repo):
     steps = repo.steps()
     assert len(steps) == 3
-    assert git(repo.path, "log", "--format=%s", "--reverse", f"{repo.base}..bitemporal").split("\n") == \
-        ["step 1", "step 2", "step 3"]
+    assert git(repo.path, "log", "--format=%s", "--reverse", f"{repo.base}..bitemporal").split("\n") == [
+        "step 1",
+        "step 2",
+        "step 3",
+    ]
     assert [repo.step_commit(n) for n in (1, 2, 3)] == steps
 
 
@@ -108,8 +111,16 @@ def test_the_runner_checks_the_step_out_for_its_checks_and_returns_to_the_branch
 
     spec = step_spec(1, repo, open_fn=opened)
     c1 = next(c for c in discover() if c.id == "C1")
-    run = run_recorded(["step1"], [c1], tmp_path, "cmd", run_day=date(2026, 10, 20),
-                       registry={"step1": spec}, runtime_root=tmp_path / "rt", log=lambda *_: None)
+    run = run_recorded(
+        ["step1"],
+        [c1],
+        tmp_path,
+        "cmd",
+        run_day=date(2026, 10, 20),
+        registry={"step1": spec},
+        runtime_root=tmp_path / "rt",
+        log=lambda *_: None,
+    )
     assert seen == [("", repo.step_commit(1))]  # detached, at step 1, while its check ran
     (v,) = run.verdicts
     assert v.verdict == "error" and "server did not start" in v.error
@@ -120,8 +131,16 @@ def test_an_incomplete_patch_gives_error_verdicts_naming_the_commit_count_and_to
     git(repo.path, "reset", "-q", "--hard", "HEAD~1")
     spec = step_spec(2, repo, open_fn=lambda *_: pytest.fail("must not open"))
     c1 = next(c for c in discover() if c.id == "C1")
-    run = run_recorded(["step2"], [c1], tmp_path, "cmd", run_day=date(2026, 10, 20),
-                       registry={"step2": spec}, runtime_root=tmp_path / "rt", log=lambda *_: None)
+    run = run_recorded(
+        ["step2"],
+        [c1],
+        tmp_path,
+        "cmd",
+        run_day=date(2026, 10, 20),
+        registry={"step2": spec},
+        runtime_root=tmp_path / "rt",
+        log=lambda *_: None,
+    )
     (v,) = run.verdicts
     assert v.verdict == "error" and "bitemporal has 2 commit(s)" in v.error and "exactly 3" in v.error
     assert git(repo.path, "branch", "--show-current") == "bitemporal"
@@ -131,8 +150,16 @@ def test_a_dirty_worktree_gives_error_verdicts_not_a_clobbered_checkout(repo, tm
     (repo.path / "f.txt").write_text("mine\n")
     spec = step_spec(1, repo, open_fn=lambda *_: pytest.fail("must not open"))
     c1 = next(c for c in discover() if c.id == "C1")
-    run = run_recorded(["step1"], [c1], tmp_path, "cmd", run_day=date(2026, 10, 20),
-                       registry={"step1": spec}, runtime_root=tmp_path / "rt", log=lambda *_: None)
+    run = run_recorded(
+        ["step1"],
+        [c1],
+        tmp_path,
+        "cmd",
+        run_day=date(2026, 10, 20),
+        registry={"step1": spec},
+        runtime_root=tmp_path / "rt",
+        log=lambda *_: None,
+    )
     assert run.verdicts[0].verdict == "error" and "uncommitted changes" in run.verdicts[0].error
     assert (repo.path / "f.txt").read_text() == "mine\n"
 
@@ -140,8 +167,16 @@ def test_a_dirty_worktree_gives_error_verdicts_not_a_clobbered_checkout(repo, tm
 def run_step1(repo, tmp_path, opened=None):
     spec = step_spec(1, repo, open_fn=opened or (lambda *_: pytest.fail("must not open")))
     c1 = next(c for c in discover() if c.id == "C1")
-    return run_recorded(["step1"], [c1], tmp_path, "cmd", run_day=date(2026, 10, 20), registry={"step1": spec},
-                        runtime_root=tmp_path / "rt", log=lambda *_: None)
+    return run_recorded(
+        ["step1"],
+        [c1],
+        tmp_path,
+        "cmd",
+        run_day=date(2026, 10, 20),
+        registry={"step1": spec},
+        runtime_root=tmp_path / "rt",
+        log=lambda *_: None,
+    )
 
 
 def test_a_refused_setup_leaves_a_detached_worktree_with_a_tracked_edit_exactly_where_it_was(repo, tmp_path):
@@ -158,7 +193,9 @@ def test_a_refused_setup_leaves_a_detached_worktree_with_a_tracked_edit_exactly_
 
 
 def test_a_refused_setup_for_an_operation_in_progress_does_not_move_the_worktree(repo, tmp_path):
-    Path(git(repo.path, "rev-parse", "--path-format=absolute", "--git-path", "MERGE_HEAD")).write_text(repo.head() + "\n")
+    Path(git(repo.path, "rev-parse", "--path-format=absolute", "--git-path", "MERGE_HEAD")).write_text(
+        repo.head() + "\n"
+    )
     run = run_step1(repo, tmp_path)
     assert "operation in progress" in run.verdicts[0].error
     assert git(repo.path, "branch", "--show-current") == "bitemporal"

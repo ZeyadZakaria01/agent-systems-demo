@@ -30,9 +30,9 @@ from __future__ import annotations
 import importlib
 import pkgutil
 import re
+from collections.abc import Callable
 from dataclasses import dataclass
 from datetime import date
-from typing import Callable
 
 from demo.adapter import System
 from demo.session import Session
@@ -90,8 +90,14 @@ class Check:
         return verdicts
 
 
-def check(*, row: str | None = None, claim: str | None = None, control: bool = False,
-          rows: list[Row] | None = None, systems: tuple[str, ...] | None = None) -> Callable[[Callable], Check]:
+def check(
+    *,
+    row: str | None = None,
+    claim: str | None = None,
+    control: bool = False,
+    rows: list[Row] | None = None,
+    systems: tuple[str, ...] | None = None,
+) -> Callable[[Callable], Check]:
     if rows is None:
         if row is None or claim is None:
             raise ValueError("check() needs row= and claim=, or rows=")

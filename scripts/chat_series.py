@@ -45,13 +45,20 @@ def fits_per_minute(prompt_tokens: int, tokens_per_minute: int | None) -> bool:
 def static_prompt_tokens() -> int:
     """The largest static request MemState sends (system prompt and tool list of the ingest or both route), counted
     with the o200k tokenizer from upstream's own source, so a provider too small for it is refused before any take."""
-    code = ("import json, tiktoken\n"
-            "from memstate.llm.tools_schema import build_chat_system_prompt, tools_for_intent_route\n"
-            "enc = tiktoken.get_encoding('o200k_base')\n"
-            "print(max(len(enc.encode(build_chat_system_prompt(r))) + len(enc.encode(json.dumps(tools_for_intent_route(r))))"
-            " for r in ('query', 'ingest', 'both')))")
-    out = subprocess.run([sys.executable, "-c", code], capture_output=True, text=True, check=True,
-                         env={**os.environ, "PYTHONPATH": str(REPO.parent / REPO.name / "MemState" / "src")})
+    code = (
+        "import json, tiktoken\n"
+        "from memstate.llm.tools_schema import build_chat_system_prompt, tools_for_intent_route\n"
+        "enc = tiktoken.get_encoding('o200k_base')\n"
+        "print(max(len(enc.encode(build_chat_system_prompt(r))) + len(enc.encode(json.dumps(tools_for_intent_route(r))))"
+        " for r in ('query', 'ingest', 'both')))"
+    )
+    out = subprocess.run(
+        [sys.executable, "-c", code],
+        capture_output=True,
+        text=True,
+        check=True,
+        env={**os.environ, "PYTHONPATH": str(REPO.parent / REPO.name / "MemState" / "src")},
+    )
     return int(out.stdout.strip())
 
 
@@ -66,19 +73,32 @@ def groq_key() -> str:
 def groq_quota(model: str) -> dict:
     """One 1-token request; returns the rate-limit headers. A 401 or 429 here stops the series before any take."""
     body = json.dumps({"model": model, "messages": [{"role": "user", "content": "ok"}], "max_tokens": 1}).encode()
-    req = urllib.request.Request(GROQ_URL, data=body, method="POST",
-                                 headers={"Authorization": f"Bearer {groq_key()}", "Content-Type": "application/json",
-                                          "User-Agent": "gem-conformance-suite/1.0"})  # Cloudflare blocks urllib's default (1010)
+    req = urllib.request.Request(
+        GROQ_URL,
+        data=body,
+        method="POST",
+        headers={
+            "Authorization": f"Bearer {groq_key()}",
+            "Content-Type": "application/json",
+            "User-Agent": "gem-conformance-suite/1.0",
+        },
+    )  # Cloudflare blocks urllib's default (1010)
     try:
         with urllib.request.urlopen(req, timeout=30) as resp:
             h = resp.headers
     except urllib.error.HTTPError as e:
         raise SystemExit(f"Groq refused the quota check: HTTP {e.code} {e.read()[:200]!r}")
+
     def num(name):
         v = h.get(name)
         return int(v) if v and v.isdigit() else None
-    return {"requests_left_today": num("x-ratelimit-remaining-requests"), "requests_per_day": num("x-ratelimit-limit-requests"),
-            "tokens_left_minute": num("x-ratelimit-remaining-tokens"), "tokens_per_minute": num("x-ratelimit-limit-tokens")}
+
+    return {
+        "requests_left_today": num("x-ratelimit-remaining-requests"),
+        "requests_per_day": num("x-ratelimit-limit-requests"),
+        "tokens_left_minute": num("x-ratelimit-remaining-tokens"),
+        "tokens_per_minute": num("x-ratelimit-limit-tokens"),
+    }
 
 
 def main() -> int:
@@ -90,25 +110,36 @@ def main() -> int:
     ap.add_argument("--out", type=Path, required=True)
     args = ap.parse_args()
     args.out.mkdir(parents=True, exist_ok=True)
-    env = {**os.environ, "GEM_CHAT_PROVIDER": args.provider,
-           ("MEMSTATE_GROQ_MODEL" if args.provider == "groq" else "MEMSTATE_OLLAMA_MODEL"): args.model}
+    env = {
+        **os.environ,
+        "GEM_CHAT_PROVIDER": args.provider,
+        ("MEMSTATE_GROQ_MODEL" if args.provider == "groq" else "MEMSTATE_OLLAMA_MODEL"): args.model,
+    }
     per_take = None
     before = groq_quota(args.model) if args.provider == "groq" else None
     if before:
         print(f"[series] quota: {before}", flush=True)
         prompt = static_prompt_tokens()
         if not fits_per_minute(prompt, before["tokens_per_minute"]):
-            print(f"[series] stop: one MemState request is about {prompt} static tokens plus the turn, over this tier's "
-                  f"{before['tokens_per_minute']} tokens per minute; no take can run", flush=True)
+            print(
+                f"[series] stop: one MemState request is about {prompt} static tokens plus the turn, over this tier's "
+                f"{before['tokens_per_minute']} tokens per minute; no take can run",
+                flush=True,
+            )
             return 4
     while (done := len(list(args.out.glob(f"{args.case}-*.json")))) < args.takes:
         left = before["requests_left_today"] if before else None
         if not take_fits(left, per_take):
-            print(f"[series] stop: {left} requests left today, a take needs about {per_take}; resume tomorrow", flush=True)
+            print(
+                f"[series] stop: {left} requests left today, a take needs about {per_take}; resume tomorrow", flush=True
+            )
             return 3
         print(f"[series] {args.case} take {done + 1}/{args.takes}", flush=True)
-        rc = subprocess.run([sys.executable, "-m", "demo.chat_run", "record", args.case, "--recordings", str(args.out)],
-                            cwd=REPO, env=env).returncode
+        rc = subprocess.run(
+            [sys.executable, "-m", "demo.chat_run", "record", args.case, "--recordings", str(args.out)],
+            cwd=REPO,
+            env=env,
+        ).returncode
         if rc:
             print(f"[series] stop: take {done + 1} failed (exit {rc}); nothing saved, not retried", flush=True)
             return rc

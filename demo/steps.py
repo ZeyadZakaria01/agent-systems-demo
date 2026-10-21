@@ -44,8 +44,9 @@ class PatchRepo:
     def _git(self, *args: str) -> str:
         r = subprocess.run(["git", "-C", str(self.path), *args], capture_output=True, text=True)
         if r.returncode != 0:
-            raise StepError(f"`git -C {self.path} {' '.join(args)}` failed ({r.returncode}): "
-                            f"{(r.stderr or r.stdout).strip()}")
+            raise StepError(
+                f"`git -C {self.path} {' '.join(args)}` failed ({r.returncode}): {(r.stderr or r.stdout).strip()}"
+            )
         return r.stdout.strip()
 
     def steps(self) -> list[str]:
@@ -55,8 +56,10 @@ class PatchRepo:
     def step_commit(self, n: int) -> str:
         steps = self.steps()
         if len(steps) != PATCH_COMMITS:
-            raise StepError(f"{self.branch} has {len(steps)} commit(s) on top of {self.base} "
-                            f"({', '.join(c[:7] for c in steps) or 'none'}); the patch is exactly {PATCH_COMMITS}")
+            raise StepError(
+                f"{self.branch} has {len(steps)} commit(s) on top of {self.base} "
+                f"({', '.join(c[:7] for c in steps) or 'none'}); the patch is exactly {PATCH_COMMITS}"
+            )
         if not 1 <= n <= PATCH_COMMITS:
             raise StepError(f"step {n} does not exist: the patch has steps 1 to {PATCH_COMMITS}")
         return steps[n - 1]
@@ -65,12 +68,15 @@ class PatchRepo:
         for name in IN_PROGRESS:
             marker = Path(self._git("rev-parse", "--path-format=absolute", "--git-path", name))
             if marker.exists():
-                raise StepError(f"{self.path} has a git operation in progress ({name}); finish or abort it before "
-                                "measuring a step")
+                raise StepError(
+                    f"{self.path} has a git operation in progress ({name}); finish or abort it before measuring a step"
+                )
         dirty = self._git("status", "--porcelain", "--untracked-files=no")
         if dirty:
-            raise StepError(f"{self.path} has uncommitted changes to tracked files; refusing to check out a step "
-                            f"over them (commit or stash them first):\n{dirty}")
+            raise StepError(
+                f"{self.path} has uncommitted changes to tracked files; refusing to check out a step "
+                f"over them (commit or stash them first):\n{dirty}"
+            )
 
     def head(self) -> str:
         return self._git("rev-parse", "HEAD")

@@ -14,17 +14,17 @@ measures every system; a patch step fails its setup unless `bitemporal` holds ex
 
 from __future__ import annotations
 
+from collections.abc import Callable, Iterator
 from contextlib import contextmanager
 from dataclasses import dataclass
-from functools import partial
-from typing import Callable, ContextManager, Iterator
+from typing import ContextManager
 
 from demo import server
-from demo.baseline import Baseline
 from demo.adapter import System
+from demo.baseline import Baseline
+from demo.evidence import RunDir, slug
 from demo.memstate_system import MemStateSystem
 from demo.reference_gem import PHASES, ReferenceGem, reference_gem_id
-from demo.evidence import RunDir, slug
 from demo.steps import PatchRepo, StepError
 from demo.upstream_tests import TestCounts, run_patched, run_upstream
 
@@ -55,9 +55,17 @@ def open_memstate(spec_id: str, label: str, patched: bool, db_name: str, tag_id:
     finally:
         system.close()
         stop = handle.stop()
-        run.events.append({"system": spec_id, "check": tag_id, "db_path": handle.info.db_path,
-                           "commit": handle.info.commit, "engine_line": handle.info.engine_line,
-                           "source_dir": handle.info.source_dir, **stop})
+        run.events.append(
+            {
+                "system": spec_id,
+                "check": tag_id,
+                "db_path": handle.info.db_path,
+                "commit": handle.info.commit,
+                "engine_line": handle.info.engine_line,
+                "source_dir": handle.info.source_dir,
+                **stop,
+            }
+        )
         if not stop["port_free_after_stop"]:
             raise server.ServerError(f"port {server.PORT} still busy after stopping {name}")
 
@@ -67,9 +75,12 @@ def open_baseline(tag_id: str, run: RunDir) -> Iterator[System]:
     yield Baseline()
 
 
-def step_spec(n: int, repo: PatchRepo | None = None,
-              open_fn: Callable[[str, RunDir], ContextManager[System]] | None = None,
-              unit_tests: Callable[[], TestCounts] | None = None) -> SystemSpec:
+def step_spec(
+    n: int,
+    repo: PatchRepo | None = None,
+    open_fn: Callable[[str, RunDir], ContextManager[System]] | None = None,
+    unit_tests: Callable[[], TestCounts] | None = None,
+) -> SystemSpec:
     """Patch step `n`: its commit checked out detached in `repo` while its checks run, a `--patched` server on a
     fresh `.lbug` per check, labelled with the step and commit. `open_fn` replaces the server (tests; then the upstream
     tests are not run unless `unit_tests` is given)."""
@@ -107,8 +118,15 @@ def step_spec(n: int, repo: PatchRepo | None = None,
                 raise StepError(f"{spec_id}: the server runs commit {served}, expected step {n} = {commit}")
             yield system
 
-    return SystemSpec(spec_id, name, open_fn or open_step, setup=setup, teardown=teardown, step=n,
-                      unit_tests=unit_tests or (run_patched if open_fn is None else None))
+    return SystemSpec(
+        spec_id,
+        name,
+        open_fn or open_step,
+        setup=setup,
+        teardown=teardown,
+        step=n,
+        unit_tests=unit_tests or (run_patched if open_fn is None else None),
+    )
 
 
 def reference_gem_spec(phase: int) -> SystemSpec:
@@ -128,10 +146,15 @@ def _upstream(tag_id: str, run: RunDir) -> ContextManager[System]:
     return open_memstate("upstream", "upstream", False, "memstate.kuzu", tag_id, run)
 
 
-SYSTEMS: dict[str, SystemSpec] = {s.id: s for s in (
-    SystemSpec("upstream", "upstream (Kuzu)", _upstream, unit_tests=run_upstream),
-    step_spec(1), step_spec(2), step_spec(3),
-    *map(reference_gem_spec, PHASES),
-    SystemSpec("baseline", "baseline", open_baseline),
-)}
+SYSTEMS: dict[str, SystemSpec] = {
+    s.id: s
+    for s in (
+        SystemSpec("upstream", "upstream (Kuzu)", _upstream, unit_tests=run_upstream),
+        step_spec(1),
+        step_spec(2),
+        step_spec(3),
+        *map(reference_gem_spec, PHASES),
+        SystemSpec("baseline", "baseline", open_baseline),
+    )
+}
 STEP_IDS = tuple(i for i, s in SYSTEMS.items() if s.step is not None)  # registry order = the order of the chain

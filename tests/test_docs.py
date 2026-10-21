@@ -30,13 +30,18 @@ def test_finding_numbers_reads_numbered_and_unnumbered_headings():
 
 def test_every_finding_is_numbered_once_in_order():
     numbers = finding_numbers(FINDINGS.read_text())
-    assert numbers == list(range(1, len(numbers) + 1)), \
+    assert numbers == list(range(1, len(numbers) + 1)), (
         "each `## ` heading in docs/findings.md is `F<n>. ` with n = 1, 2, 3, … in file order"
+    )
 
 
 def _resolves(repo, commit: str) -> bool:
-    return subprocess.run(["git", "-C", str(repo), "cat-file", "-e", f"{commit}^{{commit}}"],
-                          capture_output=True).returncode == 0
+    return (
+        subprocess.run(
+            ["git", "-C", str(repo), "cat-file", "-e", f"{commit}^{{commit}}"], capture_output=True
+        ).returncode
+        == 0
+    )
 
 
 @pytest.mark.parametrize("doc", [FINDINGS, REPORT], ids=["findings", "report"])

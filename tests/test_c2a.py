@@ -33,8 +33,15 @@ class LowerIdKeeper(System):
     pass, `supports_setup=False` refuses every setup write (no way to retitle). Archived topics take part in the pass.
     """
 
-    def __init__(self, delay: float = 0.0, merge: bool = True, archive: bool = False, supports_setup: bool = True,
-                 newer_wins: bool = False, keep: str = "lower") -> None:
+    def __init__(
+        self,
+        delay: float = 0.0,
+        merge: bool = True,
+        archive: bool = False,
+        supports_setup: bool = True,
+        newer_wins: bool = False,
+        keep: str = "lower",
+    ) -> None:
         super().__init__("lower-id-keeper")
         self.topics: dict[str, dict] = {}
         self.delay, self.merge, self.archive, self.supports_setup = delay, merge, archive, supports_setup
@@ -42,21 +49,32 @@ class LowerIdKeeper(System):
         self.lock = threading.Lock()
 
     def _topic(self, tid, title, fields=None):
-        return {"id": tid, "title": title, "archived": False, "salience": None, "summary": None, "topic_kind": None,
-                "fields": {n: {"history": [{"value": v}], "current": {"value": v}} for n, v in (fields or {}).items()}}
+        return {
+            "id": tid,
+            "title": title,
+            "archived": False,
+            "salience": None,
+            "summary": None,
+            "topic_kind": None,
+            "fields": {n: {"history": [{"value": v}], "current": {"value": v}} for n, v in (fields or {}).items()},
+        }
 
     def _ingest(self, request):
         with self.lock:
             if request["placement"] == "new_topic":
                 tid = str(uuid.uuid4())
-                self.topics[tid] = self._topic(tid, request["title"], {f["name"]: f["value"] for f in request["fields"]})
+                self.topics[tid] = self._topic(
+                    tid, request["title"], {f["name"]: f["value"] for f in request["fields"]}
+                )
             else:
                 tid = request["topic_id"]
                 if tid not in self.topics:
                     raise Rejected(400, "topic not found")
                 for f in request["fields"]:
-                    self.topics[tid]["fields"][f["name"]] = {"history": [{"value": f["value"]}],
-                                                              "current": {"value": f["value"]}}
+                    self.topics[tid]["fields"][f["name"]] = {
+                        "history": [{"value": f["value"]}],
+                        "current": {"value": f["value"]},
+                    }
         if self.merge:
             threading.Timer(self.delay, self._merge_pass).start()
         return {"topic_id": tid, "applied": [], "version_ids": {}, "similar_topic_ids": []}
@@ -65,7 +83,7 @@ class LowerIdKeeper(System):
         with self.lock:
             live = sorted(self.topics.values(), key=lambda t: t["id"], reverse=self.keep == "higher")
             for i, keep in enumerate(live):
-                for drop in live[i + 1:]:
+                for drop in live[i + 1 :]:
                     if drop["id"] in self.topics and keep["title"] == drop["title"] and keep["id"] in self.topics:
                         for n, f in drop["fields"].items():
                             if self.newer_wins:

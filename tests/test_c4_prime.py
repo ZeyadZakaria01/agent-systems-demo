@@ -2,13 +2,11 @@
 Stand-ins cover the three outcomes (stores and resolves, accepts a source but stores none, no source store); the
 baseline stands in for the versioned row until ticket 20 lands. No MemState mock: upstream is proven by the smoke run."""
 
-from demo.adapter import System
 from demo.baseline import Baseline
 from demo.checks import discover
 from demo.checks.c4_prime import SOURCE_MESSAGE
 from demo.memstate_system import request_properties, source_surface
 from demo.verdict import ABSENT, FAIL, PASS
-
 from tests.test_time_probes import _openapi
 
 
@@ -110,6 +108,7 @@ def test_a_system_that_cannot_tell_whether_it_accepts_a_source_is_refused():
             return {**super()._describe(), "accepts_source": None, "accepts_error": "no schema"}
 
     import pytest
+
     with pytest.raises(RuntimeError, match="refusing to guess"):
         run(Unknown())
 
@@ -129,4 +128,5 @@ def test_the_surface_lists_every_source_named_property_and_path_the_schema_decla
 
 def test_the_prime_row_gets_its_own_snapshot_file():
     from demo.evidence import snapshot_path
+
     assert snapshot_path("baseline", "C4′") != snapshot_path("baseline", "C4")

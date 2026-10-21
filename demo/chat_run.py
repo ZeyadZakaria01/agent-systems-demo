@@ -28,20 +28,31 @@ the recorded run shows what actually happened).
 from __future__ import annotations
 
 import argparse
-import re
 import dataclasses
 import json
+import re
 import subprocess
 import sys
 from contextlib import contextmanager
 from dataclasses import dataclass, field
+from datetime import UTC
 from pathlib import Path
 from typing import TYPE_CHECKING
 
 from demo.adapter import System
-from demo.chat_recording import (chat_provider, LEFT_UNSET, RECORDINGS_ROOT, is_variant, load_recording, new_recording,
-                                 recording_files, render_recording, save_recording)
-from demo.chat_two_weeks import CASE as TWO_WEEKS_CASE, FIRST_INTENT_OVERRIDE, record_two_weeks
+from demo.chat_recording import (
+    LEFT_UNSET,
+    RECORDINGS_ROOT,
+    chat_provider,
+    is_variant,
+    load_recording,
+    new_recording,
+    recording_files,
+    render_recording,
+    save_recording,
+)
+from demo.chat_two_weeks import CASE as TWO_WEEKS_CASE
+from demo.chat_two_weeks import FIRST_INTENT_OVERRIDE, record_two_weeks
 from demo.merge import DEFAULT_INTERVAL_S, DEFAULT_TIMEOUT_S, MergeOutcome, Pair, await_merge, unique_title
 from demo.paths import REPO_ROOT
 from demo.reads import NO_VALUE, current_value
@@ -68,11 +79,20 @@ def trim(topic: dict | None) -> dict | None:
     fields = {}
     for name, f in topic["fields"].items():
         now = current_value(f)
-        fields[name] = {"current": None if now is NO_VALUE else now,
-                        "history": [{k: e.get(k) for k in ("value", "provenance", "why_changed", "impact_expected",
-                                                           "valid_from")} for e in f.get("history") or []]}
-    return {"id": topic["id"], "title": topic["title"], "summary": topic.get("summary"),
-            "topic_kind": topic.get("topic_kind"), "fields": fields}
+        fields[name] = {
+            "current": None if now is NO_VALUE else now,
+            "history": [
+                {k: e.get(k) for k in ("value", "provenance", "why_changed", "impact_expected", "valid_from")}
+                for e in f.get("history") or []
+            ],
+        }
+    return {
+        "id": topic["id"],
+        "title": topic["title"],
+        "summary": topic.get("summary"),
+        "topic_kind": topic.get("topic_kind"),
+        "fields": fields,
+    }
 
 
 def _identity(entry: dict) -> tuple:
@@ -99,7 +119,9 @@ def lost_in_merge(before: dict, after: dict) -> dict:
         gone = [e for e in f["history"] if _identity(e) not in held]
         if gone:
             lost_entries[name] = gone
-            values = [v for v in dict.fromkeys(e["value"] for e in gone) if v not in {e["value"] for e in theirs["history"]}]
+            values = [
+                v for v in dict.fromkeys(e["value"] for e in gone) if v not in {e["value"] for e in theirs["history"]}
+            ]
             if values:
                 lost_values[name] = values
     return {"lost_entries": lost_entries, "lost_values": lost_values, "fields_lost": fields_lost, "kept_fields": kept}
@@ -126,14 +148,25 @@ class BuiltState:
         return self.outcome.survivor_id == self.reexplanation_id and self.outcome.dropped_id == self.original_id
 
 
-def build_bad_merge_state(system: System, storyline: Storyline = WEBSITE_REDESIGN,
-                          merge_timeout: float = DEFAULT_TIMEOUT_S) -> BuiltState:
+def build_bad_merge_state(
+    system: System, storyline: Storyline = WEBSITE_REDESIGN, merge_timeout: float = DEFAULT_TIMEOUT_S
+) -> BuiltState:
     first = storyline.events[0]
     if first.placement != "new_topic" or not first.topic:
         raise ScenarioError("the storyline's first event must create the topic that gets duplicated")
     placeholder = unique_title(TITLE)
-    pair_ids = [system.ingest({"placement": "new_topic", "title": f"{placeholder} {n}", "topic_kind": first.topic_kind,
-                               "summary": first.summary, "fields": []})["topic_id"] for n in ("first", "second")]
+    pair_ids = [
+        system.ingest(
+            {
+                "placement": "new_topic",
+                "title": f"{placeholder} {n}",
+                "topic_kind": first.topic_kind,
+                "summary": first.summary,
+                "fields": [],
+            }
+        )["topic_id"]
+        for n in ("first", "second")
+    ]
     reexplanation_id, original_id = sorted(pair_ids)  # the merge keeps the lower id (F9)
     ids = {first.topic: original_id}
     # the original's first event writes into the placeholder: the topic exists already under its placeholder title
@@ -145,9 +178,13 @@ def build_bad_merge_state(system: System, storyline: Storyline = WEBSITE_REDESIG
         if event.placement == "new_topic":
             ids[event.topic] = response["topic_id"]
         played += 1
-    system.ingest({"placement": "extend_topic", "topic_id": reexplanation_id,
-                   "fields": [{"name": REEXPLAINED_FIELD, "value": REEXPLAINED_VALUE,
-                               "provenance": REEXPLAINED_PROVENANCE}]})
+    system.ingest(
+        {
+            "placement": "extend_topic",
+            "topic_id": reexplanation_id,
+            "fields": [{"name": REEXPLAINED_FIELD, "value": REEXPLAINED_VALUE, "provenance": REEXPLAINED_PROVENANCE}],
+        }
+    )
     before_original = trim(system.read_topic(original_id))
     before_reexplanation = trim(system.read_topic(reexplanation_id))
     labels = []
@@ -157,19 +194,32 @@ def build_bad_merge_state(system: System, storyline: Storyline = WEBSITE_REDESIG
             raise ScenarioError("the system has no way to retitle a topic: the bad merge cannot be arranged")
         labels.append(label)
     system.ingest({"placement": "extend_topic", "topic_id": reexplanation_id, "fields": []})  # the merge trigger
-    pair = Pair(first.title or "", REEXPLAINED_FIELD, reexplanation_id, original_id, REEXPLAINED_VALUE, REEXPLAINED_VALUE)
+    pair = Pair(
+        first.title or "", REEXPLAINED_FIELD, reexplanation_id, original_id, REEXPLAINED_VALUE, REEXPLAINED_VALUE
+    )
     outcome = await_merge(system, pair, merge_timeout, DEFAULT_INTERVAL_S)
     if not outcome.merged:
         raise ScenarioError(f"no merge seen within {merge_timeout:g} s of the trigger")
     survivor = trim(system.read_topic(outcome.survivor_id)) if outcome.survivor_id else None
     if survivor is None:
         raise ScenarioError("the merge left no survivor to read")
-    built = BuiltState(events=played, topic_ids=ids, original_id=original_id, reexplanation_id=reexplanation_id,
-                       outcome=outcome, before_original=before_original, before_reexplanation=before_reexplanation,
-                       survivor=survivor, loss=lost_in_merge(before_original, survivor), setup_labels=labels)
+    built = BuiltState(
+        events=played,
+        topic_ids=ids,
+        original_id=original_id,
+        reexplanation_id=reexplanation_id,
+        outcome=outcome,
+        before_original=before_original,
+        before_reexplanation=before_reexplanation,
+        survivor=survivor,
+        loss=lost_in_merge(before_original, survivor),
+        setup_labels=labels,
+    )
     if not built.arranged:
-        raise ScenarioError(f"the merge kept {outcome.survivor_id} and dropped {outcome.dropped_id}; the run needs it to "
-                            f"keep the re-explanation {reexplanation_id} and drop the original {original_id}")
+        raise ScenarioError(
+            f"the merge kept {outcome.survivor_id} and dropped {outcome.dropped_id}; the run needs it to "
+            f"keep the re-explanation {reexplanation_id} and drop the original {original_id}"
+        )
     return built
 
 
@@ -181,8 +231,14 @@ CASE_TITLE = "Bad merge on upstream: the re-explained Website Redesign is merged
 
 
 def _setup_writes(system: System) -> list[dict]:
-    return [{"action": e["op"], "label": e["request"]["label"],
-             **{k: v for k, v in e["request"].items() if k not in ("action", "label")}} for e in system.log.of_kind("setup")]
+    return [
+        {
+            "action": e["op"],
+            "label": e["request"]["label"],
+            **{k: v for k, v in e["request"].items() if k not in ("action", "label")},
+        }
+        for e in system.log.of_kind("setup")
+    ]
 
 
 def contains_every_word(truth: object, answer: str) -> bool:
@@ -198,9 +254,14 @@ def state_violation(built: BuiltState, question) -> dict:
     name = question.field
     lost = built.loss["lost_entries"].get(name, [])
     slot = built.survivor["fields"].get(name)
-    return {"present": bool(lost), "condition": "C4" if lost else None, "field": name, "lost_entries": lost,
-            "lost_values": built.loss["lost_values"].get(name, []),
-            "current_after": None if slot is None else slot["current"]}
+    return {
+        "present": bool(lost),
+        "condition": "C4" if lost else None,
+        "field": name,
+        "lost_entries": lost,
+        "lost_values": built.loss["lost_values"].get(name, []),
+        "current_after": None if slot is None else slot["current"],
+    }
 
 
 def ask(system: System, built: BuiltState, question) -> dict:
@@ -211,22 +272,43 @@ def ask(system: System, built: BuiltState, question) -> dict:
     after = trim(system.read_topic(built.reexplanation_id))
     entry = next(e for e in reversed(system.log.entries) if e["kind"] == "chat")
     answer = response.get("reply") or ""
-    return {"question": question.id, "ability": question.ability, "text": question.text,
-            "ground_truth": question.truth, "topic_key": question.topic, "field": question.field,
-            "request": request, "answer": answer,
-            "answer_contains_ground_truth": contains_every_word(question.truth, answer),
-            "route": {"intent": response.get("intent"), "intent_source": response.get("intent_source"),
-                      "tool_calls": [t.get("tool") for t in response.get("tool_log") or []]},
-            "latency_ms": entry["latency_ms"], "model": response.get("model"), "provider": response.get("provider"),
-            "tool_log": response.get("tool_log") or [],
-            "state_violation": state_violation(built, question),
-            "topic_changed_by_turn": before != after}
+    return {
+        "question": question.id,
+        "ability": question.ability,
+        "text": question.text,
+        "ground_truth": question.truth,
+        "topic_key": question.topic,
+        "field": question.field,
+        "request": request,
+        "answer": answer,
+        "answer_contains_ground_truth": contains_every_word(question.truth, answer),
+        "route": {
+            "intent": response.get("intent"),
+            "intent_source": response.get("intent_source"),
+            "tool_calls": [t.get("tool") for t in response.get("tool_log") or []],
+        },
+        "latency_ms": entry["latency_ms"],
+        "model": response.get("model"),
+        "provider": response.get("provider"),
+        "tool_log": response.get("tool_log") or [],
+        "state_violation": state_violation(built, question),
+        "topic_changed_by_turn": before != after,
+    }
 
 
-def record_bad_merge(system: System, *, run_id: str, recorded_at: str, command: str = "",
-                     ollama_base_url: str | None = None, storyline: Storyline = WEBSITE_REDESIGN,
-                     question_ids: tuple[str, ...] = QUESTIONS, merge_timeout: float = DEFAULT_TIMEOUT_S,
-                     snapshot: str | None = None, extra: dict | None = None) -> dict:
+def record_bad_merge(
+    system: System,
+    *,
+    run_id: str,
+    recorded_at: str,
+    command: str = "",
+    ollama_base_url: str | None = None,
+    storyline: Storyline = WEBSITE_REDESIGN,
+    question_ids: tuple[str, ...] = QUESTIONS,
+    merge_timeout: float = DEFAULT_TIMEOUT_S,
+    snapshot: str | None = None,
+    extra: dict | None = None,
+) -> dict:
     """Build the state, ask the questions, return the recording (a plain dict; `save_recording` writes it)."""
     asked = {q.id: q for q in storyline.questions}
     unknown = [q for q in question_ids if q not in asked]
@@ -239,20 +321,41 @@ def record_bad_merge(system: System, *, run_id: str, recorded_at: str, command: 
     built = build_bad_merge_state(system, storyline, merge_timeout)
     turns = [ask(system, built, asked[i]) for i in question_ids]
     return new_recording(
-        system.describe(), case=CASE, title=CASE_TITLE, run_id=run_id, recorded_at=recorded_at, command=command,
-        snapshot=snapshot, ollama_base_url=ollama_base_url, left_unset=list(LEFT_UNSET), turns=turns, extra=extra,
+        system.describe(),
+        case=CASE,
+        title=CASE_TITLE,
+        run_id=run_id,
+        recorded_at=recorded_at,
+        command=command,
+        snapshot=snapshot,
+        ollama_base_url=ollama_base_url,
+        left_unset=list(LEFT_UNSET),
+        turns=turns,
+        extra=extra,
         state={
-            "title": first.title, "events_played": built.events, "topic_ids": built.topic_ids,
-            "original_id": built.original_id, "reexplanation_id": built.reexplanation_id,
-            "reexplained": {"field": REEXPLAINED_FIELD, "value": REEXPLAINED_VALUE,
-                            "provenance": REEXPLAINED_PROVENANCE},
-            "merge": {"survivor_id": built.outcome.survivor_id, "dropped_id": built.outcome.dropped_id,
-                      "dropped_state": built.outcome.dropped_state.value if built.outcome.dropped_state else None,
-                      "window_s": built.outcome.window_s, "arranged": built.arranged},
+            "title": first.title,
+            "events_played": built.events,
+            "topic_ids": built.topic_ids,
+            "original_id": built.original_id,
+            "reexplanation_id": built.reexplanation_id,
+            "reexplained": {
+                "field": REEXPLAINED_FIELD,
+                "value": REEXPLAINED_VALUE,
+                "provenance": REEXPLAINED_PROVENANCE,
+            },
+            "merge": {
+                "survivor_id": built.outcome.survivor_id,
+                "dropped_id": built.outcome.dropped_id,
+                "dropped_state": built.outcome.dropped_state.value if built.outcome.dropped_state else None,
+                "window_s": built.outcome.window_s,
+                "arranged": built.arranged,
+            },
             "setup_writes": _setup_writes(system),
             "before_merge": {"original": built.before_original, "reexplanation": built.before_reexplanation},
             "after_merge": {"survivor": built.survivor},
-            "loss": built.loss})
+            "loss": built.loss,
+        },
+    )
 
 
 # -- command line: replay (JSON only) and record (needs the machine: MemState, Ollama, the GPU)
@@ -280,6 +383,7 @@ def replay(paths: list[Path], out=None, err=None) -> int:
 
 def _port_open(port: int) -> bool:
     import socket
+
     with socket.socket() as s:
         s.settimeout(0.5)
         return s.connect_ex(("127.0.0.1", port)) == 0
@@ -353,17 +457,23 @@ def warm_up(model: str) -> float:
     Returns the seconds it took; the run states the model was warm."""
     import time
     import urllib.request
+
     t0 = time.perf_counter()
-    req = urllib.request.Request(f"{PROXY_URL}/api/generate", method="POST",
-                                 data=json.dumps({"model": model, "prompt": "Reply with OK.", "stream": False}).encode(),
-                                 headers={"Content-Type": "application/json"})
+    req = urllib.request.Request(
+        f"{PROXY_URL}/api/generate",
+        method="POST",
+        data=json.dumps({"model": model, "prompt": "Reply with OK.", "stream": False}).encode(),
+        headers={"Content-Type": "application/json"},
+    )
     with urllib.request.urlopen(req, timeout=300):
         pass
     return round(time.perf_counter() - t0, 2)
 
 
-TWO_WEEKS_VARIANTS = {"--no-router-decides": {"first_intent_override": FIRST_INTENT_OVERRIDE},
-                      "--seed-profile": {"seed": True}}
+TWO_WEEKS_VARIANTS = {
+    "--no-router-decides": {"first_intent_override": FIRST_INTENT_OVERRIDE},
+    "--seed-profile": {"seed": True},
+}
 CASES = (CASE, TWO_WEEKS_CASE)  # the order the run of record records them in
 CASE_SYSTEM = {CASE: ("upstream", "chat-bad-merge"), TWO_WEEKS_CASE: ("step3", "chat-two-weeks")}
 
@@ -381,13 +491,22 @@ def _link(path: Path) -> str:
         return str(path)
 
 
-def _record_case(case: str, run: "RunDir", recordings: Path, link_root: Path, flags: tuple[str, ...],
-                 environment: dict, command: str, ollama_url: str) -> Path:
+def _record_case(
+    case: str,
+    run: RunDir,
+    recordings: Path,
+    link_root: Path,
+    flags: tuple[str, ...],
+    environment: dict,
+    command: str,
+    ollama_url: str,
+) -> Path:
     """One chat run on a fresh DB: its server started and stopped here (a step checked out for the run and returned
     after it). The snapshot goes to `<run dir>/snapshots/...` and the recording cites it as `<link_root>/<run id>/...`:
     `link_root` is where the run folder will be (the results root, or `demo/record/` for the run of record), so the
     link resolves from the repository root. A variant take is saved under `attempts/`, never as the scored case."""
-    from datetime import date, datetime, timezone
+    from datetime import date, datetime
+
     from demo import evidence
     from demo.adapter import utc_now
     from demo.systems import SYSTEMS
@@ -400,12 +519,24 @@ def _record_case(case: str, run: "RunDir", recordings: Path, link_root: Path, fl
             spec.setup(run)
         started_at = utc_now()
         with spec.open(tag, run) as system:
-            common = dict(run_id=run.id, recorded_at=datetime.now(timezone.utc).isoformat(timespec="seconds"),
-                          command=command, ollama_base_url=ollama_url, snapshot=_link(link_root / run.id / snapshot),
-                          extra={"environment": environment})
-            recording = (record_bad_merge(system, **common) if case == CASE
-                         else record_two_weeks(system, run_day=date.today(), **common,
-                                               **{k: v for f in flags for k, v in TWO_WEEKS_VARIANTS[f].items()}))
+            common = dict(
+                run_id=run.id,
+                recorded_at=datetime.now(UTC).isoformat(timespec="seconds"),
+                command=command,
+                ollama_base_url=ollama_url,
+                snapshot=_link(link_root / run.id / snapshot),
+                extra={"environment": environment},
+            )
+            recording = (
+                record_bad_merge(system, **common)
+                if case == CASE
+                else record_two_weeks(
+                    system,
+                    run_day=date.today(),
+                    **common,
+                    **{k: v for f in flags for k, v in TWO_WEEKS_VARIANTS[f].items()},
+                )
+            )
             captured = evidence.capture(system_id, tag, system, None, started_at, utc_now())
     finally:
         if spec.teardown is not None:
@@ -416,8 +547,15 @@ def _record_case(case: str, run: "RunDir", recordings: Path, link_root: Path, fl
     return save_recording(recording, recordings / "attempts" if is_variant(recording) else recordings)
 
 
-def record_chats(run: "RunDir", recordings: Path, link_root: Path, command: str, cases: tuple[str, ...] = CASES,
-                 flags: tuple[str, ...] = (), log=print) -> Recorded:
+def record_chats(
+    run: RunDir,
+    recordings: Path,
+    link_root: Path,
+    command: str,
+    cases: tuple[str, ...] = CASES,
+    flags: tuple[str, ...] = (),
+    log=print,
+) -> Recorded:
     """Record `cases` in `run`, with Ollama and the proxy up for the whole block and stopped after it. A case that fails
     is reported in `errors` and the next one still runs. Used by `record_cli` (one case, a run folder of its own) and
     by `python -m demo.run --chat` (both cases, in the suite's run folder); both hold the machine-wide lock around it."""
@@ -426,8 +564,9 @@ def record_chats(run: "RunDir", recordings: Path, link_root: Path, command: str,
     result = Recorded()
     if chat_provider() == "groq":  # hosted: no Ollama, no warm-up; MemState calls Groq with MEMSTATE_GROQ_MODEL
         environment = {"provider": "groq", "groq_model_setting": os.environ.get("MEMSTATE_GROQ_MODEL")}
-        return _record_cases(cases, run, recordings, link_root, flags, environment, command,
-                             "https://api.groq.com (Groq)", result, log)
+        return _record_cases(
+            cases, run, recordings, link_root, flags, environment, command, "https://api.groq.com (Groq)", result, log
+        )
     base = os.environ.get("MEMSTATE_OLLAMA_BASE_URL")
     if base and base.rstrip("/") != PROXY_URL:
         raise OllamaError(f"MEMSTATE_OLLAMA_BASE_URL={base} bypasses the think-off proxy (ADR 0003); unset it")
@@ -435,8 +574,12 @@ def record_chats(run: "RunDir", recordings: Path, link_root: Path, command: str,
     ollama_url = f"{PROXY_URL} (think-off proxy, ADR 0003) -> Ollama :{OLLAMA_PORT}"
     with ollama_running() as started:
         warm = warm_up(model)
-        environment = {"model_warmed_up_s": warm, "ollama_started_by_run": started, "ollama_model_setting": model,
-                       "think": os.environ.get("GEM_THINK", "0") == "1"}
+        environment = {
+            "model_warmed_up_s": warm,
+            "ollama_started_by_run": started,
+            "ollama_model_setting": model,
+            "think": os.environ.get("GEM_THINK", "0") == "1",
+        }
         return _record_cases(cases, run, recordings, link_root, flags, environment, command, ollama_url, result, log)
 
 
@@ -480,16 +623,32 @@ def main(argv: list[str] | None = None) -> int:
     sub = ap.add_subparsers(dest="mode", required=True)
     rec = sub.add_parser("record", help="record a chat run (starts MemState and Ollama; run under the lock)")
     rec.add_argument("case", choices=[CASE, TWO_WEEKS_CASE])
-    rec.add_argument("--provider", choices=["ollama", "groq"], default=None,
-                     help="LLM provider for the chat turns (default ollama, or GEM_CHAT_PROVIDER); groq uses MEMSTATE_GROQ_MODEL")
-    rec.add_argument("--recordings", type=Path, default=RECORDINGS_ROOT, help="where the recording is written (a variant take goes to its attempts/ folder)")
-    rec.add_argument("--router-decides", action=argparse.BooleanOptionalAction, default=True,
-                     help="two-weeks only, default on: W1 carries no `intent_override`; --no-router-decides forces the "
-                          "ingest route for W1 (a variant: the router sends the statement to `query`, F31; a variant take is saved "
-                          "under attempts/ and is never the scored case)")
-    rec.add_argument("--seed-profile", action="store_true",
-                     help="two-weeks only: write one profile topic (Me: job = analyst at Acme) through /v1 first (a variant: "
-                          "saved under attempts/, never the scored case)")
+    rec.add_argument(
+        "--provider",
+        choices=["ollama", "groq"],
+        default=None,
+        help="LLM provider for the chat turns (default ollama, or GEM_CHAT_PROVIDER); groq uses MEMSTATE_GROQ_MODEL",
+    )
+    rec.add_argument(
+        "--recordings",
+        type=Path,
+        default=RECORDINGS_ROOT,
+        help="where the recording is written (a variant take goes to its attempts/ folder)",
+    )
+    rec.add_argument(
+        "--router-decides",
+        action=argparse.BooleanOptionalAction,
+        default=True,
+        help="two-weeks only, default on: W1 carries no `intent_override`; --no-router-decides forces the "
+        "ingest route for W1 (a variant: the router sends the statement to `query`, F31; a variant take is saved "
+        "under attempts/ and is never the scored case)",
+    )
+    rec.add_argument(
+        "--seed-profile",
+        action="store_true",
+        help="two-weeks only: write one profile topic (Me: job = analyst at Acme) through /v1 first (a variant: "
+        "saved under attempts/, never the scored case)",
+    )
     rep = sub.add_parser("replay", help="print recordings: no server, no Ollama, no GPU")
     rep.add_argument("paths", nargs="*", type=Path, help=f"files or folders (default {RECORDINGS_ROOT})")
     args = ap.parse_args(argv)
@@ -497,8 +656,11 @@ def main(argv: list[str] | None = None) -> int:
         return replay(args.paths or [RECORDINGS_ROOT])
     if args.provider:
         import os
+
         os.environ["GEM_CHAT_PROVIDER"] = args.provider
-    flags = tuple(f for f in TWO_WEEKS_VARIANTS if (not args.router_decides if f == "--no-router-decides" else args.seed_profile))
+    flags = tuple(
+        f for f in TWO_WEEKS_VARIANTS if (not args.router_decides if f == "--no-router-decides" else args.seed_profile)
+    )
     if flags and args.case != TWO_WEEKS_CASE:
         ap.error(f"{', '.join(flags)} apply to the two-weeks case only")
     return record_cli(args.recordings, args.case, flags)

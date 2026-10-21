@@ -18,8 +18,15 @@ import pytest
 
 from demo.adapter import System
 from demo.chat_recording import load_recording, render_recording, save_recording
-from demo.chat_two_weeks import (CASE, FIRST_MESSAGE, SECOND_MESSAGE, dates_in_text, plan, record_two_weeks,
-                                 states_four_weeks)
+from demo.chat_two_weeks import (
+    CASE,
+    FIRST_MESSAGE,
+    SECOND_MESSAGE,
+    dates_in_text,
+    plan,
+    record_two_weeks,
+    states_four_weeks,
+)
 
 RUN_DAY = date(2026, 10, 20)
 
@@ -39,15 +46,25 @@ class JobStandIn(System):
         message = request["messages"][-1]["content"]
         for name, value, valid_from in self.effects.get(message, []):
             topic = self.topics.setdefault("t1", {"id": "t1", "title": "Me", "archived": False, "fields": {}})
-            entry = {"value": value, "valid_from": valid_from, "provenance": f"chat (reference_time {request['reference_time']})",
-                     "created_at": f"wall-{next(self.ids)}", "why_changed": None}
+            entry = {
+                "value": value,
+                "valid_from": valid_from,
+                "provenance": f"chat (reference_time {request['reference_time']})",
+                "created_at": f"wall-{next(self.ids)}",
+                "why_changed": None,
+            }
             slot = topic["fields"].setdefault(name, {"history": [], "current": None})
             slot["history"].insert(0, entry)
             slot["current"] = slot["history"][0]
-        return {"reply": self.replies.get(message, "OK."),
-                "tool_log": [{"tool": "memory_append_field"}] if message in self.effects else [],
-                "model": "stand-in-model", "provider": request.get("provider"), "intent": "ingest" if message in self.effects else "query",
-                "intent_source": "classifier", "max_tool_rounds": 6}
+        return {
+            "reply": self.replies.get(message, "OK."),
+            "tool_log": [{"tool": "memory_append_field"}] if message in self.effects else [],
+            "model": "stand-in-model",
+            "provider": request.get("provider"),
+            "intent": "ingest" if message in self.effects else "query",
+            "intent_source": "classifier",
+            "max_tool_rounds": 6,
+        }
 
     def _read_state(self):
         return {"topics": copy.deepcopy(self.topics), "edges": None}
@@ -57,8 +74,16 @@ class JobStandIn(System):
 
     def _ingest(self, request):  # only the optional seed goes through /v1
         self.ingests.append(request)
-        entries = [{"value": f["value"], "valid_from": f.get("valid_from"), "provenance": f.get("provenance", "api"),
-                    "created_at": f"wall-seed-{next(self.ids)}", "why_changed": None} for f in request["fields"]]
+        entries = [
+            {
+                "value": f["value"],
+                "valid_from": f.get("valid_from"),
+                "provenance": f.get("provenance", "api"),
+                "created_at": f"wall-seed-{next(self.ids)}",
+                "why_changed": None,
+            }
+            for f in request["fields"]
+        ]
         fields = {f["name"]: {"history": [e], "current": e} for f, e in zip(request["fields"], entries)}
         self.topics["seed-1"] = {"id": "seed-1", "title": request["title"], "archived": False, "fields": fields}
         return {"topic_id": "seed-1", "applied": [], "version_ids": {}, "similar_topic_ids": []}
@@ -70,13 +95,21 @@ class JobStandIn(System):
         raise AssertionError("the two-weeks run must not make a setup write")
 
     def _describe(self):
-        return {"system": "stand-in step 3", "keeps_history": True, "url": "stand-in", "db_path": "/db", "commit": "5c5c9e6" + "0" * 33,
-                "engine": "stand-in-engine"}
+        return {
+            "system": "stand-in step 3",
+            "keeps_history": True,
+            "url": "stand-in",
+            "db_path": "/db",
+            "commit": "5c5c9e6" + "0" * 33,
+            "engine": "stand-in-engine",
+        }
 
 
 def recorded(run_day=RUN_DAY, effects=None, replies=None):
-    system = JobStandIn(effects=effects if effects is not None else {FIRST_MESSAGE: [("start_date", "Sep 22", None)]},
-                        replies=replies if replies is not None else {FIRST_MESSAGE: "Noted.", SECOND_MESSAGE: "About four weeks."})
+    system = JobStandIn(
+        effects=effects if effects is not None else {FIRST_MESSAGE: [("start_date", "Sep 22", None)]},
+        replies=replies if replies is not None else {FIRST_MESSAGE: "Noted.", SECOND_MESSAGE: "About four weeks."},
+    )
     return system, record_two_weeks(system, run_id="test-run", recorded_at="2026-10-21T10:00:00+00:00", run_day=run_day)
 
 
@@ -100,8 +133,10 @@ def test_the_story_shifts_with_the_run_day_and_keeps_its_gaps():
 
 def test_the_run_sends_two_separate_requests_one_message_each_with_the_shifted_reference_times():
     system, _ = recorded()
-    assert [c["messages"] for c in system.chats] == [[{"role": "user", "content": "I started my new job two weeks ago"}],
-                                                      [{"role": "user", "content": "How long have I been at my new job?"}]]
+    assert [c["messages"] for c in system.chats] == [
+        [{"role": "user", "content": "I started my new job two weeks ago"}],
+        [{"role": "user", "content": "How long have I been at my new job?"}],
+    ]
     assert [c["reference_time"] for c in system.chats] == ["2026-10-06T00:00:00+00:00", "2026-10-20T00:00:00+00:00"]
 
 
@@ -122,8 +157,12 @@ def test_the_variant_that_forces_the_first_route_says_so_in_the_request_the_reco
     system = JobStandIn()
     rec = record_two_weeks(system, run_id="r", recorded_at="t", run_day=RUN_DAY, first_intent_override="ingest")
     first, second = system.chats
-    assert first == {"messages": first["messages"], "provider": "ollama", "reference_time": first["reference_time"],
-                     "intent_override": "ingest"}
+    assert first == {
+        "messages": first["messages"],
+        "provider": "ollama",
+        "reference_time": first["reference_time"],
+        "intent_override": "ingest",
+    }
     assert "intent_override" not in second
     assert rec["state"]["first_intent_override"] == "ingest"
     assert any("`intent_override: ingest` on W1 only" in s for s in rec["llm"]["left_unset"])
@@ -193,23 +232,34 @@ def test_the_second_turn_records_what_it_wrote_and_whether_the_answer_says_four_
     assert wrong["turns"][1]["answer_contains_ground_truth"] is False
 
 
-@pytest.mark.parametrize("answer, expected", [
-    ("About four weeks.", True), ("4 weeks", True), ("Four weeks, to be exact", True), ("28 days.", True),
-    ("two weeks", False), ("I don't know.", False), ("You started on September 22.", False),
-])
+@pytest.mark.parametrize(
+    "answer, expected",
+    [
+        ("About four weeks.", True),
+        ("4 weeks", True),
+        ("Four weeks, to be exact", True),
+        ("28 days.", True),
+        ("two weeks", False),
+        ("I don't know.", False),
+        ("You started on September 22.", False),
+    ],
+)
 def test_the_four_weeks_hint(answer, expected):
     assert states_four_weeks(answer) is expected
 
 
-@pytest.mark.parametrize("text, found", [
-    ("started on 2026-09-22", ["2026-09-22"]),
-    ("Sep 22", ["2026-09-22"]),
-    ("Started Sept 22nd, 2025.", ["2025-09-22"]),
-    ("22 September 2026", ["2026-09-22"]),
-    ("from September 22 to October 6", ["2026-09-22", "2026-10-06"]),
-    ("manager at Initech", []),
-    ("May 32", []),
-])
+@pytest.mark.parametrize(
+    "text, found",
+    [
+        ("started on 2026-09-22", ["2026-09-22"]),
+        ("Sep 22", ["2026-09-22"]),
+        ("Started Sept 22nd, 2025.", ["2025-09-22"]),
+        ("22 September 2026", ["2026-09-22"]),
+        ("from September 22 to October 6", ["2026-09-22", "2026-10-06"]),
+        ("manager at Initech", []),
+        ("May 32", []),
+    ],
+)
 def test_dates_in_text_reads_iso_and_month_name_dates_with_the_default_year(text, found):
     assert [d.isoformat() for d in dates_in_text(text, 2026)] == found
 
@@ -224,7 +274,11 @@ def test_the_recording_describes_the_system_the_llm_and_how_the_dates_were_chose
     assert rec["llm"]["provider"] == "ollama" and rec["llm"]["model"] == "stand-in-model"
     dates = rec["state"]["dates"]
     assert (dates["run_day"], dates["first_reference_time"], dates["start_date"], dates["shift_days"]) == (
-        "2026-10-21", "2026-10-07", "2026-09-23", 1)
+        "2026-10-21",
+        "2026-10-07",
+        "2026-09-23",
+        1,
+    )
     assert rec["state"]["seeded_topics"] == 0 and rec["state"]["seed"] is None
 
 
@@ -242,7 +296,8 @@ def test_the_seed_is_one_dated_profile_topic_written_through_ingest_before_the_f
     (request,) = system.ingests
     assert request["placement"] == "new_topic" and request["title"] == "Me"
     assert [(f["name"], f["value"], f["valid_from"]) for f in request["fields"]] == [
-        ("job", "analyst at Acme", "2025-01-01T00:00:00+00:00")]
+        ("job", "analyst at Acme", "2025-01-01T00:00:00+00:00")
+    ]
     assert rec["state"]["seeded_topics"] == 1 and rec["state"]["seed"]["request"] == request
     assert "seed-1" in rec["state"]["seed"]["topic_id"]
     assert [w["value"] for w in rec["turns"][0]["written"]] == ["manager at Initech"]  # the seed is not the turn's
@@ -261,9 +316,19 @@ def test_a_recording_survives_save_and_load_unchanged(tmp_path):
 def test_replay_shows_both_turns_the_reference_times_the_stored_entry_the_truth_and_what_each_is_graded_on():
     _, rec = recorded()
     text = render_recording(rec)
-    for needle in ("I started my new job two weeks ago", "How long have I been at my new job?", "2026-10-06", "2026-10-20",
-                   "2026-09-22", "four weeks", "About four weeks.", "start_date", "Sep 22", "stored start date",
-                   "within 1 day"):
+    for needle in (
+        "I started my new job two weeks ago",
+        "How long have I been at my new job?",
+        "2026-10-06",
+        "2026-10-20",
+        "2026-09-22",
+        "four weeks",
+        "About four weeks.",
+        "start_date",
+        "Sep 22",
+        "stored start date",
+        "within 1 day",
+    ):
         assert needle in text
     assert "graded on: the stored start date" in text and "graded on: the answer" in text
 
@@ -271,11 +336,17 @@ def test_replay_shows_both_turns_the_reference_times_the_stored_entry_the_truth_
 def test_replay_runs_with_no_server_and_loads_neither_http_nor_the_server_launcher(tmp_path):
     _, rec = recorded()
     save_recording(rec, tmp_path)
-    code = ("import sys; from demo.chat_run import main; rc = main(['replay', sys.argv[1]]); "
-            "assert 'httpx' not in sys.modules and 'demo.server' not in sys.modules, sorted(m for m in sys.modules "
-            "if m in ('httpx', 'demo.server')); sys.exit(rc)")
-    done = subprocess.run([sys.executable, "-c", code, str(tmp_path)], capture_output=True, text=True,
-                          cwd=str(__import__("demo.paths").paths.REPO_ROOT))
+    code = (
+        "import sys; from demo.chat_run import main; rc = main(['replay', sys.argv[1]]); "
+        "assert 'httpx' not in sys.modules and 'demo.server' not in sys.modules, sorted(m for m in sys.modules "
+        "if m in ('httpx', 'demo.server')); sys.exit(rc)"
+    )
+    done = subprocess.run(
+        [sys.executable, "-c", code, str(tmp_path)],
+        capture_output=True,
+        text=True,
+        cwd=str(__import__("demo.paths").paths.REPO_ROOT),
+    )
     assert done.returncode == 0, done.stderr
     assert "How long have I been at my new job?" in done.stdout and "About four weeks." in done.stdout
 
@@ -283,11 +354,19 @@ def test_replay_runs_with_no_server_and_loads_neither_http_nor_the_server_launch
 def test_the_scorecard_prints_the_two_weeks_case_beside_the_bad_merge(tmp_path):
     from demo.checks import discover
     from demo.run import run_recorded
+
     _, rec = recorded()
     save_recording(rec, tmp_path / "rec")
     c1 = next(c for c in discover() if c.id == "C1")
-    run = run_recorded(systems=["baseline"], checks=[c1], results_root=tmp_path / "results", command="python -m demo.run t",
-                       run_day=RUN_DAY, runtime_root=tmp_path / "runtime", recordings_dir=tmp_path / "rec")
+    run = run_recorded(
+        systems=["baseline"],
+        checks=[c1],
+        results_root=tmp_path / "results",
+        command="python -m demo.run t",
+        run_day=RUN_DAY,
+        runtime_root=tmp_path / "runtime",
+        recordings_dir=tmp_path / "rec",
+    )
     card = (run.dir / "scorecard.md").read_text()
     assert "### Chat cases" in card and "How long have I been at my new job?" in card and "About four weeks." in card
     (case,) = json.loads((run.dir / "results.json").read_text())["chat_cases"]

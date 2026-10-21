@@ -35,8 +35,9 @@ def replay(turn: dict) -> list[tuple[str, str]]:
     store = GraphStore(graph)
     tid = str(uuid.uuid4())
     store.create_topic(tid, title="Me", summary=None, salience=1.0, archived=False, embedding=None)
-    runner = MemoryToolRunner(store, reference_time=datetime.fromisoformat(turn["reference_time"]),
-                              user_message=turn["text"])
+    runner = MemoryToolRunner(
+        store, reference_time=datetime.fromisoformat(turn["reference_time"]), user_message=turn["text"]
+    )
     stored = []
     for call in turn.get("tool_log") or []:
         if call["tool"] != "memory_append_field" or not call.get("args", {}).get("field_name"):

@@ -6,17 +6,17 @@ from functools import partial
 import pytest
 
 from demo import merge, ramp
+from demo.baseline import Baseline
 from demo.checks import discover
 from demo.checks.c2a_merge import measure_merges
 from demo.latency_tables import render_latency
 from demo.merge import DEADLINE, create_duplicate_pair
-from demo.baseline import Baseline
 from demo.reference_gem import PHASES, ReferenceGem, reference_gem_id
 from demo.run import run_recorded
 from demo.session import Session
 from demo.storyline import WEBSITE_REDESIGN
 from demo.systems import SYSTEMS
-from demo.triage import CORRECT, run_storyline
+from demo.triage import run_storyline
 from demo.verdict import Verdict
 from demo.windows import interactions, render_windows
 
@@ -47,7 +47,9 @@ def test_registered_in_process_and_declares_its_milliseconds_not_comparable(phas
 
 @pytest.mark.parametrize("phase", (1, 2))
 def test_merge_window_is_zero_interactions_with_revision_after_every_ingest(phase):
-    v = measure_merges(ReferenceGem(phase=phase), repetitions=20, timeout=0.3)  # the extras' merge wait times out by design
+    v = measure_merges(
+        ReferenceGem(phase=phase), repetitions=20, timeout=0.3
+    )  # the extras' merge wait times out by design
     assert v.measurements["window_samples_interactions"] == [0] * 20
     assert v.measurements["window_median_interactions"] == 0
     assert (v.measurements["window_min_interactions"], v.measurements["window_max_interactions"]) == (0, 0)
@@ -79,6 +81,7 @@ def test_windows_table_cites_the_interaction_unit():
 
 def test_interactions_helper_is_none_where_the_system_does_not_count():
     from demo.baseline import Baseline
+
     assert interactions(Baseline()) is None
     gem = ReferenceGem()
     gem.ingest({"placement": "new_topic", "title": "T"})
@@ -116,8 +119,9 @@ def test_c5_runs_each_size_once_and_records_no_milliseconds_on_the_reference_gem
 def test_runner_runs_reference_gem_both_phases_and_shows_no_latency(tmp_path, monkeypatch):
     monkeypatch.setattr(merge, "DEFAULT_TIMEOUT_S", 0.3)  # C2(a)'s active-into-archived extra times out by design
     checks = [c for c in discover() if c.id in {"C2(a)", "C3", "Storyline"}]
-    run = run_recorded(list(IDS), checks, tmp_path, "python -m demo.run test", run_day=RUN_DAY,
-                       runtime_root=tmp_path / "runtime")
+    run = run_recorded(
+        list(IDS), checks, tmp_path, "python -m demo.run test", run_day=RUN_DAY, runtime_root=tmp_path / "runtime"
+    )
     assert {(v.system, v.row) for v in run.verdicts} >= {(i, "C3") for i in IDS}
     assert not any(v.verdict == "error" for v in run.verdicts), [v.error for v in run.verdicts if v.error]
     assert "Latency ramps" not in run.scorecard
@@ -125,8 +129,19 @@ def test_runner_runs_reference_gem_both_phases_and_shows_no_latency(tmp_path, mo
 
 
 def test_latency_table_leaves_out_a_system_whose_ramps_carry_no_timing():
-    timed = [{"n": 2, "repeat": 1, "total": 2, "archived": 0, "ingest_median_ms": 0.1, "ingest_samples": 2,
-              "query_samples_ms": [0.2], "settle_s": 0.1, "settle_timed_out": False}]
+    timed = [
+        {
+            "n": 2,
+            "repeat": 1,
+            "total": 2,
+            "archived": 0,
+            "ingest_median_ms": 0.1,
+            "ingest_samples": 2,
+            "query_samples_ms": [0.2],
+            "settle_s": 0.1,
+            "settle_timed_out": False,
+        }
+    ]
     untimed = [{"n": 2, "repeat": 1, "total": 2, "archived": 0}]
     out = []
     for system, ramps in (("upstream", timed), (IDS[0], untimed)):

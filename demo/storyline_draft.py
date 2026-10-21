@@ -31,8 +31,11 @@ def _shared_truths(story: Storyline) -> str:
         for value in state.fields.values():
             holders.setdefault(value, []).append(state.title)
     truths = {q.truth for q in story.questions}
-    return "; ".join(f"{value} is on {' and '.join(titles)}" for value, titles in holders.items()
-                     if value in truths and len(titles) > 1)
+    return "; ".join(
+        f"{value} is on {' and '.join(titles)}"
+        for value, titles in holders.items()
+        if value in truths and len(titles) > 1
+    )
 
 
 def render(story: Storyline = WEBSITE_REDESIGN) -> str:
@@ -79,44 +82,63 @@ def render(story: Storyline = WEBSITE_REDESIGN) -> str:
     for e in story.events:
         if e.placement == "new_topic":
             lines.append(f"| `{e.topic}` | {esc(e.title)} | {esc(e.topic_kind)} | {e.id} | {esc(e.summary)} |")
-    lines += ["", "## Events", "",
-              "| Event | The user says | Topic | Fields written | Edges |",
-              "|---|---|---|---|---|"]
+    lines += [
+        "",
+        "## Events",
+        "",
+        "| Event | The user says | Topic | Fields written | Edges |",
+        "|---|---|---|---|---|",
+    ]
     for e in story.events:
         edges = ", ".join(f"→ {titles[x.to]} ({x.kind})" for x in e.edges) or "—"
         lines.append(f"| {e.id} | {esc(e.said)} | {esc(titles[e.topic])} | {esc(_writes(e))} | {esc(edges)} |")
-    lines += ["", "## Expected state at the end (one row per topic)", "",
-              "| Topic | Title | Current fields | Outgoing edges |",
-              "|---|---|---|---|"]
+    lines += [
+        "",
+        "## Expected state at the end (one row per topic)",
+        "",
+        "| Topic | Title | Current fields | Outgoing edges |",
+        "|---|---|---|---|",
+    ]
     for key, state in final.items():
         fields = "; ".join(f"{k} = {v}" for k, v in state.fields.items())
         edges = ", ".join(f"→ {titles[t]} ({k})" for t, k in state.edges) or "—"
         lines.append(f"| `{key}` | {esc(state.title)} | {esc(fields)} | {esc(edges)} |")
-    lines += ["", "## Questions", "",
-              "| Q | Ability | Question | Ground-truth answer | Answer topic | Field |", "|---|---|---|---|---|---|"]
+    lines += [
+        "",
+        "## Questions",
+        "",
+        "| Q | Ability | Question | Ground-truth answer | Answer topic | Field |",
+        "|---|---|---|---|---|---|",
+    ]
     for q in story.questions:
-        lines.append(f"| {q.id} | {q.ability} | {esc(q.text)} | {esc(q.truth)} | {esc(titles[q.topic])} (`{q.topic}`) "
-                     f"| {esc(q.field)} |")
-    lines += ["", "Abilities: " + ", ".join(f"{a} {abilities[a]}" for a in ABILITIES if abilities[a])
-              + ". Every answer is one stored value. Temporal reasoning and multi-session reasoning are not asked: "
-              "time validity is tested by the six time probes and the \"two weeks ago\" chat run, and multi-session "
-              "reasoning is not measured. Abstention (answer: \"not stored\") is not asked: it has no answer topic, "
-              "so search-vs-memory triage cannot sort it.",
-              "",
-              "## Notes",
-              "",
-              f"- Several questions share ground-truth strings with other topics ({shared}); the labelled topic "
-              "decides which one counts.",
-              "- Dependent topics (milestones, Alice's role in the team list) are updated by explicit events here, "
-              "because every event is a perfect placement; whether MemState would propagate a deadline "
-              "change by itself is C3's question, not this one.",
-              "- All values are strings so a read is judged by exact match; changing a value's wording changes the "
-              "ground truth in the same place.",
-              f"- **The store is small.** The storyline creates {len(titles)} topics, so a `top_k` 8 read returns "
-              f"most of them, and so does the baseline's top 8. Phase 2, Marketing Budget and Design Review "
-              f"Meeting are look-alikes so a paraphrased question can rank the wrong topic; they do not guarantee a "
-              f"search failure. Report whatever the recorded run gives.",
-              ""]
+        lines.append(
+            f"| {q.id} | {q.ability} | {esc(q.text)} | {esc(q.truth)} | {esc(titles[q.topic])} (`{q.topic}`) "
+            f"| {esc(q.field)} |"
+        )
+    lines += [
+        "",
+        "Abilities: "
+        + ", ".join(f"{a} {abilities[a]}" for a in ABILITIES if abilities[a])
+        + ". Every answer is one stored value. Temporal reasoning and multi-session reasoning are not asked: "
+        'time validity is tested by the six time probes and the "two weeks ago" chat run, and multi-session '
+        'reasoning is not measured. Abstention (answer: "not stored") is not asked: it has no answer topic, '
+        "so search-vs-memory triage cannot sort it.",
+        "",
+        "## Notes",
+        "",
+        f"- Several questions share ground-truth strings with other topics ({shared}); the labelled topic "
+        "decides which one counts.",
+        "- Dependent topics (milestones, Alice's role in the team list) are updated by explicit events here, "
+        "because every event is a perfect placement; whether MemState would propagate a deadline "
+        "change by itself is C3's question, not this one.",
+        "- All values are strings so a read is judged by exact match; changing a value's wording changes the "
+        "ground truth in the same place.",
+        f"- **The store is small.** The storyline creates {len(titles)} topics, so a `top_k` 8 read returns "
+        f"most of them, and so does the baseline's top 8. Phase 2, Marketing Budget and Design Review "
+        f"Meeting are look-alikes so a paraphrased question can rank the wrong topic; they do not guarantee a "
+        f"search failure. Report whatever the recorded run gives.",
+        "",
+    ]
     return "\n".join(lines)
 
 

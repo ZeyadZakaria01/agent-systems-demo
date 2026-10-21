@@ -41,10 +41,18 @@ def test_a_busy_lock_is_waited_for(tmp_path, capsys):
 
 def test_a_lock_inherited_from_flock_is_used_not_waited_on_and_announced_to_children(tmp_path):
     lock = tmp_path / "server.lock"
-    code = (f"import os, subprocess\nfrom demo.server_lock import server_lock\nwith server_lock({str(lock)!r}):\n"
-            f"    print(subprocess.run(['sh', '-c', 'echo ${HELD_ENV}'], capture_output=True, text=True).stdout.strip())")
-    result = subprocess.run(["flock", str(lock), sys.executable, "-c", code], cwd=REPO_ROOT,
-                            capture_output=True, text=True, timeout=20, env={**os.environ, HELD_ENV: ""})
+    code = (
+        f"import os, subprocess\nfrom demo.server_lock import server_lock\nwith server_lock({str(lock)!r}):\n"
+        f"    print(subprocess.run(['sh', '-c', 'echo ${HELD_ENV}'], capture_output=True, text=True).stdout.strip())"
+    )
+    result = subprocess.run(
+        ["flock", str(lock), sys.executable, "-c", code],
+        cwd=REPO_ROOT,
+        capture_output=True,
+        text=True,
+        timeout=20,
+        env={**os.environ, HELD_ENV: ""},
+    )
     assert result.stdout.strip() == str(lock)
 
 
@@ -63,8 +71,13 @@ def shell(lock, body, held_env=None, wrap=()):
     env["GEM_SERVER_LOCK"] = str(lock)
     if held_env is not None:
         env[HELD_ENV] = held_env
-    return subprocess.run([*wrap, "bash", "-c", f"source {SCRIPT}; hold_server_lock; {body}"],
-                          env=env, capture_output=True, text=True, timeout=20)
+    return subprocess.run(
+        [*wrap, "bash", "-c", f"source {SCRIPT}; hold_server_lock; {body}"],
+        env=env,
+        capture_output=True,
+        text=True,
+        timeout=20,
+    )
 
 
 def test_the_script_lock_holds_a_free_lock_for_the_rest_of_the_script(tmp_path):

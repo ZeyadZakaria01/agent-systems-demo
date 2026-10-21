@@ -32,8 +32,15 @@ def baseline_connect(scope, pace):
 def test_live_run_is_labelled_live_and_written_apart(tmp_path):
     c1 = next(c for c in discover() if c.id == "C1")
     lines = []
-    result = run_live("http://live.example", [c1], tmp_path / "live", "python -m demo.run --mode live", as_system="upstream",
-                      log=lines.append, connect=baseline_connect)
+    result = run_live(
+        "http://live.example",
+        [c1],
+        tmp_path / "live",
+        "python -m demo.run --mode live",
+        as_system="upstream",
+        log=lines.append,
+        connect=baseline_connect,
+    )
     (v,) = result.verdicts
     assert v.system == "live" and v.row == "C1"
     assert result.dir.parent == tmp_path / "live"
@@ -48,8 +55,15 @@ def test_live_run_is_labelled_live_and_written_apart(tmp_path):
 
 def test_live_run_prints_storyline_tables_but_not_a_scorecard_row(tmp_path):
     storyline = next(c for c in discover() if c.id == "Storyline")
-    result = run_live("http://live.example", [storyline], tmp_path / "live", "cmd", as_system="upstream",
-                      log=lambda m: None, connect=baseline_connect)
+    result = run_live(
+        "http://live.example",
+        [storyline],
+        tmp_path / "live",
+        "cmd",
+        as_system="upstream",
+        log=lambda m: None,
+        connect=baseline_connect,
+    )
     (v,) = result.verdicts
     assert v.row == "Storyline" and v.system == "live"
     out = result.scorecard
@@ -70,8 +84,9 @@ def test_live_run_honours_the_check_system_filter_and_records_errors(tmp_path):
         ctx.system.ingest({"placement": "new_topic", "title": "x"})
         raise RuntimeError("boom")
 
-    result = run_live("http://live.example", [only_patch, crashes], tmp_path, "cmd", log=lambda m: None,
-                      connect=baseline_connect)
+    result = run_live(
+        "http://live.example", [only_patch, crashes], tmp_path, "cmd", log=lambda m: None, connect=baseline_connect
+    )
     assert [(v.row, v.verdict) for v in result.verdicts] == [("L2", "error")]
 
 

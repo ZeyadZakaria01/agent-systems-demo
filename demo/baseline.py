@@ -20,7 +20,7 @@ reading the API code), so a check never scores the baseline on a write MemState 
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 import numpy as np
 
@@ -32,7 +32,7 @@ TOP_K = 8
 
 def _instant(text: str) -> datetime:
     t = datetime.fromisoformat(text)
-    return t if t.tzinfo else t.replace(tzinfo=timezone.utc)
+    return t if t.tzinfo else t.replace(tzinfo=UTC)
 
 
 class Baseline(System):
@@ -75,8 +75,13 @@ class Baseline(System):
         versions = {}
         for f in fields:
             row["history"].setdefault(f["name"], []).append(
-                {"value": f["value"], "provenance": f.get("provenance"), "why_changed": f.get("why_changed"),
-                 "recorded_at": utc_now()})
+                {
+                    "value": f["value"],
+                    "provenance": f.get("provenance"),
+                    "why_changed": f.get("why_changed"),
+                    "recorded_at": utc_now(),
+                }
+            )
             versions[f["name"]] = None
             applied.append(f"version:{f['name']}" if placement == "version_field" else f"field:{f['name']}")
         return {"topic_id": title, "applied": applied, "version_ids": versions, "similar_topic_ids": []}
@@ -89,15 +94,25 @@ class Baseline(System):
         if recorded_at is not None:
             moment = _instant(recorded_at)
             visible = [e for e in entries if _instant(e["recorded_at"]) <= moment]
-        return {"field_type": None, "ref_topic_id": None,
-                "current": dict(visible[-1]) if visible else None,
-                "history": [dict(e) for e in reversed(visible)] if with_history else None}
+        return {
+            "field_type": None,
+            "ref_topic_id": None,
+            "current": dict(visible[-1]) if visible else None,
+            "history": [dict(e) for e in reversed(visible)] if with_history else None,
+        }
 
     def _topic(self, row: dict) -> dict:
         return {
-            "id": row["title"], "title": row["title"], "summary": row["summary"], "topic_kind": row["topic_kind"],
-            "salience": None, "failed_salience": None, "archived": None, "topic_history": None,
-            "created_at": None, "updated_at": None,
+            "id": row["title"],
+            "title": row["title"],
+            "summary": row["summary"],
+            "topic_kind": row["topic_kind"],
+            "salience": None,
+            "failed_salience": None,
+            "archived": None,
+            "topic_history": None,
+            "created_at": None,
+            "updated_at": None,
             "fields": {name: self._field(entries, with_history=True) for name, entries in row["history"].items()},
         }
 
@@ -118,8 +133,10 @@ class Baseline(System):
         sims: dict[str, float | None] = {}
         if "semantic" in stages:
             q = self._vector(request["q"])
-            scored = sorted(((float(q @ self._vector(f"{r['title']}\n{r['summary'] or ''}")), t)
-                             for t, r in self._rows.items()), reverse=True)[:TOP_K]
+            scored = sorted(
+                ((float(q @ self._vector(f"{r['title']}\n{r['summary'] or ''}")), t) for t, r in self._rows.items()),
+                reverse=True,
+            )[:TOP_K]
             sims = {t: s for s, t in scored if topic_ids is None or t in topic_ids}
         else:
             ids = topic_ids if topic_ids is not None else list(self._rows)[:TOP_K]
@@ -133,11 +150,27 @@ class Baseline(System):
             if "structural" in stages or "temporal" in stages:
                 for name in sorted(row["history"]):
                     if names is None or name in names:
-                        fields.append({"name": name, **self._field(row["history"][name], recorded_at,
-                                                                   with_history=bool(request.get("explain")))})
-            candidates.append({"topic_id": tid, "title": row["title"], "summary": row["summary"],
-                               "topic_kind": row["topic_kind"], "salience": None, "failed_salience": None,
-                               "neighbors": None, "fields": fields, "similarity": sim})
+                        fields.append(
+                            {
+                                "name": name,
+                                **self._field(
+                                    row["history"][name], recorded_at, with_history=bool(request.get("explain"))
+                                ),
+                            }
+                        )
+            candidates.append(
+                {
+                    "topic_id": tid,
+                    "title": row["title"],
+                    "summary": row["summary"],
+                    "topic_kind": row["topic_kind"],
+                    "salience": None,
+                    "failed_salience": None,
+                    "neighbors": None,
+                    "fields": fields,
+                    "similarity": sim,
+                }
+            )
         return {"query": request["q"], "candidates": candidates, "summary_text": ""}
 
     # -- setup, description
@@ -145,5 +178,10 @@ class Baseline(System):
         return None  # no ids, salience, archived flag or edges to arrange
 
     def _describe(self) -> dict:
-        return {"engine": "in-process versioned row", "keeps_history": True, "embedder": MODEL, "top_k": TOP_K,
-                "accepts": {"valid_from": False, "invalid_at": False, "valid_at": False, "recorded_at": True}}
+        return {
+            "engine": "in-process versioned row",
+            "keeps_history": True,
+            "embedder": MODEL,
+            "top_k": TOP_K,
+            "accepts": {"valid_from": False, "invalid_at": False, "valid_at": False, "recorded_at": True},
+        }

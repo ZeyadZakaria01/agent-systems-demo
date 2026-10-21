@@ -12,10 +12,10 @@ import time
 import httpx
 import pytest
 
+from demo.adapter import Rejected, utc_now
 from demo.baseline import Baseline
 from demo.checks import c3_propagation, discover
-from demo.adapter import Rejected, utc_now
-from demo.verdict import ABSENT, FAIL, NOT_SCORED, PARTIAL, PASS, Verdict
+from demo.verdict import ABSENT, FAIL, NOT_SCORED, PASS, Verdict
 from demo.windows import render_windows, window_entries
 
 
@@ -39,12 +39,13 @@ def short_wait(monkeypatch):
 
 # -- baseline (versioned row) verdicts
 
+
 def test_baseline_c2b_passes_because_it_refuses_the_missing_reference_and_stores_nothing():
     baseline = Baseline()
     v = run("C2(b)", baseline)
     assert v.verdict == PASS
     assert [c.held for c in v.cases] == [True]
-    assert [t for t in baseline.read_state()["topics"] if "Website Redesign" == t] == []  # no topic, no first field
+    assert [t for t in baseline.read_state()["topics"] if t == "Website Redesign"] == []  # no topic, no first field
     assert v.observations == []  # it never reports an edge applied
 
 
@@ -90,10 +91,13 @@ def test_no_windows_no_table():
 
 # -- C2(b) classification on other systems
 
+
 def _without_refs(request):
     """The request as a system that does not validate `ref_topic_id` would store it."""
-    return {**request, "fields": [{k: v for k, v in f.items() if k != "ref_topic_id"}
-                                  for f in request.get("fields") or []]}
+    return {
+        **request,
+        "fields": [{k: v for k, v in f.items() if k != "ref_topic_id"} for f in request.get("fields") or []],
+    }
 
 
 def _has_ref(request):
@@ -119,8 +123,7 @@ class ServerErrorAfterWriting(Baseline):
     def _ingest(self, request):
         super()._ingest(_without_refs(request))
         if _has_ref(request):
-            raise httpx.HTTPStatusError("boom", request=httpx.Request("POST", "http://x"),
-                                        response=httpx.Response(500))
+            raise httpx.HTTPStatusError("boom", request=httpx.Request("POST", "http://x"), response=httpx.Response(500))
 
 
 class EdgeReportedButMissing(AcceptsMissingReference):
@@ -198,6 +201,7 @@ def test_the_edge_observation_does_not_change_a_partial_commit_verdict():
 
 # -- C2(c): a policy-bearing route or schema is never silently scored, a stray word in a property name is not one
 
+
 class WithPolicyRoute(Baseline):
     def _probe(self, method, path):
         if path == "/v1/policies":
@@ -221,9 +225,15 @@ def test_a_system_with_a_policy_route_is_not_scored_absent():
         run("C2(c)", WithPolicyRoute())
 
 
-@pytest.mark.parametrize("paths,schemas", [(["/v1/policies"], {}), (["/api/ui/Rules"], {}),
-                                           ([], {"PolicyRule": {"properties": {}}}),
-                                           ([], {"ConstraintSet": {"properties": {}}})])
+@pytest.mark.parametrize(
+    "paths,schemas",
+    [
+        (["/v1/policies"], {}),
+        (["/api/ui/Rules"], {}),
+        ([], {"PolicyRule": {"properties": {}}}),
+        ([], {"ConstraintSet": {"properties": {}}}),
+    ],
+)
 def test_a_route_or_schema_named_for_policies_is_not_scored_absent(paths, schemas):
     with pytest.raises(RuntimeError, match="policy-like surface"):
         run("C2(c)", WithOpenapi(paths, schemas))
@@ -237,6 +247,7 @@ def test_policy_words_only_inside_other_words_or_property_names_do_not_stop_the_
 
 
 # -- C3 on systems that rewrite B but raise no flag (the strict criteria are in test_c2c_c3_strict.py)
+
 
 class Propagating(Baseline):
     """Stores `extension` edges; updating a topic rewrites the Date of every topic linked to it, in the given directions."""
@@ -253,7 +264,7 @@ class Propagating(Baseline):
             self.edges.append({"from": owner, "to": e["to_topic_id"], "kind": e["kind"]})
         if request["placement"] == "version_field":
             for e in self.edges:
-                backward = e["to"] == owner and "B->A" in self.directions   # B depends on A
+                backward = e["to"] == owner and "B->A" in self.directions  # B depends on A
                 forward = e["from"] == owner and "A->B" in self.directions  # edge added to A
                 dependent = e["from"] if backward else e["to"] if forward else None
                 if dependent:

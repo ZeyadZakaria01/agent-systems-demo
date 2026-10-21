@@ -57,7 +57,7 @@ class Verdict:
     error: str | None = None
 
     @classmethod
-    def from_cases(cls, row: str, cases: list[Case], **kwargs: Any) -> "Verdict":
+    def from_cases(cls, row: str, cases: list[Case], **kwargs: Any) -> Verdict:
         applicable = [c.held for c in cases if c.held is not None]
         if not applicable:
             verdict = NOT_SCORED
@@ -70,17 +70,17 @@ class Verdict:
         return cls(row=row, verdict=verdict, cases=cases, **kwargs)
 
     @classmethod
-    def absent(cls, row: str, probe_evidence: Any, **kwargs: Any) -> "Verdict":
+    def absent(cls, row: str, probe_evidence: Any, **kwargs: Any) -> Verdict:
         if not probe_evidence:
             raise ValueError(f"{row}: an absent verdict needs the probe run that confirmed the absence")
         return cls(row=row, verdict=ABSENT, probe_evidence=probe_evidence, **kwargs)
 
     @classmethod
-    def not_scored(cls, row: str, **kwargs: Any) -> "Verdict":
+    def not_scored(cls, row: str, **kwargs: Any) -> Verdict:
         return cls(row=row, verdict=NOT_SCORED, **kwargs)
 
     @classmethod
-    def errored(cls, row: str, error: str, **kwargs: Any) -> "Verdict":
+    def errored(cls, row: str, error: str, **kwargs: Any) -> Verdict:
         return cls(row=row, verdict=ERROR, error=error, **kwargs)
 
     @property

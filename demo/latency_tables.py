@@ -20,12 +20,16 @@ from demo.ramp import no_measurable_difference
 from demo.systems import SYSTEMS
 from demo.verdict import ABSENT, Verdict
 
-NOTE = ("A difference of medians no larger than the larger sample range is reported as "
-        "no measurable difference (spec story 43). Ingest samples are the per-repeat medians, query samples are every "
-        "plain read.")
-PROVISIONAL_NOTE = ("Provisional: at least one (system, n) has fewer than {min} repeats, so the ingest range is "
-                    "narrower than the machine's real variation and the table makes no claim that two systems do or "
-                    "do not differ. A single run is reported as one run (spec story 43); {min} repeats of each ramp lift the label.")
+NOTE = (
+    "A difference of medians no larger than the larger sample range is reported as "
+    "no measurable difference (spec story 43). Ingest samples are the per-repeat medians, query samples are every "
+    "plain read."
+)
+PROVISIONAL_NOTE = (
+    "Provisional: at least one (system, n) has fewer than {min} repeats, so the ingest range is "
+    "narrower than the machine's real variation and the table makes no claim that two systems do or "
+    "do not differ. A single run is reported as one run (spec story 43); {min} repeats of each ramp lift the label."
+)
 MIN_REPEATS = 3
 METRICS = ("ingest", "query", "settle")
 
@@ -33,8 +37,12 @@ METRICS = ("ingest", "query", "settle")
 def _stats(samples: list[float]) -> dict | None:
     if not samples:
         return None
-    return {"median": round(statistics.median(samples), 3), "min": round(min(samples), 3),
-            "max": round(max(samples), 3), "samples": list(samples)}
+    return {
+        "median": round(statistics.median(samples), 3),
+        "min": round(min(samples), 3),
+        "max": round(max(samples), 3),
+        "samples": list(samples),
+    }
 
 
 def aggregate(verdicts: list[Verdict]) -> list[dict]:
@@ -49,14 +57,18 @@ def aggregate(verdicts: list[Verdict]) -> list[dict]:
             if "ingest_median_ms" in r:  # an untimed ramp (the reference GEM) has no latency to tabulate
                 by_n.setdefault(r["n"], []).append(r)
         for n, ramps in sorted(by_n.items()):
-            out.append({
-                "system": v.system, "n": n, "repeats": len(ramps),
-                "ingest": _stats([r["ingest_median_ms"] for r in ramps if r.get("ingest_median_ms") is not None]),
-                "query": _stats([q for r in ramps for q in r.get("query_samples_ms") or []]),
-                "as_of": _stats([q for r in ramps for q in r.get("as_of_samples_ms") or []]),
-                "settle": _stats([r["settle_s"] for r in ramps if r.get("settle_s") is not None]),
-                "archived": sorted({r["archived"] for r in ramps if r.get("archived") is not None}),
-            })
+            out.append(
+                {
+                    "system": v.system,
+                    "n": n,
+                    "repeats": len(ramps),
+                    "ingest": _stats([r["ingest_median_ms"] for r in ramps if r.get("ingest_median_ms") is not None]),
+                    "query": _stats([q for r in ramps for q in r.get("query_samples_ms") or []]),
+                    "as_of": _stats([q for r in ramps for q in r.get("as_of_samples_ms") or []]),
+                    "settle": _stats([r["settle_s"] for r in ramps if r.get("settle_s") is not None]),
+                    "archived": sorted({r["archived"] for r in ramps if r.get("archived") is not None}),
+                }
+            )
     return out
 
 
@@ -77,8 +89,10 @@ def no_difference_notes(entries: list[dict]) -> list[str]:
             for metric in ("ingest", "query"):
                 sa, sb = ea[metric], eb[metric]
                 if sa and sb and no_measurable_difference(sa["samples"], sb["samples"]):
-                    notes.append(f"{a} vs {b} at n={n}, {metric}: no measurable difference "
-                                 f"(medians {sa['median']} / {sb['median']} ms)")
+                    notes.append(
+                        f"{a} vs {b} at n={n}, {metric}: no measurable difference "
+                        f"(medians {sa['median']} / {sb['median']} ms)"
+                    )
     return notes
 
 
@@ -92,8 +106,12 @@ def render_latency(verdicts: list[Verdict]) -> str:
         return ""
     provisional = min(e["repeats"] for e in entries) < MIN_REPEATS
     lines = [
-        "### Latency ramps" + (f" (provisional: {min(e['repeats'] for e in entries)} repeat(s), "
-                               f"fewer than {MIN_REPEATS})" if provisional else ""),
+        "### Latency ramps"
+        + (
+            f" (provisional: {min(e['repeats'] for e in entries)} repeat(s), fewer than {MIN_REPEATS})"
+            if provisional
+            else ""
+        ),
         "",
         "Median (min–max) over the repeats of each (system, n).",
         "",
@@ -102,14 +120,24 @@ def render_latency(verdicts: list[Verdict]) -> str:
     ]
     for e in entries:
         archived = "n/a" if not e["archived"] else "/".join(str(a) for a in e["archived"])
-        lines.append(f"| {e['system'] or '—'} | {e['n']} | {e['repeats']} | {_cell(e['ingest'])} "
-                     f"| {_cell(e['query'])} | {_cell(e['settle'])} | {archived} |")
+        lines.append(
+            f"| {e['system'] or '—'} | {e['n']} | {e['repeats']} | {_cell(e['ingest'])} "
+            f"| {_cell(e['query'])} | {_cell(e['settle'])} | {archived} |"
+        )
     lines += ["", PROVISIONAL_NOTE.format(min=MIN_REPEATS) if provisional else NOTE]
     if as_of := [e for e in entries if e["as_of"]]:
-        lines += ["", "As-of reads (`valid_at`) beside the plain reads at the same n; median (min–max) over every as-of read:", "",
-                  "| System | n | as-of reads | as-of read (ms) | plain read (ms) |", "|---|---:|---:|---:|---:|"]
-        lines += [f"| {e['system'] or '—'} | {e['n']} | {len(e['as_of']['samples'])} | {_cell(e['as_of'])} "
-                  f"| {_cell(e['query'])} |" for e in as_of]
+        lines += [
+            "",
+            "As-of reads (`valid_at`) beside the plain reads at the same n; median (min–max) over every as-of read:",
+            "",
+            "| System | n | as-of reads | as-of read (ms) | plain read (ms) |",
+            "|---|---:|---:|---:|---:|",
+        ]
+        lines += [
+            f"| {e['system'] or '—'} | {e['n']} | {len(e['as_of']['samples'])} | {_cell(e['as_of'])} "
+            f"| {_cell(e['query'])} |"
+            for e in as_of
+        ]
     if not provisional and (notes := no_difference_notes(entries)):
         lines += ["", *[f"- {n}" for n in notes]]
     return "\n".join(lines)

@@ -9,10 +9,17 @@ from demo.model_grade import grading_prompt
 
 
 def _turn(question, model=("correct", "fine"), **extra):
-    return {"question": question, "text": f"msg {question}", "ground_truth": f"truth {question}",
-            "answer": "  an   answer\n", "answer_contains_ground_truth": True, "state_violation": "lost",
-            "route": {"intent": "x"},
-            "model_grade": {"grade": model[0], "note": model[1], "grader": "sonnet-x", "graded_at": "t"}, **extra}
+    return {
+        "question": question,
+        "text": f"msg {question}",
+        "ground_truth": f"truth {question}",
+        "answer": "  an   answer\n",
+        "answer_contains_ground_truth": True,
+        "state_violation": "lost",
+        "route": {"intent": "x"},
+        "model_grade": {"grade": model[0], "note": model[1], "grader": "sonnet-x", "graded_at": "t"},
+        **extra,
+    }
 
 
 def _dump(rec):
@@ -23,10 +30,21 @@ def _dump(rec):
 def root(tmp_path):
     folder = tmp_path / "series" / "a"
     folder.mkdir(parents=True)
-    rec1 = {"schema": 1, "case": "two-weeks", "other": {"k": "é"},
-            "turns": [_turn("W1", written=[{"title": "Job", "field": "start", "value": "Oct 7", "valid_from": "x"}],
-                            reference_time="2026-10-07", graded_on="the stored start date"),
-                      _turn("W2", model=("incorrect", "wrong")), _turn("W3")]}
+    rec1 = {
+        "schema": 1,
+        "case": "two-weeks",
+        "other": {"k": "é"},
+        "turns": [
+            _turn(
+                "W1",
+                written=[{"title": "Job", "field": "start", "value": "Oct 7", "valid_from": "x"}],
+                reference_time="2026-10-07",
+                graded_on="the stored start date",
+            ),
+            _turn("W2", model=("incorrect", "wrong")),
+            _turn("W3"),
+        ],
+    }
     rec2 = {"schema": 1, "case": "bad-merge", "turns": [_turn("Q02", model=("partially correct", "half"))]}
     (folder / "one.json").write_text(_dump(rec1))
     (folder / "two.json").write_text(_dump(rec2))
@@ -52,7 +70,11 @@ def _snapshot(root):
 def test_export_hides_model_grades_and_hints_and_ids_round_trip(root):
     out, count, items = _export(root)
     assert count == 4 and [i["id"] for i in items] == [
-        "series/a/one.json#0", "series/a/one.json#1", "series/a/one.json#2", "series/a/two.json#0"]
+        "series/a/one.json#0",
+        "series/a/one.json#1",
+        "series/a/one.json#2",
+        "series/a/two.json#0",
+    ]
     assert set(items[0]) == {"id", "case", "question", "prompt"}
     assert (items[0]["case"], items[0]["question"], items[3]["case"]) == ("two-weeks", "W1", "bad-merge")
     text = out.read_text(encoding="utf-8")
@@ -84,9 +106,16 @@ def test_apply_writes_reviewer_grade_and_keeps_everything_else(root):
     assert json.loads((root / "series/a/two.json").read_text())["turns"][0]["reviewer_grade"]["note"] == ""
 
 
-@pytest.mark.parametrize("bad", [("series/a/one.json#1", "mostly", "x"), ("series/a/one.json#9", "correct", "x"),
-                                 ("series/a/nope.json#0", "correct", "x"), ("series/a/one.json", "correct", "x"),
-                                 ("series/a/one.json#0", "correct", "dup")])
+@pytest.mark.parametrize(
+    "bad",
+    [
+        ("series/a/one.json#1", "mostly", "x"),
+        ("series/a/one.json#9", "correct", "x"),
+        ("series/a/nope.json#0", "correct", "x"),
+        ("series/a/one.json", "correct", "x"),
+        ("series/a/one.json#0", "correct", "dup"),
+    ],
+)
 def test_apply_rejects_a_bad_item_and_writes_nothing(root, bad):
     before = _snapshot(root)
     graded = _graded(root, [("series/a/two.json#0", "correct", "fine"), ("series/a/one.json#0", "correct", "ok"), bad])
@@ -115,9 +144,18 @@ def test_main_reports_an_error_with_exit_code_1(root, capsys):
 
 
 def test_agreement_counts_both_graders_and_lists_disagreements(root):
-    review_grade.apply_grades(_graded(root, [
-        ("series/a/one.json#0", "correct", "ok"), ("series/a/one.json#1", "correct", "nah"),
-        ("series/a/two.json#0", "partially correct", "same")]), "rev-1", root=root)
+    review_grade.apply_grades(
+        _graded(
+            root,
+            [
+                ("series/a/one.json#0", "correct", "ok"),
+                ("series/a/one.json#1", "correct", "nah"),
+                ("series/a/two.json#0", "partially correct", "same"),
+            ],
+        ),
+        "rev-1",
+        root=root,
+    )
     report = review_grade.agreement([root / "series" / "a"], root=root)
     assert "Sonnet: correct 2, partially correct 1, incorrect 1" in report
     assert "reviewer: correct 2, partially correct 1, incorrect 0" in report

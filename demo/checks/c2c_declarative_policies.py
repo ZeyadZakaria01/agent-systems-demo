@@ -33,24 +33,62 @@ from demo.checks import Ctx, check
 from demo.reads import current_value
 from demo.verdict import FAIL, Case, Verdict
 
-CLAIM = ("C2 (transition soundness), by construction (§4.3): every transition respects P_t, the declarative "
-         "policies ⟨event, condition, action⟩.")
+CLAIM = (
+    "C2 (transition soundness), by construction (§4.3): every transition respects P_t, the declarative "
+    "policies ⟨event, condition, action⟩."
+)
 
-POLICY_WORDS = frozenset({"policy", "policies", "rule", "rules", "constraint", "constraints", "invariant",
-                          "invariants", "trigger", "triggers"})
+POLICY_WORDS = frozenset(
+    {
+        "policy",
+        "policies",
+        "rule",
+        "rules",
+        "constraint",
+        "constraints",
+        "invariant",
+        "invariants",
+        "trigger",
+        "triggers",
+    }
+)
 TRIPLE = ("event", "condition", "action")
 # `Policies` in MemState's core/models.py (the numeric knobs); searched for in the schema, never assumed present
-KNOB_NAMES = ("max_field_history", "max_topics_for_forget_scan", "forget_salience_threshold",
-              "topic_count_soft_limit", "query_salience_bump", "embedding_dimension")
+KNOB_NAMES = (
+    "max_field_history",
+    "max_topics_for_forget_scan",
+    "forget_salience_threshold",
+    "topic_count_soft_limit",
+    "query_salience_bump",
+    "embedding_dimension",
+)
 # where a policy or config surface would sit if the server had one (none is a MemState route)
-GUESSED_ROUTES = ("/policies", "/rules", "/config", "/settings", "/v1/policies", "/v1/rules", "/v1/config",
-                  "/api/policies", "/api/config", "/api/ui/policies", "/api/ui/rules", "/api/ui/config",
-                  "/api/ui/settings", "/api/llm/policies", "/api/llm/config")
+GUESSED_ROUTES = (
+    "/policies",
+    "/rules",
+    "/config",
+    "/settings",
+    "/v1/policies",
+    "/v1/rules",
+    "/v1/config",
+    "/api/policies",
+    "/api/config",
+    "/api/ui/policies",
+    "/api/ui/rules",
+    "/api/ui/config",
+    "/api/ui/settings",
+    "/api/llm/policies",
+    "/api/llm/config",
+)
 REAL_CONFIG_ROUTES = ("/api/ui/system-context", "/api/ui/datamodel")
 DOCS = ("/docs", "/redoc")
 
-POLICY = {"name": "deadline-not-before-start", "event": "write",
-          "condition": {"field": "Deadline", "op": "<", "other_field": "Start"}, "action": "reject"}
+POLICY = {
+    "name": "deadline-not-before-start",
+    "event": "write",
+    "condition": {"field": "Deadline", "op": "<", "other_field": "Start"},
+    "action": "reject",
+}
 START, VIOLATING_DEADLINE, ORDINARY_DEADLINE = "2026-03-10", "2026-03-01", "2026-03-20"
 
 
@@ -74,29 +112,44 @@ def _policy_named(name: str) -> bool:
 def _read_schema(openapi: dict) -> dict:
     schemas = openapi.get("components", {}).get("schemas", {})
     props = {name: sorted(spec.get("properties", {})) for name, spec in schemas.items()}
-    numeric = sorted(f"{name}.{p}: {'/'.join(sorted(_types(spec) & {'integer', 'number'}))}"
-                     for name, s in schemas.items() for p, spec in s.get("properties", {}).items()
-                     if _types(spec) & {"integer", "number"})
+    numeric = sorted(
+        f"{name}.{p}: {'/'.join(sorted(_types(spec) & {'integer', 'number'}))}"
+        for name, s in schemas.items()
+        for p, spec in s.get("properties", {}).items()
+        if _types(spec) & {"integer", "number"}
+    )
     paths = {path: sorted(ops) for path, ops in openapi.get("paths", {}).items()}
-    return {"paths": paths, "schema_properties": props, "numeric_properties": numeric,
-            "policy_term_hits": sorted({n for n in [*paths, *schemas] if _policy_named(n)}),
-            "policy_term_property_hits": sorted({p for ps in props.values() for p in ps if _policy_named(p)}),
-            "triple_schemas": sorted(n for n, ps in props.items() if all(t in ps for t in TRIPLE))}
+    return {
+        "paths": paths,
+        "schema_properties": props,
+        "numeric_properties": numeric,
+        "policy_term_hits": sorted({n for n in [*paths, *schemas] if _policy_named(n)}),
+        "policy_term_property_hits": sorted({p for ps in props.values() for p in ps if _policy_named(p)}),
+        "triple_schemas": sorted(n for n, ps in props.items() if all(t in ps for t in TRIPLE)),
+    }
 
 
 def _stored(s: System) -> str:
     """The whole stored state (topics with every field's history, archived flags, events and timestamps; the edges),
     minus salience, which the system may let decay or be touched. A rejected write must leave this exactly as it was."""
     state = s.read_state()
-    topics = {tid: {k: v for k, v in t.items() if k not in ("salience", "failed_salience")}
-              for tid, t in state["topics"].items()}
+    topics = {
+        tid: {k: v for k, v in t.items() if k not in ("salience", "failed_salience")}
+        for tid, t in state["topics"].items()
+    }
     return json.dumps({"topics": topics, "edges": state.get("edges")}, sort_keys=True, default=str)
 
 
 def _write(title: str, deadline: str) -> dict:
-    return {"placement": "new_topic", "title": title, "topic_kind": "project",
-            "fields": [{"name": "Start", "value": START, "provenance": "kickoff-notes"},
-                       {"name": "Deadline", "value": deadline, "provenance": "kickoff-notes"}]}
+    return {
+        "placement": "new_topic",
+        "title": title,
+        "topic_kind": "project",
+        "fields": [
+            {"name": "Start", "value": START, "provenance": "kickoff-notes"},
+            {"name": "Deadline", "value": deadline, "provenance": "kickoff-notes"},
+        ],
+    }
 
 
 def _exercise(s: System, added: dict) -> Verdict:
@@ -108,10 +161,12 @@ def _exercise(s: System, added: dict) -> Verdict:
     except Rejected as e:
         rejected, how = True, f"rejected ({e.status}): {e.detail}"
     after = _stored(s)
-    rejects = Case("a policy added at runtime rejects a write that sets Deadline before Start, saving nothing",
-                   held=rejected and after == before,
-                   observation=f"{how}; stored state "
-                               f"{'identical to before the write' if after == before else 'changed by the write'}")
+    rejects = Case(
+        "a policy added at runtime rejects a write that sets Deadline before Start, saving nothing",
+        held=rejected and after == before,
+        observation=f"{how}; stored state "
+        f"{'identical to before the write' if after == before else 'changed by the write'}",
+    )
     ordinary = _write("Policy Check Ordinary", ORDINARY_DEADLINE)
     try:
         topic_id = s.ingest(ordinary)["topic_id"]
@@ -120,11 +175,14 @@ def _exercise(s: System, added: dict) -> Verdict:
         held, how = read_back == {"Start": START, "Deadline": ORDINARY_DEADLINE}, f"committed; read back {read_back}"
     except Rejected as e:
         held, how = False, f"rejected ({e.status}): {e.detail}"
-    control = Case("control: an ordinary write (Deadline after Start) commits", held=held, observation=how,
-                   control=True)
+    control = Case(
+        "control: an ordinary write (Deadline after Start) commits", held=held, observation=how, control=True
+    )
     verdict = Verdict.from_cases("C2(c)", [rejects, control], measurements={"policy": POLICY, "added": added})
     if rejects.held is False and not rejected:
-        verdict.verdict = FAIL  # the policy was ignored: the violating write was accepted, the control says nothing more
+        verdict.verdict = (
+            FAIL  # the policy was ignored: the violating write was accepted, the control says nothing more
+        )
     return verdict
 
 
@@ -155,22 +213,35 @@ def c2c(ctx: Ctx) -> Verdict:
         surface += [f"schema with event, condition and action: {n}" for n in schema["triple_schemas"]]
     surface += [f"route answers: {p} ({guessed[p]})" for p in answering]
     if schema is None:
-        finding = (f"no readable API schema (openapi probe: {'nothing' if openapi_probe is None else openapi_probe['status']}); "
-                   f"guessed policy/config routes answering: {answering or 'none'}")
+        finding = (
+            f"no readable API schema (openapi probe: {'nothing' if openapi_probe is None else openapi_probe['status']}); "
+            f"guessed policy/config routes answering: {answering or 'none'}"
+        )
     else:
         reachable = [p for p, r in config_like.items() if r is not None and r["status"] == 200]
-        finding = (f"no policy-named route or schema in {len(schema['paths'])} routes; "
-                   f"{len(schema['numeric_properties'])} numeric parameters in the schema; "
-                   f"policy knob names in the schema: {knobs_in_schema or 'none'}; "
-                   f"config-like routes that answer: {reachable or 'none'}; "
-                   f"{len(guessed) - len(answering)} of {len(guessed)} guessed policy/config routes absent")
+        finding = (
+            f"no policy-named route or schema in {len(schema['paths'])} routes; "
+            f"{len(schema['numeric_properties'])} numeric parameters in the schema; "
+            f"policy knob names in the schema: {knobs_in_schema or 'none'}; "
+            f"config-like routes that answer: {reachable or 'none'}; "
+            f"{len(guessed) - len(answering)} of {len(guessed)} guessed policy/config routes absent"
+        )
     evidence = {
         "api_schema": None if schema is None else {"status": openapi_probe["status"], **schema},
-        "add_policy": None, "policy_tried": POLICY, "docs_status": docs, "guessed_route_status": guessed, "config_like_routes": config_like,
-        "policy_knob_names_in_schema": knobs_in_schema, "describe": s.describe(),
-        "searched_words": sorted(POLICY_WORDS), "searched_triple": TRIPLE, "finding": finding,
+        "add_policy": None,
+        "policy_tried": POLICY,
+        "docs_status": docs,
+        "guessed_route_status": guessed,
+        "config_like_routes": config_like,
+        "policy_knob_names_in_schema": knobs_in_schema,
+        "describe": s.describe(),
+        "searched_words": sorted(POLICY_WORDS),
+        "searched_triple": TRIPLE,
+        "finding": finding,
     }
     if surface:
-        raise RuntimeError("C2(c): a policy-like surface was found, which this probe does not score; extend the "
-                           f"check to exercise it. Found: {surface}")
+        raise RuntimeError(
+            "C2(c): a policy-like surface was found, which this probe does not score; extend the "
+            f"check to exercise it. Found: {surface}"
+        )
     return Verdict.absent("C2(c)", evidence)

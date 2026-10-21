@@ -1,10 +1,17 @@
 """The scorecard layout (ticket 31), rendered from stand-in results: no check runs, no server."""
 
-from demo.changes import REFERENCE_CHAIN, render_change_tables, regression_summary
+from demo.changes import REFERENCE_CHAIN, regression_summary, render_change_tables
 from demo.checks import Row, discover
 from demo.latency_tables import render_latency
-from demo.scorecard import (COLUMNS, claimed_by_p1, render_deviations, render_limits, render_merge_existence,
-                            render_probes, render_scorecard)
+from demo.scorecard import (
+    COLUMNS,
+    claimed_by_p1,
+    render_deviations,
+    render_limits,
+    render_merge_existence,
+    render_probes,
+    render_scorecard,
+)
 from demo.verdict import ERROR, Case, Verdict
 
 SYSTEMS = ("upstream", "step1", "step2", "step3", "reference-gem-p1", "reference-gem-p2", "baseline")
@@ -16,13 +23,17 @@ TIME_PROBES = ["T1", "T2", "T3", "T4", "T5", "T6"]
 
 
 def v(system, row, verdict="pass", cases=(), **kw):
-    return Verdict(row=row, verdict=verdict, system=system, cases=list(cases), snapshots=[f"snapshots/{system}-{row}.json"],
-                   **kw)
+    return Verdict(
+        row=row, verdict=verdict, system=system, cases=list(cases), snapshots=[f"snapshots/{system}-{row}.json"], **kw
+    )
 
 
 def everything(verdict="pass"):
-    return [v(s, r.id, verdict, measurements={"accepts_dates": "yes"} if r.id.startswith("T") else {})
-            for s in SYSTEMS for r in ALL_ROWS]
+    return [
+        v(s, r.id, verdict, measurements={"accepts_dates": "yes"} if r.id.startswith("T") else {})
+        for s in SYSTEMS
+        for r in ALL_ROWS
+    ]
 
 
 def lines_of(text):
@@ -42,8 +53,14 @@ def test_one_table_in_three_groups_with_the_claim_column_before_the_systems():
     cells = [c.strip() for c in header.split("|")[1:-1]]
     assert cells[:2] == ["Row", "Claimed by [P1]?"]
     assert [c.split(":")[0] for c in cells[2:]] == ["MemState"] * 4 + ["Reference"] * 2 + ["Baseline"]
-    assert [c.split(": ")[1] for c in cells[2:]][1:] == ["step 1", "step 2", "step 3", "phase 1", "phase 2",
-                                                         "versioned row"]
+    assert [c.split(": ")[1] for c in cells[2:]][1:] == [
+        "step 1",
+        "step 2",
+        "step 3",
+        "phase 1",
+        "phase 2",
+        "versioned row",
+    ]
 
 
 def test_every_row_has_a_claim_cell_and_the_probes_are_not_claimed():
@@ -68,10 +85,21 @@ def test_a_cell_is_a_verdict_with_its_snapshot_link_and_its_n_a_cases():
 
 
 def test_c5_states_the_declared_bound_beside_the_active_count():
-    natural = v("reference-gem-p2", "C5-2", "pass", measurements={
-        "declared_bound": {"topics": 500, "name": "β"}, "active_at_largest_n": {"n": 2000, "active": 400}})
-    mech = v("upstream", "C5-1", "partial", measurements={
-        "declared_bound": {"topics": 500, "name": "soft limit"}, "topics": 501, "archived_total": 0})
+    natural = v(
+        "reference-gem-p2",
+        "C5-2",
+        "pass",
+        measurements={
+            "declared_bound": {"topics": 500, "name": "β"},
+            "active_at_largest_n": {"n": 2000, "active": 400},
+        },
+    )
+    mech = v(
+        "upstream",
+        "C5-1",
+        "partial",
+        measurements={"declared_bound": {"topics": 500, "name": "soft limit"}, "topics": 501, "archived_total": 0},
+    )
     card = render_scorecard(MAIN_ROWS, COLUMNS, [natural, mech])
     assert "400 active topics at n=2000, declared bound 500 topics" in card
     assert "501 active topics, declared bound 500 topics" in card
@@ -81,8 +109,14 @@ def test_the_probes_section_has_two_cells_per_time_probe_and_the_c4_prime_probe(
     verdicts = []
     for s in SYSTEMS:
         for t in TIME_PROBES:
-            verdicts.append(v(s, t, "absent" if s == "upstream" else "pass",
-                              measurements={"accepts_dates": "no" if s == "upstream" else "yes"}))
+            verdicts.append(
+                v(
+                    s,
+                    t,
+                    "absent" if s == "upstream" else "pass",
+                    measurements={"accepts_dates": "no" if s == "upstream" else "yes"},
+                )
+            )
         verdicts.append(v(s, "C4′", "absent" if s == "baseline" else "pass"))
     text = render_probes(ALL_ROWS, COLUMNS, verdicts)
     assert text.startswith("### Probes of the proposed C1′ and C4′, outside [P1]'s claims")
@@ -97,9 +131,11 @@ def test_the_probes_section_has_two_cells_per_time_probe_and_the_c4_prime_probe(
 def test_case_level_controls_are_shown_with_the_c4_update_path_and_each_probes_control_date():
     held, broke = Case("control date Dec 20", True, control=True), Case("control date Dec 20", False, control=True)
     update = Case("update survives", True, control=True, id="update")
-    verdicts = [v("step2", "T1", "pass", [held, Case("asked Mar 1", True)], measurements={"accepts_dates": "yes"}),
-                v("upstream", "T1", "fail", [broke], measurements={"accepts_dates": "yes"}),
-                v("step2", "C4", "pass", [update, Case("cap", True)])]
+    verdicts = [
+        v("step2", "T1", "pass", [held, Case("asked Mar 1", True)], measurements={"accepts_dates": "yes"}),
+        v("upstream", "T1", "fail", [broke], measurements={"accepts_dates": "yes"}),
+        v("step2", "C4", "pass", [update, Case("cap", True)]),
+    ]
     text = render_probes(ALL_ROWS, COLUMNS, verdicts)
     assert "### Case-level controls" in text
     lines = [l for l in lines_of(text) if l.startswith("| T1: ") or l.startswith("| C4: ")]
@@ -109,11 +145,24 @@ def test_case_level_controls_are_shown_with_the_c4_update_path_and_each_probes_c
 
 
 def test_the_merge_is_printed_as_existence_with_the_natural_random_id_count_beside_it():
-    c2a = v("upstream", "C2(a)", "fail", [Case("the merge does not make the superseded value current in the arranged "
-                                                  "case (existence)", False, "20 of 20 arranged repetitions made March 15 current")],
-            measurements={"natural_count": "10/20"})
-    text = render_merge_existence(MAIN_ROWS, COLUMNS, [c2a, v("step3", "C2(a)", "pass", [Case("x", True, "0 of 20")],
-                                                                measurements={"natural_count": None})])
+    c2a = v(
+        "upstream",
+        "C2(a)",
+        "fail",
+        [
+            Case(
+                "the merge does not make the superseded value current in the arranged case (existence)",
+                False,
+                "20 of 20 arranged repetitions made March 15 current",
+            )
+        ],
+        measurements={"natural_count": "10/20"},
+    )
+    text = render_merge_existence(
+        MAIN_ROWS,
+        COLUMNS,
+        [c2a, v("step3", "C2(a)", "pass", [Case("x", True, "0 of 20")], measurements={"natural_count": None})],
+    )
     assert "existence" in text
     upstream = next(l for l in lines_of(text) if l.startswith("| MemState: upstream"))
     assert "fail" in upstream and "10/20" in upstream and "random" in text
@@ -129,15 +178,30 @@ def test_mem_states_limits_are_stated_with_their_numbers():
 
 def test_the_deviations_table_lists_the_reference_gem_parameters_seeds_and_the_versioned_row_settings():
     table = render_deviations()
-    for needle in ("one-hop flagging over extension edges in either direction", "single archive threshold",
-                   "revision (merge) after every ingest, as MemState's Reasoner does", "no LLM",
-                   "restricted", "0.06", "0.03", "0.01", "Baseline (versioned row) settings", "top 8"):
+    for needle in (
+        "one-hop flagging over extension edges in either direction",
+        "single archive threshold",
+        "revision (merge) after every ingest, as MemState's Reasoner does",
+        "no LLM",
+        "restricted",
+        "0.06",
+        "0.03",
+        "0.01",
+        "Baseline (versioned row) settings",
+        "top 8",
+    ):
         assert needle in table or needle.replace("restricted", "limited") in table, needle
 
 
 def test_the_change_table_has_two_chains():
-    verdicts = [v("upstream", "C1", "fail"), v("step1", "C1", "fail"), v("step2", "C1", "pass"),
-                v("step3", "C1", "pass"), v("reference-gem-p1", "T1", "absent"), v("reference-gem-p2", "T1", "pass")]
+    verdicts = [
+        v("upstream", "C1", "fail"),
+        v("step1", "C1", "fail"),
+        v("step2", "C1", "pass"),
+        v("step3", "C1", "pass"),
+        v("reference-gem-p1", "T1", "absent"),
+        v("reference-gem-p2", "T1", "pass"),
+    ]
     rows = [Row("C1", "c1"), Row("T1", "t1", probe=True)]
     text = render_change_tables(rows, verdicts)
     assert "upstream → step 1 → step 2 → step 3" in text
@@ -156,13 +220,27 @@ def test_the_summary_claims_no_regressions_only_when_no_row_is_worse_at_step_3_t
     assert "no regressions" not in said.lower() and "C3 (pass → partial)" in said
     flipped = [v("step1", "C1", "partial", [Case("k", True)]), v("step3", "C1", "partial", [Case("k", False)])]
     assert "no regressions" not in regression_summary(rows[:1], flipped).lower()
-    assert "no regressions" not in regression_summary(rows[:1], [v("step1", "C1", "pass"), v("step3", "C1", ERROR)]).lower()
+    assert (
+        "no regressions"
+        not in regression_summary(rows[:1], [v("step1", "C1", "pass"), v("step3", "C1", ERROR)]).lower()
+    )
     assert "no regressions" not in regression_summary(rows[:1], [v("step1", "C1", "pass")]).lower()
 
 
 def ramp_verdict(system, repeats, ms=100.0):
-    ramps = [{"n": n, "repeat": r, "ingest_median_ms": ms, "query_samples_ms": [ms, ms], "settle_s": 0.1,
-              "archived": 0, "total": n} for n in (100, 250) for r in range(1, repeats + 1)]
+    ramps = [
+        {
+            "n": n,
+            "repeat": r,
+            "ingest_median_ms": ms,
+            "query_samples_ms": [ms, ms],
+            "settle_s": 0.1,
+            "archived": 0,
+            "total": n,
+        }
+        for n in (100, 250)
+        for r in range(1, repeats + 1)
+    ]
     return v(system, "C5-2", "fail", measurements={"ramps": ramps})
 
 
@@ -182,11 +260,21 @@ def test_with_three_repeats_the_rule_applies_as_before():
 def test_a_recorded_run_prints_the_probes_section_and_the_limits_and_records_the_claim_column(tmp_path):
     import json
     from datetime import date
+
     from demo.run import run_recorded
     from demo.systems import SYSTEMS
+
     checks = [c for c in discover() if c.id in ("C1", "C4′")]
-    run = run_recorded(["baseline"], checks, tmp_path, "cmd", run_day=date(2026, 10, 20), registry=SYSTEMS,
-                       runtime_root=tmp_path / "rt", log=lambda *_: None)
+    run = run_recorded(
+        ["baseline"],
+        checks,
+        tmp_path,
+        "cmd",
+        run_day=date(2026, 10, 20),
+        registry=SYSTEMS,
+        runtime_root=tmp_path / "rt",
+        log=lambda *_: None,
+    )
     card = (run.dir / "scorecard.md").read_text()
     assert "### Probes of the proposed C1′ and C4′, outside [P1]'s claims" in card
     assert "### MemState's limits, with their numbers" in card

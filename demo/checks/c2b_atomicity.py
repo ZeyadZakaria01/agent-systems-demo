@@ -20,51 +20,78 @@ import uuid
 
 import httpx
 
-from demo.checks import Ctx, check
 from demo.adapter import Rejected
+from demo.checks import Ctx, check
 from demo.reads import NO_VALUE, current_value
 from demo.verdict import Case, Verdict
 
-CLAIM = ("C2 (transition soundness), by construction (§4.3): every transition respects P_t, and policies are "
-         "evaluated before an atomic commit.")
+CLAIM = (
+    "C2 (transition soundness), by construction (§4.3): every transition respects P_t, and policies are "
+    "evaluated before an atomic commit."
+)
 TITLE = "Website Redesign"
 EDGE_TITLE = "Website Redesign (edge)"
 CASE = "a refused ingest with a valid field and a field referencing a missing topic commits nothing (all or nothing)"
 
 
 def _verdict(held: bool | None, observation: str, evidence: dict, observations: list[dict]) -> Verdict:
-    return Verdict.from_cases("C2(b)", [Case(CASE, held=held, observation=observation)],
-                              observations=observations, measurements={"evidence": evidence})
+    return Verdict.from_cases(
+        "C2(b)",
+        [Case(CASE, held=held, observation=observation)],
+        observations=observations,
+        measurements={"evidence": evidence},
+    )
 
 
 def _edge_observation(s) -> list[dict]:
     """The separate ingest with an edge to a missing topic: an observation only when the edge is reported applied."""
     missing_id = str(uuid.uuid4())
     try:
-        response = s.ingest({"placement": "new_topic", "title": EDGE_TITLE, "topic_kind": "project",
-                             "edges": [{"to_topic_id": missing_id, "kind": "extension"}]})
+        response = s.ingest(
+            {
+                "placement": "new_topic",
+                "title": EDGE_TITLE,
+                "topic_kind": "project",
+                "edges": [{"to_topic_id": missing_id, "kind": "extension"}],
+            }
+        )
     except (Rejected, httpx.HTTPStatusError):
         return []
     if f"edge:{missing_id}" not in ((response or {}).get("applied") or []):
         return []
     edges = s.read_state()["edges"]
-    stored = {None: "the system's edges are not readable", False: "no edge is stored",
-              True: "a dangling edge is stored"}[
-        None if edges is None else any(missing_id in (e.get("from"), e.get("to")) for e in edges)]
-    summary = (f"edge reported applied but not stored: the response lists edge:{missing_id} as applied, the target "
-               f"topic does not exist and {stored}")
-    return [{"name": "edge reported applied but not stored", "summary": summary, "missing_topic_id": missing_id,
-             "response": response}]
+    stored = {
+        None: "the system's edges are not readable",
+        False: "no edge is stored",
+        True: "a dangling edge is stored",
+    }[None if edges is None else any(missing_id in (e.get("from"), e.get("to")) for e in edges)]
+    summary = (
+        f"edge reported applied but not stored: the response lists edge:{missing_id} as applied, the target "
+        f"topic does not exist and {stored}"
+    )
+    return [
+        {
+            "name": "edge reported applied but not stored",
+            "summary": summary,
+            "missing_topic_id": missing_id,
+            "response": response,
+        }
+    ]
 
 
 @check(row="C2(b)", claim=CLAIM)
 def c2b(ctx: Ctx) -> Verdict:
     s = ctx.system
     missing_id = str(uuid.uuid4())  # no topic has this id: nothing was ever written under it
-    request = {"placement": "new_topic", "title": TITLE, "topic_kind": "project",
-               "fields": [{"name": "Deadline", "value": "March 15", "provenance": "kickoff-notes"},
-                          {"name": "Owner", "value": "Alice", "provenance": "kickoff-notes",
-                           "ref_topic_id": missing_id}]}
+    request = {
+        "placement": "new_topic",
+        "title": TITLE,
+        "topic_kind": "project",
+        "fields": [
+            {"name": "Deadline", "value": "March 15", "provenance": "kickoff-notes"},
+            {"name": "Owner", "value": "Alice", "provenance": "kickoff-notes", "ref_topic_id": missing_id},
+        ],
+    }
     response, error = None, None
     try:
         response = s.ingest(request)
@@ -77,19 +104,33 @@ def c2b(ctx: Ctx) -> Verdict:
     stored_title = f"{TITLE} [live {scope}]" if scope else TITLE
     named_id = (response or {}).get("topic_id")
     state = s.read_state()
-    topics = [t for t in state["topics"].values()
-              if t.get("title") == stored_title or (named_id is not None and t.get("id") == named_id)]
+    topics = [
+        t
+        for t in state["topics"].values()
+        if t.get("title") == stored_title or (named_id is not None and t.get("id") == named_id)
+    ]
     persisted = {name: current_value(t["fields"].get(name)) for t in topics for name in ("Deadline", "Owner")}
     persisted = {n: v for n, v in persisted.items() if v is not NO_VALUE}
-    stored = (f"topics titled {stored_title!r}: {len(topics)}; fields stored: {persisted or 'none'}; "
-              f"missing target created as a topic: {missing_id in state['topics']}")
-    evidence = {"request": request, "response": response, "error": error, "missing_topic_id": missing_id,
-                "stored": stored}
+    stored = (
+        f"topics titled {stored_title!r}: {len(topics)}; fields stored: {persisted or 'none'}; "
+        f"missing target created as a topic: {missing_id in state['topics']}"
+    )
+    evidence = {
+        "request": request,
+        "response": response,
+        "error": error,
+        "missing_topic_id": missing_id,
+        "stored": stored,
+    }
     observations = _edge_observation(s)
 
     if error is None:
-        return _verdict(None, f"the system accepted the missing reference, so atomicity is not testable with this "
-                              f"input; {stored}", evidence, observations)
+        return _verdict(
+            None,
+            f"the system accepted the missing reference, so atomicity is not testable with this input; {stored}",
+            evidence,
+            observations,
+        )
     if topics or persisted:
         return _verdict(False, f"partial commit: the system errored ({error}) but {stored}", evidence, observations)
     return _verdict(True, f"the system refused ({error}) and nothing persisted ({stored})", evidence, observations)

@@ -2,8 +2,7 @@
 
 from demo.baseline import Baseline
 from demo.checks import discover
-from demo.adapter import System
-from demo.verdict import FAIL, PASS
+from demo.verdict import PASS
 
 
 def by_row(row):

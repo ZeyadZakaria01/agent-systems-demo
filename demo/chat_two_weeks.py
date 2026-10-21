@@ -42,7 +42,7 @@ STORY_YEAR = 2026
 STORY_FIRST_DAY = date(STORY_YEAR, 10, 6)
 STORY_RUN_DAY = date(STORY_YEAR, 10, 20)  # the day the story ends on; the run day replaces it
 WEEKS_AGO = 2
-FOUR_WEEKS_HINT = "the answer says four weeks (\"four weeks\", \"4 weeks\" or \"28 days\")"
+FOUR_WEEKS_HINT = 'the answer says four weeks ("four weeks", "4 weeks" or "28 days")'
 
 
 @dataclass(frozen=True)
@@ -59,16 +59,38 @@ class Plan:
 def plan(run_day: date) -> Plan:
     offset = run_day - STORY_RUN_DAY
     first = STORY_FIRST_DAY + offset
-    return Plan(run_day=run_day, first_day=first, second_day=run_day, start_date=first - timedelta(weeks=WEEKS_AGO),
-                shift_days=offset.days)
+    return Plan(
+        run_day=run_day,
+        first_day=first,
+        second_day=run_day,
+        start_date=first - timedelta(weeks=WEEKS_AGO),
+        shift_days=offset.days,
+    )
 
 
 # -- reading dates out of what the model stored
 
-MONTHS = {name: number for number, names in enumerate(
-    (("january", "jan"), ("february", "feb"), ("march", "mar"), ("april", "apr"), ("may",), ("june", "jun"),
-     ("july", "jul"), ("august", "aug"), ("september", "sep", "sept"), ("october", "oct"), ("november", "nov"),
-     ("december", "dec")), start=1) for name in names}
+MONTHS = {
+    name: number
+    for number, names in enumerate(
+        (
+            ("january", "jan"),
+            ("february", "feb"),
+            ("march", "mar"),
+            ("april", "apr"),
+            ("may",),
+            ("june", "jun"),
+            ("july", "jul"),
+            ("august", "aug"),
+            ("september", "sep", "sept"),
+            ("october", "oct"),
+            ("november", "nov"),
+            ("december", "dec"),
+        ),
+        start=1,
+    )
+    for name in names
+}
 _MONTH = "(" + "|".join(sorted(MONTHS, key=len, reverse=True)) + ")"
 _ORDINAL = r"(?:st|nd|rd|th)?"
 _ISO = re.compile(r"\b(\d{4})-(\d{2})-(\d{2})\b")
@@ -118,7 +140,14 @@ def _valid_from_day(value: Any) -> date | None:
 
 # -- what a turn wrote
 
-COMPARED_ENTRY_KEYS = ("value", "valid_from", "invalid_at", "provenance", "created_at", "why_changed")  # an entry is the same entry before and after a turn
+COMPARED_ENTRY_KEYS = (
+    "value",
+    "valid_from",
+    "invalid_at",
+    "provenance",
+    "created_at",
+    "why_changed",
+)  # an entry is the same entry before and after a turn
 
 
 def _entries(state: dict) -> dict[tuple, dict]:
@@ -128,8 +157,12 @@ def _entries(state: dict) -> dict[tuple, dict]:
         for name, slot in topic["fields"].items():
             for entry in slot.get("history") or []:
                 key = (topic_id, name, *(repr(entry.get(k)) for k in COMPARED_ENTRY_KEYS))
-                found[key] = {"topic_id": topic_id, "title": topic.get("title"), "field": name,
-                              **{k: entry.get(k) for k in COMPARED_ENTRY_KEYS}}
+                found[key] = {
+                    "topic_id": topic_id,
+                    "title": topic.get("title"),
+                    "field": name,
+                    **{k: entry.get(k) for k in COMPARED_ENTRY_KEYS},
+                }
     return found
 
 
@@ -137,7 +170,9 @@ def written_by(before: dict, after: dict) -> tuple[list[dict], list[dict]]:
     """(entries, topics) in `after` that `before` did not hold."""
     old = _entries(before)
     entries = [e for key, e in _entries(after).items() if key not in old]
-    topics = [{"topic_id": tid, "title": t.get("title")} for tid, t in after["topics"].items() if tid not in before["topics"]]
+    topics = [
+        {"topic_id": tid, "title": t.get("title")} for tid, t in after["topics"].items() if tid not in before["topics"]
+    ]
     return entries, topics
 
 
@@ -146,14 +181,34 @@ def read_start_date(written: list[dict], truth: date, default_year: int) -> dict
     candidates = []
     for e in written:
         for d in dates_in_text(str(e["value"]), default_year):
-            candidates.append({"source": "value", "topic_id": e["topic_id"], "field": e["field"], "date": d.isoformat(),
-                               "from": e["value"]})
+            candidates.append(
+                {
+                    "source": "value",
+                    "topic_id": e["topic_id"],
+                    "field": e["field"],
+                    "date": d.isoformat(),
+                    "from": e["value"],
+                }
+            )
         vf = _valid_from_day(e.get("valid_from"))
         if vf:
-            candidates.append({"source": "valid_from", "topic_id": e["topic_id"], "field": e["field"],
-                               "date": vf.isoformat(), "from": e["valid_from"]})
-    return {"truth": truth.isoformat(), "tolerance_days": TOLERANCE_DAYS, "candidates": candidates,
-            "within_tolerance": any(abs((date.fromisoformat(c["date"]) - truth).days) <= TOLERANCE_DAYS for c in candidates)}
+            candidates.append(
+                {
+                    "source": "valid_from",
+                    "topic_id": e["topic_id"],
+                    "field": e["field"],
+                    "date": vf.isoformat(),
+                    "from": e["valid_from"],
+                }
+            )
+    return {
+        "truth": truth.isoformat(),
+        "tolerance_days": TOLERANCE_DAYS,
+        "candidates": candidates,
+        "within_tolerance": any(
+            abs((date.fromisoformat(c["date"]) - truth).days) <= TOLERANCE_DAYS for c in candidates
+        ),
+    }
 
 
 # -- the optional seed
@@ -164,9 +219,13 @@ SEED_VALID_FROM = date(2025, 1, 1)
 
 def seed_request() -> dict:
     """The profile topic of a user who already has a job, so that "my new job" has a topic and a field to land in."""
-    return {"placement": "new_topic", "title": SEED_TITLE, "topic_kind": "person", "summary": "The user's own profile",
-            "fields": [{"name": SEED_FIELD, "value": SEED_VALUE, "valid_from": iso(SEED_VALID_FROM),
-                        "provenance": "seed"}]}
+    return {
+        "placement": "new_topic",
+        "title": SEED_TITLE,
+        "topic_kind": "person",
+        "summary": "The user's own profile",
+        "fields": [{"name": SEED_FIELD, "value": SEED_VALUE, "valid_from": iso(SEED_VALID_FROM), "provenance": "seed"}],
+    }
 
 
 def write_seed(system: System) -> dict:
@@ -184,10 +243,22 @@ def left_unset(first_intent_override: str | None) -> list[str]:
     return [f"`intent_override: {first_intent_override}` on W1 only (W2's route is the router's)", *LEFT_UNSET[1:]]
 
 
-def take_turn(system: System, *, question: str, text: str, reference_day: date, ground_truth: str,
-              graded_on: str, intent_override: str | None = None) -> dict:
+def take_turn(
+    system: System,
+    *,
+    question: str,
+    text: str,
+    reference_day: date,
+    ground_truth: str,
+    graded_on: str,
+    intent_override: str | None = None,
+) -> dict:
     """One chat request; the turn keeps what the replay prints."""
-    request = {"messages": [{"role": "user", "content": text}], "provider": chat_provider(), "reference_time": iso(reference_day)}
+    request = {
+        "messages": [{"role": "user", "content": text}],
+        "provider": chat_provider(),
+        "reference_time": iso(reference_day),
+    }
     if intent_override:
         request["intent_override"] = intent_override
     before = system.read_state()
@@ -195,40 +266,96 @@ def take_turn(system: System, *, question: str, text: str, reference_day: date, 
     after = system.read_state()
     entry = next(e for e in reversed(system.log.entries) if e["kind"] == "chat")
     written, created = written_by(before, after)
-    return {"question": question, "ability": ABILITY, "text": text, "graded_on": graded_on,
-            "reference_time": request["reference_time"], "ground_truth": ground_truth, "request": request,
-            "answer": response.get("reply") or "",
-            "route": {"intent": response.get("intent"), "intent_source": response.get("intent_source"),
-                      "tool_calls": [t.get("tool") for t in response.get("tool_log") or []]},
-            "latency_ms": entry["latency_ms"], "model": response.get("model"), "provider": response.get("provider"),
-            "tool_log": response.get("tool_log") or [], "written": written, "topics_created": created}
+    return {
+        "question": question,
+        "ability": ABILITY,
+        "text": text,
+        "graded_on": graded_on,
+        "reference_time": request["reference_time"],
+        "ground_truth": ground_truth,
+        "request": request,
+        "answer": response.get("reply") or "",
+        "route": {
+            "intent": response.get("intent"),
+            "intent_source": response.get("intent_source"),
+            "tool_calls": [t.get("tool") for t in response.get("tool_log") or []],
+        },
+        "latency_ms": entry["latency_ms"],
+        "model": response.get("model"),
+        "provider": response.get("provider"),
+        "tool_log": response.get("tool_log") or [],
+        "written": written,
+        "topics_created": created,
+    }
 
 
-def record_two_weeks(system: System, *, run_id: str, recorded_at: str, run_day: date, command: str = "",
-                     ollama_base_url: str | None = None, snapshot: str | None = None,
-                     extra: dict | None = None, first_intent_override: str | None = None, seed: bool = False) -> dict:
+def record_two_weeks(
+    system: System,
+    *,
+    run_id: str,
+    recorded_at: str,
+    run_day: date,
+    command: str = "",
+    ollama_base_url: str | None = None,
+    snapshot: str | None = None,
+    extra: dict | None = None,
+    first_intent_override: str | None = None,
+    seed: bool = False,
+) -> dict:
     """Ask the two questions, return the recording (a plain dict; `save_recording` writes it). Both routes are the
     router's unless `first_intent_override` forces the first request's (`FIRST_INTENT_OVERRIDE`). With `seed`, one
     profile topic is written through `/v1` first (`seed_request`), so the model has a topic to write the job into."""
     p = plan(run_day)
     seeded = write_seed(system) if seed else None
-    first = take_turn(system, question="W1", text=FIRST_MESSAGE, reference_day=p.first_day, graded_on="the stored start date",
-                      intent_override=first_intent_override,
-                      ground_truth=f"{p.start_date.isoformat()} (two weeks before the reference time "
-                                   f"{p.first_day.isoformat()}), +- {TOLERANCE_DAYS} day")
+    first = take_turn(
+        system,
+        question="W1",
+        text=FIRST_MESSAGE,
+        reference_day=p.first_day,
+        graded_on="the stored start date",
+        intent_override=first_intent_override,
+        ground_truth=f"{p.start_date.isoformat()} (two weeks before the reference time "
+        f"{p.first_day.isoformat()}), +- {TOLERANCE_DAYS} day",
+    )
     first["stored_start_date"] = read_start_date(first["written"], p.start_date, p.first_day.year)
-    second = take_turn(system, question="W2", text=SECOND_MESSAGE, reference_day=p.second_day, graded_on="the answer",
-                       ground_truth="four weeks")
+    second = take_turn(
+        system,
+        question="W2",
+        text=SECOND_MESSAGE,
+        reference_day=p.second_day,
+        graded_on="the answer",
+        ground_truth="four weeks",
+    )
     second["answer_contains_ground_truth"] = states_four_weeks(second["answer"])
     second["hint_rule"] = FOUR_WEEKS_HINT
     turns = [first, second]
     return new_recording(
-        system.describe(), case=CASE, title=CASE_TITLE, run_id=run_id, recorded_at=recorded_at, command=command,
-        snapshot=snapshot, ollama_base_url=ollama_base_url, left_unset=left_unset(first_intent_override), turns=turns,
+        system.describe(),
+        case=CASE,
+        title=CASE_TITLE,
+        run_id=run_id,
+        recorded_at=recorded_at,
+        command=command,
+        snapshot=snapshot,
+        ollama_base_url=ollama_base_url,
+        left_unset=left_unset(first_intent_override),
+        turns=turns,
         extra=extra,
-        state={"fresh_db": True, "seeded_topics": 1 if seeded else 0, "seed": seeded, "events_played": 0,
-               "setup_writes": [], "first_intent_override": first_intent_override,
-               "dates": {"run_day": p.run_day.isoformat(), "first_reference_time": p.first_day.isoformat(),
-                         "second_reference_time": p.second_day.isoformat(), "start_date": p.start_date.isoformat(),
-                         "shift_days": p.shift_days, "story_first_day": STORY_FIRST_DAY.isoformat(),
-                         "story_run_day": STORY_RUN_DAY.isoformat()}})
+        state={
+            "fresh_db": True,
+            "seeded_topics": 1 if seeded else 0,
+            "seed": seeded,
+            "events_played": 0,
+            "setup_writes": [],
+            "first_intent_override": first_intent_override,
+            "dates": {
+                "run_day": p.run_day.isoformat(),
+                "first_reference_time": p.first_day.isoformat(),
+                "second_reference_time": p.second_day.isoformat(),
+                "start_date": p.start_date.isoformat(),
+                "shift_days": p.shift_days,
+                "story_first_day": STORY_FIRST_DAY.isoformat(),
+                "story_run_day": STORY_RUN_DAY.isoformat(),
+            },
+        },
+    )

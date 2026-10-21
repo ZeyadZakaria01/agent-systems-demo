@@ -8,6 +8,7 @@ modifying MemState. Requests that set `think` explicitly are passed through unch
 
 Usage: ollama_nothink_proxy.py [LISTEN_PORT] [UPSTREAM_URL]   (defaults: 11435, http://127.0.0.1:11436, the demo's own Ollama)
 """
+
 import json
 import os
 import sys

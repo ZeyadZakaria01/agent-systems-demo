@@ -14,7 +14,7 @@ from __future__ import annotations
 import argparse
 import json
 import sys
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 from demo.chat_recording import load_recording, recording_files
@@ -50,8 +50,15 @@ def export_items(targets: list[Path], out: Path, root: Path = REPO_ROOT) -> int:
     items = []
     for path in _files(targets):
         rec = load_recording(path)
-        items += [{"id": f"{_rel(path, root)}#{i}", "case": rec["case"], "question": turn["question"],
-                   "prompt": grading_prompt(turn)} for i, turn in enumerate(rec["turns"])]
+        items += [
+            {
+                "id": f"{_rel(path, root)}#{i}",
+                "case": rec["case"],
+                "question": turn["question"],
+                "prompt": grading_prompt(turn),
+            }
+            for i, turn in enumerate(rec["turns"])
+        ]
     Path(out).parent.mkdir(parents=True, exist_ok=True)
     Path(out).write_text(json.dumps(items, indent=2, ensure_ascii=False) + "\n")
     return len(items)
@@ -67,7 +74,7 @@ def apply_grades(graded: Path, grader: str, root: Path = REPO_ROOT, force: bool 
         raise ValueError("grader name is empty")
     recordings: dict[str, dict] = {}
     seen: set[str] = set()
-    stamp = datetime.now(timezone.utc).isoformat(timespec="seconds")
+    stamp = datetime.now(UTC).isoformat(timespec="seconds")
     for item in items:
         if not isinstance(item, dict) or "id" not in item:
             raise ValueError(f"item {item!r} has no id")
@@ -88,8 +95,12 @@ def apply_grades(graded: Path, grader: str, root: Path = REPO_ROOT, force: bool 
             raise ValueError(f"{item_id}: the recording has {len(turns)} turns")
         if turns[index].get("reviewer_grade") and not force:
             raise ValueError(f"{item_id}: already has a reviewer_grade (use --force to overwrite)")
-        turns[index]["reviewer_grade"] = {"grade": item["grade"], "note": str(item.get("note") or ""),
-                                          "grader": grader, "graded_at": stamp}
+        turns[index]["reviewer_grade"] = {
+            "grade": item["grade"],
+            "note": str(item.get("note") or ""),
+            "grader": grader,
+            "graded_at": stamp,
+        }
     for rel, rec in recordings.items():
         (Path(root) / rel).write_text(json.dumps(rec, indent=2, ensure_ascii=False) + "\n")
     return len(items)
@@ -97,8 +108,8 @@ def apply_grades(graded: Path, grader: str, root: Path = REPO_ROOT, force: bool 
 
 def agreement(targets: list[Path], root: Path = REPO_ROOT) -> str:
     """Grade counts for both graders and the reviewer's agreement with Sonnet, per case and per turn."""
-    sonnet = {g: 0 for g in GRADES}
-    reviewer = {g: 0 for g in GRADES}
+    sonnet = dict.fromkeys(GRADES, 0)
+    reviewer = dict.fromkeys(GRADES, 0)
     by_case: dict[str, list[bool]] = {}
     by_turn: dict[tuple[str, str], list[bool]] = {}
     misses = []
@@ -118,17 +129,22 @@ def agreement(targets: list[Path], root: Path = REPO_ROOT) -> str:
                 if not agree:
                     misses.append((f"{_rel(path, root)}#{i}", turn, turn["model_grade"], review))
     lines = ["Grades:"]
-    lines += [f"  Sonnet: " + ", ".join(f"{g} {n}" for g, n in sonnet.items()),
-              f"  reviewer: " + ", ".join(f"{g} {n}" for g, n in reviewer.items())]
+    lines += [
+        "  Sonnet: " + ", ".join(f"{g} {n}" for g, n in sonnet.items()),
+        "  reviewer: " + ", ".join(f"{g} {n}" for g, n in reviewer.items()),
+    ]
     lines += ["", "Agreement with Sonnet, per case:"]
     lines += [f"  {c}: {sum(a)}/{len(a)}" for c, a in sorted(by_case.items())] or ["  none reviewed"]
     lines += ["", "Agreement with Sonnet, per turn:"]
     lines += [f"  {c} {q}: {sum(a)}/{len(a)}" for (c, q), a in sorted(by_turn.items())] or ["  none reviewed"]
     lines += ["", "Disagreements:"]
     for item_id, turn, model, review in misses:
-        lines += [f"  {item_id} ({turn['question']})", f"    reviewer ({review.get('grader')}): {review['grade']}; "
-                  f"Sonnet: {model['grade']}", f"    reviewer's note: {review.get('note')}",
-                  f"    Sonnet's note: {model.get('note')}"]
+        lines += [
+            f"  {item_id} ({turn['question']})",
+            f"    reviewer ({review.get('grader')}): {review['grade']}; Sonnet: {model['grade']}",
+            f"    reviewer's note: {review.get('note')}",
+            f"    Sonnet's note: {model.get('note')}",
+        ]
     if not misses:
         lines.append("  none")
     return "\n".join(lines)

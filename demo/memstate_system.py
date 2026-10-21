@@ -22,8 +22,10 @@ def with_current(field: dict, dates_accepted: bool) -> dict:
     wrong answer."""
     if "current" not in field:
         if dates_accepted:
-            raise RuntimeError("the system accepts dates but returned a field without `current`; refusing the "
-                               "newest-entry fallback, which would read the wrong entry")
+            raise RuntimeError(
+                "the system accepts dates but returned a field without `current`; refusing the "
+                "newest-entry fallback, which would read the wrong entry"
+            )
         field["current"] = field["history"][0] if field.get("history") else None
     return field
 
@@ -34,9 +36,13 @@ def request_properties(document: dict) -> set[str]:
     not matter; a response model that merely returns a property (upstream's history entry returns `valid_from`) is not
     a request model and does not count."""
     schemas = document["components"]["schemas"]
-    pending = [body.get("content", {}).get("application/json", {}).get("schema", {})
-               for path in document.get("paths", {}).values() for op in path.values() if isinstance(op, dict)
-               for body in [op.get("requestBody", {})]]
+    pending = [
+        body.get("content", {}).get("application/json", {}).get("schema", {})
+        for path in document.get("paths", {}).values()
+        for op in path.values()
+        if isinstance(op, dict)
+        for body in [op.get("requestBody", {})]
+    ]
     seen: set[str] = set()
     found: set[str] = set()
     while pending:
@@ -68,8 +74,10 @@ SOURCE_FIELD = "source_message"  # the field-write property a source message tra
 
 def source_surface(document: dict) -> dict:
     """The C4' probe's look at the API: every request property and every path whose name says "source", sorted."""
-    return {"request_properties": sorted(p for p in request_properties(document) if "source" in p.lower()),
-            "paths": sorted(p for p in document.get("paths", {}) if "source" in p.lower())}
+    return {
+        "request_properties": sorted(p for p in request_properties(document) if "source" in p.lower()),
+        "paths": sorted(p for p in document.get("paths", {}) if "source" in p.lower()),
+    }
 
 
 class MemStateSystem(System):
@@ -102,8 +110,9 @@ class MemStateSystem(System):
                 detail = r.json().get("detail", r.text)
             except ValueError:
                 detail = r.text
-            raise httpx.HTTPStatusError(f"{r.status_code} from {method} {path}: {str(detail)[:500]}",
-                                        request=r.request, response=r)
+            raise httpx.HTTPStatusError(
+                f"{r.status_code} from {method} {path}: {str(detail)[:500]}", request=r.request, response=r
+            )
         r.raise_for_status()
         return r
 
@@ -134,9 +143,11 @@ class MemStateSystem(System):
             if "current" not in f and dates_accepted is None:
                 caps = self._date_capabilities()
                 if any(v is None for v in caps["accepts"].values()):  # no schema: the fallback would be a guess
-                    raise RuntimeError(f"the system returned a field without `current` and which dates it accepts is "
-                                       f"unknown ({caps['accepts_error']}); refusing the newest-entry fallback, "
-                                       "which would read the wrong entry if it accepts dates")
+                    raise RuntimeError(
+                        f"the system returned a field without `current` and which dates it accepts is "
+                        f"unknown ({caps['accepts_error']}); refusing the newest-entry fallback, "
+                        "which would read the wrong entry if it accepts dates"
+                    )
                 dates_accepted = any(caps["accepts"].values())
             with_current(f, bool(dates_accepted))
         return topic
@@ -175,10 +186,18 @@ class MemStateSystem(System):
             properties = request_properties(document)
             surface = source_surface(document)
         except Exception as e:
-            return {"accepts": {d: None for d in DATES}, "accepts_source": None, "source_surface": None,
-                    "accepts_error": f"could not read /openapi.json: {type(e).__name__}: {e}"}
-        self._dates = {"accepts": {d: d in properties for d in DATES}, "accepts_source": SOURCE_FIELD in properties,
-                       "source_surface": surface, "accepts_error": None}
+            return {
+                "accepts": dict.fromkeys(DATES),
+                "accepts_source": None,
+                "source_surface": None,
+                "accepts_error": f"could not read /openapi.json: {type(e).__name__}: {e}",
+            }
+        self._dates = {
+            "accepts": {d: d in properties for d in DATES},
+            "accepts_source": SOURCE_FIELD in properties,
+            "source_surface": surface,
+            "accepts_error": None,
+        }
         return self._dates
 
     def _probe(self, method: str, path: str) -> dict | None:
@@ -195,6 +214,14 @@ class MemStateSystem(System):
             db_path, health_error = self._call("GET", "/health/graph").json().get("path"), None
         except Exception as e:  # a dead server must not take the evidence down with it
             db_path, health_error = self.server.db_path, f"{type(e).__name__}: {e}"
-        return {"url": self.base_url, "db_path": db_path, "commit": self.server.commit,
-                "engine": self.server.engine_line, "source_dir": self.server.source_dir,
-                "keeps_history": True, "declared_bound": DECLARED_BOUND, **self._date_capabilities(), "health_error": health_error}
+        return {
+            "url": self.base_url,
+            "db_path": db_path,
+            "commit": self.server.commit,
+            "engine": self.server.engine_line,
+            "source_dir": self.server.source_dir,
+            "keeps_history": True,
+            "declared_bound": DECLARED_BOUND,
+            **self._date_capabilities(),
+            "health_error": health_error,
+        }

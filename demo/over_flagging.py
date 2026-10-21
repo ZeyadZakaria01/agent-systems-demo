@@ -35,8 +35,13 @@ class Counts:
     not_needed: list[str]  # raised and not needed
 
     def to_dict(self) -> dict:
-        return {**asdict(self), "flags_raised": len(self.raised), "flags_needed": len(self.needed),
-                "flags_missed": len(self.missed), "flags_not_needed": len(self.not_needed)}
+        return {
+            **asdict(self),
+            "flags_raised": len(self.raised),
+            "flags_needed": len(self.needed),
+            "flags_missed": len(self.missed),
+            "flags_not_needed": len(self.not_needed),
+        }
 
 
 def measure(system: System, mode: str, scenario: dict | None = None) -> Counts:
@@ -45,21 +50,34 @@ def measure(system: System, mode: str, scenario: dict | None = None) -> Counts:
     for key, spec in scenario["topics"].items():  # insertion order: a dependent's edge target already exists
         edges = [{"to_topic_id": ids[spec["depends_on"]], "kind": EDGE_KIND}] if spec.get("depends_on") else []
         f = spec["field"]
-        ids[key] = system.ingest({"placement": "new_topic", "title": spec["title"], "topic_kind": spec["topic_kind"],
-                                  "fields": [{"name": f["name"], "value": f["value"], "provenance": "scenario"}],
-                                  "edges": edges})["topic_id"]
+        ids[key] = system.ingest(
+            {
+                "placement": "new_topic",
+                "title": spec["title"],
+                "topic_kind": spec["topic_kind"],
+                "fields": [{"name": f["name"], "value": f["value"], "provenance": "scenario"}],
+                "edges": edges,
+            }
+        )["topic_id"]
     state = system.read_state()
     if state["edges"] is not None:
         stored = {(e["from"], e["to"]) for e in state["edges"] if e.get("kind") == EDGE_KIND}
-        missing = [k for k, s in scenario["topics"].items()
-                   if s.get("depends_on") and (ids[k], ids[s["depends_on"]]) not in stored]
+        missing = [
+            k
+            for k, s in scenario["topics"].items()
+            if s.get("depends_on") and (ids[k], ids[s["depends_on"]]) not in stored
+        ]
         if missing:
             raise RuntimeError(f"over-flagging setup failed: no extension edge stored for {missing}")
     update = scenario["update"]
-    system.ingest({"placement": "version_field", "topic_id": ids[update["topic"]],
-                   "fields": [{"name": update["field"], "value": update["value"], "provenance": "scenario"}]})
+    system.ingest(
+        {
+            "placement": "version_field",
+            "topic_id": ids[update["topic"]],
+            "fields": [{"name": update["field"], "value": update["value"], "provenance": "scenario"}],
+        }
+    )
     dependents = [k for k in scenario["topics"] if k != update["topic"]]
     raised = [k for k in dependents if ((system.read_topic(ids[k]) or {}).get("revision_flag") or {}).get("flagged")]
     needed = [k for k in dependents if scenario["needs_revision"][k]]
-    return Counts(mode, raised, needed, [k for k in needed if k not in raised],
-                  [k for k in raised if k not in needed])
+    return Counts(mode, raised, needed, [k for k in needed if k not in raised], [k for k in raised if k not in needed])

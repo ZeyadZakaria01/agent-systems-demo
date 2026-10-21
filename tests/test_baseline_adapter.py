@@ -2,8 +2,8 @@
 
 import pytest
 
-from demo.baseline import Baseline
 from demo.adapter import Rejected
+from demo.baseline import Baseline
 from demo.reads import NO_VALUE, current_value
 
 
@@ -19,12 +19,15 @@ def read_topic_fields(system, topic_id, explain=False, **extra):
 
 def test_every_write_appends_and_a_second_new_topic_with_same_title_appends_to_the_same_topic():
     b = Baseline()
-    first = b.ingest({"placement": "new_topic", "title": "Website Redesign",
-                      "fields": [field("Deadline", "March 15")]})
-    b.ingest({"placement": "version_field", "topic_id": first["topic_id"],
-              "fields": [field("Deadline", "April 20")]})
-    again = b.ingest({"placement": "new_topic", "title": "Website Redesign",
-                      "fields": [field("Deadline", "May 1"), field("Owner", "Alice")]})
+    first = b.ingest({"placement": "new_topic", "title": "Website Redesign", "fields": [field("Deadline", "March 15")]})
+    b.ingest({"placement": "version_field", "topic_id": first["topic_id"], "fields": [field("Deadline", "April 20")]})
+    again = b.ingest(
+        {
+            "placement": "new_topic",
+            "title": "Website Redesign",
+            "fields": [field("Deadline", "May 1"), field("Owner", "Alice")],
+        }
+    )
 
     assert again["topic_id"] == first["topic_id"]  # no merge ever occurs: one topic
     assert len(b.read_state()["topics"]) == 1
@@ -59,30 +62,43 @@ def test_empty_and_null_values_are_rejected_and_nothing_is_saved(bad):
 def test_a_write_is_one_transaction_a_bad_field_saves_none_of_it_and_creates_no_topic():
     b = Baseline()
     with pytest.raises(Rejected):
-        b.ingest({"placement": "new_topic", "title": "Fresh",
-                  "fields": [field("Owner", "Alice"), field("Deadline", None)]})
+        b.ingest(
+            {"placement": "new_topic", "title": "Fresh", "fields": [field("Owner", "Alice"), field("Deadline", None)]}
+        )
     assert b.read_state()["topics"] == {}  # not even the topic or the valid first field
     t = b.ingest({"placement": "new_topic", "title": "T", "fields": [field("Owner", "Alice")]})
     with pytest.raises(Rejected):
-        b.ingest({"placement": "extend_topic", "topic_id": t["topic_id"],
-                  "fields": [field("Owner", "Bob"), field("Deadline", "")]})
+        b.ingest(
+            {
+                "placement": "extend_topic",
+                "topic_id": t["topic_id"],
+                "fields": [field("Owner", "Bob"), field("Deadline", "")],
+            }
+        )
     topic = b.read_topic(t["topic_id"])
     assert set(topic["fields"]) == {"Owner"} and len(topic["fields"]["Owner"]["history"]) == 1
 
 
 def test_missing_capabilities_read_as_nothing_values_not_errors():
     b = Baseline()
-    t = b.ingest({"placement": "new_topic", "title": "T", "salience": 0.01,
-                  "fields": [field("Deadline", "April 20")],
-                  "edges": [{"to_topic_id": "nowhere", "kind": "extension"}]})
+    t = b.ingest(
+        {
+            "placement": "new_topic",
+            "title": "T",
+            "salience": 0.01,
+            "fields": [field("Deadline", "April 20")],
+            "edges": [{"to_topic_id": "nowhere", "kind": "extension"}],
+        }
+    )
     topic = b.read_topic(t["topic_id"])
     assert topic["salience"] is None and topic["archived"] is None
     assert b.read_state()["edges"] is None
     assert b.setup_write("patch_topic", label="x", topic_id=t["topic_id"], archived=True) is None
     # valid-time dates are accepted and ignored: the answer does not change
     plain = b.query({"q": "x", "stages": ["temporal"], "topic_ids": [t["topic_id"]]})
-    asof = b.query({"q": "x", "stages": ["temporal"], "topic_ids": [t["topic_id"]],
-                    "valid_at": "2020-01-01T00:00:00+00:00"})
+    asof = b.query(
+        {"q": "x", "stages": ["temporal"], "topic_ids": [t["topic_id"]], "valid_at": "2020-01-01T00:00:00+00:00"}
+    )
     assert asof["candidates"] == plain["candidates"]
 
 
@@ -147,7 +163,11 @@ def test_wait_until_reports_success_and_timeout_explicitly_and_logs_waits_apart_
 def test_every_field_has_an_explicit_current():
     b = Baseline()
     t = b.ingest({"placement": "new_topic", "title": "T", "fields": [field("Deadline", "April 20")]})
-    for f in (b.read_topic(t["topic_id"])["fields"]["Deadline"],
-              b.read_state()["topics"][t["topic_id"]]["fields"]["Deadline"]):
+    for f in (
+        b.read_topic(t["topic_id"])["fields"]["Deadline"],
+        b.read_state()["topics"][t["topic_id"]]["fields"]["Deadline"],
+    ):
         assert current_value(f) == "April 20"
-    assert current_value({"current": None, "history": [{"value": "Dec"}]}) is NO_VALUE  # server states: nothing is current
+    assert (
+        current_value({"current": None, "history": [{"value": "Dec"}]}) is NO_VALUE
+    )  # server states: nothing is current

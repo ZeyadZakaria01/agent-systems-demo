@@ -12,8 +12,14 @@ from demo.baseline import Baseline
 from demo.checks import c3_propagation, discover
 from demo.verdict import ABSENT, FAIL, PARTIAL, PASS, Verdict
 
-OPS = {"<": lambda a, b: a < b, "<=": lambda a, b: a <= b, ">": lambda a, b: a > b, ">=": lambda a, b: a >= b,
-       "==": lambda a, b: a == b, "!=": lambda a, b: a != b}
+OPS = {
+    "<": lambda a, b: a < b,
+    "<=": lambda a, b: a <= b,
+    ">": lambda a, b: a > b,
+    ">=": lambda a, b: a >= b,
+    "==": lambda a, b: a == b,
+    "!=": lambda a, b: a != b,
+}
 
 
 def run(row, system) -> Verdict:
@@ -31,8 +37,18 @@ class GemStandIn(Baseline):
     """Flags every topic linked to a written topic by an extension edge (either direction) with evidence; the flag
     clears when the flagged topic is written; policies added at runtime reject writes before anything is saved."""
 
-    def __init__(self, *, flag_surface=True, flags=True, flag_association=False, flag_everything=False,
-                 evidence="full", clears=True, policies_enforced=True, reject_ordinary=False):
+    def __init__(
+        self,
+        *,
+        flag_surface=True,
+        flags=True,
+        flag_association=False,
+        flag_everything=False,
+        evidence="full",
+        clears=True,
+        policies_enforced=True,
+        reject_ordinary=False,
+    ):
         super().__init__()
         self.edges, self.flagged, self.policies = [], {}, []
         self.flag_surface, self.flags, self.flag_association = flag_surface, flags, flag_association
@@ -43,16 +59,23 @@ class GemStandIn(Baseline):
         values = {f["name"]: f["value"] for f in request.get("fields") or []}
         for p in self.policies:
             c = p["condition"]
-            if c["field"] in values and c["other_field"] in values and OPS[c["op"]](values[c["field"]],
-                                                                                    values[c["other_field"]]):
+            if (
+                c["field"] in values
+                and c["other_field"] in values
+                and OPS[c["op"]](values[c["field"]], values[c["other_field"]])
+            ):
                 return p
         return None
 
     def _ingest(self, request):
         if self.policies_enforced and self._violates(request):
             raise Rejected(422, "policy violated")
-        if self.reject_ordinary and request.get("fields") and request["placement"] == "new_topic" \
-                and any(f["name"] == "Deadline" for f in request["fields"]):
+        if (
+            self.reject_ordinary
+            and request.get("fields")
+            and request["placement"] == "new_topic"
+            and any(f["name"] == "Deadline" for f in request["fields"])
+        ):
             raise Rejected(422, "rejects everything with a Deadline")
         out = super()._ingest(request)
         owner = out["topic_id"]
@@ -67,13 +90,19 @@ class GemStandIn(Baseline):
                         continue
                     if e["kind"] == "extension" or self.flag_association:
                         other = e["to"] if e["from"] == owner else e["from"]
-                        self.flagged[other] = {"source_topic_id": owner, "updated_field": field["name"],
-                                               "timestamp": utc_now()}
+                        self.flagged[other] = {
+                            "source_topic_id": owner,
+                            "updated_field": field["name"],
+                            "timestamp": utc_now(),
+                        }
             if self.flag_everything:
                 for tid in self._rows:
                     if tid != owner:
-                        self.flagged[tid] = {"source_topic_id": owner, "updated_field": request["fields"][0]["name"],
-                                             "timestamp": utc_now()}
+                        self.flagged[tid] = {
+                            "source_topic_id": owner,
+                            "updated_field": request["fields"][0]["name"],
+                            "timestamp": utc_now(),
+                        }
         return out
 
     def _read_topic(self, topic_id):
@@ -98,6 +127,7 @@ class GemStandIn(Baseline):
 
 
 # -- C3
+
 
 def test_a_stand_in_that_flags_correctly_passes_c3_on_both_pairs():
     v = run("C3", GemStandIn())
@@ -139,8 +169,14 @@ def test_a_system_that_changes_b_without_a_flag_fails_c3_and_its_control_is_not_
                 for e in self.edges:
                     if e["kind"] == "extension" and out["topic_id"] in (e["from"], e["to"]):
                         other = e["to"] if e["from"] == out["topic_id"] else e["from"]
-                        Baseline._ingest(self, {"placement": "version_field", "topic_id": other, "fields": [
-                            {"name": "Date", "value": "April 25", "provenance": "propagated"}]})
+                        Baseline._ingest(
+                            self,
+                            {
+                                "placement": "version_field",
+                                "topic_id": other,
+                                "fields": [{"name": "Date", "value": "April 25", "provenance": "propagated"}],
+                            },
+                        )
             return out
 
     v = run("C3", RewritesDependents(flags=False))
@@ -180,6 +216,7 @@ def test_no_flag_surface_reads_as_the_nothing_value_through_read_topic():
 
 
 # -- C2(c)
+
 
 def test_a_policy_added_at_runtime_that_rejects_the_violating_write_passes_c2c():
     s = GemStandIn()

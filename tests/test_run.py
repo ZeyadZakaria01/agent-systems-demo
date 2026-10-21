@@ -21,8 +21,11 @@ def two_row_check():
         s.setup_write("create_topic", label="arrange a forced id", topic_id="t0", title="T0")
         t = s.ingest({"placement": "new_topic", "title": "T", "fields": [{"name": "F", "value": "v"}]})
         s.query({"q": "T", "stages": ["temporal"], "topic_ids": [t["topic_id"]]})
-        return [Verdict.from_cases("X1", [Case("holds", True)]),
-                Verdict.absent("X2", probe_evidence={"probe": "asked for edges", "observed": "none"})]
+        return [
+            Verdict.from_cases("X1", [Case("holds", True)]),
+            Verdict.absent("X2", probe_evidence={"probe": "asked for edges", "observed": "none"}),
+        ]
+
     return x
 
 
@@ -31,13 +34,20 @@ def crashing_check():
     def boom(ctx):
         ctx.system.ingest({"placement": "new_topic", "title": "before the crash"})
         raise RuntimeError("boom")
+
     return boom
 
 
 def recorded(tmp_path, checks, systems=("baseline",), registry=None):
-    return run_recorded(systems=list(systems), checks=checks, results_root=tmp_path,
-                        command="python -m demo.run test", run_day=date(2026, 10, 20),
-                        registry=registry or SYSTEMS, runtime_root=tmp_path / "runtime")
+    return run_recorded(
+        systems=list(systems),
+        checks=checks,
+        results_root=tmp_path,
+        command="python -m demo.run test",
+        run_day=date(2026, 10, 20),
+        registry=registry or SYSTEMS,
+        runtime_root=tmp_path / "runtime",
+    )
 
 
 def load(path):
@@ -94,6 +104,7 @@ def failing_open(check_id, run):
     def cm():
         raise ServerError("port 8765 is busy")
         yield
+
     return cm()
 
 
@@ -115,7 +126,9 @@ def hooked_registry(events, fail_setup=False):
         if fail_setup:
             raise RuntimeError("checkout failed")
 
-    return {"hooked": SystemSpec("hooked", "hooked", open_, setup=setup, teardown=lambda run: events.append("teardown"))}
+    return {
+        "hooked": SystemSpec("hooked", "hooked", open_, setup=setup, teardown=lambda run: events.append("teardown"))
+    }
 
 
 def test_a_systems_setup_and_teardown_hooks_wrap_its_checks_and_teardown_runs_after_errors(tmp_path):
@@ -145,6 +158,7 @@ def two_stories_check():
                 seen.append(sorted(s.read_state()["topics"]))
         # each story had its own database: story 2 does not see story 1's topic
         return Verdict.from_cases("X5", [Case("fresh each time", seen == [["title of story-1"], ["title of story-2"]])])
+
     return stories
 
 

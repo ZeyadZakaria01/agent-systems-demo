@@ -7,9 +7,9 @@ are never pinned; the ramp sizes and gate are monkeypatched so the tests stay sm
 
 import pytest
 
-from demo.baseline import Baseline
 from demo import ramp
 from demo.adapter import System
+from demo.baseline import Baseline
 from demo.checks import discover
 from demo.latency_tables import aggregate, no_difference_notes, render_latency
 from demo.ramp import no_measurable_difference
@@ -65,9 +65,16 @@ class ThresholdArchiver(System):
         if request["placement"] == "new_topic":
             tid = request.get("title") or tid
             sal = request.get("salience", self.start_salience)
-            self.topics[tid] = {"id": tid, "title": tid, "salience": sal, "archived": False,
-                                "fields": {f["name"]: {"current": {"value": f.get("value")}, "history": None}
-                                           for f in request.get("fields") or []}}
+            self.topics[tid] = {
+                "id": tid,
+                "title": tid,
+                "salience": sal,
+                "archived": False,
+                "fields": {
+                    f["name"]: {"current": {"value": f.get("value")}, "history": None}
+                    for f in request.get("fields") or []
+                },
+            }
         self._archive_low()
         return {"topic_id": tid, "applied": [], "version_ids": {}, "similar_topic_ids": []}
 
@@ -122,8 +129,11 @@ def test_each_ramp_takes_several_plain_query_reads():
 
 def ramp_verdict(system, per_n, verdict=PASS):
     """A C5-2 verdict whose ramps carry the given (ingest median, query samples, settle) per repeat of each n."""
-    ramps = [{"n": n, "repeat": i, "archived": 0, "ingest_median_ms": ing, "query_samples_ms": q, "settle_s": st}
-             for n, repeats in per_n.items() for i, (ing, q, st) in enumerate(repeats, 1)]
+    ramps = [
+        {"n": n, "repeat": i, "archived": 0, "ingest_median_ms": ing, "query_samples_ms": q, "settle_s": st}
+        for n, repeats in per_n.items()
+        for i, (ing, q, st) in enumerate(repeats, 1)
+    ]
     v = Verdict.from_cases("C5-2", [Case("x", verdict == PASS, "")], measurements={"ramps": ramps})
     v.system = system
     return v
@@ -139,18 +149,24 @@ def test_aggregate_reports_median_and_range_per_system_and_n():
 
 
 def test_no_difference_fires_for_overlapping_ranges_and_not_for_disjoint_ones():
-    overlap = [ramp_verdict("upstream", {2: [(10.0, [4.0, 6.0], 0.1), (13.0, [4.0, 6.0], 0.1)]}),
-               ramp_verdict("step1", {2: [(11.0, [5.0, 7.0], 0.1), (14.0, [5.0, 7.0], 0.1)]})]
+    overlap = [
+        ramp_verdict("upstream", {2: [(10.0, [4.0, 6.0], 0.1), (13.0, [4.0, 6.0], 0.1)]}),
+        ramp_verdict("step1", {2: [(11.0, [5.0, 7.0], 0.1), (14.0, [5.0, 7.0], 0.1)]}),
+    ]
     notes = no_difference_notes(aggregate(overlap))
     assert any("ingest" in n for n in notes) and any("query" in n for n in notes)
-    disjoint = [ramp_verdict("upstream", {2: [(10.0, [4.0, 5.0], 0.1), (11.0, [4.0, 5.0], 0.1)]}),
-                ramp_verdict("step1", {2: [(50.0, [40.0, 41.0], 0.1), (51.0, [40.0, 41.0], 0.1)]})]
+    disjoint = [
+        ramp_verdict("upstream", {2: [(10.0, [4.0, 5.0], 0.1), (11.0, [4.0, 5.0], 0.1)]}),
+        ramp_verdict("step1", {2: [(50.0, [40.0, 41.0], 0.1), (51.0, [40.0, 41.0], 0.1)]}),
+    ]
     assert no_difference_notes(aggregate(disjoint)) == []
 
 
 def test_only_adjacent_chain_steps_are_compared():
     same = {2: [(10.0, [4.0, 5.0], 0.1)]}
-    steps = [ramp_verdict(s, same) for s in ("upstream", "step1", "step3")]  # step2 missing: step1 and step3 are not adjacent
+    steps = [
+        ramp_verdict(s, same) for s in ("upstream", "step1", "step3")
+    ]  # step2 missing: step1 and step3 are not adjacent
     notes = no_difference_notes(aggregate(steps))
     assert any("upstream vs step1" in n for n in notes)
     assert not any("step3" in n for n in notes)
@@ -158,8 +174,22 @@ def test_only_adjacent_chain_steps_are_compared():
 
 
 def test_systems_whose_c5_2_verdict_is_absent_are_skipped():
-    baseline = Verdict.absent("C5-2", {"probe": "x"}, measurements={"ramps": [
-        {"n": 2, "repeat": 1, "archived": None, "ingest_median_ms": 0.001, "query_samples_ms": [1.0], "settle_s": 0.1}]})
+    baseline = Verdict.absent(
+        "C5-2",
+        {"probe": "x"},
+        measurements={
+            "ramps": [
+                {
+                    "n": 2,
+                    "repeat": 1,
+                    "archived": None,
+                    "ingest_median_ms": 0.001,
+                    "query_samples_ms": [1.0],
+                    "settle_s": 0.1,
+                }
+            ]
+        },
+    )
     baseline.system = "baseline"
     upstream = ramp_verdict("upstream", {2: [(10.0, [4.0], 0.1)]})
     assert [e["system"] for e in aggregate([baseline, upstream])] == ["upstream"]
@@ -173,6 +203,7 @@ def test_no_measurable_difference_is_a_median_inside_the_combined_range():
 
 
 # -- the declared bound beside the active count, and F24
+
 
 class Bounded(ThresholdArchiver):
     def __init__(self, resets_fielded=False, **kw):
@@ -222,7 +253,9 @@ class AcceptsValidAt(ThresholdArchiver):
 def test_the_largest_ramp_of_a_system_accepting_valid_at_times_twenty_as_of_reads_apart_from_the_plain_ones():
     ramps = run(AcceptsValidAt)["C5-2"].measurements["ramps"]
     largest = max(r["n"] for r in ramps)
-    assert [len(r["as_of_samples_ms"]) for r in ramps if r["n"] == largest] == [20] * len([r for r in ramps if r["n"] == largest])
+    assert [len(r["as_of_samples_ms"]) for r in ramps if r["n"] == largest] == [20] * len(
+        [r for r in ramps if r["n"] == largest]
+    )
     assert all(r["as_of_samples_ms"] == [] for r in ramps if r["n"] != largest)
     assert all(len(r["query_samples_ms"]) == 3 for r in ramps)  # the plain samples do not include the as-of reads
 

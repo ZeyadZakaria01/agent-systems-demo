@@ -5,22 +5,28 @@ The baseline accepts `recorded_at` only, so "Expected verdicts" reads it `absent
 No MemState mock and no MemState verdict is pinned: the dated paths are proven by the patch smoke runs (tickets 12/13)."""
 
 from contextlib import nullcontext
-from datetime import date, datetime
+from datetime import date
 
 import httpx
 import pytest
 
-from demo.adapter import Rejected, utc_now
+from demo.adapter import DATES, Rejected, utc_now
 from demo.baseline import Baseline
-from demo.checks import discover
-from demo.checks import time_probes
+from demo.checks import discover, time_probes
 from demo.checks.time_probes import NEEDS
-from demo.reads import NO_VALUE, current_value, field_in_response
-from demo.session import Session
-from demo.time_stories import (AS_OF, LAPSED_OVERRIDE_1, LAPSED_OVERRIDE_2, STORIES, history_intact, ingest_request, query_request,
-                               shift_story)
-from demo.adapter import DATES, utc_now
 from demo.memstate_system import MemStateSystem, request_date_fields, with_current
+from demo.reads import current_value, field_in_response
+from demo.session import Session
+from demo.time_stories import (
+    AS_OF,
+    LAPSED_OVERRIDE_1,
+    LAPSED_OVERRIDE_2,
+    STORIES,
+    history_intact,
+    ingest_request,
+    query_request,
+    shift_story,
+)
 from demo.verdict import ABSENT, FAIL, PASS
 
 RUN_DAY = date(2026, 10, 20)
@@ -55,8 +61,12 @@ def test_the_shift_puts_today_on_the_run_day_and_keeps_every_gap():
     for story in STORIES:
         moved = shift_story(story, RUN_DAY)
         assert moved.today == RUN_DAY
-        original = [d for w in story.writes for d in (w.valid_from, w.invalid_at) if d] + [a.when for a in story.asks if a.when]
-        after = [d for w in moved.writes for d in (w.valid_from, w.invalid_at) if d] + [a.when for a in moved.asks if a.when]
+        original = [d for w in story.writes for d in (w.valid_from, w.invalid_at) if d] + [
+            a.when for a in story.asks if a.when
+        ]
+        after = [d for w in moved.writes for d in (w.valid_from, w.invalid_at) if d] + [
+            a.when for a in moved.asks if a.when
+        ]
         assert [(d - story.today) for d in original] == [(d - RUN_DAY) for d in after]
 
 
@@ -66,14 +76,27 @@ def test_the_shifted_today_is_the_run_day_on_any_run_day():
 
 def test_history_intact_requires_every_value_and_a_copy_for_each_expired_entry():
     story = AS_OF
-    intact = {"history": [
-        {"id": "3", "value": "April 20", "valid_from": "x", "operation": "interval_corrected", "replaces_entry_id": "1",
-         "expired_at": None},
-        {"id": "2", "value": "May 1", "expired_at": None},
-        {"id": "1", "value": "April 20", "expired_at": "t"}]}
+    intact = {
+        "history": [
+            {
+                "id": "3",
+                "value": "April 20",
+                "valid_from": "x",
+                "operation": "interval_corrected",
+                "replaces_entry_id": "1",
+                "expired_at": None,
+            },
+            {"id": "2", "value": "May 1", "expired_at": None},
+            {"id": "1", "value": "April 20", "expired_at": "t"},
+        ]
+    }
     assert history_intact(story, intact)[0] is True
-    no_copy = {"history": [{"id": "2", "value": "May 1", "expired_at": None},
-                           {"id": "1", "value": "April 20", "expired_at": "t"}]}
+    no_copy = {
+        "history": [
+            {"id": "2", "value": "May 1", "expired_at": None},
+            {"id": "1", "value": "April 20", "expired_at": "t"},
+        ]
+    }
     assert history_intact(story, no_copy)[0] is False
     lost = {"history": [{"id": "2", "value": "May 1", "expired_at": None}]}
     assert "April 20" in history_intact(story, lost)[1]
@@ -116,8 +139,12 @@ class HistoryStore(Baseline):
                 if self.defect != "unshaped":
                     entries[0]["expired_at"] = "t"
                 if self.defect not in ("no_copy", "unshaped"):
-                    copy = {"id": self._next_id(), "value": entries[0]["value"], "replaces_entry_id": entries[0]["id"],
-                            "expired_at": None}
+                    copy = {
+                        "id": self._next_id(),
+                        "value": entries[0]["value"],
+                        "replaces_entry_id": entries[0]["id"],
+                        "expired_at": None,
+                    }
                     entries.insert(0, copy)
             entries.insert(0, entry)
         return response
@@ -136,7 +163,7 @@ class HistoryStore(Baseline):
         return topic
 
     def _describe(self):
-        return {"keeps_history": True, "accepts": {d: True for d in DATES}}
+        return {"keeps_history": True, "accepts": dict.fromkeys(DATES, True)}
 
 
 def history_case(defect):
@@ -160,26 +187,37 @@ def test_the_baseline_gets_the_table_s_upstream_expected_answer_for_every_asked_
         s = Baseline()
         topic_id = None
         for i in range(len(story.writes)):
-            topic_id = s.ingest(ingest_request(story, i, topic_id, ))["topic_id"]
+            topic_id = s.ingest(
+                ingest_request(
+                    story,
+                    i,
+                    topic_id,
+                )
+            )["topic_id"]
         for ask in story.asks:
             request = query_request(ask, topic_id, send_valid=True)
             got = current_value(field_in_response(s.query(request), topic_id, story.field))
             assert got == ask.recency, (story.id, ask.label)
 
 
-def test_the_baseline_accepts_recorded_at_only_so_every_probe_is_absent_with_the_schema_and_the_answers_as_evidence(baseline_run):
+def test_the_baseline_accepts_recorded_at_only_so_every_probe_is_absent_with_the_schema_and_the_answers_as_evidence(
+    baseline_run,
+):
     v, _ = baseline_run
     assert sorted(v) == ["T1", "T2", "T3", "T4", "T5", "T6"]
     for row, verdict in v.items():
         assert verdict.verdict == ABSENT, row
         assert verdict.measurements["accepts_dates"] in ("no", "partly"), row
-        assert verdict.probe_evidence["accepts"] == {**{d: False for d in DATES}, "recorded_at": True}, row
+        assert verdict.probe_evidence["accepts"] == {**dict.fromkeys(DATES, False), "recorded_at": True}, row
         assert verdict.probe_evidence["missing"] == [d for d in NEEDS[row] if d != "recorded_at"], row
         assert verdict.cases == [], row  # never called wrong
     t1 = v["T1"].probe_evidence["stories"]["retroactive"]
     assert t1["write_dates"] == [] and [a["answer"] for a in t1["asked"]] == ["March 1", "March 1"]
     asked = v["T5"].probe_evidence["stories"]["as-of"]["asked"]
-    assert (asked[0]["answer"], asked[1]["answer"]) == ("May 1", "April 20")  # `valid_at` ignored, `recorded_at` answered
+    assert (asked[0]["answer"], asked[1]["answer"]) == (
+        "May 1",
+        "April 20",
+    )  # `valid_at` ignored, `recorded_at` answered
     assert "valid_at" in asked[0]["request"] and "recorded_at" in asked[1]["request"]
     (believed,) = [o for o in v["T5"].observations if o["name"] == "believed-on half"]  # recorded, not scored
     assert believed["answer"] == "April 20" and believed["correct"] == "April 20"
@@ -189,25 +227,40 @@ def test_the_baseline_accepts_recorded_at_only_so_every_probe_is_absent_with_the
 
 def test_the_lapsed_override_evidence_holds_both_stories(baseline_run):
     assert sorted(baseline_run[0]["T4"].probe_evidence["stories"]) == ["lapsed-override-1", "lapsed-override-2"]
+
+
 def test_a_recorded_at_read_on_the_baseline_answers_the_believed_on_question_from_its_history():
     s = Baseline()
     story = shift_story(AS_OF, RUN_DAY)
     topic_id = s.ingest(ingest_request(story, 0, None))["topic_id"]
     between = utc_now()
     s.ingest(ingest_request(story, 1, topic_id))
-    plain = current_value(field_in_response(s.query({"q": "x", "stages": ["temporal"], "topic_ids": [topic_id]}),
-                                            topic_id, story.field))
-    as_of = current_value(field_in_response(s.query({"q": "x", "stages": ["temporal"], "topic_ids": [topic_id],
-                                                     "recorded_at": between}), topic_id, story.field))
+    plain = current_value(
+        field_in_response(s.query({"q": "x", "stages": ["temporal"], "topic_ids": [topic_id]}), topic_id, story.field)
+    )
+    as_of = current_value(
+        field_in_response(
+            s.query({"q": "x", "stages": ["temporal"], "topic_ids": [topic_id], "recorded_at": between}),
+            topic_id,
+            story.field,
+        )
+    )
     assert (plain, as_of) == ("May 1", "April 20")
-
-
 
 
 def test_each_story_runs_on_its_own_fresh_system(baseline_run):
     _, tags = baseline_run
-    assert sorted(tags) == sorted(["retroactive", "out-of-order", "future-dated", "lapsed-override-1",
-                                   "lapsed-override-2", "future-value", "as-of"])
+    assert sorted(tags) == sorted(
+        [
+            "retroactive",
+            "out-of-order",
+            "future-dated",
+            "lapsed-override-1",
+            "lapsed-override-2",
+            "future-value",
+            "as-of",
+        ]
+    )
 
 
 def test_story_2_also_asks_oct_15_where_a_plain_statement_ends_the_override():
@@ -232,7 +285,8 @@ class Dated(Baseline):
         for f in request.get("fields") or []:
             self.writes.append(f)
             self.entries.setdefault((response["topic_id"], f["name"]), []).append(
-                {"value": f["value"], "recorded": utc_now(), "from": f.get("valid_from"), "to": f.get("invalid_at")})
+                {"value": f["value"], "recorded": utc_now(), "from": f.get("valid_from"), "to": f.get("invalid_at")}
+            )
         return response
 
     def _current(self, entries, valid_at, recorded_at):
@@ -240,7 +294,7 @@ class Dated(Baseline):
             return {"value": "?"}
         day = valid_at or RUN_DAY.isoformat()
         known = [e for e in entries if recorded_at is None or self.ignore_recorded or e["recorded"] <= recorded_at]
-        live = [e for e in known if (e["from"] or "") [:10] <= day[:10] and (e["to"] is None or day[:10] < e["to"][:10])]
+        live = [e for e in known if (e["from"] or "")[:10] <= day[:10] and (e["to"] is None or day[:10] < e["to"][:10])]
         live.sort(key=lambda e: (e["from"] or "")[:10])  # stable: the later arrival wins a tie
         return {"value": live[-1]["value"]} if live else None
 
@@ -283,7 +337,7 @@ def test_a_start_date_only_system_gets_dates_for_t1_t2_t3_t6_and_is_absent_on_t4
 
 def test_a_system_that_takes_every_date_and_answers_right_passes_all_six_probes():
     v, _ = run_stand_in(accepts=set(DATES))
-    assert {r: x.verdict for r, x in v.items()} == {r: PASS for r in ("T1", "T2", "T3", "T4", "T5", "T6")}
+    assert {r: x.verdict for r, x in v.items()} == dict.fromkeys(("T1", "T2", "T3", "T4", "T5", "T6"), PASS)
     assert all(x.measurements["accepts_dates"] == "yes" for x in v.values())
 
 
@@ -318,7 +372,7 @@ def test_case_ids_do_not_change_when_the_system_rejects_a_write():
 
 def test_a_stand_in_with_no_dates_reads_absent_on_all_six():
     v, made = run_stand_in(accepts=set())
-    assert {r: x.verdict for r, x in v.items()} == {r: ABSENT for r in ("T1", "T2", "T3", "T4", "T5", "T6")}
+    assert {r: x.verdict for r, x in v.items()} == dict.fromkeys(("T1", "T2", "T3", "T4", "T5", "T6"), ABSENT)
     assert not any(set(w) & {"valid_from", "invalid_at"} for m in made for w in m.writes)
 
 
@@ -334,6 +388,7 @@ def test_a_missing_current_is_refused_where_a_date_is_accepted_and_falls_back_to
 
 def _server(openapi_status: int, document: dict | None = None) -> MemStateSystem:
     """A MemStateSystem over a canned transport: a topic whose field states no `current`, and `/openapi.json`."""
+
     def handler(request: httpx.Request) -> httpx.Response:
         if request.url.path == "/openapi.json":
             return httpx.Response(openapi_status, json=document or {})
@@ -358,21 +413,46 @@ def test_a_readable_schema_with_no_date_falls_back_to_the_newest_entry():
 
 def _openapi(*, write_fields=(), query_fields=(), entry_fields=("valid_from",)):
     prop = lambda names: {n: {"type": "string"} for n in names}
-    return {"paths": {"/v1/ingest": {"post": {"requestBody": {"content": {"application/json": {
-                "schema": {"$ref": "#/components/schemas/IngestRequest"}}}}}},
-                      "/v1/query": {"post": {"requestBody": {"content": {"application/json": {
-                "schema": {"$ref": "#/components/schemas/QueryRequest"}}}}}},
-                      "/v1/topic": {"get": {}}},
-            "components": {"schemas": {
-                "IngestRequest": {"properties": {"fields": {"type": "array", "items": {"$ref": "#/components/schemas/FieldWrite-Input"}}}},
+    return {
+        "paths": {
+            "/v1/ingest": {
+                "post": {
+                    "requestBody": {
+                        "content": {"application/json": {"schema": {"$ref": "#/components/schemas/IngestRequest"}}}
+                    }
+                }
+            },
+            "/v1/query": {
+                "post": {
+                    "requestBody": {
+                        "content": {"application/json": {"schema": {"$ref": "#/components/schemas/QueryRequest"}}}
+                    }
+                }
+            },
+            "/v1/topic": {"get": {}},
+        },
+        "components": {
+            "schemas": {
+                "IngestRequest": {
+                    "properties": {
+                        "fields": {"type": "array", "items": {"$ref": "#/components/schemas/FieldWrite-Input"}}
+                    }
+                },
                 "FieldWrite-Input": {"properties": {"value": {}, **prop(write_fields)}},
                 "QueryRequest": {"properties": {"q": {}, **prop(query_fields)}},
-                "HistoryEntry": {"properties": {"value": {}, **prop(entry_fields)}}}}}
+                "HistoryEntry": {"properties": {"value": {}, **prop(entry_fields)}},
+            }
+        },
+    }
 
 
 def test_the_dates_a_server_accepts_are_read_per_date_from_the_models_its_requests_use():
     assert request_date_fields(_openapi()) == set()  # a response model returning valid_from is not a write model
-    assert request_date_fields(_openapi(write_fields=["valid_from"], query_fields=["valid_at"])) == {"valid_from", "valid_at"}
-    assert request_date_fields(_openapi(write_fields=["valid_from", "invalid_at"],
-                                        query_fields=["valid_at", "recorded_at"])) == set(DATES)
+    assert request_date_fields(_openapi(write_fields=["valid_from"], query_fields=["valid_at"])) == {
+        "valid_from",
+        "valid_at",
+    }
+    assert request_date_fields(
+        _openapi(write_fields=["valid_from", "invalid_at"], query_fields=["valid_at", "recorded_at"])
+    ) == set(DATES)
     assert request_date_fields(_openapi(query_fields=["recorded_at"])) == {"recorded_at"}

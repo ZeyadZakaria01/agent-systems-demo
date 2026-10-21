@@ -18,7 +18,7 @@ from pathlib import Path
 
 import httpx
 
-from demo.paths import RUN_SCRIPT, REPO_ROOT
+from demo.paths import REPO_ROOT, RUN_SCRIPT
 
 HOST, PORT = "127.0.0.1", 8765
 BASE_URL = f"http://{HOST}:{PORT}"
@@ -50,6 +50,7 @@ def _git_head(source_dir: str) -> str | None:
 
 def parse_startup(log_text: str) -> ServerInfo:
     """The run script prints `MemState engine module: <m>`, `MemState source folder: <dir>`, `MemState DB: <path>`."""
+
     def grab(prefix: str) -> str | None:
         m = re.search(rf"^({re.escape(prefix)}.*)$", log_text, re.MULTILINE)
         return m.group(1).strip() if m else None
@@ -58,8 +59,9 @@ def parse_startup(log_text: str) -> ServerInfo:
     source_line = grab("MemState source folder:")
     db_line = grab("MemState DB:")
     source_dir = source_line.split(":", 1)[1].strip() if source_line else None
-    return ServerInfo(engine_line=engine_line, source_dir=source_dir,
-                      db_path=db_line.split(":", 1)[1].strip() if db_line else None)
+    return ServerInfo(
+        engine_line=engine_line, source_dir=source_dir, db_path=db_line.split(":", 1)[1].strip() if db_line else None
+    )
 
 
 @dataclass(frozen=True)
@@ -111,8 +113,9 @@ def start(db_path: Path, patched: bool, log_path: Path, timeout: float = 240) ->
     log_path.parent.mkdir(parents=True, exist_ok=True)
     cmd = ["bash", str(RUN_SCRIPT), *(["--patched"] if patched else []), str(db_path)]
     with open(log_path, "wb") as log:
-        proc = subprocess.Popen(cmd, cwd=REPO_ROOT, stdout=log, stderr=subprocess.STDOUT,
-                                stdin=subprocess.DEVNULL, start_new_session=True)
+        proc = subprocess.Popen(
+            cmd, cwd=REPO_ROOT, stdout=log, stderr=subprocess.STDOUT, stdin=subprocess.DEVNULL, start_new_session=True
+        )
     handle = ServerHandle(proc=proc, info=ServerInfo(), log_path=log_path)
     try:
         deadline = time.monotonic() + timeout
@@ -130,8 +133,11 @@ def start(db_path: Path, patched: bool, log_path: Path, timeout: float = 240) ->
                 raise ServerError(f"/health not ready after {timeout}s; log tail:\n{log_path.read_text()[-2000:]}")
             time.sleep(0.25)
         info = parse_startup(log_path.read_text())
-        handle.info = replace(info, commit=_git_head(info.source_dir) if info.source_dir else None,
-                              db_path=graph.json().get("path") or info.db_path)
+        handle.info = replace(
+            info,
+            commit=_git_head(info.source_dir) if info.source_dir else None,
+            db_path=graph.json().get("path") or info.db_path,
+        )
         return handle
     except BaseException:
         handle.stop()

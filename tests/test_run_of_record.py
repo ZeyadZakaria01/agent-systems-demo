@@ -24,8 +24,15 @@ def with_tests(counts):
 
 def run(tmp_path, registry):
     c1 = next(c for c in discover() if c.id == "C1")
-    return run_recorded(["baseline"], [c1], tmp_path / "results", "cmd", run_day=date(2026, 10, 20),
-                        registry=registry, runtime_root=tmp_path / "runtime")
+    return run_recorded(
+        ["baseline"],
+        [c1],
+        tmp_path / "results",
+        "cmd",
+        run_day=date(2026, 10, 20),
+        registry=registry,
+        runtime_root=tmp_path / "runtime",
+    )
 
 
 def test_counts_per_system_reach_results_and_scorecard_and_a_failing_step_is_flagged(tmp_path):
@@ -42,6 +49,7 @@ def test_counts_per_system_reach_results_and_scorecard_and_a_failing_step_is_fla
 def test_a_test_run_that_cannot_happen_is_flagged_not_fatal(tmp_path):
     def boom():
         raise RuntimeError("no pytest")
+
     base = SYSTEMS["baseline"]
     result = run(tmp_path, {"baseline": SystemSpec("baseline", "baseline", base.open, unit_tests=boom)})
     assert "FLAG: not run" in result.scorecard
@@ -51,11 +59,13 @@ def test_a_test_run_that_cannot_happen_is_flagged_not_fatal(tmp_path):
 def test_pytest_outcomes_are_counted_without_writing_bytecode_or_cache(tmp_path):
     src = tmp_path / "pkg"
     (src / "tests").mkdir(parents=True)
-    (src / "tests" / "test_a.py").write_text(textwrap.dedent("""
+    (src / "tests" / "test_a.py").write_text(
+        textwrap.dedent("""
         def test_ok(): pass
         def test_bad(): assert False
         def test_ok2(): pass
-    """))
+    """)
+    )
     counts = count_tests(src)
     assert (counts.passed, counts.failed, counts.total) == (2, 1, 3)
     assert counts.flagged

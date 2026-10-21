@@ -3,18 +3,36 @@ adapter, in-process. Pins the phase 2 column of the spec's "Expected verdicts" a
 changes exactly T4 and T5 (absent -> pass) and no other row. The unit tests state the patch's rules (the same rules
 as `patches/0002-bitemporal-field-histories.patch`)."""
 
-from datetime import date, datetime, timedelta, timezone
+from datetime import UTC, date, datetime, timedelta
 
 import pytest
 
 from demo.reads import NO_VALUE, current_value, field_in_response, read_request
 from demo.reference_gem import BUMP, ReferenceGem
-from tests.reference_runs import unmutated
 from demo.verdict import ABSENT, PASS
+from tests.reference_runs import unmutated
 
 RUN_DAY = date(2026, 10, 20)
-ROWS = ["C1", "C2(a)", "C2(b)", "C2(c)", "C2(d)", "C3", "C4", "C5-1", "C5-2", "C6-1", "C6-2", "C4′",
-        "T1", "T2", "T3", "T4", "T5", "T6"]
+ROWS = [
+    "C1",
+    "C2(a)",
+    "C2(b)",
+    "C2(c)",
+    "C2(d)",
+    "C3",
+    "C4",
+    "C5-1",
+    "C5-2",
+    "C6-1",
+    "C6-2",
+    "C4′",
+    "T1",
+    "T2",
+    "T3",
+    "T4",
+    "T5",
+    "T6",
+]
 
 
 @pytest.fixture(scope="module")
@@ -28,6 +46,7 @@ def phase2():
 
 
 # ---------------------------------------------------------------- the phase 2 column of "Expected verdicts"
+
 
 @pytest.mark.parametrize("row", [r for r in ROWS if r != "C2(a)"])
 def test_the_phase_2_column_passes(phase2, row):
@@ -53,12 +72,13 @@ def test_phase_1_to_phase_2_changes_exactly_t4_and_t5(phase1, phase2):
 
 # ---------------------------------------------------------------- the model
 
+
 class StepClock:
     """A clock every reading of which is a second after the last: a moment noted between two writes is strictly
     between them, whatever the machine's clock resolution."""
 
     def __init__(self):
-        self.now = datetime(2026, 10, 20, tzinfo=timezone.utc)
+        self.now = datetime(2026, 10, 20, tzinfo=UTC)
 
     def __call__(self):
         self.now += timedelta(seconds=1)
@@ -74,7 +94,7 @@ def clock():
 
 
 def day(month, d, year=2026):
-    return datetime(year, month, d, tzinfo=timezone.utc).isoformat()
+    return datetime(year, month, d, tzinfo=UTC).isoformat()
 
 
 def new(s, title, **fields):
@@ -134,8 +154,13 @@ def test_an_entry_is_valid_until_the_next_entrys_valid_from_unless_it_carries_it
     t = new(gem, "Plan", Tier={"value": "basic", "valid_from": day(6, 1)})["topic_id"]
     put(gem, t, "Tier", "pro", valid_from=day(8, 1))
     put(gem, t, "Tier", "trial", valid_from=day(7, 1), invalid_at=day(7, 10))  # layered, ends on its own
-    assert [ask(gem, t, "Tier", valid_at=day(*d)) for d in ((5, 1), (6, 15), (7, 5), (7, 20), (8, 5))] == \
-        [NO_VALUE, "basic", "trial", "basic", "pro"]
+    assert [ask(gem, t, "Tier", valid_at=day(*d)) for d in ((5, 1), (6, 15), (7, 5), (7, 20), (8, 5))] == [
+        NO_VALUE,
+        "basic",
+        "trial",
+        "basic",
+        "pro",
+    ]
 
 
 def test_the_late_older_value_ends_where_the_later_one_begins_with_no_stored_end(gem):
@@ -271,6 +296,7 @@ def test_phase_1_ignores_the_phase_2_dates_and_shows_the_phase_1_entry_shape():
 
 def test_a_correction_uses_two_entries_toward_the_history_cap(gem):
     from demo.reference_gem import HISTORY_CAP
+
     t = new(gem, "Plan", Budget={"value": "$50", "valid_from": day(9, 1)})["topic_id"]
     put(gem, t, "Budget", "$80", valid_from=day(10, 1), invalid_at=day(11, 1))
     put(gem, t, "Budget", "$100", valid_from=day(10, 10))
@@ -283,14 +309,20 @@ def test_a_failed_write_changes_nothing_not_even_an_expiry(gem):
     put(gem, t, "Budget", "$80", valid_from=day(10, 1), invalid_at=day(11, 1))
     before = gem.read_state()
     with pytest.raises(Exception):  # the second field is empty: the default policy rejects the whole transition
-        gem.ingest({"placement": "extend_topic", "topic_id": t,
-                    "fields": [_field("Budget", "$100", valid_from=day(10, 10)), _field("Other", "")]})
+        gem.ingest(
+            {
+                "placement": "extend_topic",
+                "topic_id": t,
+                "fields": [_field("Budget", "$100", valid_from=day(10, 10)), _field("Other", "")],
+            }
+        )
     after = gem.read_state()
     assert before["topics"][t]["fields"] == after["topics"][t]["fields"]
     assert not any(e["expired_at"] for e in after["topics"][t]["fields"]["Budget"]["history"])
 
 
 # ---------------------------------------------------------------- merge
+
 
 def merged_pair(gem):
     a = new(gem, "Plan A", Budget={"value": "$50", "valid_from": day(9, 1)})["topic_id"]

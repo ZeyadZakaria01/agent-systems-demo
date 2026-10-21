@@ -2,7 +2,7 @@
 "Expected verdicts" (written before the build) and the behaviours a scorecard reader relies on. No server, no GPU; the
 retrieval model comes from the cached MiniLM. The mutation tests of ticket 29 run the checks on broken subclasses."""
 
-from datetime import date, datetime, timedelta, timezone
+from datetime import date
 from math import isclose
 
 import pytest
@@ -10,10 +10,10 @@ import pytest
 from demo.adapter import Rejected
 from demo.reads import NO_VALUE, current_value, field_in_response, read_request
 from demo.reference_gem import BETA, LAMBDA, ReferenceGem
-from tests.reference_runs import unmutated
 from demo.storyline import WEBSITE_REDESIGN
 from demo.triage import run_storyline
 from demo.verdict import ABSENT, PASS
+from tests.reference_runs import unmutated
 
 RUN_DAY = date(2026, 10, 20)
 
@@ -36,13 +36,15 @@ def value(system, topic_id, name):
 
 # ---------------------------------------------------------------- the phase 1 column of "Expected verdicts"
 
+
 @pytest.fixture(scope="module")
 def verdicts():
     return unmutated(1)
 
 
-@pytest.mark.parametrize("row", ["C1", "C2(b)", "C2(c)", "C2(d)", "C3", "C4", "C5-1", "C5-2", "C6-1", "C6-2",
-                                 "C4′", "T1", "T2", "T3", "T6"])
+@pytest.mark.parametrize(
+    "row", ["C1", "C2(b)", "C2(c)", "C2(d)", "C3", "C4", "C5-1", "C5-2", "C6-1", "C6-2", "C4′", "T1", "T2", "T3", "T6"]
+)
 def test_the_phase_1_column_passes(verdicts, row):
     v = verdicts[row]
     assert v.verdict == PASS, [(c.name, c.held, c.observation) for c in v.cases]
@@ -94,12 +96,13 @@ def test_the_storyline_is_15_of_15_and_reinforcement_precision_is_one_eighth():
 
 # ---------------------------------------------------------------- C1, Definition 4 phase 1 reading
 
+
 def test_describe_declares_the_phase_1_dates_and_the_parameters():
     d = ReferenceGem().describe()
     assert d["accepts"] == {"valid_from": True, "invalid_at": False, "valid_at": True, "recorded_at": False}
     assert d["declared_bound"] == {"topics": 500, "name": "β"} and d["accepts_source"] is True
     assert d["c6_clause_2_seeds"] == {"target": 0.06, "control": 0.06} and d["keeps_history"] is True
-    assert isclose(LAMBDA ** 400, 0.05)
+    assert isclose(LAMBDA**400, 0.05)
 
 
 def test_current_is_the_latest_timestamp_not_after_the_asked_date():
@@ -107,8 +110,7 @@ def test_current_is_the_latest_timestamp_not_after_the_asked_date():
     t = new(s, "Plan", field("Tier", "pro", valid_from="2026-10-01T00:00:00+00:00"))
     write(s, t, field("Tier", "basic", valid_from="2026-08-01T00:00:00+00:00"))  # arrives later, older
     write(s, t, field("Tier", "premium", valid_from="2999-12-01T00:00:00+00:00"))  # a future value
-    asked = lambda when: current_value(field_in_response(
-        s.query({**read_request(t), "valid_at": when}), t, "Tier"))
+    asked = lambda when: current_value(field_in_response(s.query({**read_request(t), "valid_at": when}), t, "Tier"))
     assert value(s, t, "Tier") == "pro"
     assert asked("2026-09-01T00:00:00+00:00") == "basic"
     assert asked("2026-07-01T00:00:00+00:00") is NO_VALUE
@@ -134,12 +136,16 @@ def test_a_default_read_returns_no_history_and_an_explain_read_returns_it_newest
 
 # ---------------------------------------------------------------- C2: policies, atomic commit
 
+
 def test_empty_and_null_values_are_rejected_by_the_default_policy_and_nothing_is_saved():
     s = ReferenceGem()
     t = new(s, "Plan", field("Deadline", "April 20"))
+
     def stored():  # topics, fields and histories (a rejected ingest is still an interaction, so salience decays)
-        return {tid: (t["title"], {n: f["history"] for n, f in t["fields"].items()})
-                for tid, t in s.read_state()["topics"].items()}
+        return {
+            tid: (t["title"], {n: f["history"] for n, f in t["fields"].items()})
+            for tid, t in s.read_state()["topics"].items()
+        }
 
     before = stored()
     for bad in ("", None):
@@ -152,8 +158,12 @@ def test_empty_and_null_values_are_rejected_by_the_default_policy_and_nothing_is
 
 def test_a_policy_added_at_runtime_rejects_the_violating_write_and_lets_an_ordinary_one_commit():
     s = ReferenceGem()
-    rule = {"name": "deadline-not-before-start", "event": "write",
-            "condition": {"field": "Deadline", "op": "<", "other_field": "Start"}, "action": "reject"}
+    rule = {
+        "name": "deadline-not-before-start",
+        "event": "write",
+        "condition": {"field": "Deadline", "op": "<", "other_field": "Start"},
+        "action": "reject",
+    }
     stored = s.add_policy(rule)
     assert stored == rule and stored in s.read_state()["policies"]
     with pytest.raises(Rejected):
@@ -175,16 +185,21 @@ def test_a_partial_commit_is_impossible_a_missing_reference_saves_neither_topic_
 
 def test_a_policy_outside_the_fixed_vocabulary_is_refused_when_added():
     with pytest.raises(ValueError):
-        ReferenceGem().add_policy({"name": "x", "event": "write", "condition": {"query": "whole state"},
-                                   "action": "reject"})
+        ReferenceGem().add_policy(
+            {"name": "x", "event": "write", "condition": {"query": "whole state"}, "action": "reject"}
+        )
 
 
 # ---------------------------------------------------------------- C3: Listing 1, one hop, undirected
 
+
 def linked(s, kind="extension", direction="B->A", tag=""):
     a = new(s, f"A{tag}", field("Deadline", "March 15"))
-    b = new(s, f"B{tag}", field("Date", "March 20"), edges=[{"to_topic_id": a, "kind": kind}]) if direction == "B->A" \
+    b = (
+        new(s, f"B{tag}", field("Date", "March 20"), edges=[{"to_topic_id": a, "kind": kind}])
+        if direction == "B->A"
         else new(s, f"B{tag}", field("Date", "March 20"))
+    )
     if direction == "A->B":
         write(s, a, placement="extend_topic", edges=[{"to_topic_id": b, "kind": kind}])
     return a, b
@@ -232,6 +247,7 @@ def test_flagging_is_one_hop():
 
 # ---------------------------------------------------------------- C4: cap, archived overflow, sources
 
+
 def test_the_501st_write_archives_the_oldest_entry_readable_by_id_and_a_valid_archived_value_reads_no_value():
     s = ReferenceGem()
     t = new(s, "T", field("F", "v000"))
@@ -260,6 +276,7 @@ def test_every_write_stores_its_source_message_and_resolve_source_returns_it():
 
 
 # ---------------------------------------------------------------- C5 / C6: decay, forgetting, reinforcement
+
 
 def filler(s, i):
     return s.ingest({"placement": "new_topic", "title": f"Filler {i}"})["topic_id"]
@@ -312,6 +329,7 @@ def test_archived_topics_are_not_retrieved_but_stay_readable_with_their_fields()
 
 
 # ---------------------------------------------------------------- revision: merge after every ingest
+
 
 def test_same_title_topics_merge_after_the_ingest_the_survivor_keeps_both_histories_and_the_later_write_is_current():
     s = ReferenceGem()

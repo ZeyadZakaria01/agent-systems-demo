@@ -29,7 +29,10 @@ def test_a_groq_run_starts_no_ollama_and_records_the_groq_model(monkeypatch, tmp
 
     monkeypatch.setattr(chat_run, "_record_case", record_case)
     result = chat_run.record_chats(object(), tmp_path, tmp_path, "cmd", ("bad-merge",), log=lambda *_: None)
-    assert result.errors == [] and seen["environment"] == {"provider": "groq", "groq_model_setting": "openai/gpt-oss-20b"}
+    assert result.errors == [] and seen["environment"] == {
+        "provider": "groq",
+        "groq_model_setting": "openai/gpt-oss-20b",
+    }
     assert "groq" in seen["base_url"]
 
 

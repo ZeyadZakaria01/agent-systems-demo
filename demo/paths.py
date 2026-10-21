@@ -9,7 +9,9 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 def _shared_root() -> Path:
     common = subprocess.run(
         ["git", "-C", str(REPO_ROOT), "rev-parse", "--path-format=absolute", "--git-common-dir"],
-        check=True, capture_output=True, text=True,
+        check=True,
+        capture_output=True,
+        text=True,
     ).stdout.strip()
     return Path(common).parent
 

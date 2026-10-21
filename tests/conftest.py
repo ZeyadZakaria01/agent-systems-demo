@@ -10,8 +10,16 @@ import pytest
 
 # A git hook runs with the committing repository's locators in the environment (`GIT_INDEX_FILE`, ...). The tests that
 # build throwaway repositories would then stage and commit into the real one, so each test starts without them.
-_GIT_LOCATORS = ("GIT_DIR", "GIT_WORK_TREE", "GIT_INDEX_FILE", "GIT_OBJECT_DIRECTORY", "GIT_COMMON_DIR", "GIT_PREFIX",
-                 "GIT_ALTERNATE_OBJECT_DIRECTORIES", "GIT_NAMESPACE")
+_GIT_LOCATORS = (
+    "GIT_DIR",
+    "GIT_WORK_TREE",
+    "GIT_INDEX_FILE",
+    "GIT_OBJECT_DIRECTORY",
+    "GIT_COMMON_DIR",
+    "GIT_PREFIX",
+    "GIT_ALTERNATE_OBJECT_DIRECTORIES",
+    "GIT_NAMESPACE",
+)
 
 
 @pytest.fixture(autouse=True)

@@ -3,8 +3,8 @@
 check's own failure branches."""
 
 from demo.baseline import Baseline
-from demo.checks import discover
 from demo.checks import c6_retrieval_adaptation as c6mod
+from demo.checks import discover
 from demo.verdict import ABSENT, FAIL, NOT_SCORED, PARTIAL, PASS
 
 
@@ -81,7 +81,9 @@ def test_a_bumping_store_passes_clause_1_and_every_unrelated_candidate_rose():
     verdict = run(BumpingStore(), "C6-1")
     assert verdict.verdict == PASS
     over = observation(verdict, "over-reinforcement")
-    assert over["unrelated_topics_that_rose"] == over["unrelated_topics"] == 3  # the top k is returned whatever the similarity
+    assert (
+        over["unrelated_topics_that_rose"] == over["unrelated_topics"] == 3
+    )  # the top k is returned whatever the similarity
     target = over["per_topic"][over["target_topic_id"]]
     assert target["returned_in_retrievals"] == c6mod.RETRIEVALS_CLAUSE_1
     assert target["rise"] >= target["expected_min_rise"] - c6mod.EPS
@@ -119,7 +121,9 @@ def test_clause_2_is_not_scored_when_no_forgetting_pass_ran(monkeypatch):
     assert verdict.verdict == NOT_SCORED  # forgetting is C5's failure, not C6's: never partial
     assert [c.held for c in verdict.cases] == [True, None]
     assert observation(verdict, "forgetting pass")["control"]["archived"] is False
-    assert observation(verdict, "forgetting was not shown to run")["summary"].startswith("forgetting was not shown to run")
+    assert observation(verdict, "forgetting was not shown to run")["summary"].startswith(
+        "forgetting was not shown to run"
+    )
 
 
 def test_clause_2_is_not_scored_when_only_the_read_topic_is_archived(monkeypatch):

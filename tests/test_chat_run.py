@@ -8,7 +8,6 @@ never pinned here: it comes from the recorded run (evidence rule, ADR 0002).
 """
 
 import copy
-import itertools
 import json
 import subprocess
 import sys
@@ -35,8 +34,13 @@ class MergingStandIn(System):
 
     def _write(self, topic, fields, placement):
         for f in fields:
-            entry = {"value": f["value"], "provenance": f.get("provenance", "api"), "why_changed": f.get("why_changed"),
-                     "impact_expected": f.get("impact_expected"), "valid_from": "t"}
+            entry = {
+                "value": f["value"],
+                "provenance": f.get("provenance", "api"),
+                "why_changed": f.get("why_changed"),
+                "impact_expected": f.get("impact_expected"),
+                "valid_from": "t",
+            }
             slot = topic["fields"].setdefault(f["name"], {"history": [], "current": None})
             slot["history"].insert(0, entry)
             slot["current"] = slot["history"][0]
@@ -44,9 +48,15 @@ class MergingStandIn(System):
     def _ingest(self, request):
         if request["placement"] == "new_topic":
             tid = self._new_id()
-            self.topics[tid] = {"id": tid, "title": request["title"], "summary": request.get("summary"),
-                                "topic_kind": request.get("topic_kind"), "archived": False, "salience": 1.0,
-                                "fields": {}}
+            self.topics[tid] = {
+                "id": tid,
+                "title": request["title"],
+                "summary": request.get("summary"),
+                "topic_kind": request.get("topic_kind"),
+                "archived": False,
+                "salience": 1.0,
+                "fields": {},
+            }
         else:
             tid = request["topic_id"]
             if tid not in self.topics:
@@ -88,13 +98,21 @@ class MergingStandIn(System):
     def _chat(self, request):
         self.chats.append(request)
         question = request["messages"][-1]["content"]
-        return {"reply": self.replies.get(question, "I do not know."), "tool_log": [],
-                "model": "stand-in-model", "provider": request.get("provider", "ollama"), "intent": "query",
-                "intent_source": "classifier", "max_tool_rounds": 6}
+        return {
+            "reply": self.replies.get(question, "I do not know."),
+            "tool_log": [],
+            "model": "stand-in-model",
+            "provider": request.get("provider", "ollama"),
+            "intent": "query",
+            "intent_source": "classifier",
+            "max_tool_rounds": 6,
+        }
 
 
-ID_ORDERS = [pytest.param(["id-1", "id-2"], id="first placeholder lower"),
-             pytest.param(["id-2", "id-1"], id="first placeholder higher")]
+ID_ORDERS = [
+    pytest.param(["id-1", "id-2"], id="first placeholder lower"),
+    pytest.param(["id-2", "id-1"], id="first placeholder higher"),
+]
 
 
 def build(system=None, **kw):
@@ -161,9 +179,11 @@ def test_lost_in_merge_compares_by_value_provenance_and_reason():
 from demo.chat_recording import load_recording, render_recording, save_recording  # noqa: E402
 from demo.chat_run import QUESTIONS, record_bad_merge  # noqa: E402
 
-REPLIES = {"What is the deadline of the Website Redesign?": "The deadline is April 20.",
-           "Who is on the website redesign team?": "Alice and Bob.",
-           "What is the current status of the website redesign project?": "It is complete."}
+REPLIES = {
+    "What is the deadline of the Website Redesign?": "The deadline is April 20.",
+    "Who is on the website redesign team?": "Alice and Bob.",
+    "What is the current status of the website redesign project?": "It is complete.",
+}
 
 
 def recorded(**kw):
@@ -188,7 +208,10 @@ def test_each_turn_carries_question_truth_answer_route_latency_violation_and_an_
     _, rec = recorded()
     q02 = rec["turns"][0]
     assert (q02["text"], q02["ground_truth"], q02["answer"]) == (
-        "What is the deadline of the Website Redesign?", "April 20", "The deadline is April 20.")
+        "What is the deadline of the Website Redesign?",
+        "April 20",
+        "The deadline is April 20.",
+    )
     assert q02["route"] == {"intent": "query", "intent_source": "classifier", "tool_calls": []}
     assert q02["latency_ms"] >= 0 and q02["model"] == "stand-in-model" and q02["provider"] == "ollama"
     assert q02["state_violation"]["present"] is True
@@ -201,7 +224,10 @@ def test_the_deadline_answer_looks_right_while_the_state_lost_the_history_and_it
     v = q02["state_violation"]
     assert v["condition"] == "C4" and v["field"] == "Deadline"
     assert v["lost_values"] == ["March 15"]
-    assert {(e["value"], e["why_changed"]) for e in v["lost_entries"]} == {("March 15", None), ("April 20", "vendor delay")}
+    assert {(e["value"], e["why_changed"]) for e in v["lost_entries"]} == {
+        ("March 15", None),
+        ("April 20", "vendor delay"),
+    }
     assert v["current_after"] == "April 20"
 
 
@@ -235,7 +261,10 @@ def test_the_recording_describes_how_the_state_was_built_and_what_the_merge_lost
     assert state["merge"]["survivor_id"] == state["reexplanation_id"]
     assert state["merge"]["dropped_state"] == "deleted" and state["merge"]["arranged"] is True
     assert state["loss"]["lost_values"] == {"Deadline": ["March 15"]}
-    assert [h["value"] for h in state["before_merge"]["original"]["fields"]["Deadline"]["history"]] == ["April 20", "March 15"]
+    assert [h["value"] for h in state["before_merge"]["original"]["fields"]["Deadline"]["history"]] == [
+        "April 20",
+        "March 15",
+    ]
     assert [h["value"] for h in state["after_merge"]["survivor"]["fields"]["Deadline"]["history"]] == ["April 20"]
     assert state["setup_writes"] and all("label" in w for w in state["setup_writes"])
 
@@ -260,25 +289,42 @@ def test_a_file_that_is_not_a_recording_is_refused(tmp_path):
 def test_replay_shows_every_turn_with_its_truth_answer_route_latency_violation():
     _, rec = recorded()
     text = render_recording(rec)
-    for needle in ("Q02", "What is the deadline of the Website Redesign?", "April 20", "The deadline is April 20.",
-                   "query", "classifier", "ms", "C4", "March 15", "vendor delay"):
+    for needle in (
+        "Q02",
+        "What is the deadline of the Website Redesign?",
+        "April 20",
+        "The deadline is April 20.",
+        "query",
+        "classifier",
+        "ms",
+        "C4",
+        "March 15",
+        "vendor delay",
+    ):
         assert needle in text
 
 
 def test_replay_runs_with_no_server_and_loads_neither_http_nor_the_server_launcher(tmp_path):
     _, rec = recorded()
     save_recording(rec, tmp_path)
-    code = ("import sys; from demo.chat_run import main; rc = main(['replay', sys.argv[1]]); "
-            "assert 'httpx' not in sys.modules and 'demo.server' not in sys.modules, sorted(m for m in sys.modules "
-            "if m in ('httpx', 'demo.server')); sys.exit(rc)")
-    done = subprocess.run([sys.executable, "-c", code, str(tmp_path)], capture_output=True, text=True,
-                          cwd=str(__import__("demo.paths").paths.REPO_ROOT))
+    code = (
+        "import sys; from demo.chat_run import main; rc = main(['replay', sys.argv[1]]); "
+        "assert 'httpx' not in sys.modules and 'demo.server' not in sys.modules, sorted(m for m in sys.modules "
+        "if m in ('httpx', 'demo.server')); sys.exit(rc)"
+    )
+    done = subprocess.run(
+        [sys.executable, "-c", code, str(tmp_path)],
+        capture_output=True,
+        text=True,
+        cwd=str(__import__("demo.paths").paths.REPO_ROOT),
+    )
     assert done.returncode == 0, done.stderr
     assert "Q02" in done.stdout and "The deadline is April 20." in done.stdout
 
 
 def test_replay_of_a_folder_with_no_recording_says_so(tmp_path, capsys):
     from demo.chat_run import main
+
     assert main(["replay", str(tmp_path)]) == 1
     assert "no recording" in capsys.readouterr().err
 
@@ -293,8 +339,15 @@ from demo.run import run_recorded  # noqa: E402
 
 def run_with(recordings_dir, tmp_path):
     c1 = next(c for c in discover() if c.id == "C1")
-    return run_recorded(systems=["baseline"], checks=[c1], results_root=tmp_path / "results", command="python -m demo.run t",
-                        run_day=date(2026, 10, 20), runtime_root=tmp_path / "runtime", recordings_dir=recordings_dir)
+    return run_recorded(
+        systems=["baseline"],
+        checks=[c1],
+        results_root=tmp_path / "results",
+        command="python -m demo.run t",
+        run_day=date(2026, 10, 20),
+        runtime_root=tmp_path / "runtime",
+        recordings_dir=recordings_dir,
+    )
 
 
 def test_the_recording_is_printed_in_the_scorecard_as_a_chat_case(tmp_path):
@@ -340,13 +393,20 @@ def test_only_the_newest_recording_of_a_case_is_printed(tmp_path):
 from demo.chat_run import contains_every_word  # noqa: E402
 
 
-@pytest.mark.parametrize("truth, answer, expected", [
-    ("April 20", "The deadline is **April 20**.", True),
-    ("Complete", "Is it a completed phase? I don't know.", False),  # a longer word is not the word
-    ("Complete", "The project is complete.", True),
-    ("Alice (Frontend lead), Bob (Backend), Erin (QA)", "- Alice (Frontend lead)\n- Bob (Backend)\n- Erin (QA)", True),
-    ("Alice (Frontend lead), Bob (Backend), Erin (QA)", "Alice and Bob.", False),
-    ("$46,500", "The budget is $46,500.", True),
-])
+@pytest.mark.parametrize(
+    "truth, answer, expected",
+    [
+        ("April 20", "The deadline is **April 20**.", True),
+        ("Complete", "Is it a completed phase? I don't know.", False),  # a longer word is not the word
+        ("Complete", "The project is complete.", True),
+        (
+            "Alice (Frontend lead), Bob (Backend), Erin (QA)",
+            "- Alice (Frontend lead)\n- Bob (Backend)\n- Erin (QA)",
+            True,
+        ),
+        ("Alice (Frontend lead), Bob (Backend), Erin (QA)", "Alice and Bob.", False),
+        ("$46,500", "The budget is $46,500.", True),
+    ],
+)
 def test_the_word_match_needs_every_word_of_the_ground_truth_and_no_longer_word(truth, answer, expected):
     assert contains_every_word(truth, answer) is expected

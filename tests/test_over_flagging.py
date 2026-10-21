@@ -47,11 +47,17 @@ def test_the_default_is_one_hop_and_an_unknown_mode_is_refused():
 
 def test_the_walk_terminates_on_a_cycle_and_never_flags_the_updated_topic():
     gem = ReferenceGem(propagation="transitive")
-    ids = [gem.ingest({"placement": "new_topic", "title": t,
-                       "fields": [{"name": "F", "value": "1", "provenance": "t"}]})["topic_id"] for t in "XYZ"]
+    ids = [
+        gem.ingest({"placement": "new_topic", "title": t, "fields": [{"name": "F", "value": "1", "provenance": "t"}]})[
+            "topic_id"
+        ]
+        for t in "XYZ"
+    ]
     for src, dst in ((0, 1), (1, 2), (2, 0)):
         gem.setup_write("add_edge", label="cycle edge", from_id=ids[src], to_topic_id=ids[dst], kind="extension")
-    gem.ingest({"placement": "version_field", "topic_id": ids[0], "fields": [{"name": "F", "value": "2", "provenance": "t"}]})
+    gem.ingest(
+        {"placement": "version_field", "topic_id": ids[0], "fields": [{"name": "F", "value": "2", "provenance": "t"}]}
+    )
     flagged = [bool(gem.read_topic(i)["revision_flag"]["flagged"]) for i in ids]
     assert flagged == [False, True, True]
 
@@ -60,10 +66,20 @@ def test_the_check_reports_both_runs_with_no_verdict():
     [v] = check().execute(Session.in_process(ReferenceGem), run_day=date(2026, 10, 21))
     assert v.verdict == NOT_SCORED
     one_hop, transitive = v.measurements["over_flagging"]["runs"]
-    assert (one_hop["mode"], one_hop["flags_raised"], one_hop["flags_needed"], one_hop["flags_missed"],
-            one_hop["flags_not_needed"]) == ("one hop", 1, 2, 1, 0)
-    assert (transitive["mode"], transitive["flags_raised"], transitive["flags_needed"], transitive["flags_missed"],
-            transitive["flags_not_needed"]) == ("transitive walk", 3, 2, 0, 1)
+    assert (
+        one_hop["mode"],
+        one_hop["flags_raised"],
+        one_hop["flags_needed"],
+        one_hop["flags_missed"],
+        one_hop["flags_not_needed"],
+    ) == ("one hop", 1, 2, 1, 0)
+    assert (
+        transitive["mode"],
+        transitive["flags_raised"],
+        transitive["flags_needed"],
+        transitive["flags_missed"],
+        transitive["flags_not_needed"],
+    ) == ("transitive walk", 3, 2, 0, 1)
     json.dumps(v.to_dict())  # lands in results.json
 
 

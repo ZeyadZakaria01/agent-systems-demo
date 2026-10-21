@@ -30,19 +30,32 @@ from datetime import date
 from demo import ramp
 from demo.adapter import Rejected, System
 from demo.checks import Ctx, check
-from demo.merge import DEADLINE, FIELD, NEWER, NEWER_PROVENANCE, OLDER, OLDER_PROVENANCE, PairSpec, trigger_and_await_merge
+from demo.merge import (
+    DEADLINE,
+    FIELD,
+    NEWER,
+    NEWER_PROVENANCE,
+    OLDER,
+    OLDER_PROVENANCE,
+    PairSpec,
+    trigger_and_await_merge,
+)
 from demo.reads import current_value
 from demo.time_stories import YEAR, iso
 from demo.verdict import Case, Verdict
 
-CLAIM = ("C4 (provenance preservation): revision and forgetting preserve the provenance chain of "
-         "reachable units.")
+CLAIM = "C4 (provenance preservation): revision and forgetting preserve the provenance chain of reachable units."
 CAP_WRITES = 501  # 1 new_topic + 500 version_field
 CAP_FIRST = "v000"
 LOW_SALIENCE = 0.01
 DATED_MERGE = PairSpec(  # "older" is written first (to the topic that survives), "newer" second (to the dropped one)
-    older_value=NEWER, older_provenance=NEWER_PROVENANCE, older_valid_from=iso(date(YEAR, 1, 5)),
-    newer_value=OLDER, newer_provenance=OLDER_PROVENANCE, newer_valid_from=iso(date(YEAR - 1, 12, 1)))
+    older_value=NEWER,
+    older_provenance=NEWER_PROVENANCE,
+    older_valid_from=iso(date(YEAR, 1, 5)),
+    newer_value=OLDER,
+    newer_provenance=OLDER_PROVENANCE,
+    newer_valid_from=iso(date(YEAR - 1, 12, 1)),
+)
 
 
 def _field(topic: dict | None, name: str = FIELD) -> dict | None:
@@ -76,14 +89,21 @@ def _fmt(history: list | None, provenance: bool = True) -> list | None:
 
 
 def _write_deadline(system: System, title: str) -> str:
-    topic_id = system.ingest({
-        "placement": "new_topic", "title": title, "topic_kind": "project",
-        "fields": [{"name": FIELD, "value": OLDER, "provenance": OLDER_PROVENANCE}],
-    })["topic_id"]
-    system.ingest({
-        "placement": "version_field", "topic_id": topic_id,
-        "fields": [{"name": FIELD, "value": NEWER, "provenance": NEWER_PROVENANCE, "why_changed": "vendor delay"}],
-    })
+    topic_id = system.ingest(
+        {
+            "placement": "new_topic",
+            "title": title,
+            "topic_kind": "project",
+            "fields": [{"name": FIELD, "value": OLDER, "provenance": OLDER_PROVENANCE}],
+        }
+    )["topic_id"]
+    system.ingest(
+        {
+            "placement": "version_field",
+            "topic_id": topic_id,
+            "fields": [{"name": FIELD, "value": NEWER, "provenance": NEWER_PROVENANCE, "why_changed": "vendor delay"}],
+        }
+    )
     return topic_id
 
 
@@ -98,8 +118,13 @@ def _update_case(s: System) -> tuple[Case, bool]:
     current = _current(s, topic_id)
     held = current == NEWER and _holds_both(history)
     lost = history is None or not any(e.get("value") == OLDER for e in history)
-    return Case("history survives a value update", held, f"current={current!r}, history={_fmt(history)!r}",
-                control=True, id="update"), lost
+    return Case(
+        "history survives a value update",
+        held,
+        f"current={current!r}, history={_fmt(history)!r}",
+        control=True,
+        id="update",
+    ), lost
 
 
 def _merge_case(s: System) -> Case:
@@ -109,11 +134,19 @@ def _merge_case(s: System) -> Case:
         return Case(name, None, f"no merge seen within {outcome.waited.elapsed:.1f}s (timeout)", id="merge")
     history = history_entries(s, outcome.survivor_id)
     if outcome.pair.upserted:
-        return Case(name, None, "arrangement not met: the second write went to the same topic, so no duplicate was "
-                                f"created and no merge occurs; not a case; history={_fmt(history, provenance=False)!r}",
-                    id="merge")
-    return Case(name, _holds_both(history), f"survivor {outcome.survivor_id} ({outcome.dropped_state} dropped); "
-                                            f"history={_fmt(history)!r}", id="merge")
+        return Case(
+            name,
+            None,
+            "arrangement not met: the second write went to the same topic, so no duplicate was "
+            f"created and no merge occurs; not a case; history={_fmt(history, provenance=False)!r}",
+            id="merge",
+        )
+    return Case(
+        name,
+        _holds_both(history),
+        f"survivor {outcome.survivor_id} ({outcome.dropped_state} dropped); history={_fmt(history)!r}",
+        id="merge",
+    )
 
 
 def _dated_merge_case(s: System) -> tuple[Case, dict]:
@@ -124,33 +157,63 @@ def _dated_merge_case(s: System) -> tuple[Case, dict]:
     if not outcome.merged:
         return Case(name, None, f"no merge seen within {outcome.waited.elapsed:.1f}s (timeout)", id="merge-dated"), {}
     if outcome.pair.upserted or outcome.dropped_held_newer is not True:
-        return Case(name, None, "arrangement not met: the topic written later was not the one dropped (or no "
-                                "duplicate was created)", id="merge-dated"), {}
+        return Case(
+            name,
+            None,
+            "arrangement not met: the topic written later was not the one dropped (or no duplicate was created)",
+            id="merge-dated",
+        ), {}
     history = history_entries(s, outcome.survivor_id) or []
     current = _current(s, outcome.survivor_id)
     both = _has(history, NEWER, NEWER_PROVENANCE) and _has(history, OLDER, OLDER_PROVENANCE)
     tag = next((e.get("merged_from_topic_id") for e in history if e.get("value") == OLDER), None)
-    case = Case(name, current == NEWER and both,
-                f"survivor {outcome.survivor_id} ({outcome.dropped_state} dropped {outcome.dropped_id}); "
-                f"current={current!r}, history={_fmt(history)!r}, the {OLDER!r} entry's merged_from_topic_id={tag!r}",
-                id="merge-dated")
-    return case, {"survivor_id": outcome.survivor_id, "dropped_id": outcome.dropped_id, "current": current,
-                  "merged_from_topic_id": tag, "tagged_with_dropped_id": tag == outcome.dropped_id}
+    case = Case(
+        name,
+        current == NEWER and both,
+        f"survivor {outcome.survivor_id} ({outcome.dropped_state} dropped {outcome.dropped_id}); "
+        f"current={current!r}, history={_fmt(history)!r}, the {OLDER!r} entry's merged_from_topic_id={tag!r}",
+        id="merge-dated",
+    )
+    return case, {
+        "survivor_id": outcome.survivor_id,
+        "dropped_id": outcome.dropped_id,
+        "current": current,
+        "merged_from_topic_id": tag,
+        "tagged_with_dropped_id": tag == outcome.dropped_id,
+    }
 
 
 def _forgetting_case(s: System) -> tuple[Case, dict]:
     """Real forgetting: the field-bearing topic reaches forgetting only through the system's own operations."""
     name = "history survives real forgetting"
     if ramp.archive_stats(s)["archived"] is None:
-        return Case(name, None, "the system has no archived flag, so no topic is forgotten", id="forgetting"), {"ran": False}
-    target_id = s.ingest({
-        "placement": "new_topic", "title": "Old Vendor (forgetting)", "topic_kind": "project", "salience": LOW_SALIENCE,
-        "fields": [{"name": FIELD, "value": OLDER, "provenance": OLDER_PROVENANCE}]})["topic_id"]
-    s.ingest({"placement": "version_field", "topic_id": target_id,
-              "fields": [{"name": FIELD, "value": NEWER, "provenance": NEWER_PROVENANCE, "why_changed": "vendor delay"}]})
-    control_id = s.ingest({"placement": "new_topic", "title": "Library Card (forgetting control)",
-                           "summary": "Field-less and never read; shows the forgetting pass ran",
-                           "salience": LOW_SALIENCE})["topic_id"]
+        return Case(name, None, "the system has no archived flag, so no topic is forgotten", id="forgetting"), {
+            "ran": False
+        }
+    target_id = s.ingest(
+        {
+            "placement": "new_topic",
+            "title": "Old Vendor (forgetting)",
+            "topic_kind": "project",
+            "salience": LOW_SALIENCE,
+            "fields": [{"name": FIELD, "value": OLDER, "provenance": OLDER_PROVENANCE}],
+        }
+    )["topic_id"]
+    s.ingest(
+        {
+            "placement": "version_field",
+            "topic_id": target_id,
+            "fields": [{"name": FIELD, "value": NEWER, "provenance": NEWER_PROVENANCE, "why_changed": "vendor delay"}],
+        }
+    )
+    control_id = s.ingest(
+        {
+            "placement": "new_topic",
+            "title": "Library Card (forgetting control)",
+            "summary": "Field-less and never read; shows the forgetting pass ran",
+            "salience": LOW_SALIENCE,
+        }
+    )["topic_id"]
 
     def archived(topic_id: str) -> bool:
         return (s.read_topic(topic_id) or {}).get("archived") is True
@@ -158,20 +221,39 @@ def _forgetting_case(s: System) -> tuple[Case, dict]:
     if not archived(control_id):
         for i in range(max(0, ramp.FORGET_GATE - ramp.archive_stats(s)["total"])):
             ramp.filler(s, i)
-        s.ingest({"placement": "new_topic", "title": "Filler trigger",
-                  "summary": "Ingested after the topic count reached the gate; its response schedules the pass"})
+        s.ingest(
+            {
+                "placement": "new_topic",
+                "title": "Filler trigger",
+                "summary": "Ingested after the topic count reached the gate; its response schedules the pass",
+            }
+        )
         s.wait_until(lambda: archived(control_id), ramp.ARCHIVE_WAIT_S)
     topic = s.read_topic(target_id) or {}
-    evidence = {"ran": archived(control_id), "target_salience": topic.get("salience"),
-                "target_archived": topic.get("archived"), "topics": ramp.archive_stats(s)["total"]}
+    evidence = {
+        "ran": archived(control_id),
+        "target_salience": topic.get("salience"),
+        "target_archived": topic.get("archived"),
+        "topics": ramp.archive_stats(s)["total"],
+    }
     if not evidence["ran"]:
-        return Case(name, None, f"forgetting was not shown to run: the never-read control at {LOW_SALIENCE} was not "
-                                f"archived after {evidence['topics']} topics", id="forgetting"), evidence
+        return Case(
+            name,
+            None,
+            f"forgetting was not shown to run: the never-read control at {LOW_SALIENCE} was not "
+            f"archived after {evidence['topics']} topics",
+            id="forgetting",
+        ), evidence
     if topic.get("archived") is not True:
-        return Case(name, None, f"the pass ran (the control is archived) but a topic with fields ingested at "
-                                f"{LOW_SALIENCE} was not forgotten: salience {topic.get('salience')!r}, "
-                                f"archived={topic.get('archived')!r}; it cannot be forgotten through the system's own "
-                                "operations", id="forgetting"), evidence
+        return Case(
+            name,
+            None,
+            f"the pass ran (the control is archived) but a topic with fields ingested at "
+            f"{LOW_SALIENCE} was not forgotten: salience {topic.get('salience')!r}, "
+            f"archived={topic.get('archived')!r}; it cannot be forgotten through the system's own "
+            "operations",
+            id="forgetting",
+        ), evidence
     history = history_entries(s, target_id)
     return Case(name, _holds_both(history), f"forgotten; history={_fmt(history)!r}", id="forgetting"), evidence
 
@@ -179,8 +261,13 @@ def _forgetting_case(s: System) -> tuple[Case, dict]:
 def _empty_write(system: System, topic_id: str, value: object) -> tuple[object, str]:
     """Send `version_field` with `value`; return (current afterwards, observation)."""
     try:
-        system.ingest({"placement": "version_field", "topic_id": topic_id,
-                       "fields": [{"name": FIELD, "value": value, "provenance": "empty-write"}]})
+        system.ingest(
+            {
+                "placement": "version_field",
+                "topic_id": topic_id,
+                "fields": [{"name": FIELD, "value": value, "provenance": "empty-write"}],
+            }
+        )
         how = "accepted"
     except Rejected as e:
         how = f"rejected ({e.status})"
@@ -192,19 +279,34 @@ def _empty_cases(s: System) -> tuple[list[Case], object, object]:
     """`""` and `null` written over April 20: the cases, and what became current for each."""
     empty, empty_obs = _empty_write(s, _write_deadline(s, "Website Redesign (empty write)"), "")
     null, null_obs = _empty_write(s, _write_deadline(s, "Website Redesign (null write)"), None)
-    return ([Case(f'version_field with "" does not replace {NEWER}', empty == NEWER, empty_obs, id="empty-string"),
-             Case(f"version_field with null does not replace {NEWER}", null == NEWER, null_obs, id="null")], empty, null)
+    return (
+        [
+            Case(f'version_field with "" does not replace {NEWER}', empty == NEWER, empty_obs, id="empty-string"),
+            Case(f"version_field with null does not replace {NEWER}", null == NEWER, null_obs, id="null"),
+        ],
+        empty,
+        null,
+    )
 
 
 def _cap_case(s: System) -> tuple[Case, dict]:
     """One `new_topic` and `CAP_WRITES - 1` `version_field` writes to one field; is the first value still there?"""
-    topic_id = s.ingest({
-        "placement": "new_topic", "title": "Website Redesign (history cap)", "topic_kind": "project",
-        "fields": [{"name": FIELD, "value": CAP_FIRST, "provenance": "cap-0"}],
-    })["topic_id"]
+    topic_id = s.ingest(
+        {
+            "placement": "new_topic",
+            "title": "Website Redesign (history cap)",
+            "topic_kind": "project",
+            "fields": [{"name": FIELD, "value": CAP_FIRST, "provenance": "cap-0"}],
+        }
+    )["topic_id"]
     for i in range(1, CAP_WRITES):
-        s.ingest({"placement": "version_field", "topic_id": topic_id,
-                  "fields": [{"name": FIELD, "value": f"v{i:03d}", "provenance": f"cap-{i}"}]})
+        s.ingest(
+            {
+                "placement": "version_field",
+                "topic_id": topic_id,
+                "fields": [{"name": FIELD, "value": f"v{i:03d}", "provenance": f"cap-{i}"}],
+            }
+        )
     values = _fmt(history_entries(s, topic_id), provenance=False)
     in_history = bool(values) and CAP_FIRST in values
     length = None if values is None else len(values)
@@ -212,13 +314,23 @@ def _cap_case(s: System) -> tuple[Case, dict]:
     in_overflow = bool(overflow) and CAP_FIRST in overflow
     present = in_history or in_overflow
     where = "in the history" if in_history else "in the archived overflow" if in_overflow else "nowhere"
-    case = Case(f"the first value is still readable after {CAP_WRITES} writes (1 new_topic + {CAP_WRITES - 1} "
-                "version_field), in the history or as archived overflow", present,
-                f"length={length}, archived overflow={0 if overflow is None else len(overflow)}, "
-                f"first {CAP_FIRST!r} readable {where}", id="cap")
-    return case, {"writes": CAP_WRITES, "first": CAP_FIRST, "first_present": present, "first_in_history": in_history,
-                  "first_in_archived_overflow": in_overflow, "length": length,
-                  "newest": values[0] if values else None}
+    case = Case(
+        f"the first value is still readable after {CAP_WRITES} writes (1 new_topic + {CAP_WRITES - 1} "
+        "version_field), in the history or as archived overflow",
+        present,
+        f"length={length}, archived overflow={0 if overflow is None else len(overflow)}, "
+        f"first {CAP_FIRST!r} readable {where}",
+        id="cap",
+    )
+    return case, {
+        "writes": CAP_WRITES,
+        "first": CAP_FIRST,
+        "first_present": present,
+        "first_in_history": in_history,
+        "first_in_archived_overflow": in_overflow,
+        "length": length,
+        "newest": values[0] if values else None,
+    }
 
 
 @check(row="C4", claim=CLAIM)
@@ -232,13 +344,26 @@ def c4(ctx: Ctx) -> Verdict:
     cap, history_cap = _cap_case(s)
     cases = [update, merge, dated_merge, forgetting, *empty_cases, cap]
     observations = [
-        {"name": "lost earlier value", "lost": lost,
-         "summary": (f"the earlier value {OLDER} is missing after the update"
-                     if lost else f"the earlier value {OLDER} is still in the history after the update")},
-        {"name": "empty value becoming current",
-         "empty_current": empty_current == "", "null_current": null_current is None,
-         "summary": f'empty write current={empty_current!r}; null write current={null_current!r}'},
+        {
+            "name": "lost earlier value",
+            "lost": lost,
+            "summary": (
+                f"the earlier value {OLDER} is missing after the update"
+                if lost
+                else f"the earlier value {OLDER} is still in the history after the update"
+            ),
+        },
+        {
+            "name": "empty value becoming current",
+            "empty_current": empty_current == "",
+            "null_current": null_current is None,
+            "summary": f"empty write current={empty_current!r}; null write current={null_current!r}",
+        },
     ]
-    measurements = {"history_cap": history_cap, "forgetting": forgetting_run, "dated_merge": dated_merge_run,
-                    "keeps_history": s.describe()["keeps_history"]}
+    measurements = {
+        "history_cap": history_cap,
+        "forgetting": forgetting_run,
+        "dated_merge": dated_merge_run,
+        "keeps_history": s.describe()["keeps_history"],
+    }
     return Verdict.from_cases("C4", cases, observations=observations, measurements=measurements)

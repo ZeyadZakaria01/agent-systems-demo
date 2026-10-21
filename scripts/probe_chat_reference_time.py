@@ -34,31 +34,58 @@ def main() -> None:
     schema = http.get("/openapi.json").json()["components"]["schemas"]["ChatBody"]["properties"]
     out["schema_declares_reference_time"] = "reference_time" in schema
 
-    bad = http.post("/api/llm/chat", json={"messages": [{"role": "user", "content": "hi"}],
-                                           "reference_time": "last tuesday", "intent_override": "query"})
+    bad = http.post(
+        "/api/llm/chat",
+        json={
+            "messages": [{"role": "user", "content": "hi"}],
+            "reference_time": "last tuesday",
+            "intent_override": "query",
+        },
+    )
     out["bad_reference_time"] = {"status": bad.status_code, "detail": bad.json().get("detail")}
 
     if not a.no_llm:
-        tid = http.post("/v1/ingest", json={
-            "placement": "new_topic", "title": "Alex",
-            "fields": [{"name": "job", "value": "analyst at Acme", "valid_from": "2025-01-01"}],
-        }).json()["topic_id"]
+        tid = http.post(
+            "/v1/ingest",
+            json={
+                "placement": "new_topic",
+                "title": "Alex",
+                "fields": [{"name": "job", "value": "analyst at Acme", "valid_from": "2025-01-01"}],
+            },
+        ).json()["topic_id"]
         t0 = time.perf_counter()
-        r = http.post("/api/llm/chat", json={
-            "messages": [{"role": "user", "content": "I started my new job two weeks ago: I am a manager at Initech. "
-                          f"Call memory_append_field now on the job field of the topic Alex (topic_id {tid}); "
-                          "pass valid_from only if you know the start date."}],
-            "provider": "ollama", "intent_override": "ingest", "study_ingest": False,
-            "reference_time": a.reference_time,
-        })
-        out["chat"] = {"status": r.status_code, "seconds": round(time.perf_counter() - t0, 1),
-                       "reply": (r.json().get("reply") if r.status_code == 200 else r.text)}
+        r = http.post(
+            "/api/llm/chat",
+            json={
+                "messages": [
+                    {
+                        "role": "user",
+                        "content": "I started my new job two weeks ago: I am a manager at Initech. "
+                        f"Call memory_append_field now on the job field of the topic Alex (topic_id {tid}); "
+                        "pass valid_from only if you know the start date.",
+                    }
+                ],
+                "provider": "ollama",
+                "intent_override": "ingest",
+                "study_ingest": False,
+                "reference_time": a.reference_time,
+            },
+        )
+        out["chat"] = {
+            "status": r.status_code,
+            "seconds": round(time.perf_counter() - t0, 1),
+            "reply": (r.json().get("reply") if r.status_code == 200 else r.text),
+        }
         if r.status_code == 200:
-            out["chat"]["tool_log"] = [{"tool": e.get("tool"), "args": e.get("args"), "ok": (e.get("result") or {}).get("ok")} for e in r.json().get("tool_log", [])]
+            out["chat"]["tool_log"] = [
+                {"tool": e.get("tool"), "args": e.get("args"), "ok": (e.get("result") or {}).get("ok")}
+                for e in r.json().get("tool_log", [])
+            ]
         job = http.get(f"/api/ui/topics/{tid}").json()["fields"].get("job", {"history": []})
         out["stored_job_history"] = [
             {k: e.get(k) for k in ("value", "valid_from", "provenance", "created_at", "expired_at")}
-            for e in job["history"]]
+            for e in job["history"]
+        ]
     text = json.dumps(out, indent=2)
     print(text)
     if a.out:

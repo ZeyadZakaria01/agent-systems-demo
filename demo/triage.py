@@ -29,7 +29,9 @@ from demo.reads import NO_VALUE, current_value, field_in_response
 from demo.storyline import Event, Question, Storyline
 
 CORRECT, SEARCH_FAILURE, MEMORY_FAILURE = "correct", "search failure", "memory failure"
-DEFAULT_TOP_K = 8  # MemState's default; a system declares its own in `describe()["top_k"]` (the baseline's is 8 as well)
+DEFAULT_TOP_K = (
+    8  # MemState's default; a system declares its own in `describe()["top_k"]` (the baseline's is 8 as well)
+)
 EPS = 1e-6
 
 
@@ -81,23 +83,33 @@ class StorylineRun:
 
     @property
     def triage(self) -> dict[str, int]:
-        return {"questions": len(self.outcomes), "correct": self._count(CORRECT),
-                "search_failures": self._count(SEARCH_FAILURE), "memory_failures": self._count(MEMORY_FAILURE)}
+        return {
+            "questions": len(self.outcomes),
+            "correct": self._count(CORRECT),
+            "search_failures": self._count(SEARCH_FAILURE),
+            "memory_failures": self._count(MEMORY_FAILURE),
+        }
 
     def _count(self, outcome: str) -> int:
         return sum(1 for o in self.outcomes if o.outcome == outcome)
 
     def to_measurements(self) -> dict:
         """What the check stores on its verdict and the renderer reads (`demo/storyline_tables.py`)."""
-        return {"storyline": {
-            "top_k": self.top_k, "triage": self.triage,
-            "events": {"total": len(self.events), "matched": sum(e.matched for e in self.events),
-                       "with_edges": sum(1 for e in self.events if e.edges_declared),
-                       "edges_compared": sum(e.edges_compared for e in self.events),
-                       "mismatches": [asdict(e) for e in self.events if not e.matched]},
-            "questions": [asdict(o) for o in self.outcomes],
-            "reinforcement": None if self.reinforcement is None else asdict(self.reinforcement),
-        }}
+        return {
+            "storyline": {
+                "top_k": self.top_k,
+                "triage": self.triage,
+                "events": {
+                    "total": len(self.events),
+                    "matched": sum(e.matched for e in self.events),
+                    "with_edges": sum(1 for e in self.events if e.edges_declared),
+                    "edges_compared": sum(e.edges_compared for e in self.events),
+                    "mismatches": [asdict(e) for e in self.events if not e.matched],
+                },
+                "questions": [asdict(o) for o in self.outcomes],
+                "reinforcement": None if self.reinforcement is None else asdict(self.reinforcement),
+            }
+        }
 
 
 def run_storyline(system: System, storyline: Storyline) -> StorylineRun:
@@ -120,8 +132,9 @@ def play(system: System, storyline: Storyline, ids: dict[str, str]) -> list[Even
     return results
 
 
-def _check_event(system: System, storyline: Storyline, event: Event, ids: dict[str, str],
-                 title_suffix: str) -> EventResult:
+def _check_event(
+    system: System, storyline: Storyline, event: Event, ids: dict[str, str], title_suffix: str
+) -> EventResult:
     """Compare what the system stores for the touched topic with the storyline: title, the current value of every
     field, and (when the event writes edges and the system reports them) the topic's related edges."""
     topic_id = ids[event.topic]
@@ -142,13 +155,22 @@ def _check_event(system: System, storyline: Storyline, event: Event, ids: dict[s
         edges = system.read_state()["edges"]
         if edges is not None:
             compared = True
-            reported = {(e["to"], e["kind"]) for e in edges
-                        if e["from"] == topic_id and e.get("edge_type", "related") == "related"}
+            reported = {
+                (e["to"], e["kind"])
+                for e in edges
+                if e["from"] == topic_id and e.get("edge_type", "related") == "related"
+            }
             wanted = {(ids[to], kind) for to, kind in expected.edges}
             if reported != wanted:
                 differences.append(f"edges: expected {sorted(wanted)}, stored {sorted(reported)}")
-    return EventResult(event.id, topic_id, not differences, "; ".join(differences) or "stored state as expected",
-                       bool(event.edges), compared)
+    return EventResult(
+        event.id,
+        topic_id,
+        not differences,
+        "; ".join(differences) or "stored state as expected",
+        bool(event.edges),
+        compared,
+    )
 
 
 def _saliences(system: System, ids: dict[str, str]) -> dict[str, float | None]:
@@ -165,8 +187,9 @@ def _increment(before: dict, after: dict, topic_id: str) -> float | None:
     return None if b is None or a is None else max(0.0, round(a - b, 6))
 
 
-def ask(system: System, storyline: Storyline, ids: dict[str, str], top_k: int
-        ) -> tuple[list[QuestionOutcome], Reinforcement | None]:
+def ask(
+    system: System, storyline: Storyline, ids: dict[str, str], top_k: int
+) -> tuple[list[QuestionOutcome], Reinforcement | None]:
     outcomes: list[QuestionOutcome] = []
     before = _saliences(system, ids)
     for q in storyline.questions:
@@ -190,10 +213,20 @@ def _triage(q: Question, topic_id: str, response: dict, before: dict, after: dic
     labelled = _increment(before, after, topic_id)
     every = [_increment(before, after, tid) for tid in after]
     return QuestionOutcome(
-        question=q.id, ability=q.ability, text=q.text, truth=q.truth, topic=q.topic, topic_id=topic_id,
-        outcome=outcome, returned=returned, rank=returned_ids.index(topic_id) + 1 if returned else None,
-        returned_ids=returned_ids, stored=stored, increments_labelled=labelled,
-        increments_all=None if labelled is None or None in every else round(sum(every), 6))
+        question=q.id,
+        ability=q.ability,
+        text=q.text,
+        truth=q.truth,
+        topic=q.topic,
+        topic_id=topic_id,
+        outcome=outcome,
+        returned=returned,
+        rank=returned_ids.index(topic_id) + 1 if returned else None,
+        returned_ids=returned_ids,
+        stored=stored,
+        increments_labelled=labelled,
+        increments_all=None if labelled is None or None in every else round(sum(every), 6),
+    )
 
 
 def _reinforcement(outcomes: list[QuestionOutcome]) -> Reinforcement | None:
@@ -205,7 +238,11 @@ def _reinforcement(outcomes: list[QuestionOutcome]) -> Reinforcement | None:
     returns = sum(len(o.returned_ids) for o in outcomes)
     at_k = sum(o.returned for o in outcomes) / returns if returns else None
     return Reinforcement(
-        labelled_increments=labelled, all_increments=everything, precision=precision,
-        questions_bumped=sum(1 for o in outcomes if o.increments_labelled > EPS), questions=len(outcomes),
+        labelled_increments=labelled,
+        all_increments=everything,
+        precision=precision,
+        questions_bumped=sum(1 for o in outcomes if o.increments_labelled > EPS),
+        questions=len(outcomes),
         precision_at_k=at_k,
-        matches_precision_at_k=None if precision is None or at_k is None else abs(precision - at_k) < EPS)
+        matches_precision_at_k=None if precision is None or at_k is None else abs(precision - at_k) < EPS,
+    )

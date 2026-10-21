@@ -12,10 +12,10 @@ tests pin on the full ramp.
 
 from __future__ import annotations
 
+from collections.abc import Callable, Iterator
 from contextlib import contextmanager
 from datetime import date
 from functools import cache, partial
-from typing import Callable, Iterator
 
 import pytest
 
@@ -35,7 +35,9 @@ def _fast(small_ramps: bool) -> Iterator[None]:
     with pytest.MonkeyPatch.context() as mp:
         mp.setattr(merge, "DEFAULT_TIMEOUT_S", 0.3)
         mp.setattr(time_probes, "AS_OF_GAP_S", 0.05)
-        mp.setattr(ramp, "ARCHIVE_WAIT_S", 0.3)  # waits for a forgetting pass; in-process it has happened or it never will
+        mp.setattr(
+            ramp, "ARCHIVE_WAIT_S", 0.3
+        )  # waits for a forgetting pass; in-process it has happened or it never will
         mp.setattr(c6_retrieval_adaptation, "ARCHIVE_WAIT_S", 0.3)
         if small_ramps:
             mp.setattr(ramp, "STEPS", SMALL_STEPS)
