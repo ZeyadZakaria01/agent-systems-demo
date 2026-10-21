@@ -560,15 +560,17 @@
         "current_after": "April 20"
       },
       "topic_changed_by_turn": false,
-      "hand_grade": {
-        "grade": null,
-        "note": null
-      },
       "model_grade": {
         "grade": "correct",
         "note": "The answer states the deadline is April 20, matching the ground truth exactly.",
         "grader": "claude-sonnet-5-5",
         "graded_at": "2026-10-21T11:21:11+00:00"
+      },
+      "reviewer_grade": {
+        "grade": "correct",
+        "note": "States the ground truth without contradiction.",
+        "grader": "blind-reviewer-agent",
+        "graded_at": "2026-10-21T18:12:59+00:00"
       }
     },
     {
@@ -848,15 +850,17 @@
         "current_after": "Alice (Frontend lead), Bob (Backend), Erin (QA)"
       },
       "topic_changed_by_turn": false,
-      "hand_grade": {
-        "grade": null,
-        "note": null
-      },
       "model_grade": {
         "grade": "correct",
         "note": "The answer lists Alice (Frontend lead), Bob (Backend developer), and Erin (QA engineer), which matches the ground truth; the extra '(joined the team)' note doesn't contradict it.",
         "grader": "claude-sonnet-5-5",
         "graded_at": "2026-10-21T11:21:14+00:00"
+      },
+      "reviewer_grade": {
+        "grade": "correct",
+        "note": "States the ground truth without contradiction.",
+        "grader": "blind-reviewer-agent",
+        "graded_at": "2026-10-21T18:12:59+00:00"
       }
     },
     {
@@ -1136,15 +1140,17 @@
         "current_after": "Complete"
       },
       "topic_changed_by_turn": false,
-      "hand_grade": {
-        "grade": null,
-        "note": null
-      },
       "model_grade": {
         "grade": "correct",
         "note": "The answer states the project status is Complete, matching the ground truth; the extra deadline and team details do not contradict it.",
         "grader": "claude-sonnet-5-5",
         "graded_at": "2026-10-21T11:21:18+00:00"
+      },
+      "reviewer_grade": {
+        "grade": "correct",
+        "note": "States the ground truth without contradiction.",
+        "grader": "blind-reviewer-agent",
+        "graded_at": "2026-10-21T18:12:59+00:00"
       }
     }
   ],

@@ -1,22 +1,23 @@
-"""A model grades each chat turn beside the person's hand grade: it sees what the person grades (the question, the
-ground truth, and the answer or the stored entries), never the automatic match hints or the hand grade, and its
-grade is stored under `model_grade` with the exact model id, leaving `hand_grade` untouched."""
+"""A model grades each chat turn beside the blind reviewer: it sees what a reviewer needs (the question, the
+ground truth, and the answer or the stored entries), never the automatic match hints or the reviewer's grade, and
+its grade is stored under `model_grade` with the exact model id, leaving `reviewer_grade` untouched."""
 
 import copy
 import json
 
 import pytest
 
-from demo.chat_recording import EMPTY_GRADE, render_turn
+from demo.chat_recording import render_turn
 from demo.model_grade import GradeError, grade_recording, grading_prompt, parse_grade
 
+REVIEW = {"grade": "incorrect", "note": "REVIEWER-SECRET", "grader": "rev-1", "graded_at": "t"}
 BAD_MERGE_TURN = {
     "question": "Q02", "ability": "knowledge update", "text": "What is the deadline of the Website Redesign?",
     "ground_truth": "April 20", "answer": "The deadline is April 20th.", "answer_contains_ground_truth": False,
     "route": {"intent": "query", "intent_source": "classifier", "tool_calls": ["memory_graph_snapshot"]},
     "latency_ms": 2535.0, "model": "qwen3.5:2b", "provider": "ollama",
     "state_violation": {"field": "Deadline", "lost_entries": ["March 15 (kickoff-notes)"]},
-    "topic_changed_by_turn": False, "hand_grade": dict(EMPTY_GRADE),
+    "topic_changed_by_turn": False, "reviewer_grade": REVIEW,
 }
 W1_TURN = {
     "question": "W1", "ability": "temporal reasoning", "text": "I started my new job two weeks ago",
@@ -27,7 +28,7 @@ W1_TURN = {
     "latency_ms": 3616.0, "model": "qwen3.5:2b", "provider": "ollama",
     "written": [{"title": "New Job", "topic_id": "t1", "field": "job_start_date", "value": "2026-09-23",
                  "provenance": "llm", "valid_from": "2026-10-07T00:00:00+00:00"}],
-    "topics_created": [], "hand_grade": dict(EMPTY_GRADE),
+    "topics_created": [], "reviewer_grade": REVIEW,
     "stored_start_date": {"candidates": [], "within_tolerance": True, "tolerance_days": 1, "truth": "2026-09-23"},
 }
 
@@ -39,9 +40,9 @@ def test_the_prompt_carries_what_the_person_grades():
         assert part in prompt
 
 
-def test_the_prompt_leaves_out_hints_the_hand_grade_and_the_state_evidence():
+def test_the_prompt_leaves_out_hints_the_reviewer_grade_and_the_state_evidence():
     prompt = grading_prompt(BAD_MERGE_TURN)
-    for hidden in ("answer_contains_ground_truth", "hand_grade", "kickoff-notes", "state_violation"):
+    for hidden in ("answer_contains_ground_truth", "reviewer_grade", "REVIEWER-SECRET", "incorrect", "kickoff-notes", "state_violation"):
         assert hidden not in prompt
 
 
@@ -80,14 +81,14 @@ def stub(grade="correct"):
     return ask
 
 
-def test_grading_a_recording_fills_model_grade_on_every_turn_and_leaves_the_hand_grade(tmp_path):
+def test_grading_a_recording_fills_model_grade_on_every_turn_and_leaves_the_reviewer_grade(tmp_path):
     path = recording_file(tmp_path, [copy.deepcopy(BAD_MERGE_TURN), copy.deepcopy(W1_TURN)])
     ask = stub()
     grade_recording(path, ask)
     turns = json.loads(path.read_text())["turns"]
     assert len(ask.seen) == 2
     for turn in turns:
-        assert turn["hand_grade"] == EMPTY_GRADE
+        assert turn["reviewer_grade"] == REVIEW
         assert turn["model_grade"]["grade"] == "correct"
         assert turn["model_grade"]["note"] == "stub note"
         assert turn["model_grade"]["grader"] == "claude-sonnet-test"
@@ -109,12 +110,14 @@ def plain_turn():
     return turn
 
 
-def test_replay_shows_the_model_grade_beside_the_hand_grade():
+def test_replay_shows_the_model_grade_and_the_reviewer_grade():
     turn = {**plain_turn(), "model_grade": {"grade": "correct", "note": "says April 20",
-                                            "grader": "claude-sonnet-5-5", "graded_at": "x"}}
+                                            "grader": "claude-sonnet-5-5", "graded_at": "x"},
+            "reviewer_grade": {"grade": "incorrect", "note": "wrong", "grader": "rev-1", "graded_at": "y"}}
     lines = render_turn(turn, None)
-    hand = next(i for i, line in enumerate(lines) if "hand grade" in line)
-    assert lines[hand + 1] == "  - model grade (claude-sonnet-5-5): correct; note: says April 20"
+    assert lines[-2:] == ["  - model grade (claude-sonnet-5-5): correct; note: says April 20",
+                          "  - reviewer grade (rev-1): incorrect; note: wrong"]
+    assert not any("hand" in line for line in lines)
 
 
 def test_replay_of_an_ungraded_turn_prints_no_model_grade_line():

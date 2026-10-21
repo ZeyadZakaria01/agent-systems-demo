@@ -191,7 +191,6 @@ def test_each_turn_carries_question_truth_answer_route_latency_violation_and_an_
         "What is the deadline of the Website Redesign?", "April 20", "The deadline is April 20.")
     assert q02["route"] == {"intent": "query", "intent_source": "classifier", "tool_calls": []}
     assert q02["latency_ms"] >= 0 and q02["model"] == "stand-in-model" and q02["provider"] == "ollama"
-    assert q02["hand_grade"] == {"grade": None, "note": None}
     assert q02["state_violation"]["present"] is True
 
 
@@ -258,13 +257,12 @@ def test_a_file_that_is_not_a_recording_is_refused(tmp_path):
 # -- replay: rendered from the file alone
 
 
-def test_replay_shows_every_turn_with_its_truth_answer_route_latency_violation_and_grade_slot():
+def test_replay_shows_every_turn_with_its_truth_answer_route_latency_violation():
     _, rec = recorded()
     text = render_recording(rec)
     for needle in ("Q02", "What is the deadline of the Website Redesign?", "April 20", "The deadline is April 20.",
-                   "query", "classifier", "ms", "C4", "March 15", "vendor delay", "hand grade"):
+                   "query", "classifier", "ms", "C4", "March 15", "vendor delay"):
         assert needle in text
-    assert text.count("hand grade") == 3
 
 
 def test_replay_runs_with_no_server_and_loads_neither_http_nor_the_server_launcher(tmp_path):
@@ -318,7 +316,6 @@ def test_results_json_carries_the_chat_case_without_the_tool_logs(tmp_path):
     assert case["case"] == "bad-merge" and case["file"] == f"bad-merge-{rec['run_id']}.json"
     assert [t["question"] for t in case["turns"]] == ["Q02", "Q06", "Q11"]
     assert all("tool_log" not in t for t in case["turns"])
-    assert case["turns"][0]["hand_grade"] == {"grade": None, "note": None}
 
 
 def test_a_run_with_no_recordings_prints_no_chat_section_and_an_empty_list(tmp_path):

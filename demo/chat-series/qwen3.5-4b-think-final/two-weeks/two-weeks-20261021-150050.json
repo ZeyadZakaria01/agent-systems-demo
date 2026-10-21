@@ -132,10 +132,6 @@
           "title": "User"
         }
       ],
-      "hand_grade": {
-        "grade": null,
-        "note": null
-      },
       "stored_start_date": {
         "truth": "2026-09-23",
         "tolerance_days": 1,
@@ -162,6 +158,12 @@
         "note": "The stored job_start_date is 2026-09-23, exactly two weeks before the reference time 2026-10-07, matching the ground truth.",
         "grader": "claude-sonnet-5-5",
         "graded_at": "2026-10-21T12:04:05+00:00"
+      },
+      "reviewer_grade": {
+        "grade": "correct",
+        "note": "Stored job_start_date 2026-09-23, matching ground truth.",
+        "grader": "blind-reviewer-agent",
+        "graded_at": "2026-10-21T18:12:59+00:00"
       }
     },
     {
@@ -270,10 +272,6 @@
       ],
       "written": [],
       "topics_created": [],
-      "hand_grade": {
-        "grade": null,
-        "note": null
-      },
       "answer_contains_ground_truth": true,
       "hint_rule": "the answer says four weeks (\"four weeks\", \"4 weeks\" or \"28 days\")",
       "model_grade": {
@@ -281,6 +279,12 @@
         "note": "Answer says about 4 weeks, matching the ground truth of four weeks; the Sept 23 to Oct 21 span is exactly 28 days, and the 'roughly one month' remark does not contradict it.",
         "grader": "claude-sonnet-5-5",
         "graded_at": "2026-10-21T12:04:11+00:00"
+      },
+      "reviewer_grade": {
+        "grade": "correct",
+        "note": "Answered 'about 4 weeks' since Sept 23, 'roughly one month'.",
+        "grader": "blind-reviewer-agent",
+        "graded_at": "2026-10-21T18:12:59+00:00"
       }
     }
   ],

@@ -17,7 +17,7 @@ The bad-merge run, on upstream MemState through `/v1` and the system adapter:
    no fields triggers the scan. The merge then drops the original and keeps the re-explanation.
 3. 2-3 storyline questions go through MemState chat (`POST /api/llm/chat`, provider `ollama`, one request per question,
    no `intent_override`, no Groq, no judge). Each turn records the question, ground truth, answer, route, latency, what
-   the state lost in the merge on the question's own field and on the topic, and an empty hand-grade slot.
+   the state lost in the merge on the question's own field and on the topic.
 
 What the merge loses is computed by comparing the original's stored topic before the merge with the survivor after it
 (`lost_in_merge`): history entries (value, provenance, reason) of fields both topics held are gone; fields only the
@@ -39,7 +39,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 
 from demo.adapter import System
-from demo.chat_recording import (EMPTY_GRADE, chat_provider, LEFT_UNSET, RECORDINGS_ROOT, is_variant, load_recording, new_recording,
+from demo.chat_recording import (chat_provider, LEFT_UNSET, RECORDINGS_ROOT, is_variant, load_recording, new_recording,
                                  recording_files, render_recording, save_recording)
 from demo.chat_two_weeks import CASE as TWO_WEEKS_CASE, FIRST_INTENT_OVERRIDE, record_two_weeks
 from demo.merge import DEFAULT_INTERVAL_S, DEFAULT_TIMEOUT_S, MergeOutcome, Pair, await_merge, unique_title
@@ -187,7 +187,7 @@ def _setup_writes(system: System) -> list[dict]:
 
 def contains_every_word(truth: object, answer: str) -> bool:
     """Does the answer contain every alphanumeric word of the ground truth (case ignored, whole words only)? A hint
-    printed beside the hand-grade slot, not a grade: "completed" is not "complete", and a wrong answer can repeat the
+    printed beside the grades, not a grade: "completed" is not "complete", and a wrong answer can repeat the
     right words."""
     words = lambda text: re.findall(r"[a-z0-9]+", str(text).casefold())  # noqa: E731
     return set(words(truth)) <= set(words(answer))
@@ -220,8 +220,7 @@ def ask(system: System, built: BuiltState, question) -> dict:
             "latency_ms": entry["latency_ms"], "model": response.get("model"), "provider": response.get("provider"),
             "tool_log": response.get("tool_log") or [],
             "state_violation": state_violation(built, question),
-            "topic_changed_by_turn": before != after,
-            "hand_grade": dict(EMPTY_GRADE)}
+            "topic_changed_by_turn": before != after}
 
 
 def record_bad_merge(system: System, *, run_id: str, recorded_at: str, command: str = "",

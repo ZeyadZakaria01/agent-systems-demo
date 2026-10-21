@@ -133,12 +133,11 @@ def test_the_variant_that_forces_the_first_route_says_so_in_the_request_the_reco
 # -- the turns
 
 
-def test_two_turns_each_with_an_empty_hand_grade_slot_and_the_ground_truth():
+def test_two_turns_each_with_the_ground_truth():
     _, rec = recorded()
     first, second = rec["turns"]
     assert (first["question"], second["question"]) == ("W1", "W2")
     assert first["ground_truth"].startswith("2026-09-22") and second["ground_truth"] == "four weeks"
-    assert first["hand_grade"] == second["hand_grade"] == {"grade": None, "note": None}
     assert (first["graded_on"], second["graded_on"]) == ("the stored start date", "the answer")
     assert first["reference_time"] == "2026-10-06T00:00:00+00:00"
     for turn in rec["turns"]:
@@ -259,14 +258,14 @@ def test_a_recording_survives_save_and_load_unchanged(tmp_path):
 # -- replay: rendered from the file alone
 
 
-def test_replay_shows_both_turns_the_reference_times_the_stored_entry_the_truth_and_two_empty_grade_slots():
+def test_replay_shows_both_turns_the_reference_times_the_stored_entry_the_truth_and_what_each_is_graded_on():
     _, rec = recorded()
     text = render_recording(rec)
     for needle in ("I started my new job two weeks ago", "How long have I been at my new job?", "2026-10-06", "2026-10-20",
                    "2026-09-22", "four weeks", "About four weeks.", "start_date", "Sep 22", "stored start date",
                    "within 1 day"):
         assert needle in text
-    assert text.count("hand grade") == 2 and "graded on: the stored start date" in text and "graded on: the answer" in text
+    assert "graded on: the stored start date" in text and "graded on: the answer" in text
 
 
 def test_replay_runs_with_no_server_and_loads_neither_http_nor_the_server_launcher(tmp_path):

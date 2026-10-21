@@ -86,10 +86,6 @@
       ],
       "written": [],
       "topics_created": [],
-      "hand_grade": {
-        "grade": null,
-        "note": null
-      },
       "stored_start_date": {
         "truth": "2026-09-23",
         "tolerance_days": 1,
@@ -101,6 +97,12 @@
         "note": "Nothing was stored; the assistant asked clarifying questions instead of recording the start date of 2026-09-23.",
         "grader": "claude-sonnet-5-5",
         "graded_at": "2026-10-21T09:11:44+00:00"
+      },
+      "reviewer_grade": {
+        "grade": "incorrect",
+        "note": "does not state ground truth (nothing stored/wrong date/wrong duration/refusal)",
+        "grader": "blind-reviewer-agent",
+        "graded_at": "2026-10-21T18:12:59+00:00"
       }
     },
     {
@@ -144,10 +146,6 @@
       ],
       "written": [],
       "topics_created": [],
-      "hand_grade": {
-        "grade": null,
-        "note": null
-      },
       "answer_contains_ground_truth": false,
       "hint_rule": "the answer says four weeks (\"four weeks\", \"4 weeks\" or \"28 days\")",
       "model_grade": {
@@ -155,6 +153,12 @@
         "note": "The assistant refused/asked a clarifying question and did not state the ground truth of four weeks.",
         "grader": "claude-sonnet-5-5",
         "graded_at": "2026-10-21T09:11:48+00:00"
+      },
+      "reviewer_grade": {
+        "grade": "incorrect",
+        "note": "does not state ground truth (nothing stored/wrong date/wrong duration/refusal)",
+        "grader": "blind-reviewer-agent",
+        "graded_at": "2026-10-21T18:12:59+00:00"
       }
     }
   ],

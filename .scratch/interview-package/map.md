@@ -13,14 +13,14 @@ The way to all three deliverables Prof. Mansour asked for is clear: a buildable 
 - Environment is ready and live-verified (ticket "Environment setup"); start servers via the README.
 - Build state (2026-10-21): the build is merged on `main`; all 32 build tickets in `.scratch/gem-conformance-suite/issues/` are resolved. No `gem-suite` branch or per-ticket worktree remains; `../agent-systems-demo-wt/` holds only `server.lock` and notes. Details: `docs/journal.md`, `docs/findings.md`.
 - Run of record `demo/record/20261021-194912/` (57 min, exit 0) measured the final patch commits (step 1 `089b823`, step 2 `4272a07`, step 3 `9bd471e`); it is done, F41. Every verdict equals the earlier run `20261021-085949` (patch commits `2cfabee`, `cb5d48c`, since superseded; F32–F35 stay as its evidence). Report §9.7 and §9.8 cite the new run; F38–F40 are in the report.
-- Chat series F37–F40 are recorded in `docs/findings.md` and `demo/chat-series/`. Hand grades (`demo/grading/hand-grading-sheet.csv`) are 0 of 140: the user does them later.
+- Chat series F37–F40 are recorded in `docs/findings.md` and `demo/chat-series/`. Hand grading was dropped by the user (2026-10-21); blind reviewer grades (`python -m demo.review_grade`) replace it.
 - Earlier suite audits ([vs. spec](assets/suite-audit-vs-spec.md), [vs. report](assets/suite-audit-vs-report.md), 2026-10-20) fed "Ratify verdict rules set during the build" and "Close the suite audit's design gaps before the patch tickets"; their fixes are built.
 
 ## Decisions so far
 
 - [Which system to demo](issues/01-which-system-to-demo.md): MemState only; MAFBench in report and slides (multi-hop selective forgetting < 5.0 everywhere, append-only memory); no Mem0/Zep.
 - [Demo shape and framing](issues/02-demo-shape-and-framing.md): the GEM conformance suite driving live MemState plus one patch; scorecard upstream | patched | baseline; evidence rule.
-- [What the conformance suite checks](issues/03-what-the-harness-checks.md): all six Cs (C1, C4 as controls), paper's three ground-truth levels, state-level primary, `/v1` path scored; one hand-graded Ollama chat run, n=1.
+- [What the conformance suite checks](issues/03-what-the-harness-checks.md): all six Cs (C1, C4 as controls), paper's three ground-truth levels, state-level primary, `/v1` path scored; one hand-graded Ollama chat run, n=1. *Superseded in part: graded by Sonnet and a blind reviewer agent, no hand grades (user, 2026-10-21).*
 - [Verdict scale and unimplemented conditions](issues/04-verdict-scale.md): pass / partial / fail / absent; C3 and declarative policies probed and scored absent.
 - [Baseline and setup rules](issues/05-baseline-and-setup-rules.md): last-write-wins baseline; editor endpoints for setup only; leak check out of the demo.
 - [Repeats and forgetting test](issues/06-repeats-and-forgetting.md): deterministic once, merge ×20, one LLM run; topic ramp for C5 plus targeted tests.
@@ -63,6 +63,6 @@ The way to all three deliverables Prof. Mansour asked for is clear: a buildable 
 - Cross-tenant salience leak test: empty by construction in MemState; report note only.
 - Running LongMemEval or a 500-turn workload: free-tier limits and saturation; used as motivation only.
 - Implementing GEM beyond the bitemporal patch **in the real MemState server**: C3′ propagation and bounded flags, the decay ladder, the retention score, a policy language, extension-edge discovery (report §7.9 future directions). Narrowed by "Reference GEM: show the time gap is in the conditions": the in-process reference GEM gets one-hop flagging, decay with a single archive threshold, and a restricted policy table. The full versions stay out.
-- [Judge and reference answers](issues/13-judge-and-reference-answers.md): three-rubric LLM judge and agreement deferred to future work; the one answer-level case is hand-graded.
+- [Judge and reference answers](issues/13-judge-and-reference-answers.md): three-rubric LLM judge and agreement deferred to future work; the one answer-level case is hand-graded. *Superseded in part: graded by Sonnet and a blind reviewer agent, no hand grades (user, 2026-10-21).*
 - [Measure Groq tokens per chat turn](issues/15-measure-groq-tokens-per-turn.md) and [Groq budget for chat runs](issues/16-groq-budget-for-chat-runs.md): no Groq runs in the demo.
 - LLM repeats and the cloud-vs-local comparison: future work (see "Review of the demo plan").

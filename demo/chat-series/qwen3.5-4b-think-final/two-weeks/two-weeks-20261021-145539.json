@@ -128,10 +128,6 @@
           "title": "Me"
         }
       ],
-      "hand_grade": {
-        "grade": null,
-        "note": null
-      },
       "stored_start_date": {
         "truth": "2026-09-23",
         "tolerance_days": 1,
@@ -165,6 +161,12 @@
         "note": "Stored start date 2026-09-23 matches the ground truth (two weeks before 2026-10-07), with valid_from set to the same date.",
         "grader": "claude-sonnet-5-5",
         "graded_at": "2026-10-21T12:03:49+00:00"
+      },
+      "reviewer_grade": {
+        "grade": "correct",
+        "note": "Stored value 'Started new job 2026-09-23 (approximately September 23, 2026)' with valid_from 2026-09-23, consistent with ground truth.",
+        "grader": "blind-reviewer-agent",
+        "graded_at": "2026-10-21T18:12:59+00:00"
       }
     },
     {
@@ -275,10 +277,6 @@
       ],
       "written": [],
       "topics_created": [],
-      "hand_grade": {
-        "grade": null,
-        "note": null
-      },
       "answer_contains_ground_truth": false,
       "hint_rule": "the answer says four weeks (\"four weeks\", \"4 weeks\" or \"28 days\")",
       "model_grade": {
@@ -286,6 +284,12 @@
         "note": "The start date of September 23, 2026 and 'approximately one month' match the ground truth of four weeks (28 days). However, the answer also says 'just over two weeks ago', which contradicts both and leaves the duration inconsistent.",
         "grader": "claude-sonnet-5-5",
         "graded_at": "2026-10-21T12:03:54+00:00"
+      },
+      "reviewer_grade": {
+        "grade": "partially correct",
+        "note": "Answered 'approximately one month' but also 'just over two weeks ago', a contradicting figure.",
+        "grader": "blind-reviewer-agent",
+        "graded_at": "2026-10-21T18:12:59+00:00"
       }
     }
   ],

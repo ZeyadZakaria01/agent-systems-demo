@@ -130,10 +130,6 @@
           "title": "My Profile"
         }
       ],
-      "hand_grade": {
-        "grade": null,
-        "note": null
-      },
       "stored_start_date": {
         "truth": "2026-09-23",
         "tolerance_days": 1,
@@ -160,6 +156,12 @@
         "note": "Stored job_start_date is 2026-09-23, exactly two weeks before the reference time 2026-10-07, matching the ground truth.",
         "grader": "claude-sonnet-5-5",
         "graded_at": "2026-10-21T12:02:50+00:00"
+      },
+      "reviewer_grade": {
+        "grade": "correct",
+        "note": "Stored job_start_date 2026-09-23, exactly the ground truth.",
+        "grader": "blind-reviewer-agent",
+        "graded_at": "2026-10-21T18:12:59+00:00"
       }
     },
     {
@@ -241,10 +243,6 @@
       ],
       "written": [],
       "topics_created": [],
-      "hand_grade": {
-        "grade": null,
-        "note": null
-      },
       "answer_contains_ground_truth": true,
       "hint_rule": "the answer says four weeks (\"four weeks\", \"4 weeks\" or \"28 days\")",
       "model_grade": {
@@ -252,6 +250,12 @@
         "note": "The answer gives 28 days (Sept 23 to Oct 21), which equals four weeks. The phrase 'just over a month' is slightly loose but doesn't change the stated duration.",
         "grader": "claude-sonnet-5-5",
         "graded_at": "2026-10-21T12:02:55+00:00"
+      },
+      "reviewer_grade": {
+        "grade": "correct",
+        "note": "Answered 'about 28 days—just over a month' from a Sept 23 start, which equals four weeks.",
+        "grader": "blind-reviewer-agent",
+        "graded_at": "2026-10-21T18:12:59+00:00"
       }
     }
   ],

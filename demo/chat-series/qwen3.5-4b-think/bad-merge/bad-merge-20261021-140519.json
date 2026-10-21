@@ -560,15 +560,17 @@
         "current_after": "April 20"
       },
       "topic_changed_by_turn": false,
-      "hand_grade": {
-        "grade": null,
-        "note": null
-      },
       "model_grade": {
         "grade": "correct",
         "note": "The answer states April 20, matching the ground truth.",
         "grader": "claude-sonnet-5-5",
         "graded_at": "2026-10-21T11:20:41+00:00"
+      },
+      "reviewer_grade": {
+        "grade": "correct",
+        "note": "States the ground truth without contradiction.",
+        "grader": "blind-reviewer-agent",
+        "graded_at": "2026-10-21T18:12:59+00:00"
       }
     },
     {
@@ -846,15 +848,17 @@
         "current_after": "Alice (Frontend lead), Bob (Backend), Erin (QA)"
       },
       "topic_changed_by_turn": false,
-      "hand_grade": {
-        "grade": null,
-        "note": null
-      },
       "model_grade": {
         "grade": "correct",
         "note": "The answer lists Alice (Frontend lead), Bob (Backend developer), and Erin (QA tester), matching the ground truth.",
         "grader": "claude-sonnet-5-5",
         "graded_at": "2026-10-21T11:20:44+00:00"
+      },
+      "reviewer_grade": {
+        "grade": "correct",
+        "note": "States the ground truth without contradiction.",
+        "grader": "blind-reviewer-agent",
+        "graded_at": "2026-10-21T18:12:59+00:00"
       }
     },
     {
@@ -1446,15 +1450,17 @@
         "current_after": "Complete"
       },
       "topic_changed_by_turn": false,
-      "hand_grade": {
-        "grade": null,
-        "note": null
-      },
       "model_grade": {
         "grade": "correct",
         "note": "The answer states the website redesign project status is \"Complete\", which matches the ground truth; the extra milestone and Phase 2 details do not contradict it.",
         "grader": "claude-sonnet-5-5",
         "graded_at": "2026-10-21T11:20:48+00:00"
+      },
+      "reviewer_grade": {
+        "grade": "correct",
+        "note": "States Complete; extra Phase 2 info is clearly separated and does not contradict.",
+        "grader": "blind-reviewer-agent",
+        "graded_at": "2026-10-21T18:12:59+00:00"
       }
     }
   ],

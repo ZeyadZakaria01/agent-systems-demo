@@ -318,11 +318,7 @@
         ],
         "current_after": "April 20"
       },
-      "topic_changed_by_turn": false,
-      "hand_grade": {
-        "grade": null,
-        "note": null
-      }
+      "topic_changed_by_turn": false
     },
     {
       "question": "Q06",
@@ -525,11 +521,7 @@
         "lost_values": [],
         "current_after": "Alice (Frontend lead), Bob (Backend), Erin (QA)"
       },
-      "topic_changed_by_turn": false,
-      "hand_grade": {
-        "grade": null,
-        "note": null
-      }
+      "topic_changed_by_turn": false
     },
     {
       "question": "Q11",
@@ -807,11 +799,7 @@
         "lost_values": [],
         "current_after": "Complete"
       },
-      "topic_changed_by_turn": false,
-      "hand_grade": {
-        "grade": null,
-        "note": null
-      }
+      "topic_changed_by_turn": false
     }
   ],
   "environment": {

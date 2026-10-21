@@ -98,15 +98,23 @@
       ],
       "written": [],
       "topics_created": [],
-      "hand_grade": {
-        "grade": null,
-        "note": null
-      },
       "stored_start_date": {
         "truth": "2026-09-23",
         "tolerance_days": 1,
         "candidates": [],
         "within_tolerance": false
+      },
+      "model_grade": {
+        "grade": "incorrect",
+        "note": "Nothing was stored and the answer never gives a start date; it only says it needs to search for topic structure, so it does not state 2026-09-23.",
+        "grader": "claude-sonnet-5-5",
+        "graded_at": "2026-10-21T18:08:56+00:00"
+      },
+      "reviewer_grade": {
+        "grade": "incorrect",
+        "note": "Nothing stored.",
+        "grader": "blind-reviewer-agent",
+        "graded_at": "2026-10-21T18:12:59+00:00"
       }
     },
     {
@@ -138,12 +146,20 @@
       "tool_log": [],
       "written": [],
       "topics_created": [],
-      "hand_grade": {
-        "grade": null,
-        "note": null
-      },
       "answer_contains_ground_truth": false,
-      "hint_rule": "the answer says four weeks (\"four weeks\", \"4 weeks\" or \"28 days\")"
+      "hint_rule": "the answer says four weeks (\"four weeks\", \"4 weeks\" or \"28 days\")",
+      "model_grade": {
+        "grade": "incorrect",
+        "note": "The assistant did not state the ground truth of four weeks; it said it didn't know the start date and only that it was 'more than two weeks ago', then asked a question back.",
+        "grader": "claude-sonnet-5-5",
+        "graded_at": "2026-10-21T18:09:00+00:00"
+      },
+      "reviewer_grade": {
+        "grade": "incorrect",
+        "note": "Says it does not know; 'more than two weeks' is not four weeks.",
+        "grader": "blind-reviewer-agent",
+        "graded_at": "2026-10-21T18:12:59+00:00"
+      }
     }
   ],
   "environment": {

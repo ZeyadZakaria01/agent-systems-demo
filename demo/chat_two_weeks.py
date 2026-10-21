@@ -16,7 +16,7 @@ profile topic through `/v1` first. Both are deviations from the spec's design an
 records what it wrote
 (entries that were not in the stored state before it) and its route; the first turn also reads the stored start date
 out of those entries (the value text and `valid_from`), the second whether the answer says four weeks. Both are hints
-printed beside the empty hand-grade slots, never grades: the person grading reads the stored entries and the answer.
+printed beside the grades, never grades: the graders read the stored entries and the answer.
 """
 
 from __future__ import annotations
@@ -27,7 +27,7 @@ from datetime import date, datetime, timedelta
 from typing import Any
 
 from demo.adapter import System
-from demo.chat_recording import EMPTY_GRADE, LEFT_UNSET, chat_provider, new_recording
+from demo.chat_recording import LEFT_UNSET, chat_provider, new_recording
 from demo.time_stories import iso
 
 CASE = "two-weeks"
@@ -201,8 +201,7 @@ def take_turn(system: System, *, question: str, text: str, reference_day: date, 
             "route": {"intent": response.get("intent"), "intent_source": response.get("intent_source"),
                       "tool_calls": [t.get("tool") for t in response.get("tool_log") or []]},
             "latency_ms": entry["latency_ms"], "model": response.get("model"), "provider": response.get("provider"),
-            "tool_log": response.get("tool_log") or [], "written": written, "topics_created": created,
-            "hand_grade": dict(EMPTY_GRADE)}
+            "tool_log": response.get("tool_log") or [], "written": written, "topics_created": created}
 
 
 def record_two_weeks(system: System, *, run_id: str, recorded_at: str, run_day: date, command: str = "",

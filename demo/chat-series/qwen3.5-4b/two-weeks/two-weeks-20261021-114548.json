@@ -127,10 +127,6 @@
           "title": "Me"
         }
       ],
-      "hand_grade": {
-        "grade": null,
-        "note": null
-      },
       "stored_start_date": {
         "truth": "2026-09-23",
         "tolerance_days": 1,
@@ -150,6 +146,12 @@
         "note": "The stored valid_from is 2026-09-19, which is 18 days before the reference date, not two weeks; the ground truth is 2026-09-23 (±1 day), so it is outside tolerance.",
         "grader": "claude-sonnet-5-5",
         "graded_at": "2026-10-21T08:55:48+00:00"
+      },
+      "reviewer_grade": {
+        "grade": "incorrect",
+        "note": "does not state ground truth (nothing stored/wrong date/wrong duration/refusal)",
+        "grader": "blind-reviewer-agent",
+        "graded_at": "2026-10-21T18:12:59+00:00"
       }
     },
     {
@@ -229,10 +231,6 @@
       ],
       "written": [],
       "topics_created": [],
-      "hand_grade": {
-        "grade": null,
-        "note": null
-      },
       "answer_contains_ground_truth": false,
       "hint_rule": "the answer says four weeks (\"four weeks\", \"4 weeks\" or \"28 days\")",
       "model_grade": {
@@ -240,6 +238,12 @@
         "note": "Assistant said two weeks, but the ground truth is four weeks.",
         "grader": "claude-sonnet-5-5",
         "graded_at": "2026-10-21T08:55:51+00:00"
+      },
+      "reviewer_grade": {
+        "grade": "incorrect",
+        "note": "does not state ground truth (nothing stored/wrong date/wrong duration/refusal)",
+        "grader": "blind-reviewer-agent",
+        "graded_at": "2026-10-21T18:12:59+00:00"
       }
     }
   ],

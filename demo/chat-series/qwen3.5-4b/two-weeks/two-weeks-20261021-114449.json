@@ -128,10 +128,6 @@
           "title": "My Current Job"
         }
       ],
-      "hand_grade": {
-        "grade": null,
-        "note": null
-      },
       "stored_start_date": {
         "truth": "2026-09-23",
         "tolerance_days": 1,
@@ -151,6 +147,12 @@
         "note": "The stored started_at value is the unresolved phrase \"2 weeks ago\", not the date 2026-09-23, and valid_from is just the reference time (2026-10-07). Read later, the phrase would resolve to the wrong date.",
         "grader": "claude-sonnet-5-5",
         "graded_at": "2026-10-21T08:55:33+00:00"
+      },
+      "reviewer_grade": {
+        "grade": "incorrect",
+        "note": "does not state ground truth (nothing stored/wrong date/wrong duration/refusal)",
+        "grader": "blind-reviewer-agent",
+        "graded_at": "2026-10-21T18:12:59+00:00"
       }
     },
     {
@@ -261,10 +263,6 @@
       ],
       "written": [],
       "topics_created": [],
-      "hand_grade": {
-        "grade": null,
-        "note": null
-      },
       "answer_contains_ground_truth": false,
       "hint_rule": "the answer says four weeks (\"four weeks\", \"4 weeks\" or \"28 days\")",
       "model_grade": {
@@ -272,6 +270,12 @@
         "note": "The assistant said two weeks, but the ground truth is four weeks.",
         "grader": "claude-sonnet-5-5",
         "graded_at": "2026-10-21T08:55:36+00:00"
+      },
+      "reviewer_grade": {
+        "grade": "incorrect",
+        "note": "does not state ground truth (nothing stored/wrong date/wrong duration/refusal)",
+        "grader": "blind-reviewer-agent",
+        "graded_at": "2026-10-21T18:12:59+00:00"
       }
     }
   ],

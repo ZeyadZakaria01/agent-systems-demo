@@ -483,9 +483,17 @@
         "current_after": "April 20"
       },
       "topic_changed_by_turn": false,
-      "hand_grade": {
-        "grade": null,
-        "note": null
+      "model_grade": {
+        "grade": "correct",
+        "note": "The answer states the deadline as April 20, matching the ground truth; the extra status and follow-up offer don't contradict it.",
+        "grader": "claude-sonnet-5-5",
+        "graded_at": "2026-10-21T18:08:26+00:00"
+      },
+      "reviewer_grade": {
+        "grade": "correct",
+        "note": "States April 20.",
+        "grader": "blind-reviewer-agent",
+        "graded_at": "2026-10-21T18:12:59+00:00"
       }
     },
     {
@@ -1008,9 +1016,17 @@
         "current_after": "Alice (Frontend lead), Bob (Backend), Erin (QA)"
       },
       "topic_changed_by_turn": false,
-      "hand_grade": {
-        "grade": null,
-        "note": null
+      "model_grade": {
+        "grade": "correct",
+        "note": "The answer names all three team members with the right roles: Alice (Frontend lead), Bob (Backend) and Erin (QA). The extra Homepage prototype detail does not contradict the ground truth.",
+        "grader": "claude-sonnet-5-5",
+        "graded_at": "2026-10-21T18:08:30+00:00"
+      },
+      "reviewer_grade": {
+        "grade": "correct",
+        "note": "Lists Alice, Bob, Erin with roles.",
+        "grader": "blind-reviewer-agent",
+        "graded_at": "2026-10-21T18:12:59+00:00"
       }
     },
     {
@@ -1288,9 +1304,17 @@
         "current_after": "Complete"
       },
       "topic_changed_by_turn": false,
-      "hand_grade": {
-        "grade": null,
-        "note": null
+      "model_grade": {
+        "grade": "correct",
+        "note": "The answer states the project status is Complete, matching the ground truth; extra details do not contradict it.",
+        "grader": "claude-sonnet-5-5",
+        "graded_at": "2026-10-21T18:08:33+00:00"
+      },
+      "reviewer_grade": {
+        "grade": "correct",
+        "note": "States Complete; extra context is consistent.",
+        "grader": "blind-reviewer-agent",
+        "graded_at": "2026-10-21T18:12:59+00:00"
       }
     }
   ],

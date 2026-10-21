@@ -771,15 +771,17 @@
         "current_after": "April 20"
       },
       "topic_changed_by_turn": false,
-      "hand_grade": {
-        "grade": null,
-        "note": null
-      },
       "model_grade": {
         "grade": "correct",
         "note": "The answer states the deadline is April 20th, matching the ground truth; the extra detail about the storage format does not contradict it.",
         "grader": "claude-sonnet-5-5",
         "graded_at": "2026-10-21T08:02:37+00:00"
+      },
+      "reviewer_grade": {
+        "grade": "correct",
+        "note": "States April 20.",
+        "grader": "blind-reviewer-agent",
+        "graded_at": "2026-10-21T18:12:59+00:00"
       }
     },
     {
@@ -982,15 +984,17 @@
         "current_after": "Alice (Frontend lead), Bob (Backend), Erin (QA)"
       },
       "topic_changed_by_turn": false,
-      "hand_grade": {
-        "grade": null,
-        "note": null
-      },
       "model_grade": {
         "grade": "correct",
         "note": "The answer lists Alice (frontend lead), Bob (backend), and Erin (QA), matching the ground truth exactly.",
         "grader": "claude-sonnet-5-5",
         "graded_at": "2026-10-21T08:02:40+00:00"
+      },
+      "reviewer_grade": {
+        "grade": "correct",
+        "note": "Lists all three with roles.",
+        "grader": "blind-reviewer-agent",
+        "graded_at": "2026-10-21T18:12:59+00:00"
       }
     },
     {
@@ -1268,15 +1272,17 @@
         "current_after": "Complete"
       },
       "topic_changed_by_turn": false,
-      "hand_grade": {
-        "grade": null,
-        "note": null
-      },
       "model_grade": {
         "grade": "correct",
         "note": "The answer states the Website Redesign project's status is Complete, matching the ground truth. The extra details about the deadline, team and earlier phases are muddled but don't contradict it.",
         "grader": "claude-sonnet-5-5",
         "graded_at": "2026-10-21T08:02:44+00:00"
+      },
+      "reviewer_grade": {
+        "grade": "correct",
+        "note": "Says Complete; history of earlier statuses is not a contradiction.",
+        "grader": "blind-reviewer-agent",
+        "graded_at": "2026-10-21T18:12:59+00:00"
       }
     }
   ],

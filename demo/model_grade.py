@@ -1,9 +1,9 @@
-"""A model's grade of each chat turn, stored beside the person's hand grade (`python -m demo.model_grade FILE...`).
+"""A model's grade of each chat turn, stored beside the blind reviewer's grade (`python -m demo.model_grade FILE...`).
 
-The grader sees what the person grades: the question, the ground truth, what the turn is graded on (the answer, or
+The grader sees what a reviewer needs: the question, the ground truth, what the turn is graded on (the answer, or
 for the two-weeks W1 turn the stored entries and the reference time) and the answer. It never sees the automatic match
-hints, the date-match result, the hand grade or the bad merge's state evidence. Its grade goes under `model_grade`
-(`grade`, `note`, `grader` = the exact model id, `graded_at`); `hand_grade` is not touched. The default grader is
+hints, the date-match result, the reviewer's grade or the bad merge's state evidence. Its grade goes under `model_grade`
+(`grade`, `note`, `grader` = the exact model id, `graded_at`); `reviewer_grade` is not touched (`demo/review_grade.py`). The default grader is
 Sonnet through the Claude Code CLI, run in an empty folder with no tools and no MCP servers, so it reads nothing
 but the prompt.
 """

@@ -131,10 +131,6 @@
           "title": "User"
         }
       ],
-      "hand_grade": {
-        "grade": null,
-        "note": null
-      },
       "stored_start_date": {
         "truth": "2026-09-23",
         "tolerance_days": 1,
@@ -161,6 +157,12 @@
         "note": "The stored entry has valid_from 2026-09-23 and a value of about 2026-09-23, which matches the ground truth of two weeks before 2026-10-07.",
         "grader": "claude-sonnet-5-5",
         "graded_at": "2026-10-21T11:22:31+00:00"
+      },
+      "reviewer_grade": {
+        "grade": "correct",
+        "note": "Stored value 'Started new job two weeks ago (approximately 2026-09-23)', valid_from 2026-09-23, matching ground truth.",
+        "grader": "blind-reviewer-agent",
+        "graded_at": "2026-10-21T18:12:59+00:00"
       }
     },
     {
@@ -271,10 +273,6 @@
       ],
       "written": [],
       "topics_created": [],
-      "hand_grade": {
-        "grade": null,
-        "note": null
-      },
       "answer_contains_ground_truth": false,
       "hint_rule": "the answer says four weeks (\"four weeks\", \"4 weeks\" or \"28 days\")",
       "model_grade": {
@@ -282,6 +280,12 @@
         "note": "The assistant said about two weeks (started around Sept 23), but the ground truth is four weeks, so the duration is wrong.",
         "grader": "claude-sonnet-5-5",
         "graded_at": "2026-10-21T11:22:37+00:00"
+      },
+      "reviewer_grade": {
+        "grade": "incorrect",
+        "note": "Answered 'approximately two weeks ago' for the start, not four weeks.",
+        "grader": "blind-reviewer-agent",
+        "graded_at": "2026-10-21T18:12:59+00:00"
       }
     }
   ],

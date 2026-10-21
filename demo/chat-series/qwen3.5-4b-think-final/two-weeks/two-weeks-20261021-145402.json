@@ -127,10 +127,6 @@
           "title": "Me"
         }
       ],
-      "hand_grade": {
-        "grade": null,
-        "note": null
-      },
       "stored_start_date": {
         "truth": "2026-09-23",
         "tolerance_days": 1,
@@ -157,6 +153,12 @@
         "note": "Stored start date 2026-09-23 matches the ground truth exactly (two weeks before 2026-10-07).",
         "grader": "claude-sonnet-5-5",
         "graded_at": "2026-10-21T12:03:41+00:00"
+      },
+      "reviewer_grade": {
+        "grade": "correct",
+        "note": "Stored new_job_start_date 2026-09-23, matching ground truth (reply only said 'two weeks ago', but the entry is what is graded).",
+        "grader": "blind-reviewer-agent",
+        "graded_at": "2026-10-21T18:12:59+00:00"
       }
     },
     {
@@ -272,10 +274,6 @@
       ],
       "written": [],
       "topics_created": [],
-      "hand_grade": {
-        "grade": null,
-        "note": null
-      },
       "answer_contains_ground_truth": true,
       "hint_rule": "the answer says four weeks (\"four weeks\", \"4 weeks\" or \"28 days\")",
       "model_grade": {
@@ -283,6 +281,12 @@
         "note": "It gives roughly 28 days (four weeks) and 'about a month', which matches, but it also says 'just under three weeks', which contradicts the ground truth and itself.",
         "grader": "claude-sonnet-5-5",
         "graded_at": "2026-10-21T12:03:45+00:00"
+      },
+      "reviewer_grade": {
+        "grade": "partially correct",
+        "note": "Answered 'about a month' and 'roughly 28 days' but also 'just under three weeks out', a contradicting figure.",
+        "grader": "blind-reviewer-agent",
+        "graded_at": "2026-10-21T18:12:59+00:00"
       }
     }
   ],

@@ -9,8 +9,8 @@ Shape (schema 1): `case` ("bad-merge", "two-weeks"), `title`, `run_id`, `recorde
 (how the state was built; for the bad merge what the merge lost, for the two-weeks run the dates), `turns` (one per
 question: `question`, `ability`, `text`, `ground_truth`, `answer`, `answer_contains_ground_truth` (a hint, not a
 grade: every word of the ground truth in the answer, or the rule named in `hint_rule`), `route`, `latency_ms`,
-`model`, `provider`, `tool_log`, the empty `hand_grade` slot the grader fills in by hand, and `model_grade` once
-`python -m demo.model_grade` has graded the turn, `demo/model_grade.py`). A case adds its own
+`model`, `provider`, `tool_log`, `model_grade` once `python -m demo.model_grade` has graded the turn (`demo/model_grade.py`), and
+`reviewer_grade` once the blind reviewer's grade is applied (`demo/review_grade.py`)). A case adds its own
 per-turn evidence under its own key, which the renderer prints only when a turn carries it: `state_violation` and
 `topic_changed_by_turn` (bad merge); `reference_time`, `graded_on`, `written`, `topics_created` and
 `stored_start_date` (two weeks).
@@ -26,7 +26,6 @@ from demo.paths import REPO_ROOT
 
 SCHEMA = 1
 RECORDINGS_ROOT = REPO_ROOT / "demo" / "recordings"
-EMPTY_GRADE = {"grade": None, "note": None}
 LEFT_UNSET = ("no `intent_override`", "no `model` in the request (the server's `MEMSTATE_OLLAMA_MODEL`)", "no Groq",
               "no judge")  # what every chat run leaves to MemState's defaults
 
@@ -150,7 +149,6 @@ def render_turn(turn: dict, loss: dict | None) -> list[str]:
     `written` and `stored_start_date` for the two-weeks run); a key a turn does not carry is not printed."""
     route = turn["route"]
     tools = ", ".join(route["tool_calls"]) if route["tool_calls"] else "none"
-    grade = turn["hand_grade"]
     lines = [f"- **{turn['question']}** [{turn['ability']}] {turn['text']}"]
     if "reference_time" in turn:
         lines.append(f"  - reference time sent: {turn['reference_time']}")
@@ -172,12 +170,14 @@ def render_turn(turn: dict, loss: dict | None) -> list[str]:
         lines.append(f"  - state violation: {violation_text(turn, loss)}")
     if "topic_changed_by_turn" in turn:
         lines.append(f"  - state changed by the turn itself: {'yes' if turn['topic_changed_by_turn'] else 'no'}")
-    graded_on = f" (graded on: {turn['graded_on']})" if turn.get("graded_on") else ""
-    lines.append(f"  - hand grade{graded_on}: [ ] {_shown(grade['grade']) if grade['grade'] is not None else '(empty)'}; "
-                 f"note: {grade['note'] or '(empty)'}")
+    if turn.get("graded_on"):
+        lines.append(f"  - graded on: {turn['graded_on']}")
     if "model_grade" in turn:
         model = turn["model_grade"]
         lines.append(f"  - model grade ({model['grader']}): {model['grade']}; note: {model['note'] or '(empty)'}")
+    if turn.get("reviewer_grade"):
+        review = turn["reviewer_grade"]
+        lines.append(f"  - reviewer grade ({review['grader']}): {review['grade']}; note: {review['note'] or '(empty)'}")
     return lines
 
 
@@ -216,7 +216,7 @@ def render_recording(rec: dict, level: int = 2) -> str:
     system, llm = rec["system"], rec["llm"]
     h = "#" * level
     lines = [f"{h} {rec['title']}", "",
-             f"Recorded {rec['recorded_at']} (run `{rec['run_id']}`, n = 1, graded by hand). System: {system['label']}, "
+             f"Recorded {rec['recorded_at']} (run `{rec['run_id']}`, n = 1, graded by Sonnet and a blind reviewer). System: {system['label']}, "
              f"commit {(system.get('commit') or 'n/a')[:7]}, {system.get('engine') or 'engine n/a'}, DB `{system.get('db_path')}`. "
              f"LLM: {llm['provider']} `{llm['model']}` at {llm['base_url']}; "
              f"{'; '.join(llm['left_unset'])}.", ""]
@@ -236,8 +236,8 @@ def render_chat_cases(recordings: list[dict], level: int = 3) -> str:
         return ""
     body = "\n\n".join(render_recording({**rec, "title": f"{rec['title']} (`{rec['file']}`)"}, level + 1)
                        for rec in recordings)
-    return (f"{'#' * level} Chat cases (recorded, n = 1 each, hand-graded; no verdict)\n\n"
+    return (f"{'#' * level} Chat cases (recorded, n = 1 each, graded by Sonnet and a blind reviewer; no verdict)\n\n"
             "Each case is one recorded Ollama chat run on MemState, replayed from `demo/recordings/` without a server "
-            "(`python -m demo.chat_run replay`). The grade slots are empty until a person fills them in. A recording is one "
+            "(`python -m demo.chat_run replay`). Each turn carries Sonnet's grade and, once applied, the blind reviewer's (`demo/model_grade.py`, `demo/review_grade.py`). A recording is one "
             "sample of a 2B model: the other takes of a case are in `demo/recordings/attempts/`, and `docs/journal.md` says "
             "how many were made.\n\n" + body)

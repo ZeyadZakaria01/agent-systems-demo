@@ -129,10 +129,6 @@
           "title": "User's Job"
         }
       ],
-      "hand_grade": {
-        "grade": null,
-        "note": null
-      },
       "stored_start_date": {
         "truth": "2026-09-23",
         "tolerance_days": 1,
@@ -159,6 +155,12 @@
         "note": "The stored start_date is 2026-09-23, exactly two weeks before the 2026-10-07 reference time, which matches the ground truth.",
         "grader": "claude-sonnet-5-5",
         "graded_at": "2026-10-21T09:12:23+00:00"
+      },
+      "reviewer_grade": {
+        "grade": "correct",
+        "note": "stored 2026-09-23 matches",
+        "grader": "blind-reviewer-agent",
+        "graded_at": "2026-10-21T18:12:59+00:00"
       }
     },
     {
@@ -250,10 +252,6 @@
       ],
       "written": [],
       "topics_created": [],
-      "hand_grade": {
-        "grade": null,
-        "note": null
-      },
       "answer_contains_ground_truth": false,
       "hint_rule": "the answer says four weeks (\"four weeks\", \"4 weeks\" or \"28 days\")",
       "model_grade": {
@@ -261,6 +259,12 @@
         "note": "The assistant said about three weeks (started Sept 23), but the ground truth is four weeks, so the duration is wrong.",
         "grader": "claude-sonnet-5-5",
         "graded_at": "2026-10-21T09:12:26+00:00"
+      },
+      "reviewer_grade": {
+        "grade": "incorrect",
+        "note": "does not state ground truth (nothing stored/wrong date/wrong duration/refusal)",
+        "grader": "blind-reviewer-agent",
+        "graded_at": "2026-10-21T18:12:59+00:00"
       }
     }
   ],

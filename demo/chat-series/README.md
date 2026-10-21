@@ -1,6 +1,6 @@
 # Chat series
 
-Repeated takes of the two chat cases, 10 per folder, each graded by Sonnet (`model_grade`) and open for a hand grade (`demo/grading/hand-grading-sheet.csv`). Cite a folder only with its finding; the run of record's single takes are in `demo/recordings/`.
+Repeated takes of the two chat cases, 10 per folder, each graded by Sonnet (`model_grade`) and, once applied, a blind reviewer agent (`reviewer_grade`, `python -m demo.review_grade`); no hand grades. Cite a folder only with its finding; the run of record's single takes are in `demo/recordings/`.
 
 | Folder | Model | Reasoning | Patch (two-weeks on step 3) | Finding | Use it for |
 |---|---|---|---|---|---|

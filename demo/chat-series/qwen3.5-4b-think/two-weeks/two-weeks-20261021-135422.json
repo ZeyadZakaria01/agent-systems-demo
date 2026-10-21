@@ -129,10 +129,6 @@
           "title": "User"
         }
       ],
-      "hand_grade": {
-        "grade": null,
-        "note": null
-      },
       "stored_start_date": {
         "truth": "2026-09-23",
         "tolerance_days": 1,
@@ -159,6 +155,12 @@
         "note": "Stored started_job_date 2026-09-23 equals the ground truth (two weeks before 2026-10-07).",
         "grader": "claude-sonnet-5-5",
         "graded_at": "2026-10-21T11:22:48+00:00"
+      },
+      "reviewer_grade": {
+        "grade": "correct",
+        "note": "Stored started_job_date 2026-09-23, matching ground truth.",
+        "grader": "blind-reviewer-agent",
+        "graded_at": "2026-10-21T18:12:59+00:00"
       }
     },
     {
@@ -240,10 +242,6 @@
       ],
       "written": [],
       "topics_created": [],
-      "hand_grade": {
-        "grade": null,
-        "note": null
-      },
       "answer_contains_ground_truth": true,
       "hint_rule": "the answer says four weeks (\"four weeks\", \"4 weeks\" or \"28 days\")",
       "model_grade": {
@@ -251,6 +249,12 @@
         "note": "The answer gives 28 days (Sept 23 to Oct 21), which equals the ground truth of four weeks; 'roughly one month' is only a loose gloss.",
         "grader": "claude-sonnet-5-5",
         "graded_at": "2026-10-21T11:22:52+00:00"
+      },
+      "reviewer_grade": {
+        "grade": "correct",
+        "note": "Answered 'about 28 days now (roughly one month)' from Sept 23, equal to four weeks.",
+        "grader": "blind-reviewer-agent",
+        "graded_at": "2026-10-21T18:12:59+00:00"
       }
     }
   ],

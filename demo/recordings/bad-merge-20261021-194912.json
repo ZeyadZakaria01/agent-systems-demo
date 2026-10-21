@@ -558,9 +558,17 @@
         "current_after": "April 20"
       },
       "topic_changed_by_turn": false,
-      "hand_grade": {
-        "grade": null,
-        "note": null
+      "model_grade": {
+        "grade": "correct",
+        "note": "The answer states the deadline as April 20, which matches the ground truth; the extra team and status details do not change that.",
+        "grader": "claude-sonnet-5-5",
+        "graded_at": "2026-10-21T18:08:37+00:00"
+      },
+      "reviewer_grade": {
+        "grade": "correct",
+        "note": "States April 20; the stray remark about the deadline going In progress to Complete is muddled but does not contradict the value.",
+        "grader": "blind-reviewer-agent",
+        "graded_at": "2026-10-21T18:12:59+00:00"
       }
     },
     {
@@ -763,9 +771,17 @@
         "current_after": "Alice (Frontend lead), Bob (Backend), Erin (QA)"
       },
       "topic_changed_by_turn": false,
-      "hand_grade": {
-        "grade": null,
-        "note": null
+      "model_grade": {
+        "grade": "correct",
+        "note": "The answer lists Alice (Frontend lead), Bob (Backend), and Erin (QA), matching the ground truth exactly; the extra salience remark is irrelevant but doesn't contradict it.",
+        "grader": "claude-sonnet-5-5",
+        "graded_at": "2026-10-21T18:08:41+00:00"
+      },
+      "reviewer_grade": {
+        "grade": "correct",
+        "note": "Lists all three with roles.",
+        "grader": "blind-reviewer-agent",
+        "graded_at": "2026-10-21T18:12:59+00:00"
       }
     },
     {
@@ -1369,9 +1385,17 @@
         "current_after": "Complete"
       },
       "topic_changed_by_turn": false,
-      "hand_grade": {
-        "grade": null,
-        "note": null
+      "model_grade": {
+        "grade": "correct",
+        "note": "The answer states the project status is \"Complete,\" matching the ground truth; the extra details (history, team, deadline) don't contradict it.",
+        "grader": "claude-sonnet-5-5",
+        "graded_at": "2026-10-21T18:08:44+00:00"
+      },
+      "reviewer_grade": {
+        "grade": "correct",
+        "note": "Says Complete, with prior statuses described as history.",
+        "grader": "blind-reviewer-agent",
+        "graded_at": "2026-10-21T18:12:59+00:00"
       }
     }
   ],

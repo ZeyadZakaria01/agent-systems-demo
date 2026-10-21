@@ -27,7 +27,7 @@ The time split (slot length, talk, demo, Q&A) is not decided here: the user prep
     11. Result: T1–T6 absent → pass, step 3 merge fix, no regressions, 39 upstream tests unedited. S: scorecard probe table, step 2/3 columns.
     12. Reference GEM: shows the time gap is in the conditions, not the prototype (phase 1 absent on T4/T5; phase 2 passes all). Declared simplifications on the slide.
     13. Answer-level contrast through chat: the bad merge looks right in 30 of 30 answers while the state is wrong (F37, F39); "two weeks ago": the router and model limits (F31, F38, F40). S: a chat recording frame (replayed, not live; GPU limit).
-    14. Limits and honesty: n values, simplifications, what is not measured (hand grades pending, latency on a laptop).
+    14. Limits and honesty: n values, simplifications, what is not measured (graded by Sonnet and a blind reviewer agent, no hand grades; latency on a laptop).
     15. Next: C3′ first (C3 absent on every MemState system), then the retention score, trajectory benchmark, MAFBench–GEM drift labeling (report §7.9).
     16. Questions; backup slides: latency ramps (F33), C5/C6 details, over-flagging chain, reference GEM design, MAFBench table.
   - **Handover.** Live at slide 9 and again at slide 11 if time allows; slides 10–13 can be shown without the server, so the server can be stopped after the live part (6 GB GPU, little RAM; one machine lock).
