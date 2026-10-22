@@ -7,6 +7,7 @@ __pycache__/
 MemState-patched/
 runs/results/
 runs/results-live/
+docs/report/memstate_review.*
 
 # API keys (never committed; see AGENTS.md)
 .secrets/
